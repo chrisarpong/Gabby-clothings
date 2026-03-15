@@ -9,17 +9,17 @@ const HeroSection = () => {
       <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         
         {/* Text Content - Left Side */}
-        <div className="relative z-10 order-2 lg:order-1 pt-12 lg:pt-0 flex justify-center lg:justify-start lg:pl-16 xl:pl-24">
+        <div className="relative z-10 order-2 lg:order-1 pt-12 lg:pt-0 flex justify-center lg:justify-start lg:pl-32 xl:pl-48">
           <div className="max-w-xl animate-fade-in-up text-center lg:text-left">
             <h1
-              className="text-6xl sm:text-7xl md:text-8xl lg:text-[100px] font-bold leading-[0.9] text-[var(--color-text-primary)] mb-8"
+              className="text-6xl sm:text-7xl md:text-8xl lg:text-[100px] font-bold leading-[1] text-[var(--color-text-primary)] mb-8"
               style={{ fontFamily: 'var(--font-serif)' }}
             >
               Style, <br />
               <span className="italic font-light">Redefined</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-[var(--color-text-secondary)] font-light leading-relaxed mb-10 max-w-sm">
+            <p className="text-lg md:text-xl text-[var(--color-text-secondary)] font-light leading-relaxed mb-10 max-w-xs">
               Uncomplicated, essential pieces you'll reach for again and again.
             </p>
 
@@ -42,8 +42,8 @@ const HeroSection = () => {
             className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700"
           />
           
-          {/* Floating Promotional Box - matching Wix template */}
-          <div className="absolute bottom-6 -left-6 md:-left-12 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-8 md:p-10 max-w-[280px] shadow-sm animate-fade-in animation-delay-800">
+          {/* Repositioned Promotional Box - Bottom Right */}
+          <div className="absolute -bottom-6 -right-6 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-8 md:p-10 max-w-[280px] shadow-lg animate-fade-in animation-delay-800 z-20">
             <h3 className="text-xl md:text-2xl italic text-[var(--color-text-primary)] mb-2" style={{ fontFamily: 'var(--font-serif)' }}>
               The mid-season <br /> sale is on!
             </h3>
@@ -60,8 +60,8 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Subtle background text or line element as seen in editor templates */}
-      <div className="hidden lg:block absolute bottom-10 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.5em] text-[var(--color-text-secondary)] opacity-30">
+      {/* Subtle line at bottom, moved slightly to avoid overlap */}
+      <div className="hidden lg:block absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.5em] text-[var(--color-text-secondary)] opacity-30">
         Premium Craftsmanship &bull; Timeless Design
       </div>
     </section>
