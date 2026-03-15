@@ -4,85 +4,69 @@ import heroModel from '../assets/hero-model.png';
 
 const collections = [
   {
-    title: 'Shop Kaftans',
-    image: collectionKaftans,
-    alt: 'Premium African kaftans and agbadas on display',
+    title: 'Shop Men',
+    image: heroModel,
+    alt: 'Premium Men clothing collection',
   },
   {
     title: 'Shop Accessories',
     image: collectionAccessories,
-    alt: 'Luxury African menswear accessories including fila cap and sandals',
+    alt: 'Luxury accessories collection',
   },
   {
-    title: 'Shop Agbadas',
-    image: heroModel,
-    alt: 'Premium white agbada with gold embroidery',
+    title: 'Shop Women',
+    image: collectionKaftans,
+    alt: 'Premium Women clothing collection',
   },
 ];
 
 const Collections = () => {
   return (
-    <section id="collections" className="section bg-[var(--color-black-soft)]">
+    <section id="collections" className="section bg-[var(--color-bg-primary)] border-t border-[var(--color-border)]">
       <div className="max-w-[1400px] mx-auto">
         {/* Heading */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-20 animate-fade-in">
           <h2
-            className="text-3xl md:text-4xl lg:text-5xl italic text-[var(--color-white)] mb-4"
+            className="text-4xl md:text-5xl italic text-[var(--color-text-primary)] mb-6"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
             The Collections
           </h2>
-          <p className="text-sm md:text-base text-[var(--color-white-soft)] font-light tracking-wide max-w-md mx-auto">
-            Explore our latest arrivals in premium kaftans,
-            <br />
-            agbadas, and accessories.
+          <p className="text-base text-[var(--color-text-secondary)] font-light tracking-wide max-w-lg mx-auto leading-relaxed">
+            Explore our latest arrivals in men and accessories. Modern silhouettes met with traditional craftsmanship.
           </p>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           {collections.map((item, index) => (
             <a
               key={item.title}
               href="#shop"
-              className="group relative aspect-[3/4] overflow-hidden cursor-pointer"
-              style={{ animationDelay: `${index * 0.15}s` }}
+              className="group relative flex flex-col items-center cursor-pointer overflow-hidden"
+              style={{ animationDelay: `${index * 0.2}s` }}
               id={`collection-${index}`}
             >
-              {/* Image */}
-              <img
-                src={item.image}
-                alt={item.alt}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-[var(--color-black-deep)]/30 group-hover:bg-[var(--color-black-deep)]/50 transition-all duration-500" />
+              {/* Image Container with Wix-style overlay filter */}
+              <div className="relative w-full aspect-[4/5] overflow-hidden bg-[var(--color-bg-secondary)] mb-6">
+                <img
+                  src={item.image}
+                  alt={item.alt}
+                  className="w-full h-full object-cover opacity-90 transition-all duration-1000 group-hover:scale-105 group-hover:opacity-100"
+                />
+                {/* Subtle light overlay that disappears on hover */}
+                <div className="absolute inset-0 bg-white/10 group-hover:bg-transparent transition-colors duration-500" />
+              </div>
 
-              {/* Title */}
-              <div className="absolute top-6 left-6">
+              {/* Title with Wix-style underline */}
+              <div className="text-center">
                 <p
-                  className="text-lg md:text-xl italic text-[var(--color-white)] underline underline-offset-4 decoration-[var(--color-gold)] decoration-1 group-hover:text-[var(--color-gold)] transition-colors duration-300"
+                  className="text-xl italic text-[var(--color-text-primary)] transition-all duration-300 relative inline-block"
                   style={{ fontFamily: 'var(--font-serif)' }}
                 >
                   {item.title}
+                  <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-[var(--color-text-primary)]/30 group-hover:bg-[var(--color-text-primary)] transform transition-colors duration-300" />
                 </p>
-              </div>
-
-              {/* Arrow indicator on hover */}
-              <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <svg
-                  className="w-6 h-6 text-[var(--color-gold)]"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-                  />
-                </svg>
               </div>
             </a>
           ))}

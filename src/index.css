@@ -2,15 +2,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-black-deep: #0a0a0a;
-  --color-black-soft: #141414;
-  --color-black-card: #1a1a1a;
-  --color-gold: #D4AF37;
-  --color-gold-light: #E8C967;
-  --color-gold-dark: #B8941F;
-  --color-white: #FFFFFF;
-  --color-white-muted: #d4d4d4;
-  --color-white-soft: #a3a3a3;
+  /* Soft cream background similar to the Wix template */
+  --color-bg-primary: #f8f6f4;
+  --color-bg-secondary: #f0eee9;
+  
+  /* Text colors: deep burgundy and charcoal */
+  --color-text-primary: #3d1b18; 
+  --color-text-secondary: #5a5a5a;
+  --color-text-light: #ffffff;
+
+  /* Accent colors */
+  --color-accent: #3d1b18;
+  --color-border: rgba(61, 27, 24, 0.1);
 
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Jost', system-ui, sans-serif;
@@ -32,8 +35,8 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-black-deep);
-  color: var(--color-white);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -51,88 +54,7 @@ img {
   height: auto;
 }
 
-/* ── Scrollbar ─────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-black-deep);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-gold-dark);
-  border-radius: 3px;
-}
-
-/* ── Custom animation utilities ────────────────────── */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.8s ease forwards;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.6s ease forwards;
-}
-
-.animation-delay-200 { animation-delay: 0.2s; }
-.animation-delay-400 { animation-delay: 0.4s; }
-.animation-delay-600 { animation-delay: 0.6s; }
-.animation-delay-800 { animation-delay: 0.8s; }
-
-/* ── Gold shimmer text ─────────────────────────────── */
-.gold-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--color-gold-dark) 0%,
-    var(--color-gold-light) 25%,
-    var(--color-gold) 50%,
-    var(--color-gold-light) 75%,
-    var(--color-gold-dark) 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 4s linear infinite;
-}
-
-/* ── Section spacing ───────────────────────────────── */
+/* ── Custom Utilities ───────────────────────────────── */
 .section {
   padding: 6rem 2rem;
 }
@@ -147,4 +69,64 @@ img {
   .section {
     padding: 10rem 6rem;
   }
+}
+
+/* ── Animations ─────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease forwards;
+}
+
+/* ── Ghost Button ───────────────────────────────────── */
+.btn-ghost {
+  display: inline-block;
+  border: 1px solid var(--color-text-light);
+  color: var(--color-text-light);
+  padding: 0.8rem 2.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--color-text-light);
+  color: var(--color-text-primary);
+}
+
+.btn-ghost-dark {
+  display: inline-block;
+  border: 1px solid var(--color-text-primary);
+  color: var(--color-text-primary);
+  padding: 0.8rem 2.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.btn-ghost-dark:hover {
+  background: var(--color-text-primary);
+  color: var(--color-text-light);
 }

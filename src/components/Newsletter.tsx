@@ -5,45 +5,43 @@ const Newsletter = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder for newsletter sign up
-    alert(`Thank you for subscribing with: ${email}`);
+    alert(`Subscribed: ${email}`);
     setEmail('');
   };
 
   return (
     <section
       id="contact"
-      className="section bg-[var(--color-black-soft)] border-t border-[var(--color-gold)]/10"
+      className="section bg-[var(--color-bg-primary)]"
     >
-      <div className="max-w-[700px] mx-auto text-center">
+      <div className="max-w-[800px] mx-auto text-center border-t border-[var(--color-border)] pt-20">
         <h2
-          className="text-3xl md:text-4xl italic text-[var(--color-white)] mb-4"
+          className="text-4xl md:text-5xl italic text-[var(--color-text-primary)] mb-6"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
           Join the List
         </h2>
-        <p className="text-sm text-[var(--color-white-soft)] font-light mb-10 max-w-sm mx-auto">
-          Sign up to receive updates on new arrivals, exclusive collections,
-          and special events.
+        <p className="text-base text-[var(--color-text-secondary)] font-light mb-12 max-w-sm mx-auto leading-relaxed">
+          Sign up for early access to new collections and exclusive brand updates.
         </p>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          className="flex flex-col sm:flex-row gap-0 max-w-lg mx-auto border-b border-[var(--color-text-primary)]"
           id="newsletter-form"
         >
           <input
             type="email"
             required
-            placeholder="Enter your email"
+            placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 bg-transparent border border-[var(--color-white-soft)]/30 text-[var(--color-white)] text-sm px-5 py-3.5 tracking-wide placeholder:text-[var(--color-white-soft)]/50 focus:outline-none focus:border-[var(--color-gold)] transition-colors duration-300"
+            className="flex-1 bg-transparent text-[var(--color-text-primary)] text-sm px-0 py-4 placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none transition-all duration-300"
             id="newsletter-email-input"
           />
           <button
             type="submit"
-            className="bg-[var(--color-gold)] text-[var(--color-black-deep)] text-xs uppercase tracking-[0.3em] font-medium px-8 py-3.5 hover:bg-[var(--color-gold-light)] transition-colors duration-300 cursor-pointer"
+            className="text-xs uppercase tracking-[0.4em] font-medium px-8 py-4 hover:opacity-70 transition-opacity cursor-pointer text-[var(--color-text-primary)]"
             id="newsletter-submit-btn"
           >
             Join

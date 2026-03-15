@@ -6,111 +6,125 @@ const Header = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 60);
+      setScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navLinks = [
-    { label: 'Home', href: '#home' },
-    { label: 'Shop', href: '#collections' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'All Products', href: '#collections' },
+    { label: 'Kaftans', href: '#collections' },
+    { label: 'Agbadas', href: '#collections' },
+    { label: 'Accessories', href: '#collections' },
   ];
 
   return (
     <header
       id="header"
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b border-transparent ${
         scrolled
-          ? 'bg-[var(--color-black-deep)]/95 backdrop-blur-md border-b border-[var(--color-gold)]/10 py-3'
-          : 'bg-transparent py-5'
+          ? 'bg-[var(--color-bg-primary)] py-4 !border-[var(--color-border)] shadow-sm'
+          : 'bg-transparent py-6'
       }`}
     >
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 flex items-center justify-between">
-        {/* Logo */}
-        <a
-          href="#home"
-          className="font-[var(--font-serif)] text-2xl md:text-3xl italic tracking-wide text-[var(--color-white)] hover:text-[var(--color-gold)] transition-colors duration-300"
-          style={{ fontFamily: 'var(--font-serif)' }}
-        >
-          <span className="text-[var(--color-gold)]">G</span>abby{' '}
-          <span className="text-[var(--color-gold)]">N</span>ewluk
-        </a>
+        
+        {/* Left Side: Logo & Main Nav */}
+        <div className="flex items-center gap-12">
+          {/* Logo */}
+          <a
+            href="#home"
+            className={`font-[var(--font-serif)] text-4xl italic transition-colors duration-300 ${
+              scrolled ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-primary)]'
+            }`}
+            style={{ fontFamily: 'var(--font-serif)' }}
+          >
+            Gabby Newluk
+          </a>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-10">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="relative text-sm uppercase tracking-[0.25em] font-light text-[var(--color-white-muted)] hover:text-[var(--color-gold)] transition-colors duration-300 group"
-            >
-              {link.label}
-              <span className="absolute bottom-[-4px] left-0 w-0 h-[1px] bg-[var(--color-gold)] transition-all duration-300 group-hover:w-full" />
-            </a>
-          ))}
-        </nav>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-8 mt-2">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className={`relative text-sm tracking-wide font-light transition-colors duration-300 group ${
+                  scrolled ? 'text-[var(--color-text-primary)] hover:opacity-70' : 'text-[var(--color-text-primary)] hover:opacity-70'
+                }`}
+              >
+                {link.label}
+                <span className="absolute bottom-[-2px] left-0 w-0 h-[1px] bg-current transition-all duration-300 group-hover:w-full" />
+              </a>
+            ))}
+          </nav>
+        </div>
 
-        {/* Cart icon */}
-        <div className="hidden md:flex items-center gap-6">
+        {/* Right Side: Cart & Profile */}
+        <div className="hidden md:flex items-center gap-8 mt-2">
           <a
             href="#shop"
-            className="text-sm uppercase tracking-[0.2em] font-light text-[var(--color-white-muted)] hover:text-[var(--color-gold)] transition-colors duration-300"
+            className="text-sm tracking-wide font-light text-[var(--color-text-primary)] hover:opacity-70 transition-opacity duration-300"
           >
             Cart (0)
+          </a>
+          <a
+            href="#login"
+            className="flex items-center gap-2 text-sm tracking-wide font-light text-[var(--color-text-primary)] hover:opacity-70 transition-opacity duration-300"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            Log In
           </a>
         </div>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden flex flex-col gap-[5px] items-end"
+          className="md:hidden flex flex-col gap-[5px] items-end z-50"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle navigation menu"
-          id="mobile-menu-toggle"
         >
           <span
-            className={`block h-[1.5px] bg-[var(--color-white)] transition-all duration-300 ${
+            className={`block h-[1.5px] bg-[var(--color-text-primary)] transition-all duration-300 ${
               mobileMenuOpen ? 'w-6 rotate-45 translate-y-[7px]' : 'w-6'
             }`}
           />
           <span
-            className={`block h-[1.5px] bg-[var(--color-white)] transition-all duration-300 ${
+            className={`block h-[1.5px] bg-[var(--color-text-primary)] transition-all duration-300 ${
               mobileMenuOpen ? 'opacity-0 w-4' : 'w-4'
             }`}
           />
           <span
-            className={`block h-[1.5px] bg-[var(--color-white)] transition-all duration-300 ${
+            className={`block h-[1.5px] bg-[var(--color-text-primary)] transition-all duration-300 ${
               mobileMenuOpen ? 'w-6 -rotate-45 -translate-y-[7px]' : 'w-6'
             }`}
           />
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       <div
-        className={`md:hidden absolute top-full left-0 w-full bg-[var(--color-black-deep)]/98 backdrop-blur-xl border-t border-[var(--color-gold)]/10 transition-all duration-500 overflow-hidden ${
-          mobileMenuOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+        className={`md:hidden absolute top-0 left-0 w-full h-screen bg-[var(--color-bg-primary)] transition-all duration-500 flex flex-col items-center justify-center pt-20 ${
+          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <nav className="flex flex-col items-center gap-6 py-8">
+        <nav className="flex flex-col items-center gap-8 w-full px-6">
           {navLinks.map((link, i) => (
             <a
               key={link.label}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="text-lg uppercase tracking-[0.3em] font-light text-[var(--color-white-muted)] hover:text-[var(--color-gold)] transition-colors duration-300"
+              className="text-2xl font-light text-[var(--color-text-primary)] tracking-wide w-full text-center border-b border-[var(--color-border)] pb-4"
               style={{ animationDelay: `${i * 100}ms` }}
             >
               {link.label}
             </a>
           ))}
-          <a
-            href="#shop"
-            className="mt-2 text-sm uppercase tracking-[0.2em] text-[var(--color-gold)] font-light"
-          >
-            Cart (0)
-          </a>
+          <div className="flex w-full justify-between mt-8 px-4 text-sm font-light text-[var(--color-text-secondary)]">
+            <a href="#cart" className="hover:text-[var(--color-text-primary)]">Cart (0)</a>
+            <a href="#login" className="hover:text-[var(--color-text-primary)]">Log In</a>
+          </div>
         </nav>
       </div>
     </header>
