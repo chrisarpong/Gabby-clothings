@@ -3,7 +3,7 @@ import storyPortrait from '../assets/story-portrait.png';
 const OurStory = () => {
   return (
     <section id="story" className="section bg-[var(--color-bg-secondary)] border-y border-[var(--color-border)]">
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-[1300px] mx-auto px-10 md:px-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-center overflow-hidden bg-[var(--color-bg-primary)] border border-[var(--color-border)] shadow-sm">
           
           {/* Text Content */}

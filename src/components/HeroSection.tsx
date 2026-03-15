@@ -9,8 +9,8 @@ const HeroSection = () => {
       <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         
         {/* Text Content - Left Side */}
-        <div className="relative z-10 order-2 lg:order-1 pt-12 lg:pt-0">
-          <div className="max-w-xl animate-fade-in-up">
+        <div className="relative z-10 order-2 lg:order-1 pt-12 lg:pt-0 flex justify-center lg:justify-start lg:pl-16 xl:pl-24">
+          <div className="max-w-xl animate-fade-in-up text-center lg:text-left">
             <h1
               className="text-6xl sm:text-7xl md:text-8xl lg:text-[100px] font-bold leading-[0.9] text-[var(--color-text-primary)] mb-8"
               style={{ fontFamily: 'var(--font-serif)' }}

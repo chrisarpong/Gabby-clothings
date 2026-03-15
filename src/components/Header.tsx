@@ -28,7 +28,7 @@ const Header = () => {
           : 'bg-transparent py-6'
       }`}
     >
-      <div className="max-w-[1400px] mx-auto px-6 md:px-10 flex items-center justify-between">
+      <div className="max-w-[1300px] mx-auto px-10 md:px-16 flex items-center justify-between">
         
         {/* Left Side: Logo & Main Nav */}
         <div className="flex items-center gap-12">
