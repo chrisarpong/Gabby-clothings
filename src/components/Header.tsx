@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Header = () => {
   return (
     <header className="absolute top-0 left-0 w-full z-50 flex justify-between items-center px-[5%] py-[2rem]">

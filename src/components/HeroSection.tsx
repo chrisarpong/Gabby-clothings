@@ -1,4 +1,5 @@
 import Header from './Header';
+import heroBg from '../assets/6.jpg';
 
 const HeroSection = () => {
   return (
@@ -9,7 +10,7 @@ const HeroSection = () => {
        * 1. import heroBg from '../assets/your-image.jpg';
        * 2. style={{ backgroundImage: `url(${heroBg})` }}
        */
-      style={{ backgroundImage: `url('https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=2000&auto=format&fit=crop')` }}
+      style={{ backgroundImage: `url(${heroBg})` }}
       id="home"
     >
       {/* Dark Overlay for text readability */}
@@ -62,7 +63,7 @@ const HeroSection = () => {
           >
             The mid-season <br /> sale is on!
           </h3>
-          
+
           <div className="flex flex-row justify-between items-center w-full">
             <p className="font-[var(--font-sans)] text-sm text-[#1a1a1a]">
               Up to 40% Off
