@@ -1,8 +1,28 @@
 const OurStory = () => {
   return (
-    <section className="flex flex-col md:flex-row min-h-[80vh] w-full" id="story">
+    <section 
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        width: '100%',
+        minHeight: '70vh',
+        backgroundColor: '#F5F5F3',
+        overflow: 'hidden'
+      }} 
+      className="md:flex-row flex-col" // Tailwind overrides for mobile fallback if desired, though prompt asked for flex-row structure
+      id="story"
+    >
       {/* Left Side (Text Box) */}
-      <div className="flex-1 bg-[#F5F5F3] flex flex-col justify-center py-[10%] px-[15%]">
+      <div 
+        style={{
+          flex: 1,
+          padding: '5rem 10%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          zIndex: 2
+        }}
+      >
         <h2
           className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-[2rem]"
           style={{ fontFamily: 'var(--font-serif)' }}
@@ -14,8 +34,16 @@ const OurStory = () => {
         </p>
       </div>
 
-      {/* Right Side (Image) */}
-      <div className="flex-1 w-full h-[50vh] md:h-auto object-cover relative">
+      {/* Right Side (Image Wrapper) */}
+      <div 
+        style={{
+          flex: 1,
+          position: 'relative',
+          minHeight: '400px',
+          overflow: 'hidden'
+        }}
+        className="w-full"
+      >
         {/* 
           * To use an image from the assets folder:
           * 1. import storyImg from '../assets/your-image.jpg';
@@ -24,7 +52,14 @@ const OurStory = () => {
         <img
           src="https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=1000&auto=format&fit=crop"
           alt="Our Story"
-          className="w-full h-full object-cover absolute inset-0"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
         />
       </div>
     </section>
