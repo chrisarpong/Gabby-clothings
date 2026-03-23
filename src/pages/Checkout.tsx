@@ -17,7 +17,7 @@ const Checkout = () => {
   const delivery = 50.00;
   const total = subtotal + delivery;
 
-  const publicKey = "pk_test_YOUR_PAYSTACK_PUBLIC_KEY"; // TODO: Replace with your actual Paystack public key
+  const publicKey = "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6";
 
   const config = {
     reference: (new Date()).getTime().toString(),
