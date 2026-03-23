@@ -2,11 +2,11 @@ import React from 'react';
 
 const Header = () => {
   return (
-    <header className="absolute top-0 left-0 w-full z-50 flex justify-between items-center px-[4rem] py-[2rem] bg-transparent">
+    <header className="absolute top-0 left-0 w-full z-50 flex justify-between items-center px-[5%] py-[2rem]">
       {/* Left side: Logo */}
       <a
         href="#home"
-        className="font-[var(--font-serif)] text-4xl italic text-[var(--color-text-primary)]"
+        className="font-[var(--font-serif)] text-4xl italic text-white"
       >
         Gabby Newluk
       </a>
@@ -17,7 +17,7 @@ const Header = () => {
           <a
             key={link}
             href="#collections"
-            className="font-[var(--font-sans)] text-sm text-[var(--color-text-primary)] hover:opacity-70 transition-opacity"
+            className="font-[var(--font-sans)] text-sm text-white hover:opacity-70 transition-opacity"
           >
             {link}
           </a>
@@ -28,13 +28,13 @@ const Header = () => {
       <div className="hidden md:flex flex-row gap-[2rem] items-center">
         <a
           href="#cart"
-          className="font-[var(--font-sans)] text-sm text-[var(--color-text-primary)] hover:opacity-70 transition-opacity"
+          className="font-[var(--font-sans)] text-sm text-white hover:opacity-70 transition-opacity"
         >
           Cart (0)
         </a>
         <a
           href="#account"
-          className="font-[var(--font-sans)] text-sm text-[var(--color-text-primary)] flex items-center gap-2 hover:opacity-70 transition-opacity"
+          className="font-[var(--font-sans)] text-sm text-white flex items-center gap-2 hover:opacity-70 transition-opacity"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
