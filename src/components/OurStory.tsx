@@ -1,44 +1,31 @@
-import storyPortrait from '../assets/story-portrait.png';
-
 const OurStory = () => {
   return (
-    <section id="story" className="section bg-[var(--color-bg-primary)]">
-      <div className="max-w-[1300px] mx-auto px-10 md:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-center overflow-hidden">
-          
-          {/* Text Content */}
-          <div className="flex flex-col justify-center p-16 order-2 lg:order-1 h-full">
-            <h2
-              className="text-4xl md:text-5xl italic text-[var(--color-text-primary)] mb-8"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              Our Story
-            </h2>
-            <div className="w-12 h-[1px] bg-[var(--color-text-primary)] mb-8 opacity-30" />
-            <p className="text-[var(--color-text-secondary)] font-light leading-relaxed text-sm md:text-base mb-10 max-w-sm">
-              Timeless pieces crafted for modern life. Discover our story of effortless sophistication and foundational fashion.
-            </p>
-            <a
-              href="#contact"
-              className="text-xs uppercase tracking-[0.3em] text-[var(--color-text-primary)] border-b border-[var(--color-text-primary)] pb-1 w-fit hover:opacity-70 transition-opacity"
-              id="read-more-story"
-            >
-              Read More
-            </a>
-          </div>
+    <section className="flex flex-col md:flex-row min-h-[80vh] w-full" id="story">
+      {/* Left Side (Text Box) */}
+      <div className="flex-1 bg-[#F5F5F3] flex flex-col justify-center py-[10%] px-[15%]">
+        <h2
+          className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-[2rem]"
+          style={{ fontFamily: 'var(--font-serif)' }}
+        >
+          Our Story
+        </h2>
+        <p className="font-[var(--font-sans)] text-[#3a1f1d] leading-[1.6] text-lg">
+          Gabby Newluk is about effortless sophistication. We create the foundational tailored pieces that simplify dressing, so you can focus on what matters.
+        </p>
+      </div>
 
-          {/* High Impact Portrait */}
-          <div className="relative aspect-[4/5] lg:aspect-auto h-full overflow-hidden order-1 lg:order-2">
-            <img
-              src={storyPortrait}
-              alt="Portrait showing brand aesthetic"
-              className="w-full h-full object-cover grayscale-[0.3] hover:grayscale-0 transition-all duration-1000"
-            />
-            {/* Elegant border overlay as seen in luxury templates */}
-            <div className="absolute inset-8 border border-white/20 pointer-events-none" />
-          </div>
-          
-        </div>
+      {/* Right Side (Image) */}
+      <div className="flex-1 w-full h-[50vh] md:h-auto object-cover relative">
+        {/* 
+          * To use an image from the assets folder:
+          * 1. import storyImg from '../assets/your-image.jpg';
+          * 2. src={storyImg}
+          */}
+        <img
+          src="https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=1000&auto=format&fit=crop"
+          alt="Our Story"
+          className="w-full h-full object-cover absolute inset-0"
+        />
       </div>
     </section>
   );

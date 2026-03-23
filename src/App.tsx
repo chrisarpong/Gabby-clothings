@@ -2,7 +2,6 @@ import HeroSection from './components/HeroSection';
 import Collections from './components/Collections';
 import ParallaxDivider from './components/ParallaxDivider';
 import OurStory from './components/OurStory';
-import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
 
 function App() {
@@ -13,7 +12,6 @@ function App() {
         <Collections />
         <ParallaxDivider />
         <OurStory />
-        <Newsletter />
       </main>
       <Footer />
     </div>
