@@ -3,6 +3,12 @@ import { motion } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
+import img1 from '../assets/1.jpg';
+import img2 from '../assets/2.webp';
+import img3 from '../assets/3.jpg';
+import img4 from '../assets/4.jpg';
+import img5 from '../assets/8.jpg';
+
 const ProductDetails = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
@@ -14,13 +20,7 @@ const ProductDetails = () => {
     id: id || 'prod-1',
     name: 'Premium Tailored Kaftan',
     price: 350.00,
-    images: [
-      '/assets/1.jpg',
-      '/assets/2.webp',
-      '/assets/3.jpg',
-      '/assets/4.jpg',
-      '/assets/8.jpg'
-    ]
+    images: [img1, img2, img3, img4, img5]
   };
 
   const toggleAccordion = (title: string) => {
