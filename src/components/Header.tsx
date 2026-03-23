@@ -18,18 +18,26 @@ const Header = () => {
         backgroundColor: '#F5F5F3',
         boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
         color: '#3a1f1d',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        boxSizing: 'border-box' as const,
+        padding: '2rem 5%',
+        width: '100%',
+        maxWidth: '100vw'
       }
     : {
         backgroundColor: 'transparent',
         boxShadow: 'none',
         color: '#ffffff', /* TODO: Revert top-state text color to #3a1f1d when the final light background image is added */
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        boxSizing: 'border-box' as const,
+        padding: '2rem 5%',
+        width: '100%',
+        maxWidth: '100vw'
       };
 
   return (
     <header 
-      className={`fixed top-0 left-0 w-full z-[100] flex justify-between items-center px-[5%] py-[2rem] ${isScrolled ? 'is-scrolled' : ''}`}
+      className={`fixed top-0 left-0 z-[100] flex justify-between items-center ${isScrolled ? 'is-scrolled' : ''}`}
       style={headerStyle}
     >
       {/* Left side: Logo */}
@@ -56,7 +64,7 @@ const Header = () => {
       </nav>
 
       {/* Right side: Flex row */}
-      <div className="hidden md:flex flex-row gap-[2rem] items-center lg:mr-[3rem] xl:mr-[5rem]">
+      <div className="hidden md:flex flex-row gap-[2rem] items-center">
         <a
           href="#cart"
           className="text-sm hover:opacity-70"
