@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -41,39 +42,41 @@ const Header = () => {
       style={headerStyle}
     >
       {/* Left side: Logo */}
-      <a
-        href="#home"
+      <Link
+        to="/"
         className="text-4xl italic hover:opacity-70"
         style={{ fontFamily: "'Playfair Display', serif" }}
       >
         Gabby Newluk
-      </a>
+      </Link>
 
       {/* Middle: Navigation container */}
       <nav className="hidden md:flex flex-row gap-[2rem] items-center">
-        {['All Products', 'Kaftans', 'Agbadas', 'Accessories'].map((link) => (
-          <a
-            key={link}
-            href="#collections"
-            className="text-sm hover:opacity-70"
-            style={{ fontFamily: "'Jost', sans-serif" }}
-          >
-            {link}
-          </a>
-        ))}
+        <Link to="/shop" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          All Products
+        </Link>
+        <Link to="/category/kaftans" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Kaftans
+        </Link>
+        <Link to="/category/agbadas" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Agbadas
+        </Link>
+        <Link to="/category/accessories" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Accessories
+        </Link>
       </nav>
 
       {/* Right side: Flex row */}
       <div className="hidden md:flex flex-row gap-[2rem] items-center">
-        <a
-          href="#cart"
+        <Link
+          to="/cart"
           className="text-sm hover:opacity-70"
           style={{ fontFamily: "'Jost', sans-serif" }}
         >
           Cart (0)
-        </a>
-        <a
-          href="#account"
+        </Link>
+        <Link
+          to="#"
           className="text-sm flex items-center gap-2 hover:opacity-70"
           style={{ fontFamily: "'Jost', sans-serif" }}
         >
@@ -81,7 +84,7 @@ const Header = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
           </svg>
           Account
-        </a>
+        </Link>
       </div>
     </header>
   );
