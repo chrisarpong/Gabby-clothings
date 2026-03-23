@@ -45,7 +45,7 @@ const Header = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 z-[100] flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
+      className={`${isHome ? 'fixed' : 'relative'} top-0 left-0 z-[100] flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
       style={headerStyle}
     >
       {/* Left side: Logo */}

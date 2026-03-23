@@ -33,7 +33,7 @@ const ProductDetails = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-[130px] pb-20 px-[5%]"
+      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-12 pb-20 px-[5%]"
     >
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-[6fr_4fr] gap-12 md:gap-[4rem]">
         
