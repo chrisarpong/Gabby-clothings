@@ -6,7 +6,7 @@ const Footer = () => {
         width: '100%',
         backgroundColor: '#F5F5F3',
         overflow: 'hidden',
-        padding: '6rem 5% 25rem 5%' // Massive gap required
+        padding: '6rem 5% 2rem 5%'
       }}
     >
       {/* Top Grid (Links & Newsletter) */}
@@ -105,32 +105,14 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Copyright Line */}
-      <div 
-        className="relative z-20 font-[var(--font-sans)] text-[#3a1f1d] text-xs"
-        style={{ marginTop: '5rem' }}
-      >
-        <p>&copy; 2026 by Gabby Newluk Clothing. Powered and Secured by Stadnet Technologies.</p>
-      </div>
-
-      {/* Giant Brand Name (Bottom Right) */}
-      <div 
-        style={{
-          position: 'absolute',
-          bottom: '-2%',
-          right: '-2%',
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: 'italic',
-          fontSize: '18vw',
-          lineHeight: '0.85',
-          color: '#3a1f1d',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          zIndex: 1,
-          opacity: 0.7
-        }}
-      >
-        Gabby Newluk
+      {/* Bottom Area - Centered Brand Name & Copyright */}
+      <div style={{ marginTop: '6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+        <h1 style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '10vw', color: '#3a1f1d', lineHeight: 1, margin: 0, padding: 0 }}>
+          Gabby Newluk
+        </h1>
+        <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.9rem', color: '#3a1f1d', marginTop: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          © 2026 by Gabby Newluk Clothing. Powered and Secured by Stadnet Technologies.
+        </p>
       </div>
     </footer>
   );

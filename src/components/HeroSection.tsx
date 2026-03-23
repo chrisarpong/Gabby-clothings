@@ -41,15 +41,23 @@ const HeroSection = () => {
 
       {/* Right Promo Box */}
       <div 
-        className="absolute bg-[#F5F5F3] p-[1.5rem] flex items-center gap-[1.5rem] z-30 max-w-[400px] text-[#1a1a1a]"
         style={{
-          bottom: '3rem',
-          right: '3rem',
-          boxShadow: '0 15px 35px rgba(0,0,0,0.15)'
+          position: 'absolute', 
+          bottom: '5%', 
+          right: '5%', 
+          backgroundColor: '#F5F5F3', 
+          padding: '2rem', 
+          display: 'flex', 
+          gap: '1.5rem', 
+          alignItems: 'center', 
+          maxWidth: '480px', 
+          zIndex: 50, 
+          border: '1px solid rgba(0,0,0,0.05)', 
+          boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
         }}
       >
         {/* Left side of box: Square tiny thumbnail */}
-        <div className="w-[150px] h-[150px] bg-[#E8E8E8] flex-shrink-0">
+        <div style={{ width: '120px', height: '120px', flexShrink: 0 }}>
           {/* 
             * To use an image from the assets folder:
             * 1. import promoImg from '../assets/your-image.jpg';
