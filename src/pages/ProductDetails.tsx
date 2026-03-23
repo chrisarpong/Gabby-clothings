@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
 import img1 from '../assets/1.jpg';
@@ -14,6 +14,7 @@ const ProductDetails = () => {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const [zoomedIndex, setZoomedIndex] = useState<number | null>(null);
 
   /* Mock product data for development */
   const product = {
@@ -32,18 +33,26 @@ const ProductDetails = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-32 pb-20 px-[5%]"
+      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-[130px] pb-20 px-[5%]"
     >
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-[6fr_4fr] gap-12 md:gap-[4rem]">
         
         {/* Left Side (Image Scroll) */}
         <div className="flex flex-col gap-[2rem]">
           {product.images.map((img, idx) => (
-            <div key={idx} className="w-full aspect-[3/4] overflow-hidden bg-white">
+            <div 
+              key={idx} 
+              className="w-full aspect-[3/4] overflow-hidden bg-white"
+              onClick={() => setZoomedIndex(zoomedIndex === idx ? null : idx)}
+            >
               <img 
                 src={img} 
                 alt={`${product.name} - view ${idx + 1}`} 
-                className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition-transform duration-500 ease-out"
+                className="w-full h-full object-cover transition-transform duration-300 ease-out"
+                style={{
+                  transform: zoomedIndex === idx ? 'scale(1.8)' : 'scale(1)',
+                  cursor: zoomedIndex === idx ? 'zoom-out' : 'zoom-in'
+                }}
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=800&auto=format&fit=crop';
                 }}
@@ -53,12 +62,12 @@ const ProductDetails = () => {
         </div>
 
         {/* Right Side (Sticky Info) */}
-        <div>
-          <div className="sticky top-[120px] h-fit flex flex-col">
-            <h1 className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+        <div className="py-12 md:py-8">
+          <div className="sticky top-[150px] h-fit flex flex-col">
+            <h1 className="text-[#3a1f1d]" style={{ fontSize: '2.8rem', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', marginBottom: '0.5rem' }}>
               {product.name}
             </h1>
-            <p className="font-[var(--font-sans)] text-xl text-[#3a1f1d] mb-8">
+            <p className="font-[var(--font-sans)] text-[#3a1f1d]" style={{ fontSize: '1.2rem', marginBottom: '2.5rem' }}>
               GH₵{product.price.toFixed(2)}
             </p>
 
@@ -92,13 +101,13 @@ const ProductDetails = () => {
                   quantity, 
                   image: product.images[0] 
                 })}
-                className="w-full h-14 border border-[#3a1f1d] text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-[#3a1f1d] hover:text-white transition-colors"
+                className="w-full h-14 border border-[#3a1f1d] text-[#3a1f1d] bg-transparent font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-[#3a1f1d] hover:text-white transition-colors"
               >
                 Add to Cart
               </button>
-              <button className="w-full h-14 bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors">
+              <Link to="/checkout" className="w-full h-14 bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center">
                 Buy Now
-              </button>
+              </Link>
             </div>
 
             {/* Accordions */}
