@@ -6,19 +6,18 @@ const Footer = () => {
         width: '100%',
         backgroundColor: '#F5F5F3',
         overflow: 'hidden',
-        zIndex: 10,
-        padding: '5rem 5% 2rem 5%'
+        padding: '6rem 5% 25rem 5%' // Massive gap required
       }}
     >
-      {/* Inner Container for Links */}
+      {/* Top Grid (Links & Newsletter) */}
       <div 
-        className="grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr]" // Allowing mobile wrap
+        className="grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr]" // Tailwind for mobile responsiveness
         style={{
+          position: 'relative',
+          zIndex: 10,
           display: 'grid',
           gap: '3rem',
-          width: '100%',
-          position: 'relative',
-          zIndex: 5
+          width: '100%'
         }}
       >
         {/* Column 1: Join the List */}
@@ -107,24 +106,28 @@ const Footer = () => {
       </div>
 
       {/* Copyright Line */}
-      <div className="mt-[5rem] relative z-20 font-[var(--font-sans)] text-[#3a1f1d] text-xs">
+      <div 
+        className="relative z-20 font-[var(--font-sans)] text-[#3a1f1d] text-xs"
+        style={{ marginTop: '5rem' }}
+      >
         <p>&copy; 2026 by Gabby Newluk Clothing.</p>
       </div>
 
-      {/* The Giant Watermark Logo */}
+      {/* Giant Brand Name (Bottom Right) */}
       <div 
         style={{
           position: 'absolute',
-          bottom: '-8%',
-          right: '-2%',
+          bottom: '-5%',
+          right: '0',
           fontFamily: "'Playfair Display', serif",
           fontStyle: 'italic',
-          fontSize: '18vw',
+          fontSize: '20vw',
           lineHeight: '0.7',
           color: '#3a1f1d',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
-          zIndex: 1
+          zIndex: 1,
+          opacity: 0.9
         }}
       >
         Gabby Newluk

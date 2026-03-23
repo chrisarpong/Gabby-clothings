@@ -2,29 +2,48 @@ const OurStory = () => {
   return (
     <section 
       style={{
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        minHeight: '70vh',
-        backgroundColor: '#F5F5F3',
+        position: 'relative',
+        width: '100vw',
+        height: '100vh',
         overflow: 'hidden'
-      }} 
-      className="md:flex-row flex-col" // Tailwind overrides for mobile fallback if desired, though prompt asked for flex-row structure
+      }}
       id="story"
     >
-      {/* Left Side (Text Box) */}
+      {/* Background Image */}
+      {/* 
+        * To use an image from the assets folder:
+        * 1. import storyImg from '../assets/your-image.jpg';
+        * 2. src={storyImg}
+        */}
+      <img
+        src="https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=2000&auto=format&fit=crop"
+        alt="Our Story"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 1
+        }}
+      />
+
+      {/* Text Content (Overlapping Left) */}
       <div 
         style={{
-          flex: 1,
-          padding: '5rem 10%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          zIndex: 2
+          position: 'absolute',
+          top: '20%',
+          left: '5%',
+          maxWidth: '400px',
+          zIndex: 10,
+          backgroundColor: 'rgba(245, 245, 243, 0.85)', // Very subtle soft semi-transparent cream background for readability
+          padding: '2rem',
+          backdropFilter: 'blur(5px)'
         }}
       >
         <h2
-          className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-[2rem]"
+          className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-[1.5rem]"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
           Our Story
@@ -32,35 +51,6 @@ const OurStory = () => {
         <p className="font-[var(--font-sans)] text-[#3a1f1d] leading-[1.6] text-lg">
           Gabby Newluk is about effortless sophistication. We create the foundational tailored pieces that simplify dressing, so you can focus on what matters.
         </p>
-      </div>
-
-      {/* Right Side (Image Wrapper) */}
-      <div 
-        style={{
-          flex: 1,
-          position: 'relative',
-          minHeight: '400px',
-          overflow: 'hidden'
-        }}
-        className="w-full"
-      >
-        {/* 
-          * To use an image from the assets folder:
-          * 1. import storyImg from '../assets/your-image.jpg';
-          * 2. src={storyImg}
-          */}
-        <img
-          src="https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=1000&auto=format&fit=crop"
-          alt="Our Story"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }}
-        />
       </div>
     </section>
   );
