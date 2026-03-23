@@ -1,13 +1,42 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { usePaystackPayment } from 'react-paystack';
 import { useCart, type CartItem } from '../context/CartContext';
 
 const Checkout = () => {
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
+  const navigate = useNavigate();
+  
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   
   const subtotal = cart.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
   const delivery = 50.00;
   const total = subtotal + delivery;
+
+  const publicKey = "pk_test_YOUR_PAYSTACK_PUBLIC_KEY"; // TODO: Replace with your actual Paystack public key
+
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: email,
+    amount: total * 100, // Multiplied by 100 for lowest currency unit (Pesewas)
+    publicKey: publicKey,
+    currency: 'GHS'
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = () => {
+    clearCart();
+    navigate('/order-confirmation');
+  };
+
+  const onClose = () => {
+    console.log('Payment closed');
+  };
 
   return (
     <motion.div 
@@ -31,8 +60,8 @@ const Checkout = () => {
           <section className="flex flex-col gap-4">
             <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Contact Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="email" placeholder="Email Address" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-              <input type="tel" placeholder="Phone Number" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
             </div>
           </section>
 
@@ -40,8 +69,8 @@ const Checkout = () => {
           <section className="flex flex-col gap-4">
             <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Shipping Address</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="First Name" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-              <input type="text" placeholder="Last Name" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
             </div>
             <input type="text" placeholder="Address Line 1" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -60,9 +89,14 @@ const Checkout = () => {
           </section>
 
           {/* Confirm Button */}
-          <Link to="/order-confirmation" className="w-full bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center h-16">
+          <button 
+            type="button"
+            disabled={!email}
+            onClick={() => { initializePayment({ onSuccess, onClose }) }}
+            className="w-full bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center h-16 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Confirm Order & Pay
-          </Link>
+          </button>
 
         </form>
       </div>
