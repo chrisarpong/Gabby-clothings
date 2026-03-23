@@ -110,24 +110,24 @@ const Footer = () => {
         className="relative z-20 font-[var(--font-sans)] text-[#3a1f1d] text-xs"
         style={{ marginTop: '5rem' }}
       >
-        <p>&copy; 2026 by Gabby Newluk Clothing.</p>
+        <p>&copy; 2026 by Gabby Newluk Clothing. Powered and Secured by Stadnet Technologies.</p>
       </div>
 
       {/* Giant Brand Name (Bottom Right) */}
       <div 
         style={{
           position: 'absolute',
-          bottom: '-5%',
-          right: '0',
+          bottom: '-2%',
+          right: '-2%',
           fontFamily: "'Playfair Display', serif",
           fontStyle: 'italic',
-          fontSize: '20vw',
-          lineHeight: '0.7',
+          fontSize: '18vw',
+          lineHeight: '0.85',
           color: '#3a1f1d',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
           zIndex: 1,
-          opacity: 0.9
+          opacity: 0.7
         }}
       >
         Gabby Newluk

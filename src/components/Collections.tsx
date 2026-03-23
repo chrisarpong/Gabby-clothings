@@ -12,14 +12,14 @@ const Collections = () => {
   return (
     <section id="collections" className="bg-[#F5F5F3] w-full" style={{ padding: '10rem 5%' }}>
       {/* Heading Container */}
-      <div className="text-center">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '4rem', paddingTop: '5rem' }}>
         <h2
           className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-[1rem]"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
           The Collections
         </h2>
-        <p className="font-[var(--font-sans)] text-sm text-[#3a1f1d] max-w-[400px] mx-auto mb-[5rem] leading-relaxed">
+        <p className="font-[var(--font-sans)] text-sm text-[#3a1f1d] max-w-[400px] leading-relaxed">
           Explore our latest arrivals in men, women and accessories.
         </p>
       </div>

@@ -40,8 +40,15 @@ const HeroSection = () => {
       </div>
 
       {/* Right Promo Box */}
-      <div className="absolute bottom-0 right-0 bg-[#F5F5F3] w-[450px] p-[2rem] flex items-center gap-[1.5rem] z-30 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-        {/* Left side of box: Square image */}
+      <div 
+        className="absolute bg-[#F5F5F3] p-[1.5rem] flex items-center gap-[1.5rem] z-30 max-w-[400px] text-[#1a1a1a]"
+        style={{
+          bottom: '3rem',
+          right: '3rem',
+          boxShadow: '0 15px 35px rgba(0,0,0,0.15)'
+        }}
+      >
+        {/* Left side of box: Square tiny thumbnail */}
         <div className="w-[150px] h-[150px] bg-[#E8E8E8] flex-shrink-0">
           {/* 
             * To use an image from the assets folder:

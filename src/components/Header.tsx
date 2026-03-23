@@ -11,12 +11,14 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // When scrolled, background is cream (#F5F5F3) and text should logically be dark (#3a1f1d) for contrast.
-  // Otherwise, background is transparent and text is white to contrast against the dark hero overlay.
+  // When scrolled, background is cream (#F5F5F3).
+  // The user requested white text consistently for now with a TODO to revert.
   const headerBg = isScrolled ? 'bg-[#F5F5F3] shadow-sm' : 'bg-transparent';
-  const textColor = isScrolled ? 'text-[#3a1f1d]' : 'text-white';
-  const logoColor = isScrolled ? 'text-[#3a1f1d]' : 'text-white';
   const borderClass = isScrolled ? 'border-b border-[#E8E8E8]' : 'border-transparent';
+  
+  /* TODO: Revert color to #3a1f1d when the final light background image is added */
+  const textColor = 'text-[#ffffff]';
+  const logoColor = 'text-[#ffffff]';
 
   return (
     <header 
