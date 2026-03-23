@@ -48,10 +48,11 @@ const ProductDetails = () => {
               <img 
                 src={img} 
                 alt={`${product.name} - view ${idx + 1}`} 
-                className="w-full h-full object-cover transition-transform duration-300 ease-out"
+                className="w-full h-full object-cover"
                 style={{
-                  transform: zoomedIndex === idx ? 'scale(1.8)' : 'scale(1)',
-                  cursor: zoomedIndex === idx ? 'zoom-out' : 'zoom-in'
+                  transform: zoomedIndex === idx ? 'scale(2)' : 'scale(1)',
+                  cursor: zoomedIndex === idx ? 'zoom-out' : 'zoom-in',
+                  transition: 'transform 0.4s ease'
                 }}
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=800&auto=format&fit=crop';

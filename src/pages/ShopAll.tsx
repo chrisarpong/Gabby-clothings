@@ -74,25 +74,26 @@ const ShopAll = () => {
             <div 
               style={{
                 position: 'absolute',
-                bottom: '1rem',
-                left: '1rem',
-                background: 'rgba(245, 245, 243, 0.95)',
-                padding: '0.5rem 1rem',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                padding: '1.5rem',
+                background: 'linear-gradient(to top, rgba(245,245,243, 0.95) 0%, rgba(245,245,243, 0.8) 50%, transparent 100%)',
                 display: 'flex',
                 flexDirection: 'column',
                 pointerEvents: 'none',
-                zIndex: 10,
-                border: '1px solid rgba(0,0,0,0.05)'
+                zIndex: 10
               }}
             >
               <h3 className="font-bold text-sm text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest">{product.name}</h3>
-              <p className="text-sm text-[#3a1f1d] font-[var(--font-sans)]">GH₵{product.price.toFixed(2)}</p>
+              <p className="text-sm text-[#3a1f1d] font-[var(--font-sans)] mt-1">GH₵{product.price.toFixed(2)}</p>
             </div>
 
             {/* Add to Cart Button */}
             <button
               onClick={() => handleAddToCart(product)}
-              className="absolute bottom-4 right-4 bg-white text-[#3a1f1d] w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 z-20 text-2xl font-light"
+              className="absolute bg-white text-[#3a1f1d] w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 z-20 text-2xl font-light"
+              style={{ bottom: '1.5rem', right: '1.5rem' }}
               aria-label="Add to cart"
             >
               {addedItems[product.id] ? (
