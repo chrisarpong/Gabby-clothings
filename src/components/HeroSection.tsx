@@ -52,21 +52,21 @@ const HeroSection = () => {
           alignItems: 'center', 
           maxWidth: '480px', 
           zIndex: 50, 
-          border: '1px solid rgba(0,0,0,0.05)', 
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
         }}
       >
         {/* Left side of box: Square tiny thumbnail */}
-        <div style={{ width: '120px', height: '120px', flexShrink: 0 }}>
+        <div style={{ width: '140px', height: '140px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(0,0,0,0.05)' }}>
           {/* 
             * To use an image from the assets folder:
             * 1. import promoImg from '../assets/your-image.jpg';
             * 2. src={promoImg}
             */}
           <img
-            src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=200&auto=format&fit=crop"
-            alt="Promo Product"
-            className="w-full h-full object-cover"
+            src="https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=400&auto=format&fit=crop"
+            alt="Promo"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0 }}
           />
         </div>
 
