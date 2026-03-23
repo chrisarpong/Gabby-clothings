@@ -62,29 +62,31 @@ const ProductDetails = () => {
         </div>
 
         {/* Right Side (Sticky Info) */}
-        <div className="py-12 md:py-8">
+        <div className="py-12 md:py-8" style={{ paddingLeft: '4rem' }}>
           <div className="sticky top-[150px] h-fit flex flex-col">
-            <h1 className="text-[#3a1f1d]" style={{ fontSize: '2.8rem', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', marginBottom: '0.5rem' }}>
+            <h1 className="text-[#3a1f1d]" style={{ fontSize: '2.8rem', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', marginBottom: '1rem', lineHeight: '1.1' }}>
               {product.name}
             </h1>
-            <p className="font-[var(--font-sans)] text-[#3a1f1d]" style={{ fontSize: '1.2rem', marginBottom: '2.5rem' }}>
+            <p className="font-[var(--font-sans)] text-[#3a1f1d]" style={{ fontSize: '1.4rem', marginBottom: '3rem' }}>
               GH₵{product.price.toFixed(2)}
             </p>
 
             {/* Quantity Selector */}
-            <div className="flex flex-col gap-2 mb-8">
+            <div className="flex flex-col gap-2" style={{ marginBottom: '2rem' }}>
               <span className="font-[var(--font-sans)] text-xs uppercase tracking-widest text-[#555]">Quantity</span>
-              <div className="flex items-center border border-[#dddddd] w-32 h-12">
+              <div className="flex items-center border border-[#dddddd] w-36">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="flex-1 flex justify-center items-center text-[#3a1f1d] hover:bg-[#eaeaea] transition-colors h-full"
+                  className="flex-1 flex justify-center items-center text-[#3a1f1d] hover:bg-[#eaeaea] transition-colors"
+                  style={{ padding: '10px 20px', fontSize: '1.2rem' }}
                 >
                   -
                 </button>
-                <span className="flex-1 text-center font-[var(--font-sans)] text-[#3a1f1d]">{quantity}</span>
+                <span className="flex-1 text-center font-[var(--font-sans)] text-[#3a1f1d]" style={{ fontSize: '1.2rem' }}>{quantity}</span>
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
-                  className="flex-1 flex justify-center items-center text-[#3a1f1d] hover:bg-[#eaeaea] transition-colors h-full"
+                  className="flex-1 flex justify-center items-center text-[#3a1f1d] hover:bg-[#eaeaea] transition-colors"
+                  style={{ padding: '10px 20px', fontSize: '1.2rem' }}
                 >
                   +
                 </button>
@@ -92,7 +94,7 @@ const ProductDetails = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-4 mb-12">
+            <div className="flex flex-col gap-4" style={{ marginBottom: '3rem' }}>
               <button 
                 onClick={() => addToCart({ 
                   id: product.id, 
@@ -101,11 +103,12 @@ const ProductDetails = () => {
                   quantity, 
                   image: product.images[0] 
                 })}
-                className="w-full h-14 border border-[#3a1f1d] text-[#3a1f1d] bg-transparent font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-[#3a1f1d] hover:text-white transition-colors"
+                className="w-full border border-[#3a1f1d] text-[#3a1f1d] bg-transparent font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-[#3a1f1d] hover:text-[#FFFFFF] transition-colors"
+                style={{ padding: '1.2rem 0' }}
               >
                 Add to Cart
               </button>
-              <Link to="/checkout" className="w-full h-14 bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center">
+              <Link to="/checkout" className="w-full bg-[#3a1f1d] text-[#FFFFFF] font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center" style={{ padding: '1.2rem 0' }}>
                 Buy Now
               </Link>
             </div>
@@ -117,10 +120,11 @@ const ProductDetails = () => {
                 { title: 'Return & Refund Policy', content: 'We accept returns within 14 days of delivery. Items must be unworn, unwashed, and in original condition with all tags attached.' },
                 { title: 'Shipping Info', content: 'Standard local delivery within 2-3 business days. International express shipping available globally via DHL.' }
               ].map((acc, idx) => (
-                <div key={idx} className="border-b border-[#dddddd] py-4">
+                <div key={idx} style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
                   <button 
                     onClick={() => toggleAccordion(acc.title)}
-                    className="flex justify-between w-full text-left font-[var(--font-sans)] text-[#3a1f1d] uppercase tracking-wider text-sm outline-none"
+                    className="flex justify-between w-full text-left font-[var(--font-sans)] text-[#3a1f1d] uppercase outline-none"
+                    style={{ padding: '1.5rem 0', fontSize: '1.1rem' }}
                   >
                     {acc.title}
                     <span>{openAccordion === acc.title ? '−' : '+'}</span>
@@ -129,7 +133,7 @@ const ProductDetails = () => {
                     <motion.div 
                       initial={{ height: 0, opacity: 0 }} 
                       animate={{ height: 'auto', opacity: 1 }} 
-                      className="overflow-hidden mt-4 text-[#555] text-sm leading-relaxed font-[var(--font-sans)]"
+                      className="overflow-hidden text-[#555] text-sm leading-relaxed font-[var(--font-sans)] mb-6"
                     >
                       {acc.content}
                     </motion.div>

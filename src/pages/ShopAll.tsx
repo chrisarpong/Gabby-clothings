@@ -39,13 +39,23 @@ const ShopAll = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-12 pb-20 px-[5%]"
+      className="min-h-[100vh] w-full bg-[#F5F5F3]"
+      style={{ padding: '6rem 5%' }}
     >
-      <h1 className="text-4xl md:text-6xl italic text-[#3a1f1d] mb-12 text-center" style={{ fontFamily: "'Playfair Display', serif" }}>
+      <h1 
+        style={{ 
+          marginBottom: '4rem', 
+          textAlign: 'center', 
+          fontFamily: "'Playfair Display', serif", 
+          fontStyle: 'italic', 
+          fontSize: '3.5rem', 
+          color: '#3a1f1d' 
+        }}
+      >
         Shop All
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[2rem] w-full max-w-[1400px] mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[1400px] mx-auto" style={{ gap: '3rem' }}>
         {mockProducts.map((product) => (
           <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4]">
             

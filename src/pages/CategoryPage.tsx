@@ -40,18 +40,25 @@ const CategoryPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-12 pb-20 px-[5%]"
+      className="min-h-[100vh] w-full bg-[#F5F5F3]"
+      style={{ padding: '6rem 5%' }}
     >
-      <div className="flex flex-col items-center justify-center mb-12">
-        <h1 className="text-4xl md:text-6xl italic text-[#3a1f1d] capitalize" style={{ fontFamily: "'Playfair Display', serif" }}>
+      <div className="flex flex-col items-center justify-center" style={{ marginBottom: '4rem' }}>
+        <h1 
+          className="capitalize"
+          style={{ 
+            textAlign: 'center', 
+            fontFamily: "'Playfair Display', serif", 
+            fontStyle: 'italic', 
+            fontSize: '3.5rem', 
+            color: '#3a1f1d' 
+          }}
+        >
           {slug ? slug.replace('-', ' ') : 'Category'}
         </h1>
-        <p className="mt-4 font-[var(--font-sans)] text-sm text-[#3a1f1d] uppercase tracking-widest">
-          Category Collection
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[2rem] w-full max-w-[1400px] mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[1400px] mx-auto" style={{ gap: '3rem' }}>
         {mockProducts.map((product) => (
           <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4]">
             
