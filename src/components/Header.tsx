@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+  const { cartCount } = useCart();
+  
+  const isHome = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -12,9 +17,11 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // When scrolled, background is cream (#F5F5F3) and text is dark `#3a1f1d`.
-  // At top, background is transparent and text is white.
-  const headerStyle = isScrolled 
+  // When scrolled OR not on home page, background is cream (#F5F5F3) and text is dark `#3a1f1d`.
+  // At top of home page, background is transparent and text is white.
+  const activeScrolledState = !isHome || isScrolled;
+
+  const headerStyle = activeScrolledState 
     ? {
         backgroundColor: '#F5F5F3',
         boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
@@ -38,7 +45,7 @@ const Header = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 z-[100] flex justify-between items-center ${isScrolled ? 'is-scrolled' : ''}`}
+      className={`fixed top-0 left-0 z-[100] flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
       style={headerStyle}
     >
       {/* Left side: Logo */}
@@ -73,7 +80,7 @@ const Header = () => {
           className="text-sm hover:opacity-70"
           style={{ fontFamily: "'Jost', sans-serif" }}
         >
-          Cart (0)
+          Cart ({cartCount})
         </Link>
         <Link
           to="#"
