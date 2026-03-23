@@ -1,6 +1,7 @@
 import Header from './Header';
 import heroBg from '../assets/6.jpg';
 import promoImg from '../assets/8.jpg';
+import { motion } from 'framer-motion';
 
 const HeroSection = () => {
   return (
@@ -20,8 +21,13 @@ const HeroSection = () => {
       {/* Absolutely Positioned Header */}
       <Header />
 
-      {/* Left Content Block */}
-      <div className="absolute bottom-[20%] left-[5%] max-w-[500px] z-20 text-white">
+      {/* Left-aligned Text Overlay */}
+      <motion.div 
+        className="absolute left-[5%] top-1/2 -translate-y-1/2 max-w-[500px] z-10 text-white"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
+      >
         <h1
           className="text-6xl md:text-8xl italic leading-[1.1] mb-6"
           style={{ fontFamily: 'var(--font-serif)' }}
@@ -38,24 +44,27 @@ const HeroSection = () => {
         >
           Shop All
         </a>
-      </div>
+      </motion.div>
 
       {/* Right Promo Box */}
-      <div
+      <motion.div 
         style={{
-          position: 'absolute',
-          bottom: '5%',
-          right: '5%',
-          backgroundColor: '#F5F5F3',
-          padding: '2rem',
-          display: 'flex',
-          gap: '1.5rem',
-          alignItems: 'center',
-          maxWidth: '480px',
-          zIndex: 50,
+          position: 'absolute', 
+          bottom: '5%', 
+          right: '5%', 
+          backgroundColor: '#F5F5F3', 
+          padding: '2rem', 
+          display: 'flex', 
+          gap: '1.5rem', 
+          alignItems: 'center', 
+          maxWidth: '480px', 
+          zIndex: 50, 
           boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 1, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
       >
         {/* Left side of box: Square tiny thumbnail */}
         <div style={{ width: '140px', height: '140px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(0,0,0,0.05)' }}>
@@ -92,7 +101,7 @@ const HeroSection = () => {
             </a>
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };
