@@ -12,14 +12,14 @@ const Newsletter = () => {
   return (
     <section
       id="contact"
-      className="section bg-[var(--color-bg-primary)]"
+      className="section bg-[var(--color-bg-secondary)]"
     >
       <div className="max-w-[800px] mx-auto text-center border-t border-[var(--color-border)] pt-20">
         <h2
           className="text-4xl md:text-5xl italic text-[var(--color-text-primary)] mb-6"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
-          Join the List
+          Stay Connected
         </h2>
         <p className="text-base text-[var(--color-text-secondary)] font-light mb-12 max-w-sm mx-auto leading-relaxed">
           Sign up for early access to new collections and exclusive brand updates.
@@ -27,7 +27,7 @@ const Newsletter = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row gap-0 max-w-lg mx-auto border-b border-[var(--color-text-primary)]"
+          className="flex flex-col sm:flex-row gap-0 max-w-lg mx-auto border border-[var(--color-border)] border-b border-[var(--color-text-primary)]"
           id="newsletter-form"
         >
           <input

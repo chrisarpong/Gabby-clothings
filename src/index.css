@@ -2,18 +2,18 @@
 @import "tailwindcss";
 
 @theme {
-  /* Soft cream background similar to the Wix template */
-  --color-bg-primary: #f8f6f4;
-  --color-bg-secondary: #f0eee9;
+  /* Soft cream/eggshell background */
+  --color-bg-primary: #F5F5F3;
+  --color-bg-secondary: #f0ede8;
   
   /* Text colors: deep burgundy and charcoal */
-  --color-text-primary: #3d1b18; 
-  --color-text-secondary: #5a5a5a;
+  --color-text-primary: #3a1f1d; 
+  --color-text-secondary: #1a1a1a;
   --color-text-light: #ffffff;
 
   /* Accent colors */
-  --color-accent: #3d1b18;
-  --color-border: rgba(61, 27, 24, 0.1);
+  --color-accent: #d4af37;
+  --color-border: rgba(58, 31, 29, 0.1);
 
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Jost', system-ui, sans-serif;
@@ -56,19 +56,41 @@ img {
 
 /* ── Custom Utilities ───────────────────────────────── */
 .section {
-  padding: 6rem 2rem;
+  padding: 8rem 3rem;
 }
 
 @media (min-width: 768px) {
   .section {
-    padding: 8rem 4rem;
+    padding: 12rem 6rem;
   }
 }
 
 @media (min-width: 1280px) {
   .section {
-    padding: 10rem 6rem;
+    padding: 16rem 8rem;
   }
+}
+
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+.btn-ghost-thin {
+  border: 1px solid currentColor;
+  background: transparent;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.btn-ghost-thin:hover {
+  background: currentColor;
+  color: var(--color-bg-primary);
 }
 
 /* ── Animations ─────────────────────────────────────── */

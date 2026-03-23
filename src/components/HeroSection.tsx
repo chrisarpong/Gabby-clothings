@@ -1,68 +1,65 @@
+import Header from './Header';
 import heroImage from '../assets/hero-model.png';
+import placeholderProduct from '../assets/collection-accessories.png'; // Using accessories image as a placeholder for the promo box
 
 const HeroSection = () => {
   return (
     <section
+      className="w-full h-screen relative bg-cover bg-center"
+      style={{ backgroundImage: `url(${heroImage})` }}
       id="home"
-      className="relative min-h-[90vh] flex items-center overflow-hidden bg-[var(--color-bg-primary)] px-6 md:px-10 py-20 lg:py-0"
     >
-      <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        
-        {/* Text Content - Left Side */}
-        <div className="relative z-10 order-2 lg:order-1 pt-12 lg:pt-0 flex justify-center lg:justify-start lg:pl-32 xl:pl-48">
-          <div className="max-w-xl animate-fade-in-up text-center lg:text-left">
-            <h1
-              className="text-6xl sm:text-7xl md:text-8xl lg:text-[100px] font-bold leading-[1] text-[var(--color-text-primary)] mb-8"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              Style, <br />
-              <span className="italic font-light">Redefined</span>
-            </h1>
+      <Header />
 
-            <p className="text-lg md:text-xl text-[var(--color-text-secondary)] font-light leading-relaxed mb-10 max-w-xs">
-              Uncomplicated, essential pieces you'll reach for again and again.
-            </p>
-
-            <a
-              href="#collections"
-              className="btn-ghost-dark"
-              id="cta-shop-collection"
-            >
-              Shop All
-            </a>
-          </div>
-        </div>
-
-        {/* Hero Image - Right Side */}
-        <div className="relative order-1 lg:order-2 h-[50vh] lg:h-[80vh] w-full animate-fade-in">
-          <div className="absolute inset-0 border border-[var(--color-border)] transform translate-x-4 translate-y-4 -z-10" />
-          <img
-            src={heroImage}
-            alt="Gabby Newluk model in premium clothing"
-            className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700"
-          />
-          
-          {/* Repositioned Promotional Box - Bottom Right */}
-          <div className="absolute -bottom-6 -right-6 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-8 md:p-10 max-w-[280px] shadow-lg animate-fade-in animation-delay-800 z-20">
-            <h3 className="text-xl md:text-2xl italic text-[var(--color-text-primary)] mb-2" style={{ fontFamily: 'var(--font-serif)' }}>
-              The mid-season <br /> sale is on!
-            </h3>
-            <p className="text-sm text-[var(--color-text-secondary)] font-light mb-4">
-              Up to 40% Off
-            </p>
-            <a
-              href="#collections"
-              className="text-xs uppercase tracking-widest text-[var(--color-text-primary)] border-b border-[var(--color-text-primary)] pb-1 hover:opacity-70 transition-opacity"
-            >
-              Shop Now
-            </a>
-          </div>
-        </div>
+      {/* 3. Left Content Block */}
+      <div className="absolute bottom-[15%] left-[5%] max-w-[400px] z-10">
+        <h1
+          className="text-6xl md:text-8xl italic text-white leading-[1.1] mb-6"
+          style={{ fontFamily: 'var(--font-serif)' }}
+        >
+          Style, <br />
+          Redefined
+        </h1>
+        <p className="font-[var(--font-sans)] text-white font-normal mb-[2rem] leading-relaxed text-lg">
+          Uncomplicated, essential pieces you'll reach for again and again
+        </p>
+        <a
+          href="#collections"
+          className="inline-block bg-transparent border border-white text-white px-[30px] py-[10px] font-[var(--font-sans)] tracking-widest uppercase text-sm hover:bg-white hover:text-black transition-colors"
+        >
+          Shop All
+        </a>
       </div>
 
-      {/* Subtle line at bottom, moved slightly to avoid overlap */}
-      <div className="hidden lg:block absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.5em] text-[var(--color-text-secondary)] opacity-30">
-        Premium Craftsmanship &bull; Timeless Design
+      {/* 4. Right Promo Box */}
+      <div className="absolute bottom-0 right-[5%] bg-[#F5F5F3] p-[1.5rem] flex items-center gap-[1.5rem] z-20 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+        {/* Left side of box: Square image */}
+        <div className="w-[120px] h-[120px] flex-shrink-0">
+          <img
+            src={placeholderProduct}
+            alt="Promo Product"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Right side of box: Flexbox column */}
+        <div className="flex flex-col">
+          <h3
+            className="text-2xl italic text-[var(--color-text-primary)] mb-2"
+            style={{ fontFamily: 'var(--font-serif)' }}
+          >
+            The mid-season <br /> sale is on!
+          </h3>
+          <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-primary)] mb-4">
+            Up to 40% Off
+          </p>
+          <a
+            href="#collections"
+            className="font-[var(--font-sans)] text-sm text-[var(--color-text-primary)] underline hover:opacity-70 transition-opacity"
+          >
+            Shop Now
+          </a>
+        </div>
       </div>
     </section>
   );

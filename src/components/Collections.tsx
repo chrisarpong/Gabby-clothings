@@ -4,19 +4,24 @@ import heroModel from '../assets/hero-model.png';
 
 const collections = [
   {
-    title: 'Shop Men',
-    image: heroModel,
-    alt: 'Premium Men clothing collection',
-  },
-  {
-    title: 'Shop Accessories',
-    image: collectionAccessories,
-    alt: 'Luxury accessories collection',
-  },
-  {
-    title: 'Shop Women',
+    title: 'Kaftans',
     image: collectionKaftans,
-    alt: 'Premium Women clothing collection',
+    alt: 'Premium Kaftans collection',
+  },
+  {
+    title: 'Agbadas (3 Pieces)',
+    image: heroModel,
+    alt: 'Luxury Agbadas collection',
+  },
+  {
+    title: 'Shirts',
+    image: collectionAccessories,
+    alt: 'Elegant Shirts collection',
+  },
+  {
+    title: 'Exclusives',
+    image: heroModel,
+    alt: 'Exclusive pieces collection',
   },
 ];
 
@@ -38,7 +43,7 @@ const Collections = () => {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
           {collections.map((item, index) => (
             <a
               key={item.title}
@@ -48,14 +53,19 @@ const Collections = () => {
               id={`collection-${index}`}
             >
               {/* Image Container with Wix-style overlay filter */}
-              <div className="relative w-full aspect-[4/5] overflow-hidden bg-[var(--color-bg-secondary)] mb-6">
+              <div className="relative w-full aspect-[4/5] overflow-hidden bg-[var(--color-bg-secondary)] mb-6 group">
                 <img
                   src={item.image}
                   alt={item.alt}
-                  className="w-full h-full object-cover opacity-90 transition-all duration-1000 group-hover:scale-105 group-hover:opacity-100"
+                  className="w-full h-full object-cover opacity-90 grayscale-[0.3] transition-all duration-500 ease group-hover:scale-105 group-hover:opacity-100 group-hover:grayscale-0"
                 />
                 {/* Subtle light overlay that disappears on hover */}
                 <div className="absolute inset-0 bg-white/10 group-hover:bg-transparent transition-colors duration-500" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 flex items-center justify-center">
+                  <a href="#shop" className="opacity-0 group-hover:opacity-100 text-white uppercase tracking-wider text-sm border border-white px-4 py-2 transition-opacity duration-500">
+                    Shop Now
+                  </a>
+                </div>
               </div>
 
               {/* Title with Wix-style underline */}

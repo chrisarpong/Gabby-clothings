@@ -2,12 +2,12 @@ import storyPortrait from '../assets/story-portrait.png';
 
 const OurStory = () => {
   return (
-    <section id="story" className="section bg-[var(--color-bg-secondary)] border-y border-[var(--color-border)]">
+    <section id="story" className="section bg-[var(--color-bg-primary)]">
       <div className="max-w-[1300px] mx-auto px-10 md:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-center overflow-hidden bg-[var(--color-bg-primary)] border border-[var(--color-border)] shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-center overflow-hidden">
           
           {/* Text Content */}
-          <div className="flex flex-col justify-center px-8 md:px-16 lg:px-24 py-20 order-2 lg:order-1 h-full">
+          <div className="flex flex-col justify-center p-16 order-2 lg:order-1 h-full">
             <h2
               className="text-4xl md:text-5xl italic text-[var(--color-text-primary)] mb-8"
               style={{ fontFamily: 'var(--font-serif)' }}
@@ -15,10 +15,8 @@ const OurStory = () => {
               Our Story
             </h2>
             <div className="w-12 h-[1px] bg-[var(--color-text-primary)] mb-8 opacity-30" />
-            <p className="text-[var(--color-text-secondary)] font-light leading-[2] text-base md:text-lg mb-10 max-w-sm">
-              Veilux is about effortless sophistication. We create the
-              foundational pieces that simplify dressing, so you can focus on
-              what matters.
+            <p className="text-[var(--color-text-secondary)] font-light leading-relaxed text-sm md:text-base mb-10 max-w-sm">
+              Timeless pieces crafted for modern life. Discover our story of effortless sophistication and foundational fashion.
             </p>
             <a
               href="#contact"

@@ -1,4 +1,3 @@
-import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import Collections from './components/Collections';
 import OurStory from './components/OurStory';
@@ -7,8 +6,7 @@ import Footer from './components/Footer';
 
 function App() {
   return (
-    <div className="min-h-screen bg-[var(--color-black-deep)]">
-      <Header />
+    <div className="min-h-screen bg-[var(--color-bg-primary)]">
       <main>
         <HeroSection />
         <Collections />
