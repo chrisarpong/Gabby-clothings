@@ -56,7 +56,7 @@ const Header = () => {
       </nav>
 
       {/* Right side: Flex row */}
-      <div className="hidden md:flex flex-row gap-[2rem] items-center">
+      <div className="hidden md:flex flex-row gap-[2rem] items-center lg:mr-[3rem] xl:mr-[5rem]">
         <a
           href="#cart"
           className="text-sm hover:opacity-70"
