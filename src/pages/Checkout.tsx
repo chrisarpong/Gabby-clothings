@@ -47,112 +47,116 @@ const Checkout = () => {
     >
       {/* Left Column (Form) */}
       <div className="bg-[#F5F5F3]" style={{ padding: '5rem 10%' }}>
-        <h1 
-          className="text-[#3a1f1d]" 
-          style={{ fontFamily: "'Playfair Display', serif", fontSize: '2.5rem', marginBottom: '3rem' }}
-        >
-          Checkout
-        </h1>
-
-        <form className="flex flex-col gap-10" onSubmit={(e) => e.preventDefault()}>
-          
-          {/* Section 1: Contact Information */}
-          <section className="flex flex-col gap-4">
-            <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-              <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-            </div>
-          </section>
-
-          {/* Section 2: Shipping Address */}
-          <section className="flex flex-col gap-4">
-            <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Shipping Address</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-              <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-            </div>
-            <input type="text" placeholder="Address Line 1" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input type="text" placeholder="City" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-              <input type="text" placeholder="District/State" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-              <input type="text" placeholder="Country" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-            </div>
-          </section>
-
-          {/* Section 3: Payment */}
-          <section className="flex flex-col gap-4 mb-4">
-            <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Payment Information</h2>
-            <div className="w-full bg-white border border-[#ccc] p-6 flex items-center justify-center text-[#555] font-[var(--font-sans)] text-sm italic">
-              Secure Credit/Debit Card Payment via Paystack
-            </div>
-          </section>
-
-          {/* Confirm Button */}
-          <button 
-            type="button"
-            disabled={!email}
-            onClick={() => { initializePayment({ onSuccess, onClose }) }}
-            className="w-full bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center h-16 disabled:opacity-50 disabled:cursor-not-allowed"
+        <div style={{ backgroundColor: '#ffffff', padding: '3rem', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h1 
+            className="text-[#3a1f1d]" 
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: '2.5rem', marginBottom: '3rem' }}
           >
-            Confirm Order & Pay
-          </button>
+            Checkout
+          </h1>
 
-        </form>
+          <form className="flex flex-col gap-10" onSubmit={(e) => e.preventDefault()}>
+            
+            {/* Section 1: Contact Information */}
+            <section className="flex flex-col gap-4">
+              <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Contact Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              </div>
+            </section>
+
+            {/* Section 2: Shipping Address */}
+            <section className="flex flex-col gap-4">
+              <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Shipping Address</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+                <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              </div>
+              <input type="text" placeholder="Address Line 1" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="text" placeholder="City" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+                <input type="text" placeholder="District/State" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+                <input type="text" placeholder="Country" className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              </div>
+            </section>
+
+            {/* Section 3: Payment */}
+            <section className="flex flex-col gap-4 mb-4">
+              <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Payment Information</h2>
+              <div className="w-full bg-[#F5F5F3] border border-[#ccc] p-6 flex items-center justify-center text-[#555] font-[var(--font-sans)] text-sm italic">
+                Secure Credit/Debit Card Payment via Paystack
+              </div>
+            </section>
+
+            {/* Confirm Button */}
+            <button 
+              type="button"
+              disabled={!email}
+              onClick={() => { initializePayment({ onSuccess, onClose }) }}
+              className="w-full font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center h-16 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: '#3a1f1d', color: '#ffffff' }}
+            >
+              Confirm Order & Pay
+            </button>
+
+          </form>
+        </div>
       </div>
 
       {/* Right Column (Order Summary) */}
       <div className="bg-[#EBEBE9]" style={{ padding: '5rem 10%' }}>
-        <h2 className="text-[#3a1f1d] font-[var(--font-sans)] font-bold mb-8" style={{ fontSize: '1.5rem' }}>
-          Order Summary
-        </h2>
-        
-        {/* Cart Items */}
-        <div className="flex flex-col gap-6 mb-8 pb-8 border-b border-[#ccc]">
-          {cart.length > 0 ? (
-            cart.map((item: CartItem) => (
-              <div key={item.id} className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white border border-[#ccc] overflow-hidden" style={{ width: '60px', aspectRatio: '3/4' }}>
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover" 
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=200&auto=format&fit=crop';
-                      }}
-                    />
+        <div style={{ backgroundColor: '#ffffff', padding: '3rem', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h2 className="text-[#3a1f1d] font-[var(--font-sans)] font-bold mb-8" style={{ fontSize: '1.5rem' }}>
+            Order Summary
+          </h2>
+          
+          {/* Cart Items */}
+          <div className="flex flex-col gap-6 mb-8 pb-8 border-b border-[#ccc]">
+            {cart.length > 0 ? (
+              cart.map((item: CartItem) => (
+                <div key={item.id} className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-white border border-[#ccc] overflow-hidden" style={{ width: '60px', aspectRatio: '3/4' }}>
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=200&auto=format&fit=crop';
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-[var(--font-sans)] text-[#3a1f1d] uppercase">{item.name}</span>
+                      <span className="text-xs font-[var(--font-sans)] text-[#555] mt-1">Quantity: {item.quantity}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-[var(--font-sans)] text-[#3a1f1d] uppercase">{item.name}</span>
-                    <span className="text-xs font-[var(--font-sans)] text-[#555] mt-1">Quantity: {item.quantity}</span>
-                  </div>
+                  <span className="text-sm font-[var(--font-sans)] text-[#3a1f1d]">GH₵{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
-                <span className="text-sm font-[var(--font-sans)] text-[#3a1f1d]">GH₵{(item.price * item.quantity).toFixed(2)}</span>
-              </div>
-            ))
-          ) : (
-            <div className="text-sm font-[var(--font-sans)] text-[#555] italic">Your cart is empty.</div>
-          )}
-        </div>
-
-        {/* Totals Base */}
-        <div className="flex flex-col gap-4 mb-6 font-[var(--font-sans)] text-sm text-[#3a1f1d]">
-          <div className="flex justify-between">
-            <span className="text-[#555]">Subtotal</span>
-            <span>GH₵{subtotal.toFixed(2)}</span>
+              ))
+            ) : (
+              <div className="text-sm font-[var(--font-sans)] text-[#555] italic">Your cart is empty.</div>
+            )}
           </div>
-          <div className="flex justify-between">
-            <span className="text-[#555]">Delivery Charge</span>
-            <span>GH₵{delivery.toFixed(2)}</span>
+
+          {/* Totals Base */}
+          <div className="flex flex-col gap-4 mb-6 font-[var(--font-sans)] text-sm text-[#3a1f1d]">
+            <div className="flex justify-between">
+              <span className="text-[#555]">Subtotal</span>
+              <span>GH₵{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#555]">Delivery Charge</span>
+              <span>GH₵{delivery.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between pt-6 border-t border-[#ccc] font-[var(--font-sans)] text-[#3a1f1d]">
+            <span className="uppercase tracking-widest text-sm font-bold">Total</span>
+            <span className="text-xl font-bold">GH₵{total.toFixed(2)}</span>
           </div>
         </div>
-
-        <div className="flex justify-between pt-6 border-t border-[#ccc] font-[var(--font-sans)] text-[#3a1f1d]">
-          <span className="uppercase tracking-widest text-sm font-bold">Total</span>
-          <span className="text-xl font-bold">GH₵{total.toFixed(2)}</span>
-        </div>
-
       </div>
     </motion.div>
   );

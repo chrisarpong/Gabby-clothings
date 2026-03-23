@@ -17,7 +17,20 @@ const ProductDetails = () => {
   const [zoomedIndex, setZoomedIndex] = useState<number | null>(null);
 
   /* Mock product data for development */
-  const product = {
+  const mockProducts = [
+    { id: '1', name: 'Premium Tailored Kaftan', price: 350.00, images: [img1, img2, img3, img4, img5] },
+    { id: '2', name: 'Luxury Agbada Suite', price: 850.00, images: [img2, img1, img3] },
+    { id: '3', name: 'Classic Native Wear', price: 400.00, images: [img3, img4, img1] },
+    { id: '4', name: 'Royal Velvet Cap', price: 150.00, images: [img4, img2] },
+    { id: '5', name: 'Embroidered Tunic', price: 300.00, images: [img5, img1] },
+    { id: '6', name: 'Senator Style Suit', price: 500.00, images: [img1, img3] },
+    { id: '7', name: 'Tailored Trouser', price: 200.00, images: [img2, img4] },
+    { id: '8', name: 'Silk Pocket Square', price: 50.00, images: [img3, img5] },
+    { id: '9', name: 'Leather Sandals', price: 250.00, images: [img4, img1] },
+    { id: '10', name: 'Traditional Beads', price: 100.00, images: [img5, img2] }
+  ];
+
+  const product = mockProducts.find(p => p.id === id) || {
     id: id || 'prod-1',
     name: 'Premium Tailored Kaftan',
     price: 350.00,
@@ -109,7 +122,7 @@ const ProductDetails = () => {
               >
                 Add to Cart
               </button>
-              <Link to="/checkout" className="w-full bg-[#3a1f1d] text-[#FFFFFF] font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center" style={{ padding: '1.2rem 0' }}>
+              <Link to="/checkout" className="w-full font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center" style={{ backgroundColor: '#3a1f1d', color: '#ffffff', padding: '1.2rem 0' }}>
                 Buy Now
               </Link>
             </div>
