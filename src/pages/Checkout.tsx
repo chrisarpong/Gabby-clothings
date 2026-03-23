@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useCart, CartItem } from '../context/CartContext';
+import { useCart, type CartItem } from '../context/CartContext';
 
 const Checkout = () => {
   const { cart } = useCart();
