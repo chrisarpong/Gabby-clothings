@@ -53,9 +53,10 @@ const Header = () => {
       {/* Left side: Logo */}
       <Link
         to="/"
-        className="hover:opacity-70 flex items-center"
+        className="flex items-center gap-3 hover:opacity-70"
       >
         <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 'bold', color: '#3a1f1d' }}>Gabby Newluk</span>
       </Link>
 
       {/* Middle: Navigation container */}
