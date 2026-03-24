@@ -60,16 +60,13 @@ const Header = () => {
       {/* Middle: Navigation container */}
       <nav className="hidden md:flex flex-row gap-[2rem] items-center">
         <Link to="/shop" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
-          All Products
+          Shop
         </Link>
-        <Link to="/category/kaftans" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
-          Kaftans
+        <Link to="/collections" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Collections
         </Link>
-        <Link to="/category/agbadas" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
-          Agbadas
-        </Link>
-        <Link to="/category/accessories" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
-          Accessories
+        <Link to="/book-appointment" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Book appointment
         </Link>
       </nav>
 
