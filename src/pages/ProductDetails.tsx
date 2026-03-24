@@ -34,7 +34,7 @@ const ProductDetails = () => {
    * CRITICAL BUG FIX: Dynamic Products mapped via strict ID strings 
    * enforcing absolute database alignment instead of fallback hardcodes.
    */
-  const product = mockProducts.find(p => p.id === String(id));
+  const product = mockProducts.find(p => String(p.id) === String(id) || String(p.id) === `prod-${id}`);
 
   if (!product) {
     return <div className="min-h-screen flex text-2xl items-center justify-center font-[var(--font-serif)]">Product not found.</div>;

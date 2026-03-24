@@ -106,11 +106,14 @@ const Footer = () => {
       </div>
 
       {/* Bottom Area - Centered Brand Name & Copyright */}
-      <div style={{ marginTop: '6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '10vw', color: '#3a1f1d', lineHeight: 1, margin: 0, padding: 0 }}>
+      <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }} className="md:mt-[6rem]">
+        <h1 
+          className="text-[2.2rem] md:text-[10vw] italic text-[#3a1f1d] m-0 p-0 leading-[1.2] md:leading-none"
+          style={{ fontFamily: "'Playfair Display', serif" }}
+        >
           Gabby Newluk
         </h1>
-        <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.9rem', color: '#3a1f1d', marginTop: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <p className="font-[var(--font-sans)] text-[0.75rem] md:text-[0.9rem] text-[#3a1f1d] mt-6 text-center leading-[1.5] uppercase tracking-wider">
           © 2026 by Gabby Newluk Clothing. Powered and Secured by Stadnet Technologies.
         </p>
       </div>
