@@ -65,7 +65,7 @@ const Header = () => {
           Shop
         </Link>
         <Link to="/book-appointment" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
-          Book appointment
+          Book Appointment
         </Link>
       </nav>
 
