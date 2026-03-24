@@ -60,7 +60,7 @@ const Header = () => {
       </Link>
 
       {/* Middle: Navigation container */}
-      <nav className="hidden md:flex flex-row gap-[2rem] items-center">
+      <nav className="hidden md:flex flex-1 justify-center items-center gap-8">
         <Link to="/shop" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Shop
         </Link>
