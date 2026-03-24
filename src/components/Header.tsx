@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { cartCount } = useCart();
   
@@ -51,10 +52,9 @@ const Header = () => {
       {/* Left side: Logo */}
       <Link
         to="/"
-        className="text-4xl italic hover:opacity-70"
-        style={{ fontFamily: "'Playfair Display', serif" }}
+        className="hover:opacity-70 flex items-center h-[50px] md:h-[70px]"
       >
-        Gabby Newluk
+        <img src="/logo.png" alt="Gabby Newluk" className="h-[100%] w-auto object-contain" />
       </Link>
 
       {/* Middle: Navigation container */}
@@ -70,8 +70,15 @@ const Header = () => {
         </Link>
       </nav>
 
-      {/* Right side: Flex row */}
+      {/* Right side: Flex row (Desktop) */}
       <div className="hidden md:flex flex-row gap-[2rem] items-center">
+        <Link
+          to="/account"
+          className="text-sm hover:opacity-70"
+          style={{ fontFamily: "'Jost', sans-serif" }}
+        >
+          Sign Up / Log In
+        </Link>
         <Link
           to="/cart"
           className="text-sm hover:opacity-70"
@@ -80,7 +87,7 @@ const Header = () => {
           Cart ({cartCount})
         </Link>
         <Link
-          to="#"
+          to="/account"
           className="text-sm flex items-center gap-2 hover:opacity-70"
           style={{ fontFamily: "'Jost', sans-serif" }}
         >
@@ -90,6 +97,28 @@ const Header = () => {
           Account
         </Link>
       </div>
+
+      {/* Mobile controls (Hamburger + Cart) */}
+      <div className="flex md:hidden flex-row gap-4 items-center">
+        <Link to="/cart" className="text-sm hover:opacity-70 font-[var(--font-sans)]">
+          Cart ({cartCount})
+        </Link>
+        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 outline-none">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+        </button>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 w-full bg-[#F5F5F3] flex flex-col items-center py-8 gap-6 shadow-lg border-t border-[#e0e0e0] md:hidden z-50">
+          <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Shop</Link>
+          <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Collections</Link>
+          <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Book Appointment</Link>
+          <Link to="/account" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm border-t border-[#ccc] pt-6 mt-2 w-[80%] text-center hover:opacity-70">Sign Up / Log In</Link>
+        </div>
+      )}
     </header>
   );
 };

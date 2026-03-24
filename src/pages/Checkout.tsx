@@ -60,9 +60,24 @@ const Checkout = () => {
             {/* Section 1: Contact Information */}
             <section className="flex flex-col gap-4">
               <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Contact Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-4">
+                <div className="flex flex-col gap-3">
+                  <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+                  <label className="flex items-center gap-2 cursor-pointer w-fit mt-1">
+                    <input type="checkbox" className="w-4 h-4 accent-[#3a1f1d]" defaultChecked />
+                    <span className="text-[#3a1f1d] font-[var(--font-sans)] text-sm">Email me a digital receipt.</span>
+                  </label>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <select className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] outline-none focus:border-[#3a1f1d] transition-colors">
+                    <option value="">Select Network Provider (Optional)</option>
+                    <option value="mtn">MTN</option>
+                    <option value="vodafone">Telecel</option>
+                    <option value="airteltigo">AT (AirtelTigo)</option>
+                  </select>
+                  <input type="tel" placeholder="Phone Number" required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] border-[#3a1f1d] transition-colors" />
+                </div>
               </div>
             </section>
 
@@ -84,10 +99,22 @@ const Checkout = () => {
             {/* Section 3: Payment */}
             <section className="flex flex-col gap-4 mb-4">
               <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-semibold mb-2">Payment Information</h2>
-              <div className="w-full bg-[#F5F5F3] border border-[#ccc] p-6 flex items-center justify-center text-[#555] font-[var(--font-sans)] text-sm italic">
-                Secure Credit/Debit Card Payment via Paystack
+              <div className="w-full bg-[#F5F5F3] border border-[#ccc] p-6 flex flex-col items-center justify-center text-[#555] font-[var(--font-sans)] text-sm italic py-8 border-dashed">
+                <p>Secure Credit/Debit Card Payment via Paystack</p>
+                <div className="flex items-center gap-2 mt-4">
+                  <span style={{ background: '#f0f0f0', padding: '5px 10px', fontSize: '0.8rem', borderRadius: '4px', color: '#3a1f1d', fontFamily: "'Jost', sans-serif" }}>Card</span>
+                  <span style={{ background: '#f0f0f0', padding: '5px 10px', fontSize: '0.8rem', borderRadius: '4px', color: '#3a1f1d', fontFamily: "'Jost', sans-serif" }}>Mobile Money</span>
+                </div>
               </div>
             </section>
+
+            {/* Account Creation Opt-In */}
+            <div className="flex flex-col mb-2 mt-[-10px]">
+              <label className="flex items-center gap-3 cursor-pointer w-fit p-4 bg-[#f9f9f9] border border-[#e0e0e0] rounded w-full">
+                <input type="checkbox" className="w-5 h-5 accent-[#3a1f1d] cursor-pointer" />
+                <span className="text-[#3a1f1d] font-[var(--font-sans)] text-sm font-semibold tracking-wide">Create an account to track this order and save my measurements.</span>
+              </label>
+            </div>
 
             {/* Confirm Button */}
             <button 

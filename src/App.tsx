@@ -14,6 +14,8 @@ import SizeGuide from './pages/SizeGuide';
 import ShippingReturns from './pages/ShippingReturns';
 import Contact from './pages/Contact';
 import Legal from './pages/Legal';
+import BookAppointment from './pages/BookAppointment';
+import Account from './pages/Account';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -35,6 +37,8 @@ function App() {
               <Route path="/shipping-returns" element={<ShippingReturns />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/legal" element={<Legal />} />
+              <Route path="/book-appointment" element={<BookAppointment />} />
+              <Route path="/account" element={<Account />} />
             </Routes>
           </main>
           <Footer />

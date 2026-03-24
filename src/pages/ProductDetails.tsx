@@ -30,12 +30,15 @@ const ProductDetails = () => {
     { id: '10', name: 'Traditional Beads', price: 100.00, images: [img5, img2] }
   ];
 
-  const product = mockProducts.find(p => p.id === id) || {
-    id: id || 'prod-1',
-    name: 'Premium Tailored Kaftan',
-    price: 350.00,
-    images: [img1, img2, img3, img4, img5]
-  };
+  /* 
+   * CRITICAL BUG FIX: Dynamic Products mapped via strict ID strings 
+   * enforcing absolute database alignment instead of fallback hardcodes.
+   */
+  const product = mockProducts.find(p => p.id === String(id));
+
+  if (!product) {
+    return <div className="min-h-screen flex text-2xl items-center justify-center font-[var(--font-serif)]">Product not found.</div>;
+  }
 
   const toggleAccordion = (title: string) => {
     setOpenAccordion(openAccordion === title ? null : title);
