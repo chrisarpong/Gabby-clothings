@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import brandLogo from '../assets/logo.png';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -54,7 +55,7 @@ const Header = () => {
         to="/"
         className="hover:opacity-70 flex items-center h-[50px] md:h-[70px]"
       >
-        <img src="/logo.png" alt="Gabby Newluk" className="h-[100%] w-auto object-contain" />
+        <img src={brandLogo} alt="Gabby Newluk Logo" className="h-[100%] w-auto object-contain" />
       </Link>
 
       {/* Middle: Navigation container */}

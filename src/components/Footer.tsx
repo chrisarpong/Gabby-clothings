@@ -1,3 +1,5 @@
+import brandLogo from '../assets/logo.png';
+
 const Footer = () => {
   return (
     <footer 
@@ -107,12 +109,13 @@ const Footer = () => {
 
       {/* Bottom Area - Centered Brand Name & Copyright */}
       <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }} className="md:mt-[6rem]">
-        <h1 
-          className="text-[2.2rem] md:text-[10vw] italic text-[#3a1f1d] m-0 p-0 leading-[1.2] md:leading-none"
-          style={{ fontFamily: "'Playfair Display', serif" }}
-        >
-          Gabby Newluk
-        </h1>
+        <a href="#home" className="hover:opacity-70 transition-opacity">
+          <img 
+            src={brandLogo} 
+            alt="GBNL Gabby Newluk Logo" 
+            className="w-auto h-[60px] md:h-[120px] object-contain mb-2 md:mb-4"
+          />
+        </a>
         <p className="font-[var(--font-sans)] text-[0.75rem] md:text-[0.9rem] text-[#3a1f1d] mt-6 text-center leading-[1.5] uppercase tracking-wider">
           © 2026 by Gabby Newluk Clothing. Powered and Secured by Stadnet Technologies.
         </p>
