@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import img1 from '../assets/1.jpg';
 import img2 from '../assets/2.webp';
 import img3 from '../assets/3.jpg';
@@ -59,26 +60,27 @@ const Collections = () => {
         viewport={{ once: true, margin: "-100px" }}
       >
         {cards.map((card, idx) => (
-          <motion.a
+          <motion.div
             key={idx}
-            href="/shop"
             variants={itemVariants}
             className="group relative block overflow-hidden bg-white">
-            {/* Image */}
-            <img
-              src={card.img}
-              alt={card.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-            />
-            {/* Overlay Text */}
-            <div className="absolute top-[1.5rem] left-[1.5rem] z-20">
-              <h3 
-                className="text-sm font-[var(--font-sans)] tracking-widest uppercase text-[#3a1f1d] bg-[#F5F5F3] px-3 py-1"
-              >
-                {card.title}
-              </h3>
-            </div>
-          </motion.a>
+            <Link to="/shop">
+              {/* Image */}
+              <img
+                src={card.img}
+                alt={card.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              {/* Overlay Text */}
+              <div className="absolute top-[1.5rem] left-[1.5rem] z-20">
+                <h3 
+                  className="text-sm font-[var(--font-sans)] tracking-widest uppercase text-[#3a1f1d] bg-[#F5F5F3] px-3 py-1"
+                >
+                  {card.title}
+                </h3>
+              </div>
+            </Link>
+          </motion.div>
         ))}
       </motion.div>
     </section>
