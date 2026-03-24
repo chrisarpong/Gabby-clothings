@@ -1,17 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePaystackPayment } from 'react-paystack';
 import { useCart, type CartItem } from '../context/CartContext';
+import { useUser } from '@clerk/clerk-react';
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
+  const { user } = useUser();
   
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setEmail(user.primaryEmailAddress?.emailAddress || '');
+      const nameParts = user.fullName?.split(' ') || [];
+      setFirstName(nameParts[0] || '');
+      setLastName(nameParts.slice(1).join(' ') || '');
+    }
+  }, [user]);
   
   const subtotal = cart.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
   const delivery = 50.00;

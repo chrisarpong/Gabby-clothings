@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import brandLogo from '../assets/logo.png';
 
 const Header = () => {
@@ -74,23 +75,22 @@ const Header = () => {
 
       {/* Right side: Flex row (Desktop) */}
       <div className="hidden md:flex flex-row gap-[2rem] items-center">
-        <Link
-          to="/cart"
-          className="text-sm hover:opacity-70"
-          style={{ fontFamily: "'Jost', sans-serif" }}
-        >
+        <Link to="/cart" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Cart ({cartCount})
         </Link>
-        <Link
-          to="/account"
-          className="text-sm flex items-center gap-2 hover:opacity-70"
-          style={{ fontFamily: "'Jost', sans-serif" }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-          </svg>
-          Account
-        </Link>
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="text-sm flex items-center gap-2 hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+              Account
+            </button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton afterSignOutUrl="/" />
+        </SignedIn>
       </div>
 
       {/* Mobile controls (Hamburger + Cart) */}
@@ -111,7 +111,14 @@ const Header = () => {
           <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Shop</Link>
           <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Collections</Link>
           <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Book Appointment</Link>
-          <Link to="/account" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm border-t border-[#ccc] pt-6 mt-2 w-[80%] text-center hover:opacity-70">Sign Up / Log In</Link>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Sign Up / Log In</button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
       )}
     </header>
