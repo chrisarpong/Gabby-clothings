@@ -56,7 +56,7 @@ const Header = () => {
         className="flex items-center gap-3 hover:opacity-70"
       >
         <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
-        <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '1.8rem' }}>Gabby Newluk</span>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '2.8rem' }}>Gabby Newluk</span>
       </Link>
 
       {/* Middle: Navigation container */}

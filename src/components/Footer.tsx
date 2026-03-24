@@ -108,8 +108,8 @@ const Footer = () => {
       {/* Bottom Area - Centered Brand Name & Copyright */}
       <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }} className="md:mt-[6rem]">
         <h2 
-          className="mb-4 text-center md:text-[3.5rem] text-[2.5rem]"
-          style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', color: '#3a1f1d' }}
+          className="mb-4 text-center"
+          style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', color: '#3a1f1d', fontSize: 'clamp(3.5rem, 8vw, 7rem)' }}
         >
           Gabby Newluk
         </h2>
