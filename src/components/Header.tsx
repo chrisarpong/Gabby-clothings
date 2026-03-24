@@ -56,7 +56,7 @@ const Header = () => {
         className="flex items-center gap-3 hover:opacity-70"
       >
         <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 'bold', color: '#3a1f1d' }}>Gabby Newluk</span>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '1.8rem' }}>Gabby Newluk</span>
       </Link>
 
       {/* Middle: Navigation container */}
@@ -74,13 +74,6 @@ const Header = () => {
 
       {/* Right side: Flex row (Desktop) */}
       <div className="hidden md:flex flex-row gap-[2rem] items-center">
-        <Link
-          to="/account"
-          className="text-sm hover:opacity-70"
-          style={{ fontFamily: "'Jost', sans-serif" }}
-        >
-          Sign Up / Log In
-        </Link>
         <Link
           to="/cart"
           className="text-sm hover:opacity-70"
