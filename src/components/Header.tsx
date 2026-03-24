@@ -53,9 +53,9 @@ const Header = () => {
       {/* Left side: Logo */}
       <Link
         to="/"
-        className="hover:opacity-70 flex items-center h-[50px] md:h-[70px]"
+        className="hover:opacity-70 flex items-center"
       >
-        <img src={brandLogo} alt="Gabby Newluk Logo" className="h-[100%] w-auto object-contain" />
+        <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
       </Link>
 
       {/* Middle: Navigation container */}
