@@ -49,9 +49,10 @@ const Footer = () => {
               <input type="checkbox" className="accent-[#3a1f1d]" />
               <span className="opacity-80">Yes, I agree to receive marketing emails.</span>
             </label>
-            <button
+            <button 
               type="submit"
-              className="bg-transparent border border-[#3a1f1d] text-[#3a1f1d] px-[30px] py-[10px] mt-[1rem] w-fit hover:bg-[#3a1f1d] hover:text-[#F5F5F3] transition-colors"
+              className="bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-wider text-sm hover:opacity-80 transition-opacity"
+              style={{ padding: '10px 24px', cursor: 'pointer', display: 'inline-block' }}
             >
               Join Now
             </button>
@@ -114,7 +115,7 @@ const Footer = () => {
           Gabby Newluk
         </h2>
         <p className="font-[var(--font-sans)] text-[0.75rem] md:text-[0.9rem] text-[#3a1f1d] mt-6 text-center leading-[1.5] uppercase tracking-wider">
-          © 2026 by Gabby Newluk Clothing. Powered and Secured by Stadnet Technologies.
+          © 2026 by Gabby Newluk Clothing. Powered and Secured by <a href="https://stadnet-technologies.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', fontWeight: 'bold' }}>STADNET TECHNOLOGIES</a>.
         </p>
       </div>
     </footer>

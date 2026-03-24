@@ -40,7 +40,8 @@ const HeroSection = () => {
         </p>
         <a
           href="#collections"
-          className="inline-block bg-transparent border border-white text-white px-[30px] py-[10px] font-[var(--font-sans)] tracking-widest uppercase text-sm hover:bg-white hover:text-black transition-colors"
+          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm hover:bg-white hover:text-black transition-colors"
+          style={{ padding: '12px 32px', letterSpacing: '0.1em', display: 'inline-block', marginTop: '1rem' }}
         >
           Shop All
         </a>
