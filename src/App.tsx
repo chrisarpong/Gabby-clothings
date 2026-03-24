@@ -16,6 +16,7 @@ import Contact from './pages/Contact';
 import Legal from './pages/Legal';
 import BookAppointment from './pages/BookAppointment';
 import Account from './pages/Account';
+import Collections from './pages/Collections';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<ShopAll />} />
+              <Route path="/collections" element={<Collections />} />
               <Route path="/category/:slug" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/cart" element={<Cart />} />

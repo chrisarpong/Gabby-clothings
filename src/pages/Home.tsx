@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import HeroSection from '../components/HeroSection';
 import OurStory from '../components/OurStory';
+import CollectionsGrid from '../components/Collections';
 
 import parallaxImage from '../assets/parallax-bg.jpg';
 
@@ -11,43 +12,9 @@ const Home = () => {
         <HeroSection />
       </div>
 
-      {/* Restored Collections Grid */}
-      <section className="mb-32 md:mb-48" style={{ padding: '6rem 5%', backgroundColor: '#F5F5F3' }}>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '2.5rem', color: '#3a1f1d', marginBottom: '1rem', textAlign: 'center' }}>
-          The Collections
-        </h2>
-        <p style={{ textAlign: 'center', color: '#555', marginBottom: '4rem', fontFamily: "'Jost', sans-serif" }}>
-          Explore our latest arrivals in men, women and accessories.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          {/* Men's Collection */}
-          <div style={{ position: 'relative', height: '600px', backgroundColor: '#e0e0e0', overflow: 'hidden' }}>
-            <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=800&auto=format&fit=crop" alt="Men's Collection" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <Link to="/shop" style={{ position: 'absolute', top: '20px', left: '20px', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', textDecoration: 'underline', color: '#3a1f1d', fontSize: '1.2rem', zIndex: 10 }}>
-              Shop Men
-            </Link>
-          </div>
-
-          {/* Accessories Collection */}
-          <div style={{ position: 'relative', height: '600px', backgroundColor: '#e0e0e0', overflow: 'hidden' }}>
-            <img src="https://images.unsplash.com/photo-1572715376701-98568319fd0b?q=80&w=800&auto=format&fit=crop" alt="Accessories" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <Link to="/shop" style={{ position: 'absolute', top: '20px', left: '20px', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', textDecoration: 'underline', color: '#3a1f1d', fontSize: '1.2rem', zIndex: 10 }}>
-              Shop Accessories
-            </Link>
-          </div>
-
-          {/* Women's Collection */}
-          <div style={{ position: 'relative', height: '600px', backgroundColor: '#e0e0e0', overflow: 'hidden' }}>
-            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop" alt="Women's Collection" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <Link to="/shop" style={{ position: 'absolute', top: '20px', left: '20px', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', textDecoration: 'underline', color: '#3a1f1d', fontSize: '1.2rem', zIndex: 10 }}>
-              Shop Women
-            </Link>
-          </div>
-
-        </div>
-      </section>
+      <div className="mb-32 md:mb-48">
+        <CollectionsGrid />
+      </div>
 
       {/* Parallax Divider */}
       <div 

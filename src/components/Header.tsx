@@ -64,6 +64,9 @@ const Header = () => {
         <Link to="/shop" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Shop
         </Link>
+        <Link to="/collections" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Collections
+        </Link>
         <Link to="/book-appointment" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Book Appointment
         </Link>
@@ -106,6 +109,7 @@ const Header = () => {
       {isMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-[#F5F5F3] flex flex-col items-center py-8 gap-6 shadow-lg border-t border-[#e0e0e0] md:hidden z-50">
           <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Shop</Link>
+          <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Collections</Link>
           <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Book Appointment</Link>
           <Link to="/account" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm border-t border-[#ccc] pt-6 mt-2 w-[80%] text-center hover:opacity-70">Sign Up / Log In</Link>
         </div>
