@@ -1,4 +1,5 @@
 import Header from './Header';
+import { Link } from 'react-router-dom';
 import heroBg from '../assets/6.jpg';
 import promoImg from '../assets/8.jpg';
 import { motion } from 'framer-motion';
@@ -38,13 +39,13 @@ const HeroSection = () => {
         <p className="font-[var(--font-sans)] font-normal mb-[2rem] leading-relaxed text-lg text-white">
           Uncomplicated, essential pieces you'll reach for again and again.
         </p>
-        <a
-          href="#collections"
-          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm hover:bg-white hover:text-black transition-colors"
+        <Link
+          to="/shop"
+          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm hover:bg-white hover:text-[#3a1f1d] transition-colors duration-300"
           style={{ padding: '12px 32px', letterSpacing: '0.1em', display: 'inline-block', marginTop: '1rem' }}
         >
           Shop All
-        </a>
+        </Link>
       </motion.div>
 
       {/* Right Promo Box */}

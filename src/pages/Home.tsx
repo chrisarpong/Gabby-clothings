@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import HeroSection from '../components/HeroSection';
-import Collections from '../components/Collections';
 import OurStory from '../components/OurStory';
 
 import parallaxImage from '../assets/parallax-bg.jpg';
@@ -10,10 +9,6 @@ const Home = () => {
     <main className="w-full bg-[#F5F5F3]">
       <div className="mb-32 md:mb-48">
         <HeroSection />
-      </div>
-      
-      <div className="mb-32 md:mb-48">
-        <Collections />
       </div>
 
       {/* Parallax Divider */}
@@ -55,7 +50,7 @@ const Home = () => {
           <p style={{ color: '#555', marginBottom: '2rem', lineHeight: '1.6', fontFamily: "'Jost', sans-serif" }}>
             Select styles from our core collections are now available for a limited time
           </p>
-          <Link to="/collections" style={{ color: '#3a1f1d', textDecoration: 'underline', fontStyle: 'italic', fontSize: '1.1rem', fontFamily: "'Playfair Display', serif" }}>
+          <Link to="/shop" style={{ color: '#3a1f1d', textDecoration: 'underline', fontStyle: 'italic', fontSize: '1.1rem', fontFamily: "'Playfair Display', serif" }}>
             Grab Yours
           </Link>
         </div>
