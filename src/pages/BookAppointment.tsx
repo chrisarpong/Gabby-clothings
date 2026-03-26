@@ -108,7 +108,7 @@ const BookAppointment = () => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full" style={{ padding: '6rem 6% 8rem' }}>
+      <div className="w-full bg-[#F5F5F3]" style={{ padding: '6rem 6% 8rem' }}>
         <AnimatePresence mode="wait">
           {submitted ? (
             <motion.div
@@ -164,7 +164,7 @@ const BookAppointment = () => {
             <motion.form
               key="form"
               onSubmit={handleSubmit}
-              className="max-w-[1200px] mx-auto"
+              className="max-w-4xl mx-auto w-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
@@ -177,20 +177,13 @@ const BookAppointment = () => {
                 viewport={{ once: true, margin: '-50px' }}
                 variants={fadeUp}
               >
-                <div className="flex items-center gap-5 mb-12">
-                  <span
-                    className="w-10 h-10 rounded-full bg-[#3a1f1d] text-white flex items-center justify-center text-sm font-semibold flex-shrink-0"
-                    style={{ fontFamily: "'Jost', sans-serif" }}
-                  >
-                    1
-                  </span>
-                  <h2
-                    className="text-[#3a1f1d]"
-                    style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '1.8rem' }}
-                  >
-                    Select Your Service
-                  </h2>
-                </div>
+                <h2
+                  className="text-3xl italic text-[#3a1f1d] mb-8 border-b border-gray-200 pb-4"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  <span className="text-sm not-italic tracking-widest text-gray-400 mr-4 align-middle" style={{ fontFamily: "'Jost', sans-serif" }}>01</span>
+                  Select Your Service
+                </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {services.map((service) => (
@@ -198,9 +191,9 @@ const BookAppointment = () => {
                       type="button"
                       key={service.id}
                       onClick={() => setSelectedService(service.id)}
-                      className={`text-left p-8 border transition-all duration-300 rounded-sm ${selectedService === service.id
-                          ? 'border-[#3a1f1d] bg-[#3a1f1d] text-white shadow-lg'
-                          : 'border-[#d5d0c8] bg-white hover:border-[#3a1f1d]/40 hover:shadow-md'
+                      className={`text-left p-8 transition-all duration-300 ${selectedService === service.id
+                          ? 'bg-[#3a1f1d] text-white shadow-xl border border-[#3a1f1d]'
+                          : 'bg-white shadow-sm border border-transparent hover:border-[#3a1f1d] hover:shadow-md'
                         }`}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -245,20 +238,13 @@ const BookAppointment = () => {
                 viewport={{ once: true, margin: '-50px' }}
                 variants={fadeUp}
               >
-                <div className="flex items-center gap-5 mb-12">
-                  <span
-                    className="w-10 h-10 rounded-full bg-[#3a1f1d] text-white flex items-center justify-center text-sm font-semibold flex-shrink-0"
-                    style={{ fontFamily: "'Jost', sans-serif" }}
-                  >
-                    2
-                  </span>
-                  <h2
-                    className="text-[#3a1f1d]"
-                    style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '1.8rem' }}
-                  >
-                    Choose Date & Time
-                  </h2>
-                </div>
+                <h2
+                  className="text-3xl italic text-[#3a1f1d] mb-8 border-b border-gray-200 pb-4"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  <span className="text-sm not-italic tracking-widest text-gray-400 mr-4 align-middle" style={{ fontFamily: "'Jost', sans-serif" }}>02</span>
+                  Choose Date & Time
+                </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   {/* Date Picker */}
@@ -274,7 +260,7 @@ const BookAppointment = () => {
                       min={getMinDate()}
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full bg-white border border-[#d5d0c8] py-4 px-5 text-sm text-[#3a1f1d] outline-none focus:border-[#3a1f1d] transition-colors rounded-sm"
+                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                       required
                     />
@@ -294,9 +280,9 @@ const BookAppointment = () => {
                           type="button"
                           key={slot}
                           onClick={() => setSelectedTime(slot)}
-                          className={`py-3.5 px-3 text-xs border transition-all duration-200 rounded-sm ${selectedTime === slot
+                          className={`py-3 px-4 text-sm tracking-wide border transition-all duration-200 rounded-full ${selectedTime === slot
                               ? 'border-[#3a1f1d] bg-[#3a1f1d] text-white'
-                              : 'border-[#d5d0c8] bg-white text-[#3a1f1d] hover:border-[#3a1f1d]/40'
+                              : 'border-gray-300 bg-transparent text-[#3a1f1d] hover:border-[#3a1f1d]'
                             }`}
                           style={{ fontFamily: "'Jost', sans-serif" }}
                         >
@@ -316,22 +302,15 @@ const BookAppointment = () => {
                 viewport={{ once: true, margin: '-50px' }}
                 variants={fadeUp}
               >
-                <div className="flex items-center gap-5 mb-12">
-                  <span
-                    className="w-10 h-10 rounded-full bg-[#3a1f1d] text-white flex items-center justify-center text-sm font-semibold flex-shrink-0"
-                    style={{ fontFamily: "'Jost', sans-serif" }}
-                  >
-                    3
-                  </span>
-                  <h2
-                    className="text-[#3a1f1d]"
-                    style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '1.8rem' }}
-                  >
-                    Your Details
-                  </h2>
-                </div>
+                <h2
+                  className="text-3xl italic text-[#3a1f1d] mb-8 border-b border-gray-200 pb-4"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  <span className="text-sm not-italic tracking-widest text-gray-400 mr-4 align-middle" style={{ fontFamily: "'Jost', sans-serif" }}>03</span>
+                  Your Details
+                </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[900px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="flex flex-col gap-3">
                     <label className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold" style={{ fontFamily: "'Jost', sans-serif" }}>
                       Full Name *
@@ -342,7 +321,7 @@ const BookAppointment = () => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g. Kofi Mensah"
-                      className="w-full bg-white border border-[#d5d0c8] py-4 px-5 text-sm text-[#3a1f1d] placeholder:text-[#aaa] outline-none focus:border-[#3a1f1d] transition-colors rounded-sm"
+                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
@@ -356,7 +335,7 @@ const BookAppointment = () => {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="kofi@example.com"
-                      className="w-full bg-white border border-[#d5d0c8] py-4 px-5 text-sm text-[#3a1f1d] placeholder:text-[#aaa] outline-none focus:border-[#3a1f1d] transition-colors rounded-sm"
+                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
@@ -369,7 +348,7 @@ const BookAppointment = () => {
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+233 XX XXX XXXX"
-                      className="w-full bg-white border border-[#d5d0c8] py-4 px-5 text-sm text-[#3a1f1d] placeholder:text-[#aaa] outline-none focus:border-[#3a1f1d] transition-colors rounded-sm"
+                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
@@ -382,7 +361,7 @@ const BookAppointment = () => {
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       placeholder="Tell us about the occasion, preferences, or any special requirements..."
-                      className="w-full bg-white border border-[#d5d0c8] py-4 px-5 text-sm text-[#3a1f1d] placeholder:text-[#aaa] outline-none focus:border-[#3a1f1d] transition-colors resize-none rounded-sm"
+                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors resize-none rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
