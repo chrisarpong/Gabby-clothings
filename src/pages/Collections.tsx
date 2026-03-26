@@ -10,12 +10,12 @@ import accessories from '../assets/collection-accessories.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 60 },
-  visible: { opacity: 1, y: 0, transition: { duration: 1, ease: 'easeOut' } },
+  visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0, 0, 0.2, 1] as const } },
 };
 
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 1.2, ease: 'easeOut' } },
+  visible: { opacity: 1, transition: { duration: 1.2, ease: [0, 0, 0.2, 1] as const } },
 };
 
 const stagger = {
