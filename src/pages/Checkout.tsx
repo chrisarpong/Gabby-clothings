@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePaystackPayment } from 'react-paystack';
 import { useCart, type CartItem } from '../context/CartContext';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();

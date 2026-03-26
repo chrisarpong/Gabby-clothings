@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import { Show, SignInButton, UserButton } from '@clerk/react';
 import brandLogo from '../assets/logo.png';
 
 const Header = () => {
@@ -78,7 +78,7 @@ const Header = () => {
         <Link to="/cart" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Cart ({cartCount})
         </Link>
-        <SignedOut>
+        <Show when="signed-out">
           <SignInButton mode="modal">
             <button className="text-sm flex items-center gap-2 hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
@@ -87,10 +87,10 @@ const Header = () => {
               Account
             </button>
           </SignInButton>
-        </SignedOut>
-        <SignedIn>
-          <UserButton afterSignOutUrl="/" />
-        </SignedIn>
+        </Show>
+        <Show when="signed-in">
+          <UserButton />
+        </Show>
       </div>
 
       {/* Mobile controls (Hamburger + Cart) */}
@@ -111,14 +111,14 @@ const Header = () => {
           <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Shop</Link>
           <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Collections</Link>
           <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Book Appointment</Link>
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal">
               <button onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Sign Up / Log In</button>
             </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
         </div>
       )}
     </header>

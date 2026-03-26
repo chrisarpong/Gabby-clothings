@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
+import { Show, RedirectToSignIn } from '@clerk/react';
 
 const Account = () => {
   const [measurements, setMeasurements] = useState({
@@ -13,10 +13,10 @@ const Account = () => {
 
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -71,7 +71,7 @@ const Account = () => {
             </div>
           </div>
         </motion.div>
-      </SignedIn>
+      </Show>
     </>
   );
 };
