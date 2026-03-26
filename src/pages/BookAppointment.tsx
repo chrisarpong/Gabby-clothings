@@ -177,13 +177,10 @@ const BookAppointment = () => {
                 viewport={{ once: true, margin: '-50px' }}
                 variants={fadeUp}
               >
-                <h2
-                  className="text-3xl italic text-[#3a1f1d] mb-8 border-b border-gray-200 pb-4"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  <span className="text-sm not-italic tracking-widest text-gray-400 mr-4 align-middle" style={{ fontFamily: "'Jost', sans-serif" }}>01</span>
-                  Select Your Service
-                </h2>
+                <div className="mb-10 border-b border-[#3a1f1d]/10 pb-4">
+                  <span className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Step 01</span>
+                  <h2 className="text-3xl italic text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Select Your Service</h2>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {services.map((service) => (
@@ -191,9 +188,9 @@ const BookAppointment = () => {
                       type="button"
                       key={service.id}
                       onClick={() => setSelectedService(service.id)}
-                      className={`text-left p-8 transition-all duration-300 ${selectedService === service.id
-                          ? 'bg-[#3a1f1d] text-white shadow-xl border border-[#3a1f1d]'
-                          : 'bg-white shadow-sm border border-transparent hover:border-[#3a1f1d] hover:shadow-md'
+                      className={`text-left p-8 border transition-all duration-300 cursor-pointer ${selectedService === service.id
+                          ? 'bg-[#3a1f1d] text-[#F5F5F3] border-[#3a1f1d]'
+                          : 'bg-transparent border-[#3a1f1d]/20 hover:border-[#3a1f1d]'
                         }`}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -238,19 +235,16 @@ const BookAppointment = () => {
                 viewport={{ once: true, margin: '-50px' }}
                 variants={fadeUp}
               >
-                <h2
-                  className="text-3xl italic text-[#3a1f1d] mb-8 border-b border-gray-200 pb-4"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  <span className="text-sm not-italic tracking-widest text-gray-400 mr-4 align-middle" style={{ fontFamily: "'Jost', sans-serif" }}>02</span>
-                  Choose Date & Time
-                </h2>
+                <div className="mb-10 border-b border-[#3a1f1d]/10 pb-4">
+                  <span className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Step 02</span>
+                  <h2 className="text-3xl italic text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Choose Date &amp; Time</h2>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   {/* Date Picker */}
                   <div className="flex flex-col gap-4">
                     <label
-                      className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold"
+                      className="block text-[10px] uppercase tracking-widest text-[#3a1f1d]/60 mb-2"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     >
                       Preferred Date
@@ -260,7 +254,7 @@ const BookAppointment = () => {
                       min={getMinDate()}
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
+                      className="w-full bg-transparent border-0 border-b border-[#3a1f1d]/30 py-2 px-0 text-lg text-[#3a1f1d] outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                       required
                     />
@@ -269,7 +263,7 @@ const BookAppointment = () => {
                   {/* Time Slots */}
                   <div className="flex flex-col gap-4">
                     <label
-                      className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold"
+                      className="block text-[10px] uppercase tracking-widest text-[#3a1f1d]/60 mb-2"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     >
                       Preferred Time
@@ -302,66 +296,55 @@ const BookAppointment = () => {
                 viewport={{ once: true, margin: '-50px' }}
                 variants={fadeUp}
               >
-                <h2
-                  className="text-3xl italic text-[#3a1f1d] mb-8 border-b border-gray-200 pb-4"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  <span className="text-sm not-italic tracking-widest text-gray-400 mr-4 align-middle" style={{ fontFamily: "'Jost', sans-serif" }}>03</span>
-                  Your Details
-                </h2>
+                <div className="mb-10 border-b border-[#3a1f1d]/10 pb-4">
+                  <span className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Step 03</span>
+                  <h2 className="text-3xl italic text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Your Details</h2>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="flex flex-col gap-3">
-                    <label className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold" style={{ fontFamily: "'Jost', sans-serif" }}>
-                      Full Name *
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#3a1f1d]/60 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Full Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g. Kofi Mensah"
-                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
+                      className="w-full bg-transparent border-0 border-b border-[#3a1f1d]/30 py-2 px-0 text-lg text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
                   <div className="flex flex-col gap-3">
-                    <label className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold" style={{ fontFamily: "'Jost', sans-serif" }}>
-                      Email Address *
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#3a1f1d]/60 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Email Address *</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="kofi@example.com"
-                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
+                      className="w-full bg-transparent border-0 border-b border-[#3a1f1d]/30 py-2 px-0 text-lg text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
                   <div className="flex flex-col gap-3">
-                    <label className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold" style={{ fontFamily: "'Jost', sans-serif" }}>
-                      Phone Number
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#3a1f1d]/60 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Phone Number</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+233 XX XXX XXXX"
-                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
+                      className="w-full bg-transparent border-0 border-b border-[#3a1f1d]/30 py-2 px-0 text-lg text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
                   <div className="flex flex-col gap-3 md:col-span-2">
-                    <label className="text-[#3a1f1d]/70 uppercase tracking-wider text-xs font-semibold" style={{ fontFamily: "'Jost', sans-serif" }}>
-                      Additional Notes
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#3a1f1d]/60 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>Additional Notes</label>
                     <textarea
                       rows={5}
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       placeholder="Tell us about the occasion, preferences, or any special requirements..."
-                      className="w-full bg-transparent border-0 border-b border-gray-300 py-3 px-0 text-sm text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors resize-none rounded-none"
+                      className="w-full bg-transparent border-0 border-b border-[#3a1f1d]/30 py-2 px-0 text-lg text-[#3a1f1d] placeholder:text-gray-400 outline-none focus:border-[#3a1f1d] transition-colors resize-none rounded-none"
                       style={{ fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
@@ -370,7 +353,7 @@ const BookAppointment = () => {
 
               {/* Submit */}
               <motion.div
-                className="flex flex-col items-center text-center pt-8"
+                className="pt-8"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
@@ -379,16 +362,16 @@ const BookAppointment = () => {
                 <button
                   type="submit"
                   disabled={!selectedService || !selectedDate || !selectedTime}
-                  className={`uppercase tracking-widest text-xs transition-all duration-300 ${selectedService && selectedDate && selectedTime
-                      ? 'bg-[#3a1f1d] text-white hover:bg-black cursor-pointer'
+                  className={`w-full uppercase tracking-[0.15em] text-sm py-5 mt-8 transition-colors duration-300 ${selectedService && selectedDate && selectedTime
+                      ? 'bg-[#3a1f1d] text-[#F5F5F3] hover:bg-black cursor-pointer'
                       : 'bg-[#d5d0c8] text-[#999] cursor-not-allowed'
                     }`}
-                  style={{ padding: '18px 56px', fontFamily: "'Jost', sans-serif", letterSpacing: '0.15em' }}
+                  style={{ fontFamily: "'Jost', sans-serif" }}
                 >
                   Confirm Appointment
                 </button>
                 <p
-                  className="text-[#3a1f1d]/40 text-xs mt-6 max-w-[400px]"
+                  className="text-[#3a1f1d]/40 text-xs mt-6 text-center"
                   style={{ fontFamily: "'Jost', sans-serif" }}
                 >
                   By booking, you agree to our cancellation policy. Appointments can be rescheduled up to 24 hours in advance.
