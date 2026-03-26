@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePaystackPayment } from 'react-paystack';
 import img5 from '../assets/5.jpg';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -282,6 +283,25 @@ const BookAppointment = () => {
 
   const service = SERVICES.find(s => s.id === selectedService);
 
+  // Paystack deposit payment — stable reference generated once
+  const [payReference] = useState(() => `GABBY_${new Date().getTime()}`);
+  const paystackConfig = {
+    reference: payReference,
+    email: form.email || 'guest@gabbynewluk.com',
+    amount: (service?.deposit ?? 0) * 100, // pesewas
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
+    currency: 'GHS',
+    metadata: {
+      custom_fields: [
+        { display_name: 'Service', variable_name: 'service', value: service?.title ?? '' },
+        { display_name: 'Date', variable_name: 'date', value: selectedDate?.toDateString() ?? '' },
+        { display_name: 'Time', variable_name: 'time', value: selectedTime ?? '' },
+      ],
+    },
+  };
+
+  const initializePayment = usePaystackPayment(paystackConfig);
+
   const goNext = () => {
     setDirection(1);
     setStep(s => s + 1);
@@ -306,9 +326,12 @@ const BookAppointment = () => {
   };
 
   const handleConfirm = () => {
-    // TODO: trigger Paystack modal here
-    setConfirmed(true);
+    initializePayment({
+      onSuccess: () => setConfirmed(true),
+      onClose: () => {},
+    });
   };
+
 
   const formatDate = (d: Date | null) => d
     ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })

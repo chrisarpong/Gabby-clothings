@@ -17,6 +17,7 @@ import Legal from './pages/Legal';
 import BookAppointment from './pages/BookAppointment';
 import Account from './pages/Account';
 import Collections from './pages/Collections';
+import NotFound from './pages/NotFound';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/legal" element={<Legal />} />
               <Route path="/book-appointment" element={<BookAppointment />} />
               <Route path="/account" element={<Account />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

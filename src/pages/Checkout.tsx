@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePaystackPayment } from 'react-paystack';
@@ -9,26 +9,18 @@ const Checkout = () => {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
   const { user } = useUser();
-  
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+
+  const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress || '');
+  const [firstName, setFirstName] = useState(user?.fullName?.split(' ')[0] || '');
+  const [lastName, setLastName] = useState(user?.fullName?.split(' ').slice(1).join(' ') || '');
   const [phone, setPhone] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      setEmail(user.primaryEmailAddress?.emailAddress || '');
-      const nameParts = user.fullName?.split(' ') || [];
-      setFirstName(nameParts[0] || '');
-      setLastName(nameParts.slice(1).join(' ') || '');
-    }
-  }, [user]);
-  
+
   const subtotal = cart.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
   const delivery = 50.00;
   const total = subtotal + delivery;
 
-  const publicKey = "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6";
+  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string;
 
   const config = {
     reference: (new Date()).getTime().toString(),
