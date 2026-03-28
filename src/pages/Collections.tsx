@@ -65,7 +65,7 @@ const Collections = () => {
     >
       {/* Hero Banner */}
       <div
-        className="relative w-full flex items-center justify-center overflow-hidden"
+        className="relative w-full flex flex-col items-center justify-center overflow-hidden"
         style={{ minHeight: '70vh' }}
       >
         <div className="absolute inset-0 z-0">
@@ -138,9 +138,8 @@ const Collections = () => {
 
                 {/* Overlay Content */}
                 <div
-                  className={`relative z-10 w-full flex flex-col md:flex-row ${
-                    isReversed ? 'md:flex-row-reverse' : ''
-                  } items-end md:items-end justify-between gap-8 md:gap-16`}
+                  className={`relative z-10 w-full flex flex-col md:flex-row ${isReversed ? 'md:flex-row-reverse' : ''
+                    } items-end md:items-end justify-between gap-8 md:gap-16`}
                   style={{ padding: '4rem 5% 5rem' }}
                 >
                   <motion.div
@@ -182,7 +181,7 @@ const Collections = () => {
                     </p>
                     <Link
                       to={col.link}
-                      className="inline-block w-fit border border-white text-white uppercase tracking-widest text-xs hover:bg-white hover:text-[#3a1f1d] transition-colors duration-300"
+                      className="inline-block w-fit bg-[#F5F5F3] border border-[#F5F5F3] text-[#3a1f1d] uppercase tracking-widest text-xs transition-all duration-300 hover:!bg-transparent hover:!text-[#F5F5F3]"
                       style={{
                         padding: '14px 36px',
                         fontFamily: "'Jost', sans-serif",
@@ -201,9 +200,8 @@ const Collections = () => {
                 style={{ minHeight: '400px' }}
               >
                 <motion.div
-                  className={`bg-[#EBE8E1] flex flex-col justify-center ${
-                    isReversed ? 'md:order-2' : 'md:order-1'
-                  }`}
+                  className={`bg-[#EBE8E1] flex flex-col justify-center ${isReversed ? 'md:order-2' : 'md:order-1'
+                    }`}
                   style={{ padding: '4rem 5%' }}
                   variants={fadeUp}
                 >
@@ -245,9 +243,8 @@ const Collections = () => {
                   </Link>
                 </motion.div>
                 <motion.div
-                  className={`overflow-hidden ${
-                    isReversed ? 'md:order-1' : 'md:order-2'
-                  }`}
+                  className={`overflow-hidden ${isReversed ? 'md:order-1' : 'md:order-2'
+                    }`}
                   variants={fadeIn}
                 >
                   <img
@@ -290,7 +287,7 @@ const Collections = () => {
         </h2>
         <Link
           to="/shop"
-          className="border border-white text-white uppercase tracking-widest text-xs hover:bg-white hover:text-[#3a1f1d] transition-colors duration-300"
+          className="inline-block bg-[#F5F5F3] border border-[#F5F5F3] text-[#3a1f1d] uppercase tracking-widest text-xs transition-all duration-300 hover:!bg-transparent hover:!text-[#F5F5F3]"
           style={{
             padding: '14px 40px',
             fontFamily: "'Jost', sans-serif",

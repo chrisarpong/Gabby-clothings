@@ -44,11 +44,11 @@ function getFirstDayOfMonth(year: number, month: number) {
 }
 
 const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const DAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 
@@ -70,21 +70,24 @@ const fadeUp = {
 
 function StepHeader({ step, label, title }: { step: string; label: string; title: string }) {
   return (
-    <motion.div className="mb-12" variants={fadeUp} initial="hidden" animate="visible">
+    <motion.div className="mb-14 flex flex-col items-center text-center" variants={fadeUp} initial="hidden" animate="visible">
       <span
-        className="block text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/40 mb-2"
+        className="block text-[11px] uppercase tracking-[0.4em] text-[#3a1f1d]/50 mb-5"
         style={{ fontFamily: "'Jost', sans-serif" }}
       >
         {step}
       </span>
+
       <h2
-        className="text-[#3a1f1d] mb-1"
-        style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '2.2rem', lineHeight: 1.15 }}
+        className="text-[#3a1f1d] mb-4"
+        style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '3.2rem', lineHeight: 1.15 }}
       >
         {title}
       </h2>
-      <p className="text-[#3a1f1d]/50 text-sm" style={{ fontFamily: "'Jost', sans-serif" }}>{label}</p>
-      <div className="mt-5 h-px bg-[#3a1f1d]/10" />
+
+      <p className="text-[#3a1f1d]/60 text-[16px]" style={{ fontFamily: "'Jost', sans-serif" }}>{label}</p>
+
+      <div className="mt-10 h-px w-full max-w-4xl bg-[#3a1f1d]/10" />
     </motion.div>
   );
 }
@@ -102,9 +105,8 @@ interface InputFieldProps {
 }
 
 function InputField({ label, type = 'text', value, onChange, placeholder, error, delay = 0, multiline, rows = 4 }: InputFieldProps) {
-  const baseClass = `w-full bg-transparent border-0 border-b py-3 px-0 text-base text-[#3a1f1d] placeholder:text-[#3a1f1d]/30 outline-none transition-colors duration-300 rounded-none resize-none ${
-    error ? 'border-rose-400 focus:border-rose-600' : 'border-[#3a1f1d]/25 focus:border-[#3a1f1d]'
-  }`;
+  const baseClass = `w-full bg-transparent border-0 border-b py-3 px-0 text-base text-[#3a1f1d] placeholder:text-[#3a1f1d]/30 outline-none transition-colors duration-300 rounded-none resize-none ${error ? 'border-rose-400 focus:border-rose-600' : 'border-[#3a1f1d]/25 focus:border-[#3a1f1d]'
+    }`;
   return (
     <motion.div className="flex flex-col gap-2" variants={fadeUp} custom={delay} initial="hidden" animate="visible">
       <label
@@ -159,7 +161,13 @@ function Calendar({ selected, onSelect }: { selected: Date | null; onSelect: (d:
     selected.getMonth() === viewMonth &&
     selected.getDate() === day;
 
+  // THE FIX: Mathematically check if we are in the current real-world month
+  const isPrevDisabled = viewYear < today.getFullYear() || (viewYear === today.getFullYear() && viewMonth <= today.getMonth());
+
   const prevMonth = () => {
+    // THE FIX: Prevent function from running if disabled
+    if (isPrevDisabled) return;
+
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
     else setViewMonth(m => m - 1);
   };
@@ -172,8 +180,12 @@ function Calendar({ selected, onSelect }: { selected: Date | null; onSelect: (d:
     <div className="w-full">
       {/* Month Nav */}
       <div className="flex items-center justify-between mb-6">
-        <button type="button" onClick={prevMonth}
-          className="w-8 h-8 flex items-center justify-center text-[#3a1f1d]/50 hover:text-[#3a1f1d] transition-colors"
+        <button
+          type="button"
+          onClick={prevMonth}
+          disabled={isPrevDisabled}
+          className={`w-8 h-8 flex items-center justify-center transition-colors ${isPrevDisabled ? 'text-[#3a1f1d]/15 cursor-not-allowed' : 'text-[#3a1f1d]/50 hover:text-[#3a1f1d]'
+            }`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -210,13 +222,12 @@ function Calendar({ selected, onSelect }: { selected: Date | null; onSelect: (d:
               type="button"
               disabled={disabled}
               onClick={() => onSelect(new Date(viewYear, viewMonth, day))}
-              className={`aspect-square flex items-center justify-center text-sm rounded-full transition-all duration-200 mx-auto w-9 h-9 ${
-                sel
-                  ? 'bg-[#3a1f1d] text-white'
-                  : disabled
+              className={`aspect-square flex items-center justify-center text-sm rounded-full transition-all duration-200 mx-auto w-9 h-9 ${sel
+                ? 'bg-[#3a1f1d] text-white'
+                : disabled
                   ? 'text-[#3a1f1d]/20 cursor-not-allowed'
                   : 'text-[#3a1f1d] hover:bg-[#3a1f1d]/8 hover:text-[#3a1f1d]'
-              }`}
+                }`}
               style={{ fontFamily: "'Jost', sans-serif" }}
             >
               {day}
@@ -233,27 +244,28 @@ function Calendar({ selected, onSelect }: { selected: Date | null; onSelect: (d:
 function Progress({ step }: { step: number }) {
   const steps = ['Service', 'Date & Time', 'Details', 'Confirm'];
   return (
-    <div className="flex items-center justify-center gap-3 mb-12">
+    <div className="flex items-start justify-center w-full max-w-3xl mx-auto mb-32 mt-6 px-4">
       {steps.map((s, i) => (
-        <div key={s} className="flex items-center gap-3">
-          <div className="flex flex-col items-center gap-1">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all duration-500 ${
-              i + 1 < step ? 'bg-[#3a1f1d] text-white' :
-              i + 1 === step ? 'bg-[#3a1f1d] text-white ring-4 ring-[#3a1f1d]/15' :
-              'bg-[#3a1f1d]/10 text-[#3a1f1d]/40'
-            }`} style={{ fontFamily: "'Jost', sans-serif" }}>
+        <div key={s} className="flex items-start">
+
+          <div className="flex flex-col items-center w-20 sm:w-28">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold z-10 transition-all duration-500 ${i + 1 < step ? 'bg-[#3a1f1d] text-white' :
+              i + 1 === step ? 'bg-[#3a1f1d] text-white ring-[6px] ring-[#3a1f1d]/10' :
+                'bg-[#EBE8E1] text-[#3a1f1d]/40'
+              }`} style={{ fontFamily: "'Jost', sans-serif" }}>
               {i + 1 < step ? (
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               ) : i + 1}
             </div>
-            <span className={`text-[9px] uppercase tracking-widest hidden md:block transition-colors ${
-              i + 1 <= step ? 'text-[#3a1f1d]' : 'text-[#3a1f1d]/30'
-            }`} style={{ fontFamily: "'Jost', sans-serif" }}>{s}</span>
+
+            <span className={`mt-5 text-[9px] uppercase tracking-[0.2em] text-center hidden sm:block transition-colors ${i + 1 <= step ? 'text-[#3a1f1d]' : 'text-[#3a1f1d]/40'
+              }`} style={{ fontFamily: "'Jost', sans-serif" }}>{s}</span>
           </div>
+
           {i < steps.length - 1 && (
-            <div className={`h-px w-8 md:w-16 transition-all duration-500 ${i + 1 < step ? 'bg-[#3a1f1d]' : 'bg-[#3a1f1d]/15'}`} />
+            <div className={`h-[2px] w-8 sm:w-20 -mx-2 sm:-mx-4 mt-6 z-0 transition-all duration-500 ${i + 1 < step ? 'bg-[#3a1f1d]' : 'bg-[#EBE8E1]'}`} />
           )}
         </div>
       ))}
@@ -328,10 +340,9 @@ const BookAppointment = () => {
   const handleConfirm = () => {
     initializePayment({
       onSuccess: () => setConfirmed(true),
-      onClose: () => {},
+      onClose: () => { },
     });
   };
-
 
   const formatDate = (d: Date | null) => d
     ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -354,7 +365,7 @@ const BookAppointment = () => {
           </p>
           <h1 className="text-white mb-3" style={{
             fontFamily: "'Playfair Display', serif", fontStyle: 'italic',
-            fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.1,
+            fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1,
           }}>
             Book Your Appointment
           </h1>
@@ -364,19 +375,19 @@ const BookAppointment = () => {
         </motion.div>
       </div>
 
-      {/* Wizard */}
-      <div style={{ padding: '5rem 6% 8rem' }}>
-        <div className="max-w-3xl mx-auto">
+      {/* Main Container */}
+      <div className="w-full flex justify-center bg-[#FBFBFA]" style={{ paddingTop: '6rem', paddingBottom: '8rem' }}>
+        <div className="w-full max-w-3xl px-4 sm:px-8 md:px-12">
 
           {!confirmed ? (
             <>
               <Progress step={step} />
 
-              <div className="relative overflow-hidden">
+              <div className="relative overflow-hidden pt-4">
                 <AnimatePresence mode="wait" custom={direction}>
                   {/* ── STEP 1 ── */}
                   {step === 1 && (
-                    <motion.div key="step1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
+                    <motion.div key="step1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
                       <StepHeader step="Step 01 of 04" label="Choose the service that best fits your needs." title="The Service" />
 
                       <div className="flex flex-col gap-4">
@@ -389,45 +400,43 @@ const BookAppointment = () => {
                             custom={i}
                             initial="hidden"
                             animate="visible"
-                            className={`group text-left w-full border transition-all duration-300 ${
-                              selectedService === s.id
-                                ? 'border-[#3a1f1d] bg-[#3a1f1d]'
-                                : 'border-[#3a1f1d]/15 bg-transparent hover:border-[#3a1f1d]/50 hover:-translate-y-0.5'
-                            }`}
+                            className={`group text-left w-full border bg-white transition-all duration-300 ${selectedService === s.id
+                              ? 'border-[#3a1f1d] shadow-sm'
+                              : 'border-gray-200 hover:border-[#3a1f1d]/40 hover:-translate-y-0.5'
+                              }`}
                             style={{ padding: '2rem 2.5rem' }}
                           >
-                            <div className="flex justify-between items-start gap-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                               <div>
                                 <h3
-                                  className={`font-semibold text-lg mb-1 transition-colors ${selectedService === s.id ? 'text-[#F5F5F3]' : 'text-[#3a1f1d]'}`}
+                                  className={`font-semibold text-lg mb-1 transition-colors text-[#3a1f1d]`}
                                   style={{ fontFamily: "'Playfair Display', serif" }}
                                 >
                                   {s.title}
                                 </h3>
                                 <p
-                                  className={`text-sm transition-colors ${selectedService === s.id ? 'text-white/60' : 'text-[#3a1f1d]/50'}`}
+                                  className={`text-sm transition-colors text-[#3a1f1d]/50`}
                                   style={{ fontFamily: "'Jost', sans-serif" }}
                                 >
                                   {s.subtitle}
                                 </p>
                               </div>
-                              <div className="text-right flex-shrink-0">
+                              <div className="sm:text-right flex-shrink-0">
                                 <span
-                                  className={`block text-xs uppercase tracking-widest mb-1 ${selectedService === s.id ? 'text-white/50' : 'text-[#3a1f1d]/40'}`}
+                                  className={`block text-xs uppercase tracking-widest mb-1 text-[#3a1f1d]/40`}
                                   style={{ fontFamily: "'Jost', sans-serif" }}
                                 >
                                   {s.duration}
                                 </span>
                                 <span
-                                  className={`block text-xs font-semibold tracking-wide ${selectedService === s.id ? 'text-white/80' : 'text-[#3a1f1d]'}`}
+                                  className={`block text-xs font-semibold tracking-wide text-[#3a1f1d]`}
                                   style={{ fontFamily: "'Jost', sans-serif" }}
                                 >
                                   GHS {s.deposit} deposit
                                 </span>
                               </div>
                             </div>
-                            {/* Selection indicator */}
-                            <div className={`mt-4 h-px transition-all duration-300 ${selectedService === s.id ? 'bg-white/20' : 'bg-[#3a1f1d]/10'}`} />
+                            <div className={`mt-5 h-px transition-all duration-300 ${selectedService === s.id ? 'bg-[#3a1f1d]' : 'bg-gray-100'}`} />
                           </motion.button>
                         ))}
                       </div>
@@ -440,11 +449,10 @@ const BookAppointment = () => {
 
                   {/* ── STEP 2 ── */}
                   {step === 2 && (
-                    <motion.div key="step2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
+                    <motion.div key="step2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
                       <StepHeader step="Step 02 of 04" label="Select a date and time for your private fitting." title="Date & Time" />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Calendar */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
                         <motion.div variants={fadeUp} initial="hidden" animate="visible">
                           <p className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>
                             Select Date
@@ -452,7 +460,6 @@ const BookAppointment = () => {
                           <Calendar selected={selectedDate} onSelect={setSelectedDate} />
                         </motion.div>
 
-                        {/* Time Slots */}
                         <motion.div variants={fadeUp} custom={1} initial="hidden" animate="visible">
                           <p className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>
                             Select Time {!selectedDate && <span className="normal-case tracking-normal not-italic text-[#3a1f1d]/30">— choose a date first</span>}
@@ -473,11 +480,10 @@ const BookAppointment = () => {
                                     initial={{ opacity: 0, x: 12 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: i * 0.06, duration: 0.35 }}
-                                    className={`w-full py-3.5 px-5 text-sm tracking-wide border rounded-full transition-all duration-200 ${
-                                      selectedTime === slot
-                                        ? 'bg-[#3a1f1d] text-white border-[#3a1f1d]'
-                                        : 'bg-transparent border-[#3a1f1d]/20 text-[#3a1f1d] hover:border-[#3a1f1d]'
-                                    }`}
+                                    className={`w-full py-3.5 px-5 text-sm tracking-wide border rounded-full transition-all duration-200 ${selectedTime === slot
+                                      ? 'bg-[#3a1f1d] text-white border-[#3a1f1d]'
+                                      : 'bg-white border-gray-200 text-[#3a1f1d] hover:border-[#3a1f1d]/50'
+                                      }`}
                                     style={{ fontFamily: "'Jost', sans-serif" }}
                                   >
                                     {slot}
@@ -489,14 +495,14 @@ const BookAppointment = () => {
                           {!selectedDate && (
                             <div className="flex flex-col gap-3">
                               {TIME_SLOTS.map(slot => (
-                                <div key={slot} className="w-full py-3.5 px-5 border border-[#3a1f1d]/08 rounded-full bg-[#3a1f1d]/3" />
+                                <div key={slot} className="w-full py-3.5 px-5 border border-gray-100 rounded-full bg-gray-50/50" />
                               ))}
                             </div>
                           )}
                         </motion.div>
                       </div>
 
-                      <div className="mt-12 flex justify-between">
+                      <div className="mt-16 border-t border-gray-200 pt-6 flex justify-between">
                         <BackButton onClick={goBack} />
                         <NextButton disabled={!selectedDate || !selectedTime} onClick={goNext} />
                       </div>
@@ -505,25 +511,25 @@ const BookAppointment = () => {
 
                   {/* ── STEP 3 ── */}
                   {step === 3 && (
-                    <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
+                    <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
                       <StepHeader step="Step 03 of 04" label="Tell us about yourself so we can prepare for your fitting." title="Your Details" />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                        <InputField label="First Name" value={form.firstName} onChange={v => { setForm(f => ({...f, firstName: v})); setErrors(e => ({...e, firstName: false})); }}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 pt-4">
+                        <InputField label="First Name" value={form.firstName} onChange={v => { setForm(f => ({ ...f, firstName: v })); setErrors(e => ({ ...e, firstName: false })); }}
                           placeholder="Kofi" error={errors.firstName} delay={0} />
-                        <InputField label="Last Name" value={form.lastName} onChange={v => { setForm(f => ({...f, lastName: v})); setErrors(e => ({...e, lastName: false})); }}
+                        <InputField label="Last Name" value={form.lastName} onChange={v => { setForm(f => ({ ...f, lastName: v })); setErrors(e => ({ ...e, lastName: false })); }}
                           placeholder="Mensah" error={errors.lastName} delay={1} />
-                        <InputField label="Email Address" type="email" value={form.email} onChange={v => { setForm(f => ({...f, email: v})); setErrors(e => ({...e, email: false})); }}
+                        <InputField label="Email Address" type="email" value={form.email} onChange={v => { setForm(f => ({ ...f, email: v })); setErrors(e => ({ ...e, email: false })); }}
                           placeholder="kofi@example.com" error={errors.email} delay={2} />
-                        <InputField label="Phone Number" type="tel" value={form.phone} onChange={v => { setForm(f => ({...f, phone: v})); setErrors(e => ({...e, phone: false})); }}
+                        <InputField label="Phone Number" type="tel" value={form.phone} onChange={v => { setForm(f => ({ ...f, phone: v })); setErrors(e => ({ ...e, phone: false })); }}
                           placeholder="+233 XX XXX XXXX" error={errors.phone} delay={3} />
                         <div className="md:col-span-2">
-                          <InputField label="Fabrics, Occasions, or Style Notes" value={form.notes} onChange={v => setForm(f => ({...f, notes: v}))}
+                          <InputField label="Fabrics, Occasions, or Style Notes" value={form.notes} onChange={v => setForm(f => ({ ...f, notes: v }))}
                             placeholder="Any specific fabrics, occasions, or styles you have in mind? — We'd love to know." delay={4} multiline rows={5} />
                         </div>
                       </div>
 
-                      <div className="mt-12 flex justify-between">
+                      <div className="mt-16 border-t border-gray-200 pt-6 flex justify-between">
                         <BackButton onClick={goBack} />
                         <NextButton onClick={handleStep3Next} />
                       </div>
@@ -532,12 +538,12 @@ const BookAppointment = () => {
 
                   {/* ── STEP 4 ── */}
                   {step === 4 && (
-                    <motion.div key="step4" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
+                    <motion.div key="step4" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
                       <StepHeader step="Step 04 of 04" label="Review your booking and secure your fitting with a deposit." title="Secure Your Fitting" />
 
                       {/* Summary Pane */}
                       <motion.div variants={fadeUp} initial="hidden" animate="visible"
-                        className="bg-white border border-[#3a1f1d]/08 mb-10"
+                        className="bg-white border border-gray-200 mb-10"
                         style={{ padding: '2.5rem 3rem' }}
                       >
                         <p className="text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/40 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>
@@ -551,11 +557,11 @@ const BookAppointment = () => {
                             { label: 'Client', value: `${form.firstName} ${form.lastName}` },
                             { label: 'Contact', value: form.email },
                           ].map(({ label, value }) => (
-                            <div key={label} className="flex items-start justify-between gap-8 pb-5 border-b border-[#3a1f1d]/06 last:border-0 last:pb-0">
+                            <div key={label} className="flex items-start justify-between gap-8 pb-5 border-b border-gray-100 last:border-0 last:pb-0">
                               <span className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 flex-shrink-0" style={{ fontFamily: "'Jost', sans-serif" }}>
                                 {label}
                               </span>
-                              <span className="text-sm text-[#3a1f1d] text-right" style={{ fontFamily: "'Jost', sans-serif" }}>{value}</span>
+                              <span className="text-sm text-[#3a1f1d] text-right font-medium" style={{ fontFamily: "'Jost', sans-serif" }}>{value}</span>
                             </div>
                           ))}
                         </div>
@@ -563,20 +569,20 @@ const BookAppointment = () => {
 
                       {/* Deposit Section */}
                       <motion.div variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                        className="border border-[#3a1f1d]/12 mb-10"
-                        style={{ padding: '2rem 2.5rem', background: 'rgba(58, 31, 29, 0.02)' }}
+                        className="bg-[#EBE8E1]/30 mb-10"
+                        style={{ padding: '2rem 2.5rem' }}
                       >
-                        <div className="flex items-start justify-between gap-6">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/40 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                          <div className="text-center sm:text-left">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/50 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>
                               Consultation Deposit
                             </p>
                             <p className="text-sm text-[#3a1f1d]/60 leading-relaxed max-w-[380px]" style={{ fontFamily: "'Jost', sans-serif" }}>
                               A refundable deposit is required to secure your slot. This will be deducted from your final garment total.
                             </p>
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <span className="block text-2xl font-semibold text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                          <div className="text-center sm:text-right flex-shrink-0">
+                            <span className="block text-3xl font-semibold text-[#3a1f1d] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
                               GHS {service?.deposit ?? '—'}
                             </span>
                             <span className="text-[10px] uppercase tracking-widest text-[#3a1f1d]/40" style={{ fontFamily: "'Jost', sans-serif" }}>
@@ -591,17 +597,17 @@ const BookAppointment = () => {
                         <button
                           type="button"
                           onClick={handleConfirm}
-                          className="w-full bg-[#3a1f1d] text-[#F5F5F3] uppercase tracking-[0.2em] text-sm py-6 hover:bg-black transition-colors duration-300"
+                          className="w-full bg-[#3a1f1d] text-[#F5F5F3] uppercase tracking-[0.2em] text-sm py-5 hover:bg-black transition-colors duration-300"
                           style={{ fontFamily: "'Jost', sans-serif" }}
                         >
                           Proceed to Payment — GHS {service?.deposit ?? '—'}
                         </button>
-                        <p className="text-center text-[#3a1f1d]/30 text-xs mt-5" style={{ fontFamily: "'Jost', sans-serif" }}>
+                        <p className="text-center text-[#3a1f1d]/40 text-xs mt-4" style={{ fontFamily: "'Jost', sans-serif" }}>
                           Secured via Paystack. Your deposit is refundable up to 48 hours before your appointment.
                         </p>
                       </motion.div>
 
-                      <div className="mt-10 flex justify-start">
+                      <div className="mt-16 border-t border-gray-200 pt-6 flex justify-start">
                         <BackButton onClick={goBack} />
                       </div>
                     </motion.div>
@@ -619,19 +625,19 @@ const BookAppointment = () => {
               className="text-center"
               style={{ paddingTop: '4rem', paddingBottom: '4rem' }}
             >
-              <div className="w-14 h-14 rounded-full bg-[#3a1f1d] flex items-center justify-center mx-auto mb-8">
-                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-16 h-16 rounded-full bg-[#3a1f1d] flex items-center justify-center mx-auto mb-8">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-[#3a1f1d] mb-4" style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '2.5rem' }}>
+              <h2 className="text-[#3a1f1d] mb-4" style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '3rem' }}>
                 Fitting Secured
               </h2>
-              <p className="text-[#3a1f1d]/60 mb-2 leading-relaxed" style={{ fontFamily: "'Jost', sans-serif" }}>
+              <p className="text-[#3a1f1d]/70 text-lg mb-2 leading-relaxed" style={{ fontFamily: "'Jost', sans-serif" }}>
                 Thank you, <strong>{form.firstName}</strong>. Your <strong>{service?.title}</strong> is confirmed for<br />
                 <strong>{formatDate(selectedDate)}</strong> at <strong>{selectedTime}</strong>.
               </p>
-              <p className="text-[#3a1f1d]/40 text-sm mt-3 mb-10" style={{ fontFamily: "'Jost', sans-serif" }}>
+              <p className="text-[#3a1f1d]/50 text-sm mt-4 mb-12" style={{ fontFamily: "'Jost', sans-serif" }}>
                 A confirmation email will be sent to <strong>{form.email}</strong>.
               </p>
               <button
@@ -642,7 +648,7 @@ const BookAppointment = () => {
                   setConfirmed(false);
                 }}
                 className="border border-[#3a1f1d] text-[#3a1f1d] uppercase tracking-widest text-xs hover:bg-[#3a1f1d] hover:text-white transition-colors duration-300"
-                style={{ padding: '14px 36px', fontFamily: "'Jost', sans-serif" }}
+                style={{ padding: '16px 40px', fontFamily: "'Jost', sans-serif" }}
               >
                 Book Another Appointment
               </button>
@@ -662,11 +668,10 @@ function NextButton({ disabled = false, onClick }: { disabled?: boolean; onClick
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-3 uppercase tracking-[0.18em] text-xs transition-all duration-300 ${
-        disabled
-          ? 'text-[#3a1f1d]/25 cursor-not-allowed'
-          : 'text-[#3a1f1d] hover:gap-5'
-      }`}
+      className={`flex items-center gap-3 uppercase tracking-[0.18em] text-xs transition-all duration-300 ${disabled
+        ? 'text-[#3a1f1d]/25 cursor-not-allowed'
+        : 'text-[#3a1f1d] hover:gap-5'
+        }`}
       style={{ fontFamily: "'Jost', sans-serif", padding: '14px 0' }}
     >
       Continue

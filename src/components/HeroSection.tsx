@@ -8,8 +8,7 @@ const HeroSection = () => {
   return (
     <section
       className="w-[100vw] h-[100vh] relative overflow-hidden bg-cover bg-center bg-no-repeat"
-      /* 
-       * To use an image from the assets folder:
+      /* * To use an image from the assets folder:
        * 1. import heroBg from '../assets/your-image.jpg';
        * 2. style={{ backgroundImage: `url(${heroBg})` }}
        */
@@ -23,7 +22,7 @@ const HeroSection = () => {
       <Header />
 
       {/* Left-aligned Text Overlay */}
-      <motion.div 
+      <motion.div
         className="absolute left-[5%] top-1/2 -translate-y-1/2 max-w-[500px] z-10 text-white"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -41,7 +40,7 @@ const HeroSection = () => {
         </p>
         <Link
           to="/shop"
-          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm hover:bg-white hover:text-[#3a1f1d] transition-colors duration-300"
+          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm transition-all duration-300 hover:bg-white hover:!text-[#3a1f1d]"
           style={{ padding: '12px 32px', letterSpacing: '0.1em', display: 'inline-block', marginTop: '1rem' }}
         >
           Shop All
@@ -49,18 +48,18 @@ const HeroSection = () => {
       </motion.div>
 
       {/* Right Promo Box */}
-      <motion.div 
+      <motion.div
         style={{
-          position: 'absolute', 
-          bottom: '5%', 
-          right: '5%', 
-          backgroundColor: '#F5F5F3', 
-          padding: '2rem', 
-          display: 'flex', 
-          gap: '1.5rem', 
-          alignItems: 'center', 
-          maxWidth: '480px', 
-          zIndex: 50, 
+          position: 'absolute',
+          bottom: '5%',
+          right: '5%',
+          backgroundColor: '#F5F5F3',
+          padding: '2rem',
+          display: 'flex',
+          gap: '1.5rem',
+          alignItems: 'center',
+          maxWidth: '480px',
+          zIndex: 50,
           boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}
@@ -70,13 +69,12 @@ const HeroSection = () => {
       >
         {/* Left side of box: Square tiny thumbnail */}
         <div style={{ width: '140px', height: '140px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(0,0,0,0.05)' }}>
-          {/* 
-            * To use an image from the assets folder:
+          {/* * To use an image from the assets folder:
             * 1. import promoImg from '../assets/your-image.jpg';
             * 2. src={promoImg}
             */}
           <img
-            src={promoImg} 
+            src={promoImg}
             alt="Promo"
             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0 }}
           />
