@@ -14,8 +14,12 @@ import img8 from '../assets/8.jpg';
 
 const localImages = [img1, img2, img3, img4, img5, img6, img7, img8];
 
-/* TODO: Ensure real images are placed in public/assets */
-const mockProducts = Array.from({ length: 10 }).map((_, i) => ({
+/* 18 total items: 
+   Initial load: 6
+   Click 1: 12
+   Click 2: 18 (All loaded, button hides)
+*/
+const mockProducts = Array.from({ length: 18 }).map((_, i) => ({
   id: `prod-${i + 1}`,
   name: i % 2 === 0 ? `Premium Kaftan ${i + 1}` : `Classic Agbada ${i + 1}`,
   price: 250.00 + (i * 15),
@@ -26,6 +30,9 @@ const ShopAll = () => {
   const { addToCart } = useCart();
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
 
+  // State to control how many items are visible on the screen
+  const [visibleCount, setVisibleCount] = useState(6);
+
   const handleAddToCart = (product: { id: string, name: string, price: number, image: string }) => {
     addToCart({ ...product, quantity: 1 });
     setAddedItems(prev => ({ ...prev, [product.id]: true }));
@@ -34,36 +41,41 @@ const ShopAll = () => {
     }, 1000);
   };
 
+  // THE FIX: Now it only loads 6 items (two rows) per click
+  const loadMore = () => {
+    setVisibleCount(prev => prev + 6);
+  };
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
       className="min-h-[100vh] w-full bg-[#F5F5F3]"
-      style={{ padding: '6rem 5%' }}
+      style={{ padding: '6rem 5% 8rem' }}
     >
-      <h1 
-        style={{ 
-          marginBottom: '4rem', 
-          textAlign: 'center', 
-          fontFamily: "'Playfair Display', serif", 
-          fontStyle: 'italic', 
-          fontSize: '3.5rem', 
-          color: '#3a1f1d' 
+      <h1
+        style={{
+          marginBottom: '4rem',
+          textAlign: 'center',
+          fontFamily: "'Playfair Display', serif",
+          fontStyle: 'italic',
+          fontSize: '3.5rem',
+          color: '#3a1f1d'
         }}
       >
         Shop All
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[1400px] mx-auto" style={{ gap: '3rem' }}>
-        {mockProducts.map((product) => (
-          <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4]">
-            
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-[1400px] mx-auto" style={{ gap: '3rem' }}>
+        {mockProducts.slice(0, visibleCount).map((product) => (
+          <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4] group">
+
             <Link to={`/product/${product.id}`} className="block w-full h-full">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-full h-full object-cover"
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=600&auto=format&fit=crop';
                 }}
@@ -71,7 +83,7 @@ const ShopAll = () => {
             </Link>
 
             {/* Name & Price Box */}
-            <div 
+            <div
               style={{
                 position: 'absolute',
                 bottom: 0,
@@ -86,7 +98,7 @@ const ShopAll = () => {
               }}
             >
               <h3 className="font-bold text-sm text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest">{product.name}</h3>
-              <p className="text-sm text-[#3a1f1d] font-[var(--font-sans)] mt-1">GH₵{product.price.toFixed(2)}</p>
+              <p className="text-sm text-[#3a1f1d] font-[var(--font-sans)] mt-1">GHS {product.price.toFixed(2)}</p>
             </div>
 
             {/* Add to Cart Button */}
@@ -102,10 +114,23 @@ const ShopAll = () => {
                 '+'
               )}
             </button>
-            
+
           </div>
         ))}
       </div>
+
+      {/* VIEW MORE BUTTON */}
+      {visibleCount < mockProducts.length && (
+        <div className="w-full flex justify-center mt-20">
+          <button
+            onClick={loadMore}
+            className="border border-[#3a1f1d] text-[#3a1f1d] uppercase tracking-widest text-xs hover:bg-[#3a1f1d] hover:text-[#F5F5F3] transition-colors duration-300"
+            style={{ padding: '16px 48px', fontFamily: "'Jost', sans-serif" }}
+          >
+            View More
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
