@@ -46,18 +46,18 @@ const Header = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 w-full z-[100] flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
+      className={`fixed top-0 left-0 w-full z-50 flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
       style={headerStyle}
     >
       {/* Left side: Logo */}
       <Link
         to="/"
-        className="flex items-center gap-3 hover:opacity-70"
+        className="flex flex-col items-center hover:opacity-70"
       >
-        <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
-        <div className="flex flex-col items-center leading-[1.1]">
-          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '2.2rem' }}>Gabby Newluk</span>
-          <span style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 400, color: '#4a3b32', marginTop: '5px' }}>Right Above it</span>
+        <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '50px', width: 'auto', maxWidth: '200px' }} />
+        <div className="flex flex-col items-center leading-[1.1] mt-1">
+          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '1.8rem' }}>Gabby Newluk</span>
+          <span style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 400, color: '#4a3b32', marginTop: '2px' }}>Right Above it</span>
         </div>
       </Link>
 
