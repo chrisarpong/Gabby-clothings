@@ -11,178 +11,101 @@ const Checkout = () => {
   const { user } = useUser();
 
   const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress || '');
-  const [firstName, setFirstName] = useState(user?.fullName?.split(' ')[0] || '');
-  const [lastName, setLastName] = useState(user?.fullName?.split(' ').slice(1).join(' ') || '');
   const [phone, setPhone] = useState('');
 
   const subtotal = cart.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
   const delivery = 50.00;
   const total = subtotal + delivery;
 
-  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string;
-
   const config = {
     reference: (new Date()).getTime().toString(),
     email: email,
-    amount: total * 100, // Multiplied by 100 for lowest currency unit (Pesewas)
-    publicKey: publicKey,
+    amount: total * 100,
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
     currency: 'GHS'
   };
 
   const initializePayment = usePaystackPayment(config);
 
-  const onSuccess = () => {
-    clearCart();
-    navigate('/order-confirmation');
-  };
-
-  const onClose = () => {
-    console.log('Payment closed');
-  };
+  const inputClasses = "w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-6 text-base font-medium text-[#3a1f1d] placeholder:text-[#3a1f1d]/20 focus:border-[#3a1f1d] outline-none transition-all";
+  const labelClasses = "uppercase tracking-[0.3em] text-[10px] font-bold text-[#3a1f1d]/40 mb-1 block";
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full pt-40 pb-24 bg-[#F5F5F3]"
+      className="min-h-screen w-full pt-56 pb-32 bg-[#F5F5F3] flex flex-col items-center text-[#3a1f1d]"
     >
-      <div className="max-w-6xl mx-auto w-full px-6 flex flex-col items-center">
-        <h1 
-          className="text-[#3a1f1d] text-center w-full mb-16" 
-          style={{ fontFamily: "'Playfair Display', serif", fontSize: '3rem', fontStyle: 'italic' }}
-        >
-          Checkout
-        </h1>
+      <div className="max-w-7xl w-full px-8 flex flex-col items-center">
+        <div className="text-center mb-24">
+          <h1 className="text-7xl italic mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>Finalize Order</h1>
+          <p className="uppercase tracking-[0.5em] text-[11px] opacity-40">Bespoke Tailoring Request</p>
+        </div>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-12 lg:gap-20 items-start">
-          
-          {/* Left Column (Form) */}
-          <div className="w-full">
-            <form className="flex flex-col space-y-16" onSubmit={(e) => e.preventDefault()}>
-              
-              {/* Section 1: Contact Information */}
-              <section className="flex flex-col gap-4">
-                <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-bold mb-4">Contact Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="flex flex-col gap-3">
-                    <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-                    <label className="flex items-center gap-2 cursor-pointer w-fit mt-1">
-                      <input type="checkbox" className="w-4 h-4 accent-[#3a1f1d]" defaultChecked />
-                      <span className="text-[#3a1f1d] font-[var(--font-sans)] text-sm">Email me a digital receipt.</span>
-                    </label>
-                  </div>
-                  
-                  <div className="flex flex-col gap-8">
-                    <select className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] outline-none focus:border-[#3a1f1d] transition-colors">
-                      <option value="">Select Network Provider (Optional)</option>
-                      <option value="mtn">MTN</option>
-                      <option value="vodafone">Telecel</option>
-                      <option value="airteltigo">AT (AirtelTigo)</option>
-                    </select>
-                    <input type="tel" placeholder="Phone Number" required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-                  </div>
-                </div>
-              </section>
+        <div className="w-full grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-32 items-start">
 
-              {/* Section 2: Shipping Address */}
-              <section className="flex flex-col gap-4">
-                <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-bold mb-4">Shipping Address</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-                  <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+          <div className="w-full space-y-28">
+            <section>
+              <h2 className="uppercase tracking-[0.4em] text-xs font-bold mb-12 border-b border-[#3a1f1d]/10 pb-6">01. Contact</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                <div>
+                  <label className={labelClasses}>Email Address</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} placeholder="atelier@client.com" />
                 </div>
-                <input type="text" placeholder="Address Line 1" className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors mt-4" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-4">
-                  <input type="text" placeholder="City" className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-                  <input type="text" placeholder="District/State" className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
-                  <input type="text" placeholder="Country" className="w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-4 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors" />
+                <div>
+                  <label className={labelClasses}>Phone Number</label>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} placeholder="+233 XX XXX XXXX" />
                 </div>
-              </section>
-
-              {/* Section 3: Payment */}
-              <section className="flex flex-col gap-4">
-                <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-bold mb-4">Payment Information</h2>
-                <div className="w-full bg-white/40 border border-[#3a1f1d]/10 p-10 flex flex-col items-center justify-center text-[#3a1f1d]/80 font-[var(--font-sans)] text-sm italic py-10 border-dashed">
-                  <p>Secure Credit/Debit Card Payment via Paystack</p>
-                  <div className="flex items-center gap-3 mt-6">
-                    <span style={{ background: '#ffffff', padding: '6px 14px', fontSize: '0.8rem', color: '#3a1f1d', border: '1px solid rgba(58,31,29,0.1)', fontFamily: "'Jost', sans-serif" }}>Card</span>
-                    <span style={{ background: '#ffffff', padding: '6px 14px', fontSize: '0.8rem', color: '#3a1f1d', border: '1px solid rgba(58,31,29,0.1)', fontFamily: "'Jost', sans-serif" }}>Mobile Money</span>
-                  </div>
-                </div>
-              </section>
-
-              {/* Account Creation Opt-In */}
-              <div className="flex flex-col pt-4">
-                <label className="flex items-center gap-4 cursor-pointer w-full p-6 bg-white/40 border border-[#3a1f1d]/10">
-                  <input type="checkbox" className="w-5 h-5 accent-[#3a1f1d] cursor-pointer" />
-                  <span className="text-[#3a1f1d] font-[var(--font-sans)] text-sm tracking-wide">Create an account to track this order and save my measurements.</span>
-                </label>
               </div>
+            </section>
 
-              {/* Confirm Button */}
-              <button 
-                type="button"
-                disabled={!email}
-                onClick={() => { initializePayment({ onSuccess, onClose }) }}
-                className="block w-full bg-[#3a1f1d] text-[#F5F5F3] py-6 text-center uppercase tracking-[0.3em] font-bold hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-              >
-                Confirm Order & Pay
-              </button>
+            <section>
+              <h2 className="uppercase tracking-[0.4em] text-xs font-bold mb-12 border-b border-[#3a1f1d]/10 pb-6">02. Shipping</h2>
+              <div className="grid grid-cols-2 gap-16">
+                <input type="text" placeholder="First Name" className={inputClasses} />
+                <input type="text" placeholder="Last Name" className={inputClasses} />
+              </div>
+              <input type="text" placeholder="House Number & Street" className={`${inputClasses} mt-12`} />
+              <div className="grid grid-cols-3 gap-16 mt-12">
+                <input type="text" placeholder="City" className={inputClasses} />
+                <input type="text" placeholder="Region" className={inputClasses} />
+                <input type="text" placeholder="Country" className={inputClasses} />
+              </div>
+            </section>
 
-            </form>
+            <button
+              onClick={() => initializePayment({ onSuccess: () => { clearCart(); navigate('/order-confirmation'); }, onClose: () => { } })}
+              className="w-full bg-[#3a1f1d] text-[#F5F5F3] py-8 text-center uppercase tracking-[0.5em] text-sm font-bold hover:bg-black transition-all shadow-2xl"
+            >
+              Pay Now — GH₵ {total.toFixed(2)}
+            </button>
           </div>
 
-          {/* Right Column (Order Summary) */}
-          <div className="w-full bg-transparent border border-[#3a1f1d]/10 p-8 lg:p-10 sticky top-[120px]">
-            <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-bold mb-8 text-center sm:text-left">
-              Order Summary
-            </h2>
-            
-            {/* Cart Items */}
-            <div className="flex flex-col gap-6 mb-8 pb-8 border-b border-[#3a1f1d]/10">
-              {cart.length > 0 ? (
-                cart.map((item: CartItem) => (
-                  <div key={item.id} className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-white border border-[#3a1f1d]/10 overflow-hidden shrink-0" style={{ width: '60px', aspectRatio: '3/4' }}>
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover" 
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=200&auto=format&fit=crop';
-                          }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-[var(--font-sans)] font-semibold tracking-wider text-[#3a1f1d] uppercase">{item.name}</span>
-                        <span className="text-xs font-[var(--font-sans)] text-[#3a1f1d]/70 mt-1">Quantity: {item.quantity}</span>
-                      </div>
-                    </div>
-                    <span className="text-sm font-[var(--font-sans)] text-[#3a1f1d] font-medium">GH₵{(item.price * item.quantity).toFixed(2)}</span>
+          {/* Right: Modern Summary Bag */}
+          <div className="bg-white p-12 border border-[#3a1f1d]/5 shadow-2xl sticky top-52">
+            <h2 className="uppercase tracking-[0.4em] text-[10px] font-bold mb-12 text-center opacity-40">Your Bag</h2>
+            <div className="space-y-8 mb-12 pb-12 border-b border-[#3a1f1d]/10">
+              {cart.map((item) => (
+                <div key={item.id} className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-6">
+                    <img src={item.image} alt="" className="w-16 h-20 object-cover border border-[#3a1f1d]/5" />
+                    <span className="uppercase tracking-widest font-bold text-[10px]">{item.name} <span className="opacity-40 ml-3">x{item.quantity}</span></span>
                   </div>
-                ))
-              ) : (
-                <div className="text-sm font-[var(--font-sans)] text-[#3a1f1d]/60 italic">Your cart is empty.</div>
-              )}
+                  <span className="font-bold tracking-tighter">GH₵{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Totals Base */}
-            <div className="flex flex-col gap-5 mb-8 font-[var(--font-sans)] text-sm border-b border-[#3a1f1d]/10 pb-8">
-              <div className="flex justify-between items-center text-[#3a1f1d]/80">
-                <span className="tracking-wider">Subtotal</span>
-                <span className="font-medium text-[#3a1f1d]">GH₵ {subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center text-[#3a1f1d]/80">
-                <span className="tracking-wider">Delivery</span>
-                <span className="font-medium text-[#3a1f1d]">GH₵ {delivery.toFixed(2)}</span>
-              </div>
+            <div className="space-y-6 text-[11px] tracking-[0.2em] uppercase opacity-50 mb-10">
+              <div className="flex justify-between"><span>Subtotal</span><span>GH₵ {subtotal.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Shipping</span><span>GH₵ {delivery.toFixed(2)}</span></div>
             </div>
 
-            <div className="flex justify-between items-end mb-4 text-[#3a1f1d]">
-              <span className="uppercase tracking-widest text-sm font-bold">Total</span>
-              <span className="text-2xl font-[var(--font-serif)] italic">GH₵ {total.toFixed(2)}</span>
+            <div className="flex justify-between items-end border-t border-[#3a1f1d]/10 pt-10">
+              <span className="uppercase tracking-[0.4em] text-xs font-bold text-[#3a1f1d]">Total Due</span>
+              <span className="text-3xl italic font-medium" style={{ fontFamily: "'Playfair Display', serif" }}>
+                GH₵ {total.toFixed(2)}
+              </span>
             </div>
           </div>
 
