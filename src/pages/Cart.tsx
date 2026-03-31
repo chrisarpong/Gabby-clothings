@@ -14,13 +14,12 @@ const Cart = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3]"
-      style={{ paddingTop: '150px', paddingBottom: '10rem' }}
+      className="w-full flex flex-col items-center pt-40 pb-24 bg-[#F5F5F3] min-h-screen"
     >
-      <div className="max-w-[1300px] mx-auto w-full px-6 lg:px-12 flex flex-col items-center">
+      <div className="max-w-6xl w-full px-6">
         <h1 
-          className="text-center w-full text-5xl md:text-6xl text-[#3a1f1d] mb-16"
-          style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 500 }}
+          className="text-center w-full mb-20 text-5xl italic text-[#3a1f1d]"
+          style={{ fontFamily: "'Playfair Display', serif" }}
         >
           Your Cart
         </h1>
@@ -36,10 +35,10 @@ const Cart = () => {
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 w-full relative items-start justify-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-20 mx-auto items-start justify-center">
             
-            {/* Cart Table List - Takes up ~60% */}
-            <div className="w-full lg:w-[60%] flex flex-col border-t border-[#3a1f1d]/10">
+            {/* Cart Table List */}
+            <div className="w-full flex flex-col border-t border-[#3a1f1d]/10">
               {cart.map((item) => (
                 <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-stretch py-10 border-b border-[#3a1f1d]/10 gap-8">
                   
@@ -113,8 +112,8 @@ const Cart = () => {
               ))}
             </div>
 
-            {/* Cart Summary - Takes up ~40% */}
-            <div className="w-full lg:w-[35%] bg-transparent border border-[#3a1f1d]/10 p-8 lg:p-10 sticky top-[120px]">
+            {/* Cart Summary */}
+            <div className="w-full bg-transparent border border-[#3a1f1d]/10 p-8 lg:p-10 sticky top-[120px]">
               <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-bold mb-8 text-center sm:text-left">
                 Order Summary
               </h2>
@@ -137,7 +136,7 @@ const Cart = () => {
 
               <Link 
                 to="/checkout" 
-                className="w-full bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-[0.2em] text-[11px] md:text-xs hover:bg-[#20100f] transition-all duration-300 flex items-center justify-center py-5 rounded-none"
+                className="block w-full bg-[#3a1f1d] text-[#F5F5F3] py-6 text-center uppercase tracking-[0.3em] font-bold hover:bg-black transition-all"
               >
                 Proceed to Checkout
               </Link>
