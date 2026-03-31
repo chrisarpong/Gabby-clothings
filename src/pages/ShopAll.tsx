@@ -67,10 +67,9 @@ const ShopAll = () => {
         Shop All
       </h1>
 
-      <div className="mx-auto w-full max-w-[1400px]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full justify-items-center" style={{ gap: '2.5rem' }}>
+      <div className="mx-auto w-full max-w-[1200px] px-[20px] grid justify-center" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
           {mockProducts.slice(0, visibleCount).map((product) => (
-            <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4] group hover:shadow-[0_10px_35px_rgba(58,31,29,0.06)] transition-shadow duration-[400ms] ease-out">
+            <div key={product.id} className="relative overflow-hidden rounded-[4px] w-full aspect-[3/4] group hover:shadow-[0_10px_35px_rgba(58,31,29,0.06)] transition-shadow duration-[500ms] ease-out">
 
             <Link to={`/product/${product.id}`} className="block w-full h-full">
               <img
@@ -118,7 +117,6 @@ const ShopAll = () => {
 
           </div>
         ))}
-        </div>
       </div>
 
       {/* VIEW MORE BUTTON */}

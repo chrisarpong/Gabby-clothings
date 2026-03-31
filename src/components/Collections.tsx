@@ -53,7 +53,8 @@ const Collections = () => {
 
       {/* Grid Container */}
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16 max-w-[1400px] mx-auto"
+        className="w-full max-w-[1200px] mx-auto px-[20px] grid justify-center"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"

@@ -30,7 +30,7 @@ const Cart = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[6fr_4fr] gap-16 relative items-start">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-[2rem] relative items-start">
           
           {/* Cart Table List */}
           <div className="flex flex-col gap-6">
@@ -79,8 +79,8 @@ const Cart = () => {
               <span className="text-xl font-bold">GH₵{total.toFixed(2)}</span>
             </div>
 
-            <Link to="/checkout" className="w-full bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:opacity-85 transition-all flex items-center justify-center py-4 relative group overflow-hidden">
-              <span className="relative z-10 transition-transform duration-300 group-hover:scale-105">Proceed to Checkout</span>
+            <Link to="/checkout" className="w-full bg-[#3b2416] text-[#fff] font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-[#4d311e] transition-all flex items-center justify-center cursor-pointer rounded" style={{ padding: '15px' }}>
+              Proceed to Checkout
             </Link>
           </div>
 

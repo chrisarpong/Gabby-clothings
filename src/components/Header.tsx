@@ -57,7 +57,7 @@ const Header = () => {
         <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
         <div className="flex flex-col items-center leading-[1.1]">
           <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '2.2rem' }}>Gabby Newluk</span>
-          <span className="opacity-70" style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '4px' }}>Right Above it</span>
+          <span style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 400, color: '#4a3b32', marginTop: '5px' }}>Right Above it</span>
         </div>
       </Link>
 
