@@ -67,7 +67,7 @@ const ShopAll = () => {
         Shop All
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-[1400px] mx-auto" style={{ gap: '3rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-[1400px] mx-auto justify-center place-items-center" style={{ gap: '3rem' }}>
         {mockProducts.slice(0, visibleCount).map((product) => (
           <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4] group">
 
@@ -121,7 +121,7 @@ const ShopAll = () => {
 
       {/* VIEW MORE BUTTON */}
       {visibleCount < mockProducts.length && (
-        <div className="w-full flex justify-center mt-20">
+        <div className="w-full flex justify-center mt-32 mb-16">
           <button
             onClick={loadMore}
             className="border border-[#3a1f1d] text-[#3a1f1d] uppercase tracking-widest text-xs hover:bg-[#3a1f1d] hover:text-[#F5F5F3] transition-colors duration-300"

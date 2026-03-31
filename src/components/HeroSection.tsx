@@ -1,22 +1,27 @@
 import Header from './Header';
 import { Link } from 'react-router-dom';
-import heroBg from '../assets/6.jpg';
+
 import promoImg from '../assets/8.jpg';
 import { motion } from 'framer-motion';
 
 const HeroSection = () => {
   return (
     <section
-      className="w-[100vw] h-[100vh] relative overflow-hidden bg-cover bg-center bg-no-repeat"
-      /* * To use an image from the assets folder:
-       * 1. import heroBg from '../assets/your-image.jpg';
-       * 2. style={{ backgroundImage: `url(${heroBg})` }}
-       */
-      style={{ backgroundImage: `url(${heroBg})` }}
+      className="w-[100vw] h-[100vh] relative overflow-hidden bg-[#3a1f1d]"
       id="home"
     >
+      {/* Background Video Placeholder */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        src="https://cdn.pixabay.com/video/2019/04/16/22872-331002877_large.mp4"
+      />
+
       {/* Dark Overlay for text readability */}
-      <div className="absolute inset-0 bg-black/30 z-0"></div>
+      <div className="absolute inset-0 bg-black/40 z-0"></div>
 
       {/* Absolutely Positioned Header */}
       <Header />

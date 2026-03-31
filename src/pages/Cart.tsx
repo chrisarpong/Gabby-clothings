@@ -14,12 +14,13 @@ const Cart = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3]"
-      style={{ padding: '130px 10% 5rem 10%' }}
+      className="min-h-screen w-full bg-[#F5F5F3]"
+      style={{ paddingTop: '140px', paddingBottom: '8rem' }}
     >
-      <h1 className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-12" style={{ fontFamily: "'Playfair Display', serif" }}>
-        Your Cart
-      </h1>
+      <div className="w-full max-w-6xl mx-auto px-6 md:px-12">
+        <h1 className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-16 text-center" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Your Cart
+        </h1>
 
       {cart.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border-t border-b border-[#dddddd]">
@@ -29,7 +30,7 @@ const Cart = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16">
           
           {/* Cart Table List */}
           <div className="flex flex-col gap-6">
@@ -85,6 +86,7 @@ const Cart = () => {
 
         </div>
       )}
+      </div>
     </motion.div>
   );
 };

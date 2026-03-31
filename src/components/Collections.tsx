@@ -53,7 +53,7 @@ const Collections = () => {
 
       {/* Grid Container */}
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#E8E8E8] max-w-[1400px] mx-auto"
+        className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-[1400px] mx-auto"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -63,7 +63,7 @@ const Collections = () => {
           <motion.div
             key={idx}
             variants={itemVariants}
-            className="group relative block overflow-hidden bg-white">
+            className="group relative block overflow-hidden bg-white shadow-md aspect-[3/4]">
             <Link to="/shop">
               {/* Image */}
               <img

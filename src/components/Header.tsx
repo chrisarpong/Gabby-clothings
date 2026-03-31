@@ -31,9 +31,8 @@ const Header = () => {
         color: '#3a1f1d',
         transition: 'all 0.3s ease',
         boxSizing: 'border-box' as const,
-        padding: '2rem 5%',
+        padding: '1.2rem 5%',
         width: '100%',
-        maxWidth: '100vw'
       }
     : {
         backgroundColor: 'transparent',
@@ -41,14 +40,13 @@ const Header = () => {
         color: '#ffffff', /* TODO: Revert top-state text color to #3a1f1d when the final light background image is added */
         transition: 'all 0.3s ease',
         boxSizing: 'border-box' as const,
-        padding: '2rem 5%',
+        padding: '1.2rem 5%',
         width: '100%',
-        maxWidth: '100vw'
       };
 
   return (
     <header 
-      className={`${isHome ? 'fixed' : 'relative'} top-0 left-0 z-[100] flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
+      className={`fixed top-0 left-0 w-full z-[100] flex justify-between items-center ${activeScrolledState ? 'is-scrolled' : ''}`}
       style={headerStyle}
     >
       {/* Left side: Logo */}
@@ -57,16 +55,19 @@ const Header = () => {
         className="flex items-center gap-3 hover:opacity-70"
       >
         <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
-        <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '2.8rem' }}>Gabby Newluk</span>
+        <div className="flex flex-col items-start leading-[1.1]">
+          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '2.2rem' }}>Gabby Newluk</span>
+          <span style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '2px' }}>Right Above it</span>
+        </div>
       </Link>
 
       {/* Middle: Navigation container */}
       <nav className="hidden md:flex flex-1 justify-center items-center gap-8">
-        <Link to="/shop" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
-          Shop
-        </Link>
         <Link to="/collections" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Collections
+        </Link>
+        <Link to="/shop" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
+          Shop
         </Link>
         <Link to="/book-appointment" className="text-sm hover:opacity-70" style={{ fontFamily: "'Jost', sans-serif" }}>
           Book Appointment
