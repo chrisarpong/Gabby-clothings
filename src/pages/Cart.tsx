@@ -17,20 +17,20 @@ const Cart = () => {
       className="min-h-screen w-full bg-[#F5F5F3]"
       style={{ paddingTop: '140px', paddingBottom: '8rem' }}
     >
+      <h1 className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-16 text-center w-full" style={{ fontFamily: "'Playfair Display', serif" }}>
+        Your Cart
+      </h1>
       <div className="w-full max-w-6xl mx-auto px-6 md:px-12">
-        <h1 className="text-4xl md:text-5xl italic text-[#3a1f1d] mb-16 text-center" style={{ fontFamily: "'Playfair Display', serif" }}>
-          Your Cart
-        </h1>
 
       {cart.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border-t border-b border-[#dddddd]">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] w-full">
           <p className="font-[var(--font-sans)] text-[#555] mb-8 text-lg">Your Cart is Empty</p>
           <Link to="/shop" className="bg-[#3a1f1d] text-[#ffffff] px-8 py-4 font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors">
-            Continue Browsing
+            Continue Shopping
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[6fr_4fr] gap-16 relative items-start">
           
           {/* Cart Table List */}
           <div className="flex flex-col gap-6">
@@ -40,10 +40,10 @@ const Cart = () => {
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 </div>
                 
-                <div className="flex-grow flex flex-col gap-2">
+                <div className="flex-grow flex flex-col justify-center gap-1">
                   <h3 className="font-bold text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm">{item.name}</h3>
-                  <p className="text-[#3a1f1d] font-[var(--font-sans)] text-sm">GH₵{item.price.toFixed(2)}</p>
-                  <button onClick={() => removeFromCart(item.id)} className="text-xs text-[#888] underline text-left w-fit uppercase font-[var(--font-sans)] tracking-widest mt-2 hover:text-[#3a1f1d]">Remove</button>
+                  <p className="text-[#3a1f1d]/70 font-[var(--font-sans)] text-sm">GH₵{item.price.toFixed(2)}</p>
+                  <button onClick={() => removeFromCart(item.id)} className="text-xs text-[#888] underline text-left w-fit uppercase font-[var(--font-sans)] tracking-widest mt-2 hover:text-[#3a1f1d] transition-colors">Remove</button>
                 </div>
                 
                 <div className="flex items-center border border-[#dddddd] h-10 w-28">
@@ -60,7 +60,7 @@ const Cart = () => {
           </div>
 
           {/* Cart Summary */}
-          <div className="bg-white p-8 h-fit shadow-sm border border-[#eaeaea]">
+          <div className="bg-[#FCFBFA] p-8 md:p-10 border border-[#3a1f1d]/5 sticky top-32">
             <h2 className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-widest text-sm font-bold mb-6 pb-4 border-b border-[#dddddd]">Order Summary</h2>
             
             <div className="flex flex-col gap-4 mb-6 font-[var(--font-sans)] text-sm text-[#555]">
@@ -79,8 +79,8 @@ const Cart = () => {
               <span className="text-xl font-bold">GH₵{total.toFixed(2)}</span>
             </div>
 
-            <Link to="/checkout" className="w-full bg-[#3a1f1d] text-[#ffffff] font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center h-14">
-              Proceed to Checkout
+            <Link to="/checkout" className="w-full bg-[#3a1f1d] text-white font-[var(--font-sans)] uppercase tracking-widest text-sm hover:opacity-85 transition-all flex items-center justify-center py-4 relative group overflow-hidden">
+              <span className="relative z-10 transition-transform duration-300 group-hover:scale-105">Proceed to Checkout</span>
             </Link>
           </div>
 

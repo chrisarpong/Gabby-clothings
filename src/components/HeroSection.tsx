@@ -10,15 +10,16 @@ const HeroSection = () => {
       className="w-[100vw] h-[100vh] relative overflow-hidden bg-[#3a1f1d]"
       id="home"
     >
-      {/* Background Video Placeholder */}
+      {/* Background Video */}
       <video
         autoPlay
         loop
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
-        src="https://cdn.pixabay.com/video/2019/04/16/22872-331002877_large.mp4"
+        src="/hero-video.mp4"
       />
+
 
       {/* Dark Overlay for text readability */}
       <div className="absolute inset-0 bg-black/40 z-0"></div>

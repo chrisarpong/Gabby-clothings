@@ -114,8 +114,16 @@ const Footer = () => {
         >
           Gabby Newluk
         </h2>
-        <p className="font-[var(--font-sans)] text-[0.75rem] md:text-[0.9rem] text-[#3a1f1d] mt-6 text-center leading-[1.5] uppercase tracking-wider">
-          © 2026 by Gabby Newluk Clothing.
+        <p className="font-[var(--font-sans)] text-[0.75rem] md:text-[0.9rem] text-[#3a1f1d]/80 mt-6 text-center leading-[1.5] uppercase tracking-widest">
+          © 2026 by Gabby Newluk Clothing. Built by{' '}
+          <a
+            href="https://stadnet-technologies.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-[1px] after:bottom-0 after:left-0 after:bg-[#3a1f1d] hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-bottom-right hover:after:origin-bottom-left"
+          >
+            STADNET TECHNOLOGIES
+          </a>.
         </p>
       </div>
     </footer>

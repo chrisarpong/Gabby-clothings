@@ -55,9 +55,9 @@ const Header = () => {
         className="flex items-center gap-3 hover:opacity-70"
       >
         <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '60px', width: 'auto', maxWidth: '200px' }} />
-        <div className="flex flex-col items-start leading-[1.1]">
+        <div className="flex flex-col items-center leading-[1.1]">
           <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '2.2rem' }}>Gabby Newluk</span>
-          <span style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '2px' }}>Right Above it</span>
+          <span className="opacity-70" style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '4px' }}>Right Above it</span>
         </div>
       </Link>
 
@@ -109,8 +109,8 @@ const Header = () => {
       {/* Mobile Dropdown Menu */}
       {isMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-[#F5F5F3] flex flex-col items-center py-8 gap-6 shadow-lg border-t border-[#e0e0e0] md:hidden z-50">
-          <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Shop</Link>
           <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Collections</Link>
+          <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Shop</Link>
           <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="text-[#3a1f1d] font-[var(--font-sans)] uppercase tracking-wider text-sm font-semibold hover:opacity-70">Book Appointment</Link>
           <Show when="signed-out">
             <SignInButton mode="modal">

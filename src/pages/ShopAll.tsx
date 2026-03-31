@@ -67,15 +67,16 @@ const ShopAll = () => {
         Shop All
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-[1400px] mx-auto justify-center place-items-center" style={{ gap: '3rem' }}>
-        {mockProducts.slice(0, visibleCount).map((product) => (
-          <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4] group">
+      <div className="mx-auto w-full max-w-[1400px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full justify-items-center" style={{ gap: '2.5rem' }}>
+          {mockProducts.slice(0, visibleCount).map((product) => (
+            <div key={product.id} className="relative overflow-hidden w-full aspect-[3/4] group hover:shadow-[0_10px_35px_rgba(58,31,29,0.06)] transition-shadow duration-[400ms] ease-out">
 
             <Link to={`/product/${product.id}`} className="block w-full h-full">
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-[400ms] ease-in-out group-hover:scale-[1.03]"
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=600&auto=format&fit=crop';
                 }}
@@ -117,6 +118,7 @@ const ShopAll = () => {
 
           </div>
         ))}
+        </div>
       </div>
 
       {/* VIEW MORE BUTTON */}
