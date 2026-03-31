@@ -31,7 +31,7 @@ const Header = () => {
         color: '#3a1f1d',
         transition: 'all 0.3s ease',
         boxSizing: 'border-box' as const,
-        padding: '1.2rem 5%',
+        padding: '0.7rem 5%',
         width: '100%',
       }
     : {
@@ -40,7 +40,7 @@ const Header = () => {
         color: '#ffffff', /* TODO: Revert top-state text color to #3a1f1d when the final light background image is added */
         transition: 'all 0.3s ease',
         boxSizing: 'border-box' as const,
-        padding: '1.2rem 5%',
+        padding: '0.7rem 5%',
         width: '100%',
       };
 
@@ -54,10 +54,10 @@ const Header = () => {
         to="/"
         className="flex flex-col items-center hover:opacity-70"
       >
-        <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '50px', width: 'auto', maxWidth: '200px' }} />
+        <img src={brandLogo} alt="Gabby Newluk" className="object-contain" style={{ height: '35px', width: 'auto', maxWidth: '200px' }} />
         <div className="flex flex-col items-center leading-[1.1] mt-1">
-          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '1.8rem' }}>Gabby Newluk</span>
-          <span style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 400, color: '#4a3b32', marginTop: '2px' }}>Right Above it</span>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '1.4rem' }}>Gabby Newluk</span>
+          <span style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 400, color: '#4a3b32', marginTop: '2px' }}>Right Above it</span>
         </div>
       </Link>
 
