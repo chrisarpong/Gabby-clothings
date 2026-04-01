@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import SyncUser from './components/SyncUser'; // <-- The new Sync component
 
 // Pages
 import Home from './pages/Home';
@@ -24,6 +25,9 @@ function App() {
   return (
     <CartProvider>
       <BrowserRouter>
+        {/* Invisible Database Sync Listener */}
+        <SyncUser /> 
+        
         <div className="min-h-screen bg-[var(--color-bg-primary)] flex flex-col">
           <Header />
           <main className="flex-1 w-full">
