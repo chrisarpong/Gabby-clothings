@@ -1,170 +1,135 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 
-import img1 from '../assets/1.jpg';
-import img2 from '../assets/2.webp';
-import img3 from '../assets/3.jpg';
-import img4 from '../assets/4.jpg';
-import img5 from '../assets/8.jpg';
+// MOCK DATA
+const mockProducts = [
+  {
+    id: "1",
+    name: "Classic Agbada 2",
+    price: 265.00,
+    mainImage: "https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=800&auto=format&fit=crop",
+    description: "This is your Product Page description. It's a great place to tell customers what this category is about, connect with your audience and draw attention to your products."
+  }
+];
 
-const ProductDetails = () => {
+const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const [product, setProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
-  const [zoomedIndex, setZoomedIndex] = useState<number | null>(null);
 
-  /* Mock product data for development */
-  const mockProducts = [
-    { id: '1', name: 'Premium Tailored Kaftan', price: 350.00, images: [img1, img2, img3, img4, img5] },
-    { id: '2', name: 'Luxury Agbada Suite', price: 850.00, images: [img2, img1, img3] },
-    { id: '3', name: 'Classic Native Wear', price: 400.00, images: [img3, img4, img1] },
-    { id: '4', name: 'Royal Velvet Cap', price: 150.00, images: [img4, img2] },
-    { id: '5', name: 'Embroidered Tunic', price: 300.00, images: [img5, img1] },
-    { id: '6', name: 'Senator Style Suit', price: 500.00, images: [img1, img3] },
-    { id: '7', name: 'Tailored Trouser', price: 200.00, images: [img2, img4] },
-    { id: '8', name: 'Silk Pocket Square', price: 50.00, images: [img3, img5] },
-    { id: '9', name: 'Leather Sandals', price: 250.00, images: [img4, img1] },
-    { id: '10', name: 'Traditional Beads', price: 100.00, images: [img5, img2] }
-  ];
+  useEffect(() => {
+    // FALLBACK SAFEGUARD: If the ID from the shop page doesn't match the mock database, 
+    // force it to load the first product so the layout never breaks.
+    const foundProduct = mockProducts.find(p => p.id === id) || mockProducts[0];
+    setProduct(foundProduct);
+  }, [id]);
 
-  /* 
-   * CRITICAL BUG FIX: Dynamic Products mapped via strict ID strings 
-   * enforcing absolute database alignment instead of fallback hardcodes.
-   */
-  const product = mockProducts.find(p => String(p.id) === String(id) || String(p.id) === `prod-${id}`);
-
-  if (!product) {
-    return <div className="min-h-screen flex text-2xl items-center justify-center font-[var(--font-serif)]">Product not found.</div>;
-  }
-
-  const toggleAccordion = (title: string) => {
-    setOpenAccordion(openAccordion === title ? null : title);
-  };
+  if (!product) return null;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-[100vh] w-full bg-[#F5F5F3] pt-12 pb-20 px-[5%]"
+      className="min-h-screen bg-[#F9F8F6] text-[#3a1f1d] font-[var(--font-sans)] w-full pt-20 pb-40"
     >
-      <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-[6fr_4fr] gap-12 md:gap-[4rem]">
+      <div className="max-w-[1200px] mx-auto w-full px-6 md:px-12 lg:px-16">
         
-        {/* Left Side (Image Scroll) */}
-        <div className="flex flex-col gap-[2rem]">
-          {product.images.map((img, idx) => (
-            <div 
-              key={idx} 
-              className="w-full aspect-[3/4] overflow-hidden bg-white"
-              onClick={() => setZoomedIndex(zoomedIndex === idx ? null : idx)}
-            >
-              <img 
-                src={img} 
-                alt={`${product.name} - view ${idx + 1}`} 
-                className="w-full h-full object-cover"
-                style={{
-                  transform: zoomedIndex === idx ? 'scale(2)' : 'scale(1)',
-                  cursor: zoomedIndex === idx ? 'zoom-out' : 'zoom-in',
-                  transition: 'transform 0.4s ease'
-                }}
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=800&auto=format&fit=crop';
-                }}
-              />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+          
+          {/* LEFT: Image Gallery (Veilux Style) */}
+          <div className="w-full flex justify-center lg:justify-start">
+            <div className="w-full max-w-[500px] bg-[#EFEFEF] border border-[#3a1f1d]/5" style={{ aspectRatio: '4/5' }}>
+              <img src={product.mainImage} alt={product.name} className="w-full h-full object-cover" />
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Right Side (Sticky Info) */}
-        <div className="py-12 md:py-8" style={{ paddingLeft: '4rem' }}>
-          <div className="sticky top-[150px] h-fit flex flex-col">
-            <h1 className="text-[#3a1f1d]" style={{ fontSize: '2.8rem', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', marginBottom: '1rem', lineHeight: '1.1' }}>
-              {product.name}
-            </h1>
-            <p className="font-[var(--font-sans)] text-[#3a1f1d]" style={{ fontSize: '1.4rem', marginBottom: '3rem' }}>
-              GH₵{product.price.toFixed(2)}
-            </p>
+          {/* RIGHT: Product Details & Controls */}
+          <div className="w-full max-w-[450px]">
+            
+            {/* Title & Price */}
+            <div className="space-y-2 mb-8">
+              <h1 className="text-[2rem] font-normal italic" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {product.name}
+              </h1>
+              <p className="text-[17px] font-normal tracking-wide">GH₵ {product.price.toFixed(2)}</p>
+            </div>
 
             {/* Quantity Selector */}
-            <div className="flex flex-col gap-2" style={{ marginBottom: '2rem' }}>
-              <span className="font-[var(--font-sans)] text-xs uppercase tracking-widest text-[#555]">Quantity</span>
-              <div className="flex items-center border border-[#dddddd] w-36">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="flex-1 flex justify-center items-center text-[#3a1f1d] hover:bg-[#eaeaea] transition-colors"
-                  style={{ padding: '10px 20px', fontSize: '1.2rem' }}
-                >
-                  -
-                </button>
-                <span className="flex-1 text-center font-[var(--font-sans)] text-[#3a1f1d]" style={{ fontSize: '1.2rem' }}>{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="flex-1 flex justify-center items-center text-[#3a1f1d] hover:bg-[#eaeaea] transition-colors"
-                  style={{ padding: '10px 20px', fontSize: '1.2rem' }}
-                >
-                  +
-                </button>
+            <div className="mb-8">
+              <label className="block text-[13px] mb-2 font-medium">Quantity ^</label>
+              <div className="flex items-center border border-[#3a1f1d]/30 h-11 w-[120px]">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex-1 text-lg hover:bg-[#3a1f1d]/5 transition-colors select-none">−</button>
+                <span className="flex-1 text-center text-[14px]">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="flex-1 text-lg hover:bg-[#3a1f1d]/5 transition-colors select-none">+</button>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-4" style={{ marginBottom: '3rem' }}>
-              <button 
-                onClick={() => addToCart({ 
-                  id: product.id, 
-                  name: `${product.name} (${id})`, 
-                  price: product.price, 
-                  quantity, 
-                  image: product.images[0] 
-                })}
-                className="w-full border border-[#3a1f1d] text-[#3a1f1d] bg-transparent font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-[#3a1f1d] hover:text-[#FFFFFF] transition-colors"
-                style={{ padding: '1.2rem 0' }}
+            {/* Buttons (Add to Cart / Buy Now) */}
+            <div className="space-y-3 mb-10">
+              <button
+                onClick={() => addToCart({ id: product.id, name: product.name, price: product.price, image: product.mainImage, quantity })}
+                className="w-full border border-[#3a1f1d] bg-transparent text-[#3a1f1d] py-[14px] text-center text-[15px] font-normal hover:bg-[#3a1f1d] hover:text-[#F9F8F6] transition-colors"
               >
                 Add to Cart
               </button>
-              <Link to="/checkout" className="w-full font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center" style={{ backgroundColor: '#3a1f1d', color: '#ffffff', padding: '1.2rem 0' }}>
+              
+              <Link to="/checkout" className="block w-full bg-[#3a1f1d] text-[#F9F8F6] py-[14px] text-center text-[15px] font-normal hover:bg-black transition-colors">
                 Buy Now
               </Link>
             </div>
 
-            {/* Accordions */}
-            <div className="flex flex-col border-t border-[#dddddd]">
-              {[
-                { title: 'Product Info', content: 'Expertly tailored with premium lightweight fabrics, designed for effortless elegance and breathable comfort. Perfect for any formal or semi-formal occasion.' },
-                { title: 'Return & Refund Policy', content: 'We accept returns within 14 days of delivery. Items must be unworn, unwashed, and in original condition with all tags attached.' },
-                { title: 'Shipping Info', content: 'Standard local delivery within 2-3 business days. International express shipping available globally via DHL.' }
-              ].map((acc, idx) => (
-                <div key={idx} style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-                  <button 
-                    onClick={() => toggleAccordion(acc.title)}
-                    className="flex justify-between w-full text-left font-[var(--font-sans)] text-[#3a1f1d] uppercase outline-none"
-                    style={{ padding: '1.5rem 0', fontSize: '1.1rem' }}
-                  >
-                    {acc.title}
-                    <span>{openAccordion === acc.title ? '−' : '+'}</span>
-                  </button>
-                  {openAccordion === acc.title && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }} 
-                      animate={{ height: 'auto', opacity: 1 }} 
-                      className="overflow-hidden text-[#555] text-sm leading-relaxed font-[var(--font-sans)] mb-6"
-                    >
-                      {acc.content}
-                    </motion.div>
-                  )}
-                </div>
-              ))}
+            {/* Description */}
+            <p className="text-[14px] leading-relaxed opacity-90 mb-10">
+              {product.description}
+            </p>
+
+            {/* Accordions (Veilux Style lines with + / -) */}
+            <div className="border-t border-[#3a1f1d]/20">
+              
+              <details className="group border-b border-[#3a1f1d]/20 py-4 cursor-pointer">
+                <summary className="flex justify-between items-center text-[15px] font-normal list-none">
+                  Product Info
+                  <span className="text-xl font-light group-open:hidden">+</span>
+                  <span className="text-xl font-light hidden group-open:block">−</span>
+                </summary>
+                <p className="mt-4 text-[14px] opacity-80 leading-relaxed">
+                  I'm a great place to add more information about your product, such as sizing, material, care, and cleaning instructions.
+                </p>
+              </details>
+
+              <details className="group border-b border-[#3a1f1d]/20 py-4 cursor-pointer">
+                <summary className="flex justify-between items-center text-[15px] font-normal list-none">
+                  Return & Refund Policy
+                  <span className="text-xl font-light group-open:hidden">+</span>
+                  <span className="text-xl font-light hidden group-open:block">−</span>
+                </summary>
+                <p className="mt-4 text-[14px] opacity-80 leading-relaxed">
+                  I’m a Return and Refund policy. I’m a great place to let your customers know what to do in case they are dissatisfied with their purchase.
+                </p>
+              </details>
+
+              <details className="group border-b border-[#3a1f1d]/20 py-4 cursor-pointer">
+                <summary className="flex justify-between items-center text-[15px] font-normal list-none">
+                  Shipping Info
+                  <span className="text-xl font-light group-open:hidden">+</span>
+                  <span className="text-xl font-light hidden group-open:block">−</span>
+                </summary>
+                <p className="mt-4 text-[14px] opacity-80 leading-relaxed">
+                  I'm a shipping policy. I'm a great place to add more information about your shipping methods, packaging and cost.
+                </p>
+              </details>
+
             </div>
 
           </div>
-        </div>
 
+        </div>
       </div>
     </motion.div>
   );
 };
 
-export default ProductDetails;
+export default ProductDetail;

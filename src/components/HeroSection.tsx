@@ -1,4 +1,4 @@
-import Header from './Header';
+
 import { Link } from 'react-router-dom';
 
 import promoImg from '../assets/8.jpg';
@@ -24,8 +24,7 @@ const HeroSection = () => {
       {/* Dark Overlay for text readability */}
       <div className="absolute inset-0 bg-black/40 z-0"></div>
 
-      {/* Absolutely Positioned Header */}
-      <Header />
+
 
       {/* Left-aligned Text Overlay */}
       <motion.div
