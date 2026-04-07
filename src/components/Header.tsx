@@ -12,27 +12,25 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-[#F9F8F6] border-b border-[#3a1f1d]/10 px-8 md:px-16">
+      <header className="sticky top-0 z-[100] w-full bg-[#F9F8F6] border-b border-[#3a1f1d]/10 px-8 md:px-16">
         <div className="max-w-[1400px] mx-auto w-full h-20 md:h-24 flex items-center justify-between relative">
           
-          {/* LEFT SECTION: Logo on Left, Text on Right, Pushed inward from the edge */}
-          <Link to="/" className="flex items-center gap-3 z-10 shrink-0 pl-2 md:pl-6">
-            {/* Logo image restored to the LEFT side */}
-            <img src="/logo.png" alt="Gabby Newluk" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+          {/* LEFT SECTION: Logo on Left, Text on Right */}
+          <Link to="/" className="flex items-center gap-3 md:gap-4 z-10 shrink-0 pl-2 md:pl-6">
+            <img src="/logo.png" alt="Gabby Newluk" className="h-12 w-12 md:h-14 md:w-14 object-contain" />
             
-            {/* Brand text on the RIGHT side of the logo */}
-            <div className="flex flex-col text-left">
+            <div className="flex flex-col text-left mt-1">
               <span
-                className="text-xl md:text-2xl font-normal text-[#3a1f1d] leading-none"
+                className="text-[28px] md:text-[34px] font-medium italic text-[#3a1f1d] leading-[0.8]"
                 style={{ fontFamily: "'Playfair Display', serif" }}
               >
                 Gabby Newluk
               </span>
-              <span className="text-[8px] md:text-[9px] uppercase tracking-[0.35em] opacity-70 text-[#3a1f1d] mt-1 md:mt-1.5">
+              <span className="text-[9px] md:text-[10px] uppercase tracking-[0.4em] opacity-60 text-[#3a1f1d] mt-2 md:mt-2.5 ml-[2px] italic">
                 RIGHT ABOVE IT
               </span>
             </div>
-          </Link>
+          </Link>  
 
           {/* CENTER SECTION: Navigation (Absolutely centered) */}
           <nav className="hidden lg:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -85,22 +83,53 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
-        {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-[#F9F8F6] text-[#3a1f1d] flex flex-col items-center py-10 gap-8 shadow-2xl border-t border-[#3a1f1d]/10 lg:hidden z-40">
-            <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Collections</Link>
-            <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Shop</Link>
-            <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Book Appointment</Link>
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Sign Up / Log In</button>
-              </SignInButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
-          </div>
-        )}
+        {/* PREMIUM SLIDE-OUT MOBILE MENU */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                onClick={() => setIsMenuOpen(false)} 
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150] lg:hidden" 
+              />
+              <motion.div 
+                initial={{ x: '100%' }} 
+                animate={{ x: 0 }} 
+                exit={{ x: '100%' }} 
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }} 
+                className="fixed top-0 right-0 h-screen w-[80%] max-w-sm bg-[#F9F8F6]/30 backdrop-blur-3xl shadow-2xl border-l border-[#3a1f1d]/10 z-[200] flex flex-col text-[#3a1f1d] lg:hidden"
+              >
+                <div className="flex justify-end p-6">
+                  <button onClick={() => setIsMenuOpen(false)} className="p-2 text-[#3a1f1d]/50 hover:text-[#3a1f1d] transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto flex flex-col w-full pb-10">
+                  <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Collections</Link>
+                  <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Shop</Link>
+                  <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Book Appointment</Link>
+                  
+                  <div className="w-full flex flex-col">
+                    <Show when="signed-out">
+                      <SignInButton mode="modal">
+                        <button onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Sign Up / Log In</button>
+                      </SignInButton>
+                    </Show>
+                    <Show when="signed-in">
+                      <div className="w-full py-10 border-b border-[#3a1f1d]/10 flex flex-col items-center gap-3">
+                        <UserButton />
+                        <span className="text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Profile</span>
+                      </div>
+                    </Show>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* PREMIUM SLIDE-OUT CART */}
@@ -108,7 +137,7 @@ const Header = () => {
         {isCartOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCartOpen(false)} className="fixed inset-0 bg-black/60 z-[150]" />
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed top-0 right-0 h-screen w-full md:w-[420px] bg-[#F9F8F6] z-[200] shadow-2xl flex flex-col text-[#3a1f1d]">
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed top-0 right-0 h-screen w-full md:w-[420px] bg-[#F9F8F6] z-[200] shadow-2xl flex flex-col text-[#3a1f1d]">
               
               <div className="flex justify-between items-center p-6 border-b border-[#3a1f1d]/10 shrink-0">
                 <h2 className="text-2xl font-normal" style={{ fontFamily: "'Playfair Display', serif" }}>

@@ -28,7 +28,7 @@ const HeroSection = () => {
 
       {/* Left-aligned Text Overlay */}
       <motion.div
-        className="absolute left-[5%] top-1/2 -translate-y-1/2 max-w-[500px] z-10 text-white"
+        className="absolute left-0 right-0 top-1/2 z-10 max-w-[500px] -translate-y-1/2 px-6 text-white md:left-[5%] md:right-auto md:px-0"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
@@ -54,26 +54,16 @@ const HeroSection = () => {
 
       {/* Right Promo Box */}
       <motion.div
+        className="absolute bottom-4 left-0 right-0 z-40 mx-auto flex max-w-[90%] flex-row items-center gap-3 overflow-hidden bg-[#F5F5F3] p-3 shadow-[0_10px_40px_rgba(0,0,0,0.1)] md:bottom-[5%] md:left-auto md:right-[5%] md:mx-0 md:max-w-md md:gap-6 md:p-6"
         style={{
-          position: 'absolute',
-          bottom: '5%',
-          right: '5%',
-          backgroundColor: '#F5F5F3',
-          padding: '2rem',
-          display: 'flex',
-          gap: '1.5rem',
-          alignItems: 'center',
-          maxWidth: '480px',
-          zIndex: 50,
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-          overflow: 'hidden'
+          position: 'absolute'
         }}
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 1, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
       >
         {/* Left side of box: Square tiny thumbnail */}
-        <div style={{ width: '140px', height: '140px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(0,0,0,0.05)' }}>
+        <div className="h-20 w-20 shrink-0 overflow-hidden border border-black/5 md:h-32 md:w-32">
           {/* * To use an image from the assets folder:
             * 1. import promoImg from '../assets/your-image.jpg';
             * 2. src={promoImg}
@@ -81,26 +71,27 @@ const HeroSection = () => {
           <img
             src={promoImg}
             alt="Promo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0 }}
+            className="h-20 w-20 shrink-0 object-cover md:h-32 md:w-32"
+            style={{ borderRadius: 0 }}
           />
         </div>
 
         {/* Right side of box: Flexbox column */}
-        <div className="flex flex-col gap-[1rem] flex-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 md:gap-3">
           <h3
-            className="text-2xl italic text-[#3a1f1d]"
+            className="text-sm italic leading-tight text-[#3a1f1d] md:text-xl"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
             The mid-season <br /> sale is on!
           </h3>
 
-          <div className="flex flex-row justify-between items-center w-full">
-            <p className="font-[var(--font-sans)] text-sm text-[#1a1a1a]">
+          <div className="flex w-full flex-row items-center justify-between gap-2">
+            <p className="font-[var(--font-sans)] text-[10px] text-[#1a1a1a] md:text-sm">
               Up to 40% Off
             </p>
             <a
               href="#collections"
-              className="font-[var(--font-sans)] text-[#1a1a1a] text-sm underline hover:opacity-70 transition-opacity whitespace-nowrap"
+              className="whitespace-nowrap font-[var(--font-sans)] text-[10px] text-[#1a1a1a] underline transition-opacity hover:opacity-70 md:text-sm"
             >
               Shop Now
             </a>

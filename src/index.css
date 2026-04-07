@@ -31,6 +31,7 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -46,6 +47,11 @@ body {
 a {
   text-decoration: none;
   color: inherit;
+  touch-action: manipulation;
+}
+
+button {
+  touch-action: manipulation;
 }
 
 img {
