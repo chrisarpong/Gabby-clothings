@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Show, SignInButton, UserButton } from '@clerk/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import brandLogo from '../assets/logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,54 +12,93 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 left-0 w-full z-[100] bg-[#F9F8F6] border-b border-[#3a1f1d]/10 px-8 md:px-16 py-4 flex justify-between items-center transition-all duration-300">
-        <div className="flex md:flex-1 justify-start">
-          <Link to="/" className="flex flex-col items-center hover:opacity-70 transition-opacity">
-            <img src={brandLogo} alt="Gabby Newluk" style={{ height: '40px', width: 'auto', maxWidth: '150px', objectFit: 'contain' }} />
-            <div className="flex flex-col items-center leading-[1.1] mt-1 text-[#3a1f1d]">
-              <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: '500', fontSize: '1.2rem' }}>Gabby Newluk</span>
-              <span className="opacity-70" style={{ fontFamily: "'Jost', sans-serif", fontSize: '0.55rem', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 400, marginTop: '2px' }}>Right Above it</span>
+      <header className="sticky top-0 z-50 w-full bg-[#F9F8F6] border-b border-[#3a1f1d]/10 px-8 md:px-16">
+        <div className="max-w-[1400px] mx-auto w-full h-20 md:h-24 flex items-center justify-between relative">
+          
+          {/* LEFT SECTION: Logo on Left, Text on Right, Pushed inward from the edge */}
+          <Link to="/" className="flex items-center gap-3 z-10 shrink-0 pl-2 md:pl-6">
+            {/* Logo image restored to the LEFT side */}
+            <img src="/logo.png" alt="Gabby Newluk" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+            
+            {/* Brand text on the RIGHT side of the logo */}
+            <div className="flex flex-col text-left">
+              <span
+                className="text-xl md:text-2xl font-normal text-[#3a1f1d] leading-none"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Gabby Newluk
+              </span>
+              <span className="text-[8px] md:text-[9px] uppercase tracking-[0.35em] opacity-70 text-[#3a1f1d] mt-1 md:mt-1.5">
+                RIGHT ABOVE IT
+              </span>
             </div>
           </Link>
+
+          {/* CENTER SECTION: Navigation (Absolutely centered) */}
+          <nav className="hidden lg:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <Link to="/collections" className="text-[11px] uppercase tracking-[0.15em] font-medium text-[#3a1f1d] hover:opacity-60 transition-opacity">
+              COLLECTIONS
+            </Link>
+            <Link to="/shop" className="text-[11px] uppercase tracking-[0.15em] font-medium text-[#3a1f1d] hover:opacity-60 transition-opacity">
+              SHOP
+            </Link>
+            <Link to="/book-appointment" className="text-[11px] uppercase tracking-[0.15em] font-medium text-[#3a1f1d] hover:opacity-60 transition-opacity">
+              BOOK APPOINTMENT
+            </Link>
+          </nav>
+
+          {/* RIGHT SECTION: Cart & Auth (Desktop) */}
+          <div className="hidden lg:flex items-center gap-8 z-10 shrink-0 mr-2 md:mr-4">
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="text-[11px] uppercase tracking-[0.15em] font-medium text-[#3a1f1d] hover:opacity-60 transition-opacity"
+            >
+              CART ({cartCount})
+            </button>
+            <div className="flex items-center scale-90 origin-right">
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <button className="text-[11px] uppercase tracking-[0.15em] font-medium text-[#3a1f1d] hover:opacity-60 transition-opacity">
+                    LOGIN
+                  </button>
+                </SignInButton>
+              </Show>
+              <Show when="signed-in">
+                <UserButton />
+              </Show>
+            </div>
+          </div>
+
+          {/* MOBILE CONTROLS (Cart & Hamburger) */}
+          <div className="flex lg:hidden items-center gap-5 z-10">
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="text-[10px] uppercase tracking-widest font-medium text-[#3a1f1d]"
+            >
+              CART ({cartCount})
+            </button>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-[#3a1f1d]">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <nav className="hidden md:flex justify-center items-center gap-10">
-          <Link to="/collections" className="text-xs uppercase tracking-widest font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity" style={{ fontFamily: "'Jost', sans-serif" }}>Collections</Link>
-          <Link to="/shop" className="text-xs uppercase tracking-widest font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity" style={{ fontFamily: "'Jost', sans-serif" }}>Shop</Link>
-          <Link to="/book-appointment" className="text-xs uppercase tracking-widest font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity" style={{ fontFamily: "'Jost', sans-serif" }}>Book Appointment</Link>
-        </nav>
-
-        <div className="hidden md:flex flex-row gap-8 items-center justify-end md:flex-1 text-[#3a1f1d]">
-          <button onClick={() => setIsCartOpen(true)} className="text-xs uppercase tracking-widest font-medium hover:opacity-50 transition-opacity" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Cart ({cartCount})
-          </button>
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button className="text-xs uppercase tracking-widest font-medium flex items-center gap-2 hover:opacity-50 transition-opacity" style={{ fontFamily: "'Jost', sans-serif" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                Account
-              </button>
-            </SignInButton>
-          </Show>
-          <Show when="signed-in">
-            <UserButton />
-          </Show>
-        </div>
-
-        <div className="flex md:hidden flex-row gap-6 items-center text-[#3a1f1d]">
-          <button onClick={() => setIsCartOpen(true)} className="text-xs uppercase tracking-widest font-medium hover:opacity-50">Cart ({cartCount})</button>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="outline-none hover:opacity-50">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
-          </button>
-        </div>
-
+        {/* Mobile Dropdown Menu */}
         {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-[#F9F8F6] text-[#3a1f1d] flex flex-col items-center py-10 gap-8 shadow-2xl border-t border-[#3a1f1d]/10 md:hidden z-50">
+          <div className="absolute top-full left-0 w-full bg-[#F9F8F6] text-[#3a1f1d] flex flex-col items-center py-10 gap-8 shadow-2xl border-t border-[#3a1f1d]/10 lg:hidden z-40">
             <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Collections</Link>
             <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Shop</Link>
             <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Book Appointment</Link>
-            <Show when="signed-out"><SignInButton mode="modal"><button onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Sign Up / Log In</button></SignInButton></Show>
-            <Show when="signed-in"><UserButton /></Show>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button onClick={() => setIsMenuOpen(false)} className="uppercase tracking-[0.2em] text-xs font-bold hover:opacity-50">Sign Up / Log In</button>
+              </SignInButton>
+            </Show>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
           </div>
         )}
       </header>

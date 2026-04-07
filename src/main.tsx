@@ -1,29 +1,30 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { ClerkProvider, useAuth } from '@clerk/react'
-import { ConvexProviderWithClerk } from 'convex/react-clerk'
-import { ConvexReactClient } from 'convex/react'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { ClerkProvider, useAuth } from "@clerk/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
+import App from "./App";
+import "./index.css";
 
-// Read the keys from your .env.local file
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
+const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Clerk Publishable Key");
+if (!publishableKey) {
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env.local");
 }
 
-// Initialize the Convex Database Client
-const convex = new ConvexReactClient(CONVEX_URL as string);
+if (!convexUrl) {
+  throw new Error("Missing VITE_CONVEX_URL in .env.local");
+}
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const convex = new ConvexReactClient(convexUrl);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      {/* This syncs your Clerk users directly with your Convex database */}
+    <ClerkProvider publishableKey={publishableKey}>
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <App />
       </ConvexProviderWithClerk>
     </ClerkProvider>
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);

@@ -21,39 +21,65 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     // Saved to profile for future orders
-    savedMeasurements: v.optional(v.object(measurementFields)), 
+    savedMeasurements: v.optional(v.object(measurementFields)),
   }).index("by_clerk_id", ["clerkId"]),
 
   // 2. PRODUCTS TABLE
   products: defineTable({
     name: v.string(),
+    slug: v.optional(v.string()),
     price: v.number(),
     description: v.string(),
+    productInfo: v.optional(v.string()),
+    returnPolicy: v.optional(v.string()),
+    shippingInfo: v.optional(v.string()),
     images: v.array(v.string()),
+    category: v.optional(v.string()),
     type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
     inStock: v.boolean(),
-  }),
+    stock: v.optional(v.number()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_category", ["category"]),
 
-  // 3. ORDERS TABLE
+  // 3. CART ITEMS TABLE (server-side cart for authenticated users)
+  cartItems: defineTable({
+    userId: v.string(), // Clerk user ID (tokenIdentifier)
+    productId: v.id("products"),
+    quantity: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_product", ["userId", "productId"]),
+
+  // 4. ORDERS TABLE
   orders: defineTable({
     userId: v.id("users"),
-    items: v.array(v.object({
-      productId: v.id("products"),
-      quantity: v.number(),
-      priceAtTime: v.number(),
-      type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
-    })),
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+        priceAtTime: v.number(),
+        type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
+      })
+    ),
     totalAmount: v.number(),
-    status: v.union(v.literal("pending"), v.literal("processing"), v.literal("shipped"), v.literal("completed")),
-    
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("shipped"),
+      v.literal("completed")
+    ),
+
     // THE BESPOKE BUSINESS LOGIC
-    tailoringDetails: v.optional(v.object({
-      hasMeasurements: v.boolean(), // True = Option A, False = Option B
-      measurementsUsed: v.optional(v.object(measurementFields)), // Snapshot for this specific order
-      fullBodyImageId: v.id("_storage"), // COMPULSORY Convex storage ID
-      inspoImageId: v.optional(v.id("_storage")), // OPTIONAL Convex storage ID
-    })),
-    
+    tailoringDetails: v.optional(
+      v.object({
+        hasMeasurements: v.boolean(), // True = Option A, False = Option B
+        measurementsUsed: v.optional(v.object(measurementFields)), // Snapshot for this specific order
+        fullBodyImageId: v.id("_storage"), // COMPULSORY Convex storage ID
+        inspoImageId: v.optional(v.id("_storage")), // OPTIONAL Convex storage ID
+      })
+    ),
+
     shippingAddress: v.object({
       street: v.string(),
       city: v.string(),

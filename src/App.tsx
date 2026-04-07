@@ -1,33 +1,29 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import SyncUser from './components/SyncUser'; // <-- The new Sync component
-
-// Pages
-import Home from './pages/Home';
-import ShopAll from './pages/ShopAll';
-import CategoryPage from './pages/CategoryPage';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import OrderConfirmation from './pages/OrderConfirmation';
-import SizeGuide from './pages/SizeGuide';
-import ShippingReturns from './pages/ShippingReturns';
-import Contact from './pages/Contact';
-import Legal from './pages/Legal';
-import BookAppointment from './pages/BookAppointment';
-import Account from './pages/Account';
-import Collections from './pages/Collections';
-import NotFound from './pages/NotFound';
-import { CartProvider } from './context/CartContext';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import SyncUser from "./components/SyncUser";
+import { CartProvider } from "./context/CartContext";
+import Home from "./pages/Home";
+import ShopAll from "./pages/ShopAll";
+import CategoryPage from "./pages/CategoryPage";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import SizeGuide from "./pages/SizeGuide";
+import ShippingReturns from "./pages/ShippingReturns";
+import Contact from "./pages/Contact";
+import Legal from "./pages/Legal";
+import BookAppointment from "./pages/BookAppointment";
+import Account from "./pages/Account";
+import Collections from "./pages/Collections";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
     <CartProvider>
       <BrowserRouter>
-        {/* Invisible Database Sync Listener */}
-        <SyncUser /> 
-        
+        <SyncUser />
         <div className="min-h-screen bg-[var(--color-bg-primary)] flex flex-col">
           <Header />
           <main className="flex-1 w-full">
