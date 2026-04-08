@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { TextField } from '@mui/material';
+import { Button } from '../components/ui/Button';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -19,8 +21,12 @@ const Contact = () => {
     setSent(true);
   };
 
-  const inputClass =
-    'w-full bg-transparent border-0 border-b border-[#3a1f1d]/25 py-3 px-0 text-base text-[#3a1f1d] placeholder:text-[#3a1f1d]/30 outline-none focus:border-[#3a1f1d] transition-colors rounded-none';
+  const muiBrandStyles = {
+    '& .MuiOutlinedInput-root': {
+      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+  };
 
   return (
     <motion.div
@@ -107,41 +113,43 @@ const Contact = () => {
                 <p className="text-sm text-[#3a1f1d]/60 leading-relaxed" style={{ fontFamily: "'Jost', sans-serif" }}>
                   Thank you for reaching out. A member of our team will respond within 24–48 hours.
                 </p>
-                <button
+                <Button
                   onClick={() => { setSent(false); setForm({ name: '', email: '', subject: '', message: '' }); }}
-                  className="mt-4 border border-[#3a1f1d] text-[#3a1f1d] uppercase tracking-widest text-xs hover:bg-[#3a1f1d] hover:text-white transition-colors duration-300"
-                  style={{ padding: '12px 28px', fontFamily: "'Jost', sans-serif" }}
+                  style={{ backgroundColor: 'transparent', borderColor: '#3a1f1d', border: '1px solid #3a1f1d', color: '#3a1f1d', padding: '12px 28px', textTransform: 'uppercase', letterSpacing: '0.2em' }}
                 >
                   Send Another
-                </button>
+                </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40" style={{ fontFamily: "'Jost', sans-serif" }}>Your Name</label>
-                    <input required type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Kofi Mensah" className={inputClass} style={{ fontFamily: "'Jost', sans-serif" }} />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40" style={{ fontFamily: "'Jost', sans-serif" }}>Email Address</label>
-                    <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="kofi@example.com" className={inputClass} style={{ fontFamily: "'Jost', sans-serif" }} />
-                  </div>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <TextField 
+                    fullWidth variant="outlined" required label="YOUR NAME"
+                    value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Kofi Mensah" sx={muiBrandStyles}
+                  />
+                  <TextField 
+                    fullWidth variant="outlined" required label="EMAIL ADDRESS" type="email"
+                    value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="kofi@example.com" sx={muiBrandStyles}
+                  />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40" style={{ fontFamily: "'Jost', sans-serif" }}>Subject</label>
-                  <input type="text" value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} placeholder="e.g. Bespoke Suit Inquiry" className={inputClass} style={{ fontFamily: "'Jost', sans-serif" }} />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40" style={{ fontFamily: "'Jost', sans-serif" }}>Your Message</label>
-                  <textarea required rows={6} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us how we can help you..." className={`${inputClass} resize-none`} style={{ fontFamily: "'Jost', sans-serif" }} />
-                </div>
-                <button
+                <TextField 
+                  fullWidth variant="outlined" label="SUBJECT"
+                  value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
+                  placeholder="e.g. Bespoke Suit Inquiry" sx={muiBrandStyles}
+                />
+                <TextField 
+                  fullWidth variant="outlined" required label="YOUR MESSAGE" multiline rows={6}
+                  value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                  placeholder="Tell us how we can help you..." sx={muiBrandStyles}
+                />
+                <Button
                   type="submit"
-                  className="w-full bg-[#3a1f1d] text-[#F5F5F3] uppercase tracking-[0.2em] text-sm py-5 hover:bg-black transition-colors duration-300"
-                  style={{ fontFamily: "'Jost', sans-serif" }}
+                  style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem' }}
                 >
                   Send Message
-                </button>
+                </Button>
               </form>
             )}
           </motion.div>

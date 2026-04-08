@@ -1,4 +1,14 @@
 import { useState } from 'react';
+import { TextField } from '@mui/material';
+import { Button } from './ui/Button';
+
+const muiBrandStyles = {
+  '& .MuiOutlinedInput-root': {
+    '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
+    '& fieldset': { borderColor: 'rgba(58, 31, 29, 0.2)' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+};
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
@@ -27,25 +37,24 @@ const Newsletter = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row gap-0 max-w-lg mx-auto border border-[var(--color-border)] border-b border-[var(--color-text-primary)]"
+          className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto w-full"
           id="newsletter-form"
         >
-          <input
+          <TextField
+            fullWidth
             type="email"
             required
-            placeholder="Email Address"
+            label="EMAIL ADDRESS"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 bg-transparent text-[var(--color-text-primary)] text-sm px-0 py-4 placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none transition-all duration-300"
-            id="newsletter-email-input"
+            sx={muiBrandStyles}
           />
-          <button
+          <Button
             type="submit"
-            className="text-xs uppercase tracking-[0.4em] font-medium px-8 py-4 hover:opacity-70 transition-opacity cursor-pointer text-[var(--color-text-primary)]"
-            id="newsletter-submit-btn"
+            style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1rem 3rem' }}
           >
             Join
-          </button>
+          </Button>
         </form>
       </div>
     </section>

@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { usePaystackPayment } from "react-paystack";
 import { useCart } from "../context/CartContext";
 import { useUser } from "@clerk/react";
+import { TextField } from "@mui/material";
+import { Button } from "../components/ui/Button";
 
 // npm install react-paystack (if not already installed)
 
@@ -96,11 +98,12 @@ const Checkout = () => {
   };
 
   // ── Reusable classes ──
-  const inputClasses =
-    "w-full border-0 border-b border-[#3a1f1d]/20 bg-transparent py-5 text-base font-medium text-[#3a1f1d] placeholder:text-[#3a1f1d]/25 focus:border-[#3a1f1d] outline-none transition-all";
-  const labelClasses =
-    "uppercase tracking-[0.3em] text-[10px] font-bold text-[#3a1f1d]/40 mb-1 block";
-  const errorClasses = "text-red-500 text-[11px] mt-1 tracking-wide";
+  const muiBrandStyles = {
+    '& .MuiOutlinedInput-root': {
+      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+  };
 
   // ── Empty cart ──
   if (cart.length === 0) {
@@ -177,24 +180,18 @@ const Checkout = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div>
-                  <label className={labelClasses}>Email Address *</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={inputClasses}
-                    placeholder="your@email.com"
+                  <TextField 
+                    fullWidth variant="outlined" label="EMAIL ADDRESS *" type="email"
+                    value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com" sx={muiBrandStyles}
+                    error={!!formErrors.email} helperText={formErrors.email}
                   />
-                  {formErrors.email && <p className={errorClasses}>{formErrors.email}</p>}
                 </div>
                 <div>
-                  <label className={labelClasses}>Phone Number</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={inputClasses}
-                    placeholder="+233 XX XXX XXXX"
+                  <TextField 
+                    fullWidth variant="outlined" label="PHONE NUMBER" type="tel"
+                    value={phone} onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+233 XX XXX XXXX" sx={muiBrandStyles}
                   />
                 </div>
               </div>
@@ -207,79 +204,66 @@ const Checkout = () => {
               </h2>
               <div className="grid grid-cols-2 gap-12">
                 <div>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First Name *"
-                    className={inputClasses}
+                  <TextField 
+                    fullWidth variant="outlined" label="FIRST NAME *"
+                    value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First Name" sx={muiBrandStyles}
+                    error={!!formErrors.firstName} helperText={formErrors.firstName}
                   />
-                  {formErrors.firstName && <p className={errorClasses}>{formErrors.firstName}</p>}
                 </div>
                 <div>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last Name *"
-                    className={inputClasses}
+                  <TextField 
+                    fullWidth variant="outlined" label="LAST NAME *"
+                    value={lastName} onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last Name" sx={muiBrandStyles}
+                    error={!!formErrors.lastName} helperText={formErrors.lastName}
                   />
-                  {formErrors.lastName && <p className={errorClasses}>{formErrors.lastName}</p>}
                 </div>
               </div>
               <div className="mt-10">
-                <input
-                  type="text"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                  placeholder="House Number & Street *"
-                  className={inputClasses}
+                <TextField 
+                  fullWidth variant="outlined" label="HOUSE NUMBER & STREET *"
+                  value={street} onChange={(e) => setStreet(e.target.value)}
+                  placeholder="House Number & Street" sx={muiBrandStyles}
+                  error={!!formErrors.street} helperText={formErrors.street}
                 />
-                {formErrors.street && <p className={errorClasses}>{formErrors.street}</p>}
               </div>
               <div className="grid grid-cols-3 gap-12 mt-10">
                 <div>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="City *"
-                    className={inputClasses}
+                  <TextField 
+                    fullWidth variant="outlined" label="CITY *"
+                    value={city} onChange={(e) => setCity(e.target.value)}
+                    placeholder="City" sx={muiBrandStyles}
+                    error={!!formErrors.city} helperText={formErrors.city}
                   />
-                  {formErrors.city && <p className={errorClasses}>{formErrors.city}</p>}
                 </div>
                 <div>
-                  <input
-                    type="text"
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    placeholder="Region *"
-                    className={inputClasses}
+                  <TextField 
+                    fullWidth variant="outlined" label="REGION *"
+                    value={region} onChange={(e) => setRegion(e.target.value)}
+                    placeholder="Region" sx={muiBrandStyles}
+                    error={!!formErrors.region} helperText={formErrors.region}
                   />
-                  {formErrors.region && <p className={errorClasses}>{formErrors.region}</p>}
                 </div>
                 <div>
-                  <input
-                    type="text"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    placeholder="Country *"
-                    className={inputClasses}
+                  <TextField 
+                    fullWidth variant="outlined" label="COUNTRY *"
+                    value={country} onChange={(e) => setCountry(e.target.value)}
+                    placeholder="Country" sx={muiBrandStyles}
+                    error={!!formErrors.country} helperText={formErrors.country}
                   />
-                  {formErrors.country && <p className={errorClasses}>{formErrors.country}</p>}
                 </div>
               </div>
             </section>
 
             {/* ── Pay Now Button ── */}
-            <motion.button
+            <Button
               type="button"
-              whileTap={{ scale: 0.98 }}
               onClick={handlePayNow}
-              className="w-full bg-[#3a1f1d] text-[#F9F8F6] py-7 text-center uppercase tracking-[0.5em] text-sm font-bold hover:bg-black transition-all shadow-2xl"
+              style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.4em', padding: '1.75rem', fontSize: '0.875rem', width: '100%', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)' }}
             >
               Pay Now — GH₵ {total.toFixed(2)}
-            </motion.button>
+            </Button>
           </div>
 
           {/* ════════ RIGHT: Order Summary ════════ */}

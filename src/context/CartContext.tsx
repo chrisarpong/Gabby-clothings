@@ -6,8 +6,8 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { useAuth } from "@clerk/react";
-import { useMutation, useQuery } from "convex/react";
+// import { useAuth } from "@clerk/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -69,7 +69,7 @@ function addItemToArray(prev: CartItem[], item: CartItem): CartItem[] {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { isSignedIn } = useAuth();
+  const { isAuthenticated: isSignedIn } = useConvexAuth();
 
   // Server cart (only fetched when signed in)
   const serverCart = useQuery(api.cart.getCart, isSignedIn ? {} : "skip");

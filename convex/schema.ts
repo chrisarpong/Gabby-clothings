@@ -3,11 +3,12 @@ import { v } from "convex/values";
 
 // Define standard male measurements to reuse
 const measurementFields = {
+  height: v.optional(v.number()),
   neck: v.optional(v.number()),
   chest: v.optional(v.number()),
   waist: v.optional(v.number()),
   hips: v.optional(v.number()),
-  shoulderToWaist: v.optional(v.number()),
+  shoulders: v.optional(v.number()),
   sleeveLength: v.optional(v.number()),
   inseam: v.optional(v.number()),
   thigh: v.optional(v.number()),
@@ -22,7 +23,18 @@ export default defineSchema({
     lastName: v.optional(v.string()),
     // Saved to profile for future orders
     savedMeasurements: v.optional(v.object(measurementFields)),
+    fullBodyImageId: v.optional(v.id("_storage")),
+    inspoImageId: v.optional(v.id("_storage")),
   }).index("by_clerk_id", ["clerkId"]),
+
+  // 1.5 MEASUREMENT PROFILES (Catalogue)
+  measurementProfiles: defineTable({
+    userId: v.string(), // Links to their Clerk Authentication
+    profileName: v.string(),
+    ...measurementFields,
+    fullBodyImageId: v.optional(v.id("_storage")),
+    inspoImageId: v.optional(v.id("_storage")),
+  }).index("by_userId", ["userId"]),
 
   // 2. PRODUCTS TABLE
   products: defineTable({

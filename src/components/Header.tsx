@@ -62,7 +62,12 @@ const Header = () => {
                 </SignInButton>
               </Show>
               <Show when="signed-in">
-                <UserButton />
+                <div className="flex items-center gap-6">
+                  <Link to="/profile" className="text-[11px] uppercase tracking-[0.15em] font-medium text-[#3a1f1d] hover:opacity-60 transition-opacity">
+                    PROFILE
+                  </Link>
+                  <UserButton />
+                </div>
               </Show>
             </div>
           </div>
@@ -92,7 +97,7 @@ const Header = () => {
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }} 
                 onClick={() => setIsMenuOpen(false)} 
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150] lg:hidden" 
+                className= "fixed inset-0 bg-black/40 backdrop-blur-sm z-[150] lg:hidden" 
               />
               <motion.div 
                 initial={{ x: '100%' }} 
@@ -101,27 +106,40 @@ const Header = () => {
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }} 
                 className="fixed top-0 right-0 h-screen w-[80%] max-w-sm bg-[#F9F8F6]/30 backdrop-blur-3xl shadow-2xl border-l border-[#3a1f1d]/10 z-[200] flex flex-col text-[#3a1f1d] lg:hidden"
               >
+                {/* Close Button Container */}
                 <div className="flex justify-end p-6">
                   <button onClick={() => setIsMenuOpen(false)} className="p-2 text-[#3a1f1d]/50 hover:text-[#3a1f1d] transition-colors">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto flex flex-col w-full pb-10">
-                  <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Collections</Link>
-                  <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Shop</Link>
-                  <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Book Appointment</Link>
+                {/* Centered, MASSIVELY Spaced Edge-to-Edge Links */}
+                <div className="flex-1 overflow-y-auto flex flex-col w-full mt-8">
+                  <Link to="/collections" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-16 border-t border-b border-[#3a1f1d]/20 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">
+                    Collections
+                  </Link>
+                  <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-16 border-b border-[#3a1f1d]/20 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">
+                    Shop
+                  </Link>
+                  <Link to="/book-appointment" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-16 border-b border-[#3a1f1d]/20 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">
+                    Book Appointment
+                  </Link>
                   
-                  <div className="w-full flex flex-col">
+                  {/* Auth Container (Matches link styling perfectly) */}
+                  <div className="w-full flex justify-center items-center py-16 border-b border-[#3a1f1d]/20">
                     <Show when="signed-out">
                       <SignInButton mode="modal">
-                        <button onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-10 border-b border-[#3a1f1d]/10 text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Sign Up / Log In</button>
+                        <button onClick={() => setIsMenuOpen(false)} className="block w-full text-center text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">
+                          Sign Up / Log In
+                        </button>
                       </SignInButton>
                     </Show>
                     <Show when="signed-in">
-                      <div className="w-full py-10 border-b border-[#3a1f1d]/10 flex flex-col items-center gap-3">
+                      <div className="flex flex-col items-center gap-3">
                         <UserButton />
-                        <span className="text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">Profile</span>
+                        <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="block w-full text-center text-[18px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] hover:opacity-50 transition-opacity">
+                          Profile
+                        </Link>
                       </div>
                     </Show>
                   </div>

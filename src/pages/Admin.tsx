@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { motion } from 'framer-motion';
+import { TextField, MenuItem } from '@mui/material';
+import { Button } from '../components/ui/Button';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'inventory'>('orders');
@@ -13,6 +15,13 @@ const Admin = () => {
   const [formData, setFormData] = useState({
     name: '', price: '', description: '', imageUrl: '', type: 'custom' as 'custom' | 'ready-to-wear',
   });
+
+  const muiBrandStyles = {
+    '& .MuiOutlinedInput-root': {
+      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,38 +154,47 @@ const Admin = () => {
                 </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <div>
-                    <label className="block text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 mb-3">Product Name</label>
-                    <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#F9F8F6] border border-[#3a1f1d]/10 px-5 py-4 text-[15px] focus:outline-none focus:border-[#3a1f1d]/50 transition-colors" />
-                  </div>
+                  <TextField 
+                    fullWidth variant="outlined" required label="PRODUCT NAME"
+                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                    sx={muiBrandStyles}
+                  />
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 mb-3">Price (GH₵)</label>
-                      <input type="number" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-[#F9F8F6] border border-[#3a1f1d]/10 px-5 py-4 text-[15px] focus:outline-none focus:border-[#3a1f1d]/50 transition-colors" />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 mb-3">Garment Type</label>
-                      <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full bg-[#F9F8F6] border border-[#3a1f1d]/10 px-5 py-4 text-[15px] focus:outline-none focus:border-[#3a1f1d]/50 transition-colors appearance-none">
-                        <option value="custom">Bespoke Custom Made</option>
-                        <option value="ready-to-wear">Ready to Wear</option>
-                      </select>
-                    </div>
+                    <TextField 
+                      fullWidth variant="outlined" required label="PRICE (GH₵)" type="number"
+                      value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
+                      sx={muiBrandStyles}
+                    />
+                    <TextField 
+                      fullWidth select variant="outlined" label="GARMENT TYPE"
+                      value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}
+                      sx={muiBrandStyles}
+                    >
+                      <MenuItem value="custom">Bespoke Custom Made</MenuItem>
+                      <MenuItem value="ready-to-wear">Ready to Wear</MenuItem>
+                    </TextField>
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 mb-3">Cover Image URL</label>
-                    <input type="url" required placeholder="https://..." value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="w-full bg-[#F9F8F6] border border-[#3a1f1d]/10 px-5 py-4 text-[15px] focus:outline-none focus:border-[#3a1f1d]/50 transition-colors" />
-                  </div>
+                  <TextField 
+                    fullWidth variant="outlined" required label="COVER IMAGE URL" type="url"
+                    placeholder="https://..."
+                    value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                    sx={muiBrandStyles}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 mb-3">Editorial Description</label>
-                    <textarea required rows={5} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-[#F9F8F6] border border-[#3a1f1d]/10 px-5 py-4 text-[15px] focus:outline-none focus:border-[#3a1f1d]/50 transition-colors resize-none"></textarea>
-                  </div>
+                  <TextField 
+                    fullWidth variant="outlined" required label="EDITORIAL DESCRIPTION" multiline rows={5}
+                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                    sx={muiBrandStyles}
+                  />
 
-                  <button type="submit" className="w-full bg-[#3a1f1d] text-[#F9F8F6] py-5 text-[12px] uppercase tracking-[0.2em] font-medium hover:bg-black transition-colors mt-4">
+                  <Button 
+                    type="submit" 
+                    style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem', marginTop: '1rem', width: '100%' }}
+                  >
                     Publish to Storefront
-                  </button>
+                  </Button>
                 </form>
               </div>
 

@@ -16,6 +16,7 @@ import Contact from "./pages/Contact";
 import Legal from "./pages/Legal";
 import BookAppointment from "./pages/BookAppointment";
 import Account from "./pages/Account";
+import Profile from "./pages/Profile";
 import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,7 @@ function App() {
               <Route path="/legal" element={<Legal />} />
               <Route path="/book-appointment" element={<BookAppointment />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

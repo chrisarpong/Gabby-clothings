@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePaystackPayment } from 'react-paystack';
 import img5 from '../assets/5.jpg';
+import { TextField } from '@mui/material';
+import { Button } from '../components/ui/Button';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -104,36 +106,29 @@ interface InputFieldProps {
   rows?: number;
 }
 
+const muiBrandStyles = {
+  '& .MuiOutlinedInput-root': {
+    '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+};
+
 function InputField({ label, type = 'text', value, onChange, placeholder, error, delay = 0, multiline, rows = 4 }: InputFieldProps) {
-  const baseClass = `w-full bg-transparent border-0 border-b py-3 px-0 text-base text-[#3a1f1d] placeholder:text-[#3a1f1d]/30 outline-none transition-colors duration-300 rounded-none resize-none ${error ? 'border-rose-400 focus:border-rose-600' : 'border-[#3a1f1d]/25 focus:border-[#3a1f1d]'
-    }`;
   return (
     <motion.div className="flex flex-col gap-2" variants={fadeUp} custom={delay} initial="hidden" animate="visible">
-      <label
-        className={`text-[10px] uppercase tracking-[0.25em] transition-colors ${error ? 'text-rose-500' : 'text-[#3a1f1d]/50'}`}
-        style={{ fontFamily: "'Jost', sans-serif" }}
-      >
-        {label}{error && <span className="ml-2 normal-case tracking-normal not-italic">— required</span>}
-      </label>
-      {multiline ? (
-        <textarea
-          rows={rows}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={baseClass}
-          style={{ fontFamily: "'Jost', sans-serif" }}
-        />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={baseClass}
-          style={{ fontFamily: "'Jost', sans-serif" }}
-        />
-      )}
+      <TextField 
+        fullWidth variant="outlined" 
+        label={label.toUpperCase()} 
+        type={type} 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)} 
+        placeholder={placeholder} 
+        error={!!error} 
+        helperText={error ? "Required" : ""} 
+        multiline={multiline} 
+        rows={rows} 
+        sx={muiBrandStyles} 
+      />
     </motion.div>
   );
 }
@@ -594,14 +589,13 @@ const BookAppointment = () => {
 
                       {/* CTA */}
                       <motion.div variants={fadeUp} custom={2} initial="hidden" animate="visible">
-                        <button
+                        <Button
                           type="button"
                           onClick={handleConfirm}
-                          className="w-full bg-[#3a1f1d] text-[#F5F5F3] uppercase tracking-[0.2em] text-sm py-5 hover:bg-black transition-colors duration-300"
-                          style={{ fontFamily: "'Jost', sans-serif" }}
+                          style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem', width: '100%' }}
                         >
                           Proceed to Payment — GHS {service?.deposit ?? '—'}
-                        </button>
+                        </Button>
                         <p className="text-center text-[#3a1f1d]/40 text-xs mt-4" style={{ fontFamily: "'Jost', sans-serif" }}>
                           Secured via Paystack. Your deposit is refundable up to 48 hours before your appointment.
                         </p>
@@ -640,18 +634,17 @@ const BookAppointment = () => {
               <p className="text-[#3a1f1d]/50 text-sm mt-4 mb-12" style={{ fontFamily: "'Jost', sans-serif" }}>
                 A confirmation email will be sent to <strong>{form.email}</strong>.
               </p>
-              <button
+              <Button
                 onClick={() => {
                   setStep(1); setDirection(1); setSelectedService(null);
                   setSelectedDate(null); setSelectedTime(null);
                   setForm({ firstName: '', lastName: '', email: '', phone: '', notes: '' });
                   setConfirmed(false);
                 }}
-                className="border border-[#3a1f1d] text-[#3a1f1d] uppercase tracking-widest text-xs hover:bg-[#3a1f1d] hover:text-white transition-colors duration-300"
-                style={{ padding: '16px 40px', fontFamily: "'Jost', sans-serif" }}
+                style={{ backgroundColor: 'transparent', borderColor: '#3a1f1d', border: '1px solid #3a1f1d', color: '#3a1f1d', padding: '16px 40px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
               >
                 Book Another Appointment
-              </button>
+              </Button>
             </motion.div>
           )}
         </div>

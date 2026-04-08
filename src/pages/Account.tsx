@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Show, RedirectToSignIn } from '@clerk/react';
+import { TextField } from '@mui/material';
+import { Button } from '../components/ui/Button';
 
 const Account = () => {
   const [measurements, setMeasurements] = useState({
@@ -10,6 +12,13 @@ const Account = () => {
     shoulder: '',
     neck: ''
   });
+
+  const muiBrandStyles = {
+    '& .MuiOutlinedInput-root': {
+      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+  };
 
   return (
     <>
@@ -44,28 +53,23 @@ const Account = () => {
 
               <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={(e) => e.preventDefault()}>
                 {Object.keys(measurements).map((key) => (
-                  <div key={key} className="flex flex-col gap-2">
-                    <label className="font-[var(--font-sans)] uppercase tracking-wider text-xs font-semibold text-[#3a1f1d]">
-                      {key}
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder={`Enter ${key} in inches`}
-                      value={measurements[key as keyof typeof measurements]}
-                      onChange={(e) => setMeasurements({...measurements, [key]: e.target.value})}
-                      className="w-full bg-transparent border-b border-[#ccc] py-3 text-sm font-[var(--font-sans)] text-[#3a1f1d] placeholder:text-[#888] outline-none focus:border-[#3a1f1d] transition-colors"
-                    />
-                  </div>
+                  <TextField 
+                    key={key}
+                    fullWidth variant="outlined" label={key.toUpperCase()}
+                    placeholder={`Enter ${key} in inches`}
+                    value={measurements[key as keyof typeof measurements]}
+                    onChange={(e) => setMeasurements({...measurements, [key]: e.target.value})}
+                    sx={muiBrandStyles}
+                  />
                 ))}
                 
                 <div className="md:col-span-2 mt-8">
-                  <button 
+                  <Button 
                     type="button"
-                    className="font-[var(--font-sans)] uppercase tracking-widest text-sm hover:bg-black transition-colors flex items-center justify-center h-14 px-10"
-                    style={{ backgroundColor: '#3a1f1d', color: '#ffffff' }}
+                    style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem', width: '100%' }}
                   >
                     Save Measurements
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
