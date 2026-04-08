@@ -22,6 +22,7 @@ export const syncUser = mutation({
         email: args.email,
         firstName: args.firstName,
         lastName: args.lastName,
+        role: "customer",
       });
     }
     

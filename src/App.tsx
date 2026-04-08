@@ -19,6 +19,7 @@ import Account from "./pages/Account";
 import Profile from "./pages/Profile";
 import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
+import { Toaster } from "./components/ui/toast";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
       <BrowserRouter>
         <SyncUser />
         <div className="min-h-screen bg-[var(--color-bg-primary)] flex flex-col">
+          <Toaster />
           <Header />
           <main className="flex-1 w-full">
             <Routes>

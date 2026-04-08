@@ -21,10 +21,10 @@ export default defineSchema({
     email: v.string(),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
-    // Saved to profile for future orders
     savedMeasurements: v.optional(v.object(measurementFields)),
     fullBodyImageId: v.optional(v.id("_storage")),
     inspoImageId: v.optional(v.id("_storage")),
+    role: v.optional(v.union(v.literal("admin"), v.literal("customer"))),
   }).index("by_clerk_id", ["clerkId"]),
 
   // 1.5 MEASUREMENT PROFILES (Catalogue)
@@ -99,4 +99,23 @@ export default defineSchema({
       country: v.string(),
     }),
   }),
+
+  // 5. APPOINTMENTS TABLE
+  appointments: defineTable({
+    userId: v.optional(v.string()), // Guest or logged-in user
+    date: v.string(),
+    time: v.string(),
+    name: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    notes: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+  })
+    .index("by_user", ["userId"])
+    .index("by_date", ["date"]),
 });

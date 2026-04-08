@@ -1,694 +1,241 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { usePaystackPayment } from 'react-paystack';
-import img5 from '../assets/5.jpg';
-import { TextField } from '@mui/material';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-const SERVICES = [
-  {
-    id: 'bespoke',
-    title: 'Bespoke Suit Consultation',
-    subtitle: 'Full custom suiting from scratch',
-    duration: '90 min',
-    deposit: 500,
-  },
-  {
-    id: 'custom-shirting',
-    title: 'Custom Shirting & Trousers',
-    subtitle: 'Hand-fitted everyday essentials',
-    duration: '60 min',
-    deposit: 300,
-  },
-  {
-    id: 'alterations',
-    title: 'Alterations & Adjustments',
-    subtitle: 'Expert tailoring of existing garments',
-    duration: '30 min',
-    deposit: 150,
-  },
-];
-
-const TIME_SLOTS = [
-  '10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM',
-];
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay();
-}
-
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-const DAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-
-// ─── Animation Variants ───────────────────────────────────────────────────────
-
-const slideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
-  center: { x: 0, opacity: 1, transition: { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] as const } },
-  exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const } }),
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({
-    opacity: 1, y: 0,
-    transition: { duration: 0.55, delay: i * 0.08, ease: [0.25, 0.46, 0.45, 0.94] as const },
-  }),
-};
-
-// ─── Subcomponents ────────────────────────────────────────────────────────────
-
-function StepHeader({ step, label, title }: { step: string; label: string; title: string }) {
-  return (
-    <motion.div className="mb-14 flex flex-col items-center text-center" variants={fadeUp} initial="hidden" animate="visible">
-      <span
-        className="block text-[11px] uppercase tracking-[0.4em] text-[#3a1f1d]/50 mb-5"
-        style={{ fontFamily: "'Jost', sans-serif" }}
-      >
-        {step}
-      </span>
-
-      <h2
-        className="text-[#3a1f1d] mb-4"
-        style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '3.2rem', lineHeight: 1.15 }}
-      >
-        {title}
-      </h2>
-
-      <p className="text-[#3a1f1d]/60 text-[16px]" style={{ fontFamily: "'Jost', sans-serif" }}>{label}</p>
-
-      <div className="mt-10 h-px w-full max-w-4xl bg-[#3a1f1d]/10" />
-    </motion.div>
-  );
-}
-
-interface InputFieldProps {
-  label: string;
-  type?: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  error?: boolean;
-  delay?: number;
-  multiline?: boolean;
-  rows?: number;
-}
-
-const muiBrandStyles = {
-  '& .MuiOutlinedInput-root': {
-    '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
-  },
-  '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-};
-
-function InputField({ label, type = 'text', value, onChange, placeholder, error, delay = 0, multiline, rows = 4 }: InputFieldProps) {
-  return (
-    <motion.div className="flex flex-col gap-2" variants={fadeUp} custom={delay} initial="hidden" animate="visible">
-      <TextField 
-        fullWidth variant="outlined" 
-        label={label.toUpperCase()} 
-        type={type} 
-        value={value} 
-        onChange={(e) => onChange(e.target.value)} 
-        placeholder={placeholder} 
-        error={!!error} 
-        helperText={error ? "Required" : ""} 
-        multiline={multiline} 
-        rows={rows} 
-        sx={muiBrandStyles} 
-      />
-    </motion.div>
-  );
-}
-
-// ─── Calendar ─────────────────────────────────────────────────────────────────
-
-function Calendar({ selected, onSelect }: { selected: Date | null; onSelect: (d: Date) => void }) {
-  const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
-
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-  const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-  const cells = Array.from({ length: firstDay + daysInMonth }, (_, i) => i < firstDay ? null : i - firstDay + 1);
-
-  const isDisabled = (day: number) => {
-    const d = new Date(viewYear, viewMonth, day);
-    const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return d <= t || d.getDay() === 0; // no Sundays, no past
-  };
-
-  const isSelected = (day: number) =>
-    selected &&
-    selected.getFullYear() === viewYear &&
-    selected.getMonth() === viewMonth &&
-    selected.getDate() === day;
-
-  // THE FIX: Mathematically check if we are in the current real-world month
-  const isPrevDisabled = viewYear < today.getFullYear() || (viewYear === today.getFullYear() && viewMonth <= today.getMonth());
-
-  const prevMonth = () => {
-    // THE FIX: Prevent function from running if disabled
-    if (isPrevDisabled) return;
-
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
-    else setViewMonth(m => m - 1);
-  };
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
-    else setViewMonth(m => m + 1);
-  };
-
-  return (
-    <div className="w-full">
-      {/* Month Nav */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          type="button"
-          onClick={prevMonth}
-          disabled={isPrevDisabled}
-          className={`w-8 h-8 flex items-center justify-center transition-colors ${isPrevDisabled ? 'text-[#3a1f1d]/15 cursor-not-allowed' : 'text-[#3a1f1d]/50 hover:text-[#3a1f1d]'
-            }`}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <span className="text-sm uppercase tracking-widest text-[#3a1f1d]" style={{ fontFamily: "'Jost', sans-serif" }}>
-          {MONTH_NAMES[viewMonth]} {viewYear}
-        </span>
-        <button type="button" onClick={nextMonth}
-          className="w-8 h-8 flex items-center justify-center text-[#3a1f1d]/50 hover:text-[#3a1f1d] transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Day Headers */}
-      <div className="grid grid-cols-7 mb-2">
-        {DAY_NAMES.map(d => (
-          <div key={d} className="text-center text-[10px] uppercase tracking-widest text-[#3a1f1d]/30 py-1" style={{ fontFamily: "'Jost', sans-serif" }}>{d}</div>
-        ))}
-      </div>
-
-      {/* Days */}
-      <div className="grid grid-cols-7 gap-y-1">
-        {cells.map((day, i) => {
-          if (!day) return <div key={`e${i}`} />;
-          const disabled = isDisabled(day);
-          const sel = isSelected(day);
-          return (
-            <button
-              key={day}
-              type="button"
-              disabled={disabled}
-              onClick={() => onSelect(new Date(viewYear, viewMonth, day))}
-              className={`aspect-square flex items-center justify-center text-sm rounded-full transition-all duration-200 mx-auto w-9 h-9 ${sel
-                ? 'bg-[#3a1f1d] text-white'
-                : disabled
-                  ? 'text-[#3a1f1d]/20 cursor-not-allowed'
-                  : 'text-[#3a1f1d] hover:bg-[#3a1f1d]/8 hover:text-[#3a1f1d]'
-                }`}
-              style={{ fontFamily: "'Jost', sans-serif" }}
-            >
-              {day}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
-
-function Progress({ step }: { step: number }) {
-  const steps = ['Service', 'Date & Time', 'Details', 'Confirm'];
-  return (
-    <div className="flex items-start justify-center w-full max-w-3xl mx-auto mb-32 mt-6 px-4">
-      {steps.map((s, i) => (
-        <div key={s} className="flex items-start">
-
-          <div className="flex flex-col items-center w-20 sm:w-28">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold z-10 transition-all duration-500 ${i + 1 < step ? 'bg-[#3a1f1d] text-white' :
-              i + 1 === step ? 'bg-[#3a1f1d] text-white ring-[6px] ring-[#3a1f1d]/10' :
-                'bg-[#EBE8E1] text-[#3a1f1d]/40'
-              }`} style={{ fontFamily: "'Jost', sans-serif" }}>
-              {i + 1 < step ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              ) : i + 1}
-            </div>
-
-            <span className={`mt-5 text-[9px] uppercase tracking-[0.2em] text-center hidden sm:block transition-colors ${i + 1 <= step ? 'text-[#3a1f1d]' : 'text-[#3a1f1d]/40'
-              }`} style={{ fontFamily: "'Jost', sans-serif" }}>{s}</span>
-          </div>
-
-          {i < steps.length - 1 && (
-            <div className={`h-[2px] w-8 sm:w-20 -mx-2 sm:-mx-4 mt-6 z-0 transition-all duration-500 ${i + 1 < step ? 'bg-[#3a1f1d]' : 'bg-[#EBE8E1]'}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
+import { TextField } from '@mui/material';
+import { CheckCircle, CalendarDays, Clock, User, Phone } from 'lucide-react';
+import Stepper, { Step } from '../components/ui/Stepper';
+import { toast } from 'sonner';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 const BookAppointment = () => {
-  const [step, setStep] = useState(1);
-  const [direction, setDirection] = useState(1);
+  const navigate = useNavigate();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const bookAppointment = useMutation(api.appointments.bookAppointment);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    date: '',
+    time: '',
+    name: '',
+    email: '',
+    phone: '',
+    notes: ''
+  });
 
-  // Step 1
-  const [selectedService, setSelectedService] = useState<string | null>(null);
-
-  // Step 2
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-
-  // Step 3
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', notes: '' });
-  const [errors, setErrors] = useState<Record<string, boolean>>({});
-
-  // Step 4 / completion
-  const [confirmed, setConfirmed] = useState(false);
-
-  const service = SERVICES.find(s => s.id === selectedService);
-
-  // Paystack deposit payment — stable reference generated once
-  const [payReference] = useState(() => `GABBY_${new Date().getTime()}`);
-  const paystackConfig = {
-    reference: payReference,
-    email: form.email || 'guest@gabbynewluk.com',
-    amount: (service?.deposit ?? 0) * 100, // pesewas
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
-    currency: 'GHS',
-    metadata: {
-      custom_fields: [
-        { display_name: 'Service', variable_name: 'service', value: service?.title ?? '' },
-        { display_name: 'Date', variable_name: 'date', value: selectedDate?.toDateString() ?? '' },
-        { display_name: 'Time', variable_name: 'time', value: selectedTime ?? '' },
-      ],
-    },
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const initializePayment = usePaystackPayment(paystackConfig);
-
-  const goNext = () => {
-    setDirection(1);
-    setStep(s => s + 1);
-  };
-  const goBack = () => {
-    setDirection(-1);
-    setStep(s => s - 1);
-  };
-
-  const validateStep3 = () => {
-    const e: Record<string, boolean> = {};
-    if (!form.firstName.trim()) e.firstName = true;
-    if (!form.lastName.trim()) e.lastName = true;
-    if (!form.email.trim() || !form.email.includes('@')) e.email = true;
-    if (!form.phone.trim()) e.phone = true;
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  const validateStep = (step: number) => {
+    if (step === 1) {
+      if (!formData.date || !formData.time) {
+        toast.error("Please select both a date and time to continue.");
+        return false;
+      }
+    }
+    if (step === 2) {
+      if (!formData.name || !formData.email || !formData.phone) {
+        toast.error("Please complete all contact details to continue.");
+        return false;
+      }
+    }
+    return true;
   };
 
-  const handleStep3Next = () => {
-    if (validateStep3()) goNext();
+  const handleStepChange = (step: number) => {
+    if (step === 2) {
+      toast.success("Date & Time Saved", {
+        description: "Please provide your contact details.",
+      });
+    } else if (step === 3) {
+      toast.success("Details Captured", {
+        description: "Review your appointment before confirming.",
+      });
+    }
   };
 
-  const handleConfirm = () => {
-    initializePayment({
-      onSuccess: () => setConfirmed(true),
-      onClose: () => { },
-    });
+  const handleFinalSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await bookAppointment({
+        date: formData.date,
+        time: formData.time,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        notes: formData.notes
+      });
+      
+      // Show success toast
+      toast.success("Appointment Confirmed", {
+        description: "We look forward to seeing you.",
+      });
+      
+      // Trigger Success Screen
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error(error);
+      toast.error("Booking Failed", {
+        description: "There was an issue scheduling your appointment.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const formatDate = (d: Date | null) => d
-    ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-    : '—';
+  const muiBrandStyles = {
+    '& .MuiOutlinedInput-root': { '&.Mui-focused fieldset': { borderColor: '#3a1f1d' } },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
+  };
 
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="min-h-screen bg-[#F5F5F3]">
-      {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{ height: '50vh', minHeight: '360px' }}>
-        <img src={img5} alt="Atelier" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/65" />
-        <motion.div
-          className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.25 }}
-        >
-          <p className="uppercase tracking-[0.35em] text-white/50 text-xs mb-4" style={{ fontFamily: "'Jost', sans-serif" }}>
-            The Gabby Newluk Clothing
+  // ==========================================
+  // SUCCESS SCREEN (Renders after completion)
+  // ==========================================
+  if (isSubmitted) {
+    return (
+      <div className="min-h-[70vh] bg-[#F9F8F6] flex flex-col items-center justify-center py-20 px-6 relative">
+        <div className="flex flex-col items-center text-center max-w-[600px] animate-in zoom-in-95 duration-500">
+          <div className="h-24 w-24 bg-[#3a1f1d]/5 rounded-full flex items-center justify-center mb-8">
+            <CheckCircle className="h-12 w-12 text-[#3a1f1d]" />
+          </div>
+          <h2 className="text-5xl md:text-6xl font-medium text-[#3a1f1d] mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Booking Confirmed
+          </h2>
+          <p className="text-[15px] text-[#3a1f1d]/70 mb-12 leading-relaxed max-w-[500px]">
+            Thank you, {formData.name || 'Christian'}. Your appointment for <strong>{formData.date}</strong> at <strong>{formData.time}</strong> has been successfully scheduled. We will send a confirmation email shortly.
           </p>
-          <h1 className="text-white mb-3" style={{
-            fontFamily: "'Playfair Display', serif", fontStyle: 'italic',
-            fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1,
-          }}>
-            Book Your Appointment
-          </h1>
-          <p className="text-white/60 max-w-[420px] leading-relaxed text-sm" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Reserve your private session with our master tailors. Each appointment is your own — unhurried and personal.
-          </p>
-        </motion.div>
-      </div>
-
-      {/* Main Container */}
-      <div className="w-full flex justify-center bg-[#FBFBFA]" style={{ paddingTop: '6rem', paddingBottom: '8rem' }}>
-        <div className="w-full max-w-3xl px-4 sm:px-8 md:px-12">
-
-          {!confirmed ? (
-            <>
-              <Progress step={step} />
-
-              <div className="relative overflow-hidden pt-4">
-                <AnimatePresence mode="wait" custom={direction}>
-                  {/* ── STEP 1 ── */}
-                  {step === 1 && (
-                    <motion.div key="step1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-                      <StepHeader step="Step 01 of 04" label="Choose the service that best fits your needs." title="The Service" />
-
-                      <div className="flex flex-col gap-4">
-                        {SERVICES.map((s, i) => (
-                          <motion.button
-                            key={s.id}
-                            type="button"
-                            onClick={() => setSelectedService(s.id)}
-                            variants={fadeUp}
-                            custom={i}
-                            initial="hidden"
-                            animate="visible"
-                            className={`group text-left w-full border bg-white transition-all duration-300 ${selectedService === s.id
-                              ? 'border-[#3a1f1d] shadow-sm'
-                              : 'border-gray-200 hover:border-[#3a1f1d]/40 hover:-translate-y-0.5'
-                              }`}
-                            style={{ padding: '2rem 2.5rem' }}
-                          >
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                              <div>
-                                <h3
-                                  className={`font-semibold text-lg mb-1 transition-colors text-[#3a1f1d]`}
-                                  style={{ fontFamily: "'Playfair Display', serif" }}
-                                >
-                                  {s.title}
-                                </h3>
-                                <p
-                                  className={`text-sm transition-colors text-[#3a1f1d]/50`}
-                                  style={{ fontFamily: "'Jost', sans-serif" }}
-                                >
-                                  {s.subtitle}
-                                </p>
-                              </div>
-                              <div className="sm:text-right flex-shrink-0">
-                                <span
-                                  className={`block text-xs uppercase tracking-widest mb-1 text-[#3a1f1d]/40`}
-                                  style={{ fontFamily: "'Jost', sans-serif" }}
-                                >
-                                  {s.duration}
-                                </span>
-                                <span
-                                  className={`block text-xs font-semibold tracking-wide text-[#3a1f1d]`}
-                                  style={{ fontFamily: "'Jost', sans-serif" }}
-                                >
-                                  GHS {s.deposit} deposit
-                                </span>
-                              </div>
-                            </div>
-                            <div className={`mt-5 h-px transition-all duration-300 ${selectedService === s.id ? 'bg-[#3a1f1d]' : 'bg-gray-100'}`} />
-                          </motion.button>
-                        ))}
-                      </div>
-
-                      <div className="mt-12 flex justify-end">
-                        <NextButton disabled={!selectedService} onClick={goNext} />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* ── STEP 2 ── */}
-                  {step === 2 && (
-                    <motion.div key="step2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-                      <StepHeader step="Step 02 of 04" label="Select a date and time for your private fitting." title="Date & Time" />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                        <motion.div variants={fadeUp} initial="hidden" animate="visible">
-                          <p className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>
-                            Select Date
-                          </p>
-                          <Calendar selected={selectedDate} onSelect={setSelectedDate} />
-                        </motion.div>
-
-                        <motion.div variants={fadeUp} custom={1} initial="hidden" animate="visible">
-                          <p className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>
-                            Select Time {!selectedDate && <span className="normal-case tracking-normal not-italic text-[#3a1f1d]/30">— choose a date first</span>}
-                          </p>
-                          <AnimatePresence>
-                            {selectedDate && (
-                              <motion.div
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4 }}
-                                className="flex flex-col gap-3"
-                              >
-                                {TIME_SLOTS.map((slot, i) => (
-                                  <motion.button
-                                    key={slot}
-                                    type="button"
-                                    onClick={() => setSelectedTime(slot)}
-                                    initial={{ opacity: 0, x: 12 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.06, duration: 0.35 }}
-                                    className={`w-full py-3.5 px-5 text-sm tracking-wide border rounded-full transition-all duration-200 ${selectedTime === slot
-                                      ? 'bg-[#3a1f1d] text-white border-[#3a1f1d]'
-                                      : 'bg-white border-gray-200 text-[#3a1f1d] hover:border-[#3a1f1d]/50'
-                                      }`}
-                                    style={{ fontFamily: "'Jost', sans-serif" }}
-                                  >
-                                    {slot}
-                                  </motion.button>
-                                ))}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                          {!selectedDate && (
-                            <div className="flex flex-col gap-3">
-                              {TIME_SLOTS.map(slot => (
-                                <div key={slot} className="w-full py-3.5 px-5 border border-gray-100 rounded-full bg-gray-50/50" />
-                              ))}
-                            </div>
-                          )}
-                        </motion.div>
-                      </div>
-
-                      <div className="mt-16 border-t border-gray-200 pt-6 flex justify-between">
-                        <BackButton onClick={goBack} />
-                        <NextButton disabled={!selectedDate || !selectedTime} onClick={goNext} />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* ── STEP 3 ── */}
-                  {step === 3 && (
-                    <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-                      <StepHeader step="Step 03 of 04" label="Tell us about yourself so we can prepare for your fitting." title="Your Details" />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 pt-4">
-                        <InputField label="First Name" value={form.firstName} onChange={v => { setForm(f => ({ ...f, firstName: v })); setErrors(e => ({ ...e, firstName: false })); }}
-                          placeholder="Kofi" error={errors.firstName} delay={0} />
-                        <InputField label="Last Name" value={form.lastName} onChange={v => { setForm(f => ({ ...f, lastName: v })); setErrors(e => ({ ...e, lastName: false })); }}
-                          placeholder="Mensah" error={errors.lastName} delay={1} />
-                        <InputField label="Email Address" type="email" value={form.email} onChange={v => { setForm(f => ({ ...f, email: v })); setErrors(e => ({ ...e, email: false })); }}
-                          placeholder="kofi@example.com" error={errors.email} delay={2} />
-                        <InputField label="Phone Number" type="tel" value={form.phone} onChange={v => { setForm(f => ({ ...f, phone: v })); setErrors(e => ({ ...e, phone: false })); }}
-                          placeholder="+233 XX XXX XXXX" error={errors.phone} delay={3} />
-                        <div className="md:col-span-2">
-                          <InputField label="Fabrics, Occasions, or Style Notes" value={form.notes} onChange={v => setForm(f => ({ ...f, notes: v }))}
-                            placeholder="Any specific fabrics, occasions, or styles you have in mind? — We'd love to know." delay={4} multiline rows={5} />
-                        </div>
-                      </div>
-
-                      <div className="mt-16 border-t border-gray-200 pt-6 flex justify-between">
-                        <BackButton onClick={goBack} />
-                        <NextButton onClick={handleStep3Next} />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* ── STEP 4 ── */}
-                  {step === 4 && (
-                    <motion.div key="step4" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-                      <StepHeader step="Step 04 of 04" label="Review your booking and secure your fitting with a deposit." title="Secure Your Fitting" />
-
-                      {/* Summary Pane */}
-                      <motion.div variants={fadeUp} initial="hidden" animate="visible"
-                        className="bg-white border border-gray-200 mb-10"
-                        style={{ padding: '2.5rem 3rem' }}
-                      >
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/40 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>
-                          Booking Summary
-                        </p>
-                        <div className="flex flex-col gap-5">
-                          {[
-                            { label: 'Service', value: service?.title ?? '—' },
-                            { label: 'Date', value: formatDate(selectedDate) },
-                            { label: 'Time', value: selectedTime ?? '—' },
-                            { label: 'Client', value: `${form.firstName} ${form.lastName}` },
-                            { label: 'Contact', value: form.email },
-                          ].map(({ label, value }) => (
-                            <div key={label} className="flex items-start justify-between gap-8 pb-5 border-b border-gray-100 last:border-0 last:pb-0">
-                              <span className="text-[10px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 flex-shrink-0" style={{ fontFamily: "'Jost', sans-serif" }}>
-                                {label}
-                              </span>
-                              <span className="text-sm text-[#3a1f1d] text-right font-medium" style={{ fontFamily: "'Jost', sans-serif" }}>{value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-
-                      {/* Deposit Section */}
-                      <motion.div variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                        className="bg-[#EBE8E1]/30 mb-10"
-                        style={{ padding: '2rem 2.5rem' }}
-                      >
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                          <div className="text-center sm:text-left">
-                            <p className="text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/50 mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>
-                              Consultation Deposit
-                            </p>
-                            <p className="text-sm text-[#3a1f1d]/60 leading-relaxed max-w-[380px]" style={{ fontFamily: "'Jost', sans-serif" }}>
-                              A refundable deposit is required to secure your slot. This will be deducted from your final garment total.
-                            </p>
-                          </div>
-                          <div className="text-center sm:text-right flex-shrink-0">
-                            <span className="block text-3xl font-semibold text-[#3a1f1d] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
-                              GHS {service?.deposit ?? '—'}
-                            </span>
-                            <span className="text-[10px] uppercase tracking-widest text-[#3a1f1d]/40" style={{ fontFamily: "'Jost', sans-serif" }}>
-                              Refundable
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-
-                      {/* CTA */}
-                      <motion.div variants={fadeUp} custom={2} initial="hidden" animate="visible">
-                        <Button
-                          type="button"
-                          onClick={handleConfirm}
-                          style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem', width: '100%' }}
-                        >
-                          Proceed to Payment — GHS {service?.deposit ?? '—'}
-                        </Button>
-                        <p className="text-center text-[#3a1f1d]/40 text-xs mt-4" style={{ fontFamily: "'Jost', sans-serif" }}>
-                          Secured via Paystack. Your deposit is refundable up to 48 hours before your appointment.
-                        </p>
-                      </motion.div>
-
-                      <div className="mt-16 border-t border-gray-200 pt-6 flex justify-start">
-                        <BackButton onClick={goBack} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </>
-          ) : (
-            /* ── CONFIRMATION ── */
-            <motion.div
-              key="confirmed"
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-              style={{ paddingTop: '4rem', paddingBottom: '4rem' }}
-            >
-              <div className="w-16 h-16 rounded-full bg-[#3a1f1d] flex items-center justify-center mx-auto mb-8">
-                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-[#3a1f1d] mb-4" style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '3rem' }}>
-                Fitting Secured
-              </h2>
-              <p className="text-[#3a1f1d]/70 text-lg mb-2 leading-relaxed" style={{ fontFamily: "'Jost', sans-serif" }}>
-                Thank you, <strong>{form.firstName}</strong>. Your <strong>{service?.title}</strong> is confirmed for<br />
-                <strong>{formatDate(selectedDate)}</strong> at <strong>{selectedTime}</strong>.
-              </p>
-              <p className="text-[#3a1f1d]/50 text-sm mt-4 mb-12" style={{ fontFamily: "'Jost', sans-serif" }}>
-                A confirmation email will be sent to <strong>{form.email}</strong>.
-              </p>
-              <Button
-                onClick={() => {
-                  setStep(1); setDirection(1); setSelectedService(null);
-                  setSelectedDate(null); setSelectedTime(null);
-                  setForm({ firstName: '', lastName: '', email: '', phone: '', notes: '' });
-                  setConfirmed(false);
-                }}
-                style={{ backgroundColor: 'transparent', borderColor: '#3a1f1d', border: '1px solid #3a1f1d', color: '#3a1f1d', padding: '16px 40px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-              >
-                Book Another Appointment
-              </Button>
-            </motion.div>
-          )}
+          <Button 
+            onClick={() => navigate('/')} 
+            className="next-button uppercase tracking-widest text-[11px] mt-2"
+          >
+            RETURN TO HOMEPAGE
+          </Button>
         </div>
       </div>
-    </motion.div>
+    );
+  }
+
+  // ==========================================
+  // BOOKING STEPPER
+  // ==========================================
+  return (
+    <div className="min-h-screen bg-[#F9F8F6] flex flex-col items-center py-20 px-4 md:px-6 relative">
+
+      <header style={{ marginTop: '60px', marginBottom: '80px', width: '100%', textAlign: 'center' }}>
+        <h1 className="text-4xl md:text-5xl italic font-medium text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Book an Appointment
+        </h1>
+      </header>
+
+      <div className="w-full max-w-[800px]">
+        <Stepper
+          initialStep={1}
+          onStepChange={handleStepChange}
+          onFinalStepCompleted={handleFinalSubmit}
+          validator={validateStep}
+          backButtonText="PREVIOUS"
+          nextButtonText="CONTINUE"
+        >
+          {/* STEP 1: DATE & TIME */}
+          <Step>
+            <div className="flex flex-col gap-8 py-4">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-medium text-[#3a1f1d] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Select Date & Time</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">Appointment Date</label>
+                  <TextField fullWidth type="date" name="date" value={formData.date} onChange={handleChange} sx={muiBrandStyles} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">Appointment Time</label>
+                  <TextField fullWidth type="time" name="time" value={formData.time} onChange={handleChange} sx={muiBrandStyles} />
+                </div>
+              </div>
+            </div>
+          </Step>
+
+          {/* STEP 2: CONTACT DETAILS */}
+          <Step>
+            <div className="flex flex-col gap-8 py-4">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-medium text-[#3a1f1d] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Your Details</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <TextField fullWidth label="FULL NAME" name="name" value={formData.name} onChange={handleChange} sx={muiBrandStyles} />
+                <TextField fullWidth label="PHONE NUMBER" name="phone" type="tel" value={formData.phone} onChange={handleChange} sx={muiBrandStyles} />
+                <div className="md:col-span-2">
+                  <TextField fullWidth label="EMAIL ADDRESS" name="email" type="email" value={formData.email} onChange={handleChange} sx={muiBrandStyles} />
+                </div>
+              </div>
+            </div>
+          </Step>
+
+          {/* STEP 3: PREMIUM REVIEW SUMMARY */}
+          <Step>
+            <div className="flex flex-col gap-6 py-4">
+              <div className="text-center mb-4">
+                <h2 className="text-xl font-medium text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Review & Confirm</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mt-4">
+                
+                {/* Date Component Card */}
+                <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[180px] md:min-h-[200px] p-6 md:p-8 rounded-3xl border border-[#3a1f1d]/10 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-[#3a1f1d]/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
+                  <div className="h-12 w-12 bg-[#F9F8F6] rounded-full flex shrink-0 items-center justify-center border border-[#3a1f1d]/5 hover:scale-110 transition-transform duration-300">
+                    <CalendarDays className="h-5 w-5 text-[#3a1f1d]/80" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-50">Appointment Date</span>
+                    <span className="text-xl md:text-2xl font-medium text-[#3a1f1d] mt-1">{formData.date || 'Pending Selection'}</span>
+                  </div>
+                </div>
+
+                {/* Time Component Card */}
+                <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[180px] md:min-h-[200px] p-6 md:p-8 rounded-3xl border border-[#3a1f1d]/10 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-[#3a1f1d]/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
+                  <div className="h-12 w-12 bg-[#F9F8F6] rounded-full flex shrink-0 items-center justify-center border border-[#3a1f1d]/5 hover:scale-110 transition-transform duration-300">
+                    <Clock className="h-5 w-5 text-[#3a1f1d]/80" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-50">Appointment Time</span>
+                    <span className="text-xl md:text-2xl font-medium text-[#3a1f1d] mt-1">{formData.time || 'Pending Selection'}</span>
+                  </div>
+                </div>
+
+                {/* Name Component Card */}
+                <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[180px] md:min-h-[200px] p-6 md:p-8 rounded-3xl border border-[#3a1f1d]/10 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-[#3a1f1d]/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
+                  <div className="h-12 w-12 bg-[#F9F8F6] rounded-full flex shrink-0 items-center justify-center border border-[#3a1f1d]/5 hover:scale-110 transition-transform duration-300">
+                    <User className="h-5 w-5 text-[#3a1f1d]/80" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-50">Client Name</span>
+                    <span className="text-xl md:text-2xl font-medium text-[#3a1f1d] mt-1 text-center">{formData.name || 'Pending Selection'}</span>
+                  </div>
+                </div>
+
+                {/* Contact Component Card */}
+                <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[180px] md:min-h-[200px] p-6 md:p-8 rounded-3xl border border-[#3a1f1d]/10 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-[#3a1f1d]/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
+                  <div className="h-12 w-12 bg-[#F9F8F6] rounded-full flex shrink-0 items-center justify-center border border-[#3a1f1d]/5 hover:scale-110 transition-transform duration-300">
+                    <Phone className="h-5 w-5 text-[#3a1f1d]/80" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1 w-full">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-50">Client Contact</span>
+                    <span className="text-xl md:text-2xl font-medium text-[#3a1f1d] mt-1 shrink-0 overflow-hidden text-ellipsis whitespace-nowrap max-w-[90%] text-center">{formData.phone || formData.email || 'Pending Selection'}</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </Step>
+
+        </Stepper>
+      </div>
+    </div>
   );
 };
-
-// ─── Button helpers ───────────────────────────────────────────────────────────
-
-function NextButton({ disabled = false, onClick }: { disabled?: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex items-center gap-3 uppercase tracking-[0.18em] text-xs transition-all duration-300 ${disabled
-        ? 'text-[#3a1f1d]/25 cursor-not-allowed'
-        : 'text-[#3a1f1d] hover:gap-5'
-        }`}
-      style={{ fontFamily: "'Jost', sans-serif", padding: '14px 0' }}
-    >
-      Continue
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-      </svg>
-    </button>
-  );
-}
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-3 uppercase tracking-[0.18em] text-xs text-[#3a1f1d]/40 hover:text-[#3a1f1d] hover:gap-5 transition-all duration-300"
-      style={{ fontFamily: "'Jost', sans-serif", padding: '14px 0' }}
-    >
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-      </svg>
-      Back
-    </button>
-  );
-}
 
 export default BookAppointment;
