@@ -9,14 +9,13 @@ export const syncUser = mutation({
     lastName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // 1. Check if this user already exists in the database
     const existingUser = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
-    // 2. If they are new, insert them into the database
     if (!existingUser) {
+      // 1. BRAND NEW USER: Insert with "customer" role
       return await ctx.db.insert("users", {
         clerkId: args.clerkId,
         email: args.email,
@@ -26,12 +25,17 @@ export const syncUser = mutation({
       });
     }
     
-    // 3. If they exist, just return their ID
+    // 2. EXISTING USER: Update basic info if it changed in Clerk (keeps roles/measurements safe)
+    await ctx.db.patch(existingUser._id, {
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+    });
+
     return existingUser._id;
   },
 });
 
-// Fetch the current user's profile and measurements
 export const getUserProfile = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -46,7 +50,6 @@ export const getUserProfile = query({
   },
 });
 
-// Fetch all measurement profiles for the current user (Catalogue)
 export const getMeasurementProfiles = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -59,10 +62,9 @@ export const getMeasurementProfiles = query({
   },
 });
 
-// Update or create a measurement profile in the catalogue
 export const updateMeasurements = mutation({
   args: {
-    profileName: v.optional(v.string()), // Added for the catalogue
+    profileName: v.optional(v.string()),
     height: v.optional(v.number()),
     chest: v.optional(v.number()),
     waist: v.optional(v.number()),
@@ -81,7 +83,6 @@ export const updateMeasurements = mutation({
       throw new Error("You must be logged in to save measurements.");
     }
 
-    // Default legacy support (if they update from the current profile view without a name)
     const pName = args.profileName || "Primary Profile";
 
     const existingProfile = await ctx.db
@@ -104,7 +105,6 @@ export const updateMeasurements = mutation({
       inspoImageId: args.inspoImageId,
     };
 
-    // Clean undefined fields to avoid overriding existing saved dimensions with undefined
     Object.keys(data).forEach(key => data[key as keyof typeof data] === undefined && delete data[key as keyof typeof data]);
 
     if (existingProfile) {
@@ -117,11 +117,11 @@ export const updateMeasurements = mutation({
       });
     }
 
-    // Optional legacy sync to users table temporarily for backwards compatibility
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
+      
     if (user && pName === "Primary Profile") {
       const measurementData = { ...data };
       delete measurementData.fullBodyImageId;
