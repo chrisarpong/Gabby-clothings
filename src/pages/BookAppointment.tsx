@@ -12,7 +12,6 @@ const BookAppointment = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const bookAppointment = useMutation(api.appointments.bookAppointment);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     date: '',
     time: '',
@@ -55,7 +54,6 @@ const BookAppointment = () => {
   };
 
   const handleFinalSubmit = async () => {
-    setIsSubmitting(true);
     try {
       await bookAppointment({
         date: formData.date,
@@ -78,8 +76,6 @@ const BookAppointment = () => {
       toast.error("Booking Failed", {
         description: "There was an issue scheduling your appointment.",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
