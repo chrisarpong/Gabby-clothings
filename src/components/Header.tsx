@@ -5,7 +5,8 @@ import { Show, SignInButton, UserButton, useUser, useClerk } from '@clerk/react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useScroll } from './ui/use-scroll';
-import { Grid, ShoppingBag, Calendar, User, LogOut, LogIn, ChevronRight } from 'lucide-react';
+import { Grid, ShoppingBag, Calendar, User, LogOut, LogIn, ChevronRight, X, ArrowRight } from 'lucide-react';
+import { Button } from './ui/button';
 
 // --- NEW Sidebar Animation Variants ---
 const sidebarVariants: any = {
@@ -189,34 +190,83 @@ const Header = () => {
                 <button onClick={() => setIsCartOpen(false)} className="text-[#3a1f1d]/50 hover:text-[#3a1f1d] transition-colors p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
               </div>
               <div className="flex-1 overflow-y-auto p-6">
-                {!cart || cart.length === 0 ? <p className="text-center opacity-50 text-sm mt-10">Your cart is empty.</p> : (
-                  <div className="space-y-6">
+                {!cart || cart.length === 0 ? (
+                  <p className="text-center opacity-50 text-sm mt-10">Your cart is empty.</p>
+                ) : (
+                  <div className="flex flex-col gap-6">
                     {cart.map((item) => (
-                      <div key={item.id} className="flex gap-5 pb-6 border-b border-[#3a1f1d]/10 last:border-0">
-                        <div className="w-[85px] h-[115px] shrink-0 bg-[#EFEFEF] border border-[#3a1f1d]/5"><img src={item.image} alt={item.name} className="w-full h-full object-cover" /></div>
+                      <div key={item.id} className="flex gap-4 pb-6 border-b border-[#3a1f1d]/10 last:border-0 last:pb-0">
+
+                        {/* Enlarged, properly spaced image */}
+                        <div className="w-[85px] h-[115px] shrink-0 bg-[#EFEFEF] border border-[#3a1f1d]/5 rounded-md overflow-hidden">
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        </div>
+
                         <div className="flex-1 flex flex-col justify-between py-1">
                           <div className="flex justify-between items-start gap-2">
-                            <div><h3 className="text-[13px] font-medium leading-snug">{item.name}</h3><p className="text-[13px] mt-1 opacity-70">GH₵ {item.price.toFixed(2)}</p></div>
-                            <button onClick={() => removeFromCart(item.id)} className="text-[#3a1f1d]/40 hover:text-red-700 transition-colors shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
+                            <div>
+                              <h3 className="text-[13px] font-medium leading-snug">{item.name}</h3>
+                              <p className="text-[13px] mt-1 opacity-70">GH₵ {item.price.toFixed(2)}</p>
+                            </div>
+                            <button onClick={() => removeFromCart(item.id)} className="text-[#3a1f1d]/40 hover:text-red-700 transition-colors shrink-0">
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
-                          <div className="flex justify-between items-end">
-                            <div className="flex items-center border border-[#3a1f1d]/20 h-8 w-20">
-                              <button onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))} className="flex-1 text-center hover:bg-[#3a1f1d]/5 text-sm leading-none select-none">−</button><span className="flex-1 text-center text-[13px] select-none">{item.quantity}</span><button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="flex-1 text-center hover:bg-[#3a1f1d]/5 text-sm leading-none select-none">+</button>
+
+                          <div className="flex justify-between items-end mt-4">
+                            {/* Polished Quantity Selector */}
+                            <div className="flex items-center border border-[#3a1f1d]/20 rounded-md h-8 w-24 bg-white shadow-sm overflow-hidden">
+                              <button onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))} className="flex-1 h-full text-center hover:bg-[#3a1f1d]/5 text-sm transition-colors">−</button>
+                              <span className="flex-1 text-center text-[13px] font-medium">{item.quantity}</span>
+                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="flex-1 h-full text-center hover:bg-[#3a1f1d]/5 text-sm transition-colors">+</button>
                             </div>
                             <span className="text-[14px] font-medium">GH₵ {(item.price * item.quantity).toFixed(2)}</span>
                           </div>
                         </div>
+
                       </div>
                     ))}
                   </div>
                 )}
               </div>
+
               {cart && cart.length > 0 && (
-                <div className="border-t border-[#3a1f1d]/10 p-6 bg-[#F9F8F6] shrink-0">
-                  <div className="flex justify-between items-end mb-6"><span className="text-[15px]">Subtotal</span><span className="text-xl font-normal">GH₵ {subtotal.toFixed(2)}</span></div>
+                <div className="border-t border-[#3a1f1d]/10 p-6 bg-[#F9F8F6] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-end mb-6">
+                    <span className="text-[15px]">Subtotal</span>
+                    <span className="text-xl font-normal" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      GH₵ {subtotal.toFixed(2)}
+                    </span>
+                  </div>
+
                   <div className="space-y-3">
-                    <Link to="/checkout" onClick={() => setIsCartOpen(false)} className="block w-full bg-[#3a1f1d] text-white text-center py-4 text-[14px] hover:bg-black transition-colors">Checkout</Link>
-                    <Link to="/cart" onClick={() => setIsCartOpen(false)} className="block w-full border border-[#3a1f1d] bg-transparent text-[#3a1f1d] text-center py-4 text-[14px] hover:bg-[#3a1f1d] hover:text-white transition-colors">View Cart</Link>
+                    {/* Animated Checkout Button */}
+                    <Button
+                      asChild
+                      size="xl"
+                      className="w-full group bg-[#3a1f1d] hover:bg-black text-white uppercase tracking-[0.2em]"
+                    >
+                      <Link to="/checkout" onClick={() => setIsCartOpen(false)}>
+                        Checkout
+                        <ArrowRight
+                          className="-me-1 ms-3 opacity-70 transition-transform group-hover:translate-x-1"
+                          size={16}
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                      </Link>
+                    </Button>
+
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="xl"
+                      className="w-full border-[#3a1f1d]/20 text-[#3a1f1d] hover:bg-[#3a1f1d]/5 uppercase tracking-[0.2em]"
+                    >
+                      <Link to="/cart" onClick={() => setIsCartOpen(false)}>
+                        View Cart
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               )}

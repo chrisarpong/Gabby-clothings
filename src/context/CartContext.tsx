@@ -98,7 +98,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       if (guestItems.length > 0) {
         mergeGuestCartMutation({
           items: guestItems.map((item) => ({
-            productId: item.productId as Id<"products">,
+            productId: (item.productId || item.id) as Id<"products">,
             quantity: item.quantity,
           })),
         })

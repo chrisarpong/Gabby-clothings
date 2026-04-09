@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Show, RedirectToSignIn } from '@clerk/react';
 import { TextField } from '@mui/material';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 
 const Account = () => {
   const [measurements, setMeasurements] = useState({

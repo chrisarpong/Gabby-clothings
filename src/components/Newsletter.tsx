@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TextField } from '@mui/material';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 const muiBrandStyles = {
   '& .MuiOutlinedInput-root': {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 import { TextField } from '@mui/material';
 import { CheckCircle, CalendarDays, Clock, User, Phone } from 'lucide-react';
 import Stepper, { Step } from '../components/ui/Stepper';

@@ -3,7 +3,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { motion } from 'framer-motion';
 import { TextField, MenuItem } from '@mui/material';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'inventory'>('orders');

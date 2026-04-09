@@ -19,6 +19,48 @@
   --font-sans: 'Jost', system-ui, sans-serif;
 }
 
+/* ── Shadcn/UI Theme Variables (--hu-) ─────────────────────────────────────── */
+@layer base {
+  :root {
+    --hu-background: 0 0% 100%;
+    --hu-foreground: 20 14% 20%;
+    --hu-card: 0 0% 100%;
+    --hu-card-foreground: 20 14% 20%;
+    --hu-popover: 0 0% 100%;
+    --hu-popover-foreground: 20 14% 20%;
+    --hu-muted: 210 40% 96%;
+    --hu-muted-foreground: 215.4 16.3% 46.9%;
+    --hu-accent: 20 90% 48%;
+    --hu-accent-foreground: 60 9% 97%;
+    --hu-destructive: 0 84% 60%;
+    --hu-destructive-foreground: 60 9% 97%;
+    --hu-border: 214.3 31.8% 91.4%;
+    --hu-input: 214.3 31.8% 91.4%;
+    --hu-ring: 20 90% 48%;
+    --hu-radius: 0.5rem;
+    --hu-primary: 20 14% 20%;
+    --hu-primary-foreground: 60 9% 97%;
+  }
+
+  .dark {
+    --hu-background: 20 14% 4%;
+    --hu-foreground: 60 9% 97%;
+    --hu-card: 20 14% 8%;
+    --hu-card-foreground: 60 9% 97%;
+    --hu-popover: 20 14% 8%;
+    --hu-popover-foreground: 60 9% 97%;
+    --hu-muted: 12 6% 31%;
+    --hu-muted-foreground: 215.4 16.3% 56.9%;
+    --hu-accent: 20 90% 48%;
+    --hu-accent-foreground: 20 14% 4%;
+    --hu-border: 12 6% 20%;
+    --hu-input: 12 6% 20%;
+    --hu-ring: 20 90% 48%;
+    --hu-primary: 60 9% 97%;
+    --hu-primary-foreground: 20 14% 4%;
+  }
+}
+
 /* ── Base reset ─────────────────────────────────────── */
 *,
 *::before,

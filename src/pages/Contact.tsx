@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TextField } from '@mui/material';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },

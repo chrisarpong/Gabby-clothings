@@ -3,7 +3,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useUser } from '@clerk/react';
 import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import { ImageUpload } from "../components/ui/image-upload";
 import { toast } from "sonner";
 
@@ -145,7 +145,7 @@ const Profile = () => {
           </div>
 
           <div className="mt-6 flex justify-center">
-            <Button color="primary" size="xl" type="submit" disabled={isSaving} style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', padding: '1rem 4rem', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+            <Button type="submit" disabled={isSaving} style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', padding: '1rem 4rem', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
               {isSaving ? 'Saving...' : 'Save Measurements'}
             </Button>
           </div>

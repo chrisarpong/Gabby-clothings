@@ -65,16 +65,18 @@ export default defineSchema({
 
   // 4. ORDERS TABLE
   orders: defineTable({
-    userId: v.id("users"),
+    userId: v.string(), // Clerk tokenIdentifier
+    paystackReference: v.string(), // Transaction reference from Paystack
     items: v.array(
       v.object({
-        productId: v.id("products"),
+        productId: v.string(), // Product ID as string for flexibility
+        name: v.string(),
         quantity: v.number(),
         priceAtTime: v.number(),
-        type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
       })
     ),
     totalAmount: v.number(),
+    shippingFee: v.number(),
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),
@@ -82,23 +84,29 @@ export default defineSchema({
       v.literal("completed")
     ),
 
-    // THE BESPOKE BUSINESS LOGIC
+    // THE BESPOKE BUSINESS LOGIC (handled separately after order)
     tailoringDetails: v.optional(
       v.object({
-        hasMeasurements: v.boolean(), // True = Option A, False = Option B
-        measurementsUsed: v.optional(v.object(measurementFields)), // Snapshot for this specific order
-        fullBodyImageId: v.id("_storage"), // COMPULSORY Convex storage ID
-        inspoImageId: v.optional(v.id("_storage")), // OPTIONAL Convex storage ID
+        hasMeasurements: v.boolean(),
+        measurementsUsed: v.optional(v.object(measurementFields)),
+        fullBodyImageId: v.optional(v.id("_storage")),
+        inspoImageId: v.optional(v.id("_storage")),
       })
     ),
 
     shippingAddress: v.object({
-      street: v.string(),
+      firstName: v.string(),
+      lastName: v.string(),
+      email: v.string(),
+      phone: v.string(),
+      address: v.string(),
       city: v.string(),
       region: v.string(),
       country: v.string(),
     }),
-  }),
+  })
+    .index("by_user", ["userId"])
+    .index("by_reference", ["paystackReference"]),
 
   // 5. APPOINTMENTS TABLE
   appointments: defineTable({

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import React, { Children, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef, useState } from 'react';
-import { Button } from './Button';
+import { Button } from './button';
 import './Stepper.css';
 
 interface StepperProps extends HTMLAttributes<HTMLDivElement> { children: ReactNode; initialStep?: number; onStepChange?: (step: number) => void; onFinalStepCompleted?: () => void; stepCircleContainerClassName?: string; stepContainerClassName?: string; contentClassName?: string; footerClassName?: string; backButtonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>; nextButtonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>; backButtonText?: string; nextButtonText?: string; disableStepIndicators?: boolean; renderStepIndicator?: (props: RenderStepIndicatorProps) => ReactNode; validator?: (step: number) => boolean; }
