@@ -5,7 +5,7 @@ import { Show, SignInButton, UserButton, useUser, useClerk } from '@clerk/react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useScroll } from './ui/use-scroll';
-import { Grid, ShoppingBag, Calendar, User, LogOut, LogIn, ChevronRight, X, ArrowRight } from 'lucide-react';
+import { Grid, ShoppingBag, Calendar, User, LogOut, LogIn, ChevronRight, X } from 'lucide-react';
 import { Button } from './ui/button';
 
 // --- NEW Sidebar Animation Variants ---
@@ -57,7 +57,7 @@ const Header = () => {
                 : 'max-w-full bg-[#F9F8F6] border-b border-[#3a1f1d]/10 rounded-none'
             )}
           >
-            <nav className={cn('flex w-full items-center justify-between shrink-0 transition-all duration-500 ease-out', scrolled ? 'h-20 md:h-24 px-8 md:px-10' : 'h-20 md:h-28 px-6 md:px-12')}>
+            <nav className={cn('flex w-full items-center justify-between shrink-0 transition-all duration-500 ease-out', scrolled ? 'h-20 md:h-24 px-12 md:px-20 lg:px-[90px]' : 'h-20 md:h-28 px-10 md:px-16 lg:px-[70px]')}>
               {/* LEFT: Logo */}
               <Link to="/" className="flex items-center gap-3 md:gap-4 z-10 shrink-0" onClick={() => setOpen(false)}>
                 <img src="/logo.png" alt="Gabby Newluk" className="h-12 w-12 md:h-14 md:w-14 object-contain" />
@@ -136,11 +136,13 @@ const Header = () => {
               <nav className="flex-1 space-y-2">
                 {navLinks.map((item) => (
                   <motion.div key={item.label} variants={itemVariants}>
-                    <Link to={item.href} onClick={() => setOpen(false)} className="group flex items-center rounded-md px-3 py-3 text-sm font-medium text-[#3a1f1d] transition-colors hover:bg-[#3a1f1d]/5">
-                      <span className="mr-4 opacity-70">{item.icon}</span>
-                      <span className="uppercase tracking-[0.15em] text-[12px]">{item.label}</span>
-                      <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
-                    </Link>
+                    <Button asChild variant="ghost" className="group flex items-center justify-start rounded-md px-3 py-6 w-full text-sm font-medium text-[#3a1f1d] transition-colors hover:bg-[#3a1f1d]/5">
+                      <Link to={item.href} onClick={() => setOpen(false)}>
+                        <span className="mr-4 opacity-70">{item.icon}</span>
+                        <span className="uppercase tracking-[0.15em] text-[12px]">{item.label}</span>
+                        <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </Link>
+                    </Button>
                   </motion.div>
                 ))}
 
@@ -149,11 +151,13 @@ const Header = () => {
                   <>
                     <motion.div variants={itemVariants} className="my-4 border-t border-[#3a1f1d]/10" />
                     <motion.div variants={itemVariants}>
-                      <Link to="/profile" onClick={() => setOpen(false)} className="group flex items-center rounded-md px-3 py-3 text-sm font-medium text-[#3a1f1d] transition-colors hover:bg-[#3a1f1d]/5">
-                        <span className="mr-4 opacity-70"><User className="h-5 w-5" /></span>
-                        <span className="uppercase tracking-[0.15em] text-[12px]">My Atelier Profile</span>
-                        <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
-                      </Link>
+                      <Button asChild variant="ghost" className="group flex items-center justify-start rounded-md px-3 py-6 w-full text-sm font-medium text-[#3a1f1d] transition-colors hover:bg-[#3a1f1d]/5">
+                        <Link to="/profile" onClick={() => setOpen(false)}>
+                          <span className="mr-4 opacity-70"><User className="h-5 w-5" /></span>
+                          <span className="uppercase tracking-[0.15em] text-[12px]">My Atelier Profile</span>
+                          <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                        </Link>
+                      </Button>
                     </motion.div>
                   </>
                 )}
@@ -162,14 +166,14 @@ const Header = () => {
               {/* Bottom Auth Button */}
               <motion.div variants={itemVariants} className="mt-6 border-t border-[#3a1f1d]/10 pt-6">
                 {isSignedIn ? (
-                  <button onClick={() => { signOut(); setOpen(false); }} className="flex w-full items-center rounded-md px-3 py-3 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-50 uppercase tracking-[0.15em]">
+                  <Button variant="ghost" onClick={() => { signOut(); setOpen(false); }} className="flex w-full items-center justify-start rounded-md px-3 py-6 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-50 uppercase tracking-[0.15em]">
                     <LogOut className="mr-4 h-5 w-5 opacity-70" /> Log out
-                  </button>
+                  </Button>
                 ) : (
                   <SignInButton mode="modal">
-                    <button onClick={() => setOpen(false)} className="flex w-full items-center rounded-md px-3 py-3 text-[12px] font-medium text-[#3a1f1d] transition-colors hover:bg-[#3a1f1d]/5 uppercase tracking-[0.15em]">
+                    <Button variant="ghost" onClick={() => setOpen(false)} className="flex w-full items-center justify-start rounded-md px-3 py-6 text-[12px] font-medium text-[#3a1f1d] transition-colors hover:bg-[#3a1f1d]/5 uppercase tracking-[0.15em]">
                       <LogIn className="mr-4 h-5 w-5 opacity-70" /> Sign Up / Log In
-                    </button>
+                    </Button>
                   </SignInButton>
                 )}
               </motion.div>
@@ -189,38 +193,40 @@ const Header = () => {
                 <h2 className="text-2xl font-normal" style={{ fontFamily: "'Playfair Display', serif" }}>Cart <span className="text-[13px] opacity-60 font-sans not-italic tracking-normal">({cart?.length || 0} items)</span></h2>
                 <button onClick={() => setIsCartOpen(false)} className="text-[#3a1f1d]/50 hover:text-[#3a1f1d] transition-colors p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
               </div>
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-6 md:p-8">
                 {!cart || cart.length === 0 ? (
-                  <p className="text-center opacity-50 text-sm mt-10">Your cart is empty.</p>
+                  <div className="flex flex-col items-center justify-center h-full text-[#3a1f1d]/50 gap-4 mt-20">
+                    <ShoppingBag className="h-12 w-12 opacity-20" />
+                    <p className="text-sm uppercase tracking-widest">Your cart is empty.</p>
+                  </div>
                 ) : (
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-8">
+                    {/* STRICT SPACING APPLIED HERE */}
                     {cart.map((item) => (
-                      <div key={item.id} className="flex gap-4 pb-6 border-b border-[#3a1f1d]/10 last:border-0 last:pb-0">
-
-                        {/* Enlarged, properly spaced image */}
-                        <div className="w-[85px] h-[115px] shrink-0 bg-[#EFEFEF] border border-[#3a1f1d]/5 rounded-md overflow-hidden">
+                      <div key={item.id} className="flex gap-4 pb-8 border-b border-[#3a1f1d]/10 last:border-0 last:pb-0">
+                        
+                        <div className="w-[85px] h-[115px] shrink-0 bg-[#F9F8F6] border border-[#3a1f1d]/10 rounded-md overflow-hidden">
                           <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                         </div>
-
+                        
                         <div className="flex-1 flex flex-col justify-between py-1">
                           <div className="flex justify-between items-start gap-2">
                             <div>
-                              <h3 className="text-[13px] font-medium leading-snug">{item.name}</h3>
-                              <p className="text-[13px] mt-1 opacity-70">GH₵ {item.price.toFixed(2)}</p>
+                              <h3 className="text-[13px] font-medium leading-snug text-[#3a1f1d]">{item.name}</h3>
+                              <p className="text-[13px] mt-1 opacity-70 text-[#3a1f1d]">GH₵ {item.price.toFixed(2)}</p>
                             </div>
                             <button onClick={() => removeFromCart(item.id)} className="text-[#3a1f1d]/40 hover:text-red-700 transition-colors shrink-0">
                               <X className="h-4 w-4" />
                             </button>
                           </div>
-
+                          
                           <div className="flex justify-between items-end mt-4">
-                            {/* Polished Quantity Selector */}
                             <div className="flex items-center border border-[#3a1f1d]/20 rounded-md h-8 w-24 bg-white shadow-sm overflow-hidden">
-                              <button onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))} className="flex-1 h-full text-center hover:bg-[#3a1f1d]/5 text-sm transition-colors">−</button>
-                              <span className="flex-1 text-center text-[13px] font-medium">{item.quantity}</span>
-                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="flex-1 h-full text-center hover:bg-[#3a1f1d]/5 text-sm transition-colors">+</button>
+                              <button onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))} className="flex-1 h-full text-center hover:bg-[#3a1f1d]/5 text-sm transition-colors text-[#3a1f1d]">−</button>
+                              <span className="flex-1 text-center text-[13px] font-medium text-[#3a1f1d]">{item.quantity}</span>
+                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="flex-1 h-full text-center hover:bg-[#3a1f1d]/5 text-sm transition-colors text-[#3a1f1d]">+</button>
                             </div>
-                            <span className="text-[14px] font-medium">GH₵ {(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-[14px] font-medium text-[#3a1f1d]">GH₵ {(item.price * item.quantity).toFixed(2)}</span>
                           </div>
                         </div>
 
@@ -229,44 +235,34 @@ const Header = () => {
                   </div>
                 )}
               </div>
-
+              
               {cart && cart.length > 0 && (
-                <div className="border-t border-[#3a1f1d]/10 p-6 bg-[#F9F8F6] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+                <div className="border-t border-[#3a1f1d]/10 p-6 md:p-8 bg-white shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
                   <div className="flex justify-between items-end mb-6">
-                    <span className="text-[15px]">Subtotal</span>
-                    <span className="text-xl font-normal" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    <span className="text-[13px] uppercase tracking-widest font-medium opacity-70 text-[#3a1f1d]">Subtotal</span>
+                    <span className="text-2xl font-medium text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
                       GH₵ {subtotal.toFixed(2)}
                     </span>
                   </div>
-
-                  <div className="space-y-3">
-                    {/* Animated Checkout Button */}
-                    <Button
-                      asChild
-                      size="xl"
-                      className="w-full group bg-[#3a1f1d] hover:bg-black text-white uppercase tracking-[0.2em]"
+                  
+                  {/* BUTTONS WITH EXPLICIT TEXT COLORS AND INLINE OVERRIDES */}
+                  <div className="flex flex-col mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <Link 
+                      to="/checkout" 
+                      onClick={() => setIsCartOpen(false)}
+                      className="flex items-center justify-center w-full rounded-md uppercase tracking-[0.2em] text-[12px] font-medium transition-colors hover:opacity-80"
+                      style={{ backgroundColor: '#3a1f1d', color: '#ffffff', padding: '1rem 0' }}
                     >
-                      <Link to="/checkout" onClick={() => setIsCartOpen(false)}>
-                        Checkout
-                        <ArrowRight
-                          className="-me-1 ms-3 opacity-70 transition-transform group-hover:translate-x-1"
-                          size={16}
-                          strokeWidth={2}
-                          aria-hidden="true"
-                        />
-                      </Link>
-                    </Button>
-
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="xl"
-                      className="w-full border-[#3a1f1d]/20 text-[#3a1f1d] hover:bg-[#3a1f1d]/5 uppercase tracking-[0.2em]"
+                      Checkout
+                    </Link>
+                    <Link 
+                      to="/cart" 
+                      onClick={() => setIsCartOpen(false)}
+                      className="flex items-center justify-center w-full bg-white border border-[#3a1f1d]/20 text-[#3a1f1d] py-4 rounded-md uppercase tracking-[0.2em] text-[12px] font-medium hover:bg-[#F9F8F6] transition-colors"
+                      style={{ color: '#3a1f1d', padding: '1rem 0' }}
                     >
-                      <Link to="/cart" onClick={() => setIsCartOpen(false)}>
-                        View Cart
-                      </Link>
-                    </Button>
+                      View Cart
+                    </Link>
                   </div>
                 </div>
               )}

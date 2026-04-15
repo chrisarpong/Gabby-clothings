@@ -1,5 +1,5 @@
-
 import { Link } from 'react-router-dom';
+import { Button } from './ui/button';
 
 import promoImg from '../assets/8.jpg';
 import { motion } from 'framer-motion';
@@ -43,13 +43,14 @@ const HeroSection = () => {
         <p className="font-[var(--font-sans)] font-normal mb-[2rem] leading-relaxed text-lg text-white">
           Uncomplicated, essential pieces you'll reach for again and again.
         </p>
-        <Link
-          to="/shop"
-          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm transition-all duration-300 hover:bg-white hover:!text-[#3a1f1d]"
-          style={{ padding: '12px 32px', letterSpacing: '0.1em', display: 'inline-block', marginTop: '1rem' }}
+        <Button
+          asChild
+          variant="outline"
+          className="bg-transparent border border-white text-white font-[var(--font-sans)] uppercase text-sm transition-all duration-300 hover:bg-white hover:!text-[#3a1f1d] mt-4 rounded-none h-12 px-8"
+          style={{ letterSpacing: '0.1em' }}
         >
-          Shop All
-        </Link>
+          <Link to="/shop">Shop All</Link>
+        </Button>
       </motion.div>
 
       {/* Right Promo Box */}
@@ -89,12 +90,13 @@ const HeroSection = () => {
             <p className="font-[var(--font-sans)] text-[10px] text-[#1a1a1a] md:text-sm">
               Up to 40% Off
             </p>
-            <a
-              href="#collections"
-              className="whitespace-nowrap font-[var(--font-sans)] text-[10px] text-[#1a1a1a] underline transition-opacity hover:opacity-70 md:text-sm"
+            <Button
+              asChild
+              variant="link"
+              className="whitespace-nowrap font-[var(--font-sans)] text-[10px] text-[#1a1a1a] underline transition-opacity hover:opacity-70 md:text-sm px-0 py-0 h-auto"
             >
-              Shop Now
-            </a>
+              <a href="#collections">Shop Now</a>
+            </Button>
           </div>
         </div>
       </motion.div>

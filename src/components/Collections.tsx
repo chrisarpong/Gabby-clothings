@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Button } from './ui/button';
 import img1 from '../assets/1.jpg';
 import img2 from '../assets/2.webp';
 import img3 from '../assets/3.jpg';
@@ -65,22 +66,24 @@ const Collections = () => {
             key={idx}
             variants={itemVariants}
             className="group relative block overflow-hidden bg-white border border-[#3a1f1d]/5 shadow-sm aspect-[3/4]">
-            <Link to="/shop">
-              {/* Image */}
-              <img
-                src={card.img}
-                alt={card.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-              {/* Overlay Text */}
-              <div className="absolute top-[1.5rem] left-[1.5rem] z-20">
-                <h3 
-                  className="text-sm font-[var(--font-sans)] tracking-widest uppercase text-[#3a1f1d] bg-[#F5F5F3] px-3 py-1"
-                >
-                  {card.title}
-                </h3>
-              </div>
-            </Link>
+            <Button asChild variant="ghost" className="block w-full h-full p-0 overflow-hidden bg-transparent hover:bg-transparent rounded-none">
+              <Link to="/shop">
+                {/* Image */}
+                <img
+                  src={card.img}
+                  alt={card.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+                {/* Overlay Text */}
+                <div className="absolute top-[1.5rem] left-[1.5rem] z-20">
+                  <h3 
+                    className="text-sm font-[var(--font-sans)] tracking-widest uppercase text-[#3a1f1d] bg-[#F5F5F3] px-3 py-1"
+                  >
+                    {card.title}
+                  </h3>
+                </div>
+              </Link>
+            </Button>
           </motion.div>
         ))}
       </motion.div>

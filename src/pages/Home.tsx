@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Button } from '../components/ui/button';
 import HeroSection from '../components/HeroSection';
 import OurStory from '../components/OurStory';
 import CollectionsGrid from '../components/Collections';
@@ -55,9 +56,11 @@ const Home = () => {
           <p style={{ color: '#555', marginBottom: '2rem', lineHeight: '1.6', fontFamily: "'Jost', sans-serif" }}>
             Select styles from our core collections are now available for a limited time
           </p>
-          <Link to="/shop" style={{ color: '#3a1f1d', textDecoration: 'underline', fontStyle: 'italic', fontSize: '1.1rem', fontFamily: "'Playfair Display', serif" }}>
-            Grab Yours
-          </Link>
+          <Button asChild variant="link" className="p-0 h-auto font-normal hover:opacity-70 transition-opacity">
+            <Link to="/shop" style={{ color: '#3a1f1d', textDecoration: 'underline', fontStyle: 'italic', fontSize: '1.1rem', fontFamily: "'Playfair Display', serif" }}>
+              Grab Yours
+            </Link>
+          </Button>
         </div>
       </div>
 

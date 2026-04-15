@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Button } from '../components/ui/button';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 
@@ -17,7 +18,9 @@ const Cart = () => {
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-6">
             <h1 className="text-3xl font-normal" style={{ fontFamily: "'Playfair Display', serif" }}>Your cart is empty</h1>
-            <Link to="/shop" className="mt-6 border border-[#3a1f1d] px-12 py-4 text-sm hover:bg-[#3a1f1d] hover:text-white transition-all">Continue Shopping</Link>
+            <Button asChild variant="outline" size="lg" className="mt-6 border-[#3a1f1d] px-12 py-6 text-sm hover:bg-[#3a1f1d] hover:text-white transition-all uppercase tracking-widest rounded-none">
+              <Link to="/shop">Continue Shopping</Link>
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 items-start w-full">
@@ -46,9 +49,9 @@ const Cart = () => {
                         <div className="w-[80px] text-right hidden sm:block">
                           <span className="text-[15px] font-normal text-[#3a1f1d]">GH₵ {(item.price * item.quantity).toFixed(2)}</span>
                         </div>
-                        <button onClick={() => removeFromCart(item.id)} className="text-[#3a1f1d]/40 hover:text-red-800 transition-colors">
+                        <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)} className="text-[#3a1f1d]/40 hover:text-red-800 transition-colors bg-transparent hover:bg-transparent">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -57,14 +60,14 @@ const Cart = () => {
 
               {/* Promo Code & Note - Moved down with top border */}
               <div className="mt-14 pt-8 flex flex-col gap-5 border-t border-[#3a1f1d]/10">
-                <button className="flex items-center gap-3 text-[15px] font-normal text-[#3a1f1d] hover:opacity-70 transition-opacity w-fit">
+                <Button variant="ghost" className="flex items-center gap-3 text-[15px] font-normal text-[#3a1f1d] hover:opacity-70 transition-opacity w-fit px-0 hover:bg-transparent justify-start">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>
                   Enter a promo code
-                </button>
-                <button className="flex items-center gap-3 text-[15px] font-normal text-[#3a1f1d] hover:opacity-70 transition-opacity w-fit">
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-3 text-[15px] font-normal text-[#3a1f1d] hover:opacity-70 transition-opacity w-fit px-0 hover:bg-transparent justify-start">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                   Add a note
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -89,9 +92,11 @@ const Cart = () => {
               </div>
 
               {/* Checkout Button - Hover state set to text-white */}
-              <Link to="/checkout" className="block w-full border border-[#3a1f1d] bg-transparent text-[#3a1f1d] text-center py-[14px] text-[15px] hover:bg-[#3a1f1d] hover:text-white transition-all duration-300">
-                Checkout
-              </Link>
+              <Button asChild size="xl" className="w-full bg-transparent text-[#3a1f1d] border border-[#3a1f1d] rounded-none hover:bg-[#3a1f1d] hover:text-white transition-all uppercase tracking-[0.2em] font-medium text-[11px] h-[52px]">
+                <Link to="/checkout">
+                  Checkout
+                </Link>
+              </Button>
 
               <div className="flex justify-center items-center gap-2 mt-4 opacity-80 text-[#3a1f1d]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>

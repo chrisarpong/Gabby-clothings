@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Button } from "../components/ui/button";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
@@ -99,14 +100,15 @@ const ProductDetails = () => {
         >
           The product you're looking for doesn't exist or may have been removed.
         </p>
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => navigate("/shop")}
-          className="mt-4 border border-[#3a1f1d] px-10 py-3 text-sm hover:bg-[#3a1f1d] hover:text-white transition-all"
+          className="mt-4 border border-[#3a1f1d] px-10 py-6 text-sm bg-transparent hover:bg-[#3a1f1d] hover:text-white transition-all rounded-none"
           style={{ fontFamily: "'Jost', sans-serif" }}
         >
           Continue Shopping
-        </button>
+        </Button>
       </div>
     );
   }
@@ -212,13 +214,13 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* ── ACTION BUTTONS ── */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-10">
-              <motion.button
+            <div className="flex flex-col sm:flex-row gap-3 mb-10 w-full">
+              <Button
                 type="button"
-                whileTap={{ scale: 0.95 }}
+                variant="outline"
+                size="xl"
                 onClick={handleAddToCart}
-                className="flex-1 border border-[#3a1f1d] bg-transparent text-[#3a1f1d] py-[14px] text-center text-[15px] hover:bg-[#3a1f1d] hover:text-[#F9F8F6] transition-colors relative overflow-hidden"
+                className="flex-1 border border-[#3a1f1d] bg-transparent text-[#3a1f1d] py-7 text-center text-[15px] hover:bg-[#3a1f1d] hover:text-[#F9F8F6] transition-colors relative overflow-hidden rounded-none shadow-none"
                 style={{ fontFamily: "'Jost', sans-serif", fontWeight: "normal" }}
                 id="add-to-cart-btn"
               >
@@ -236,18 +238,18 @@ const ProductDetails = () => {
                 ) : (
                   "Add to Cart"
                 )}
-              </motion.button>
+              </Button>
 
-              <motion.button
+              <Button
                 type="button"
-                whileTap={{ scale: 0.95 }}
+                size="xl"
                 onClick={handleBuyNow}
-                className="flex-1 bg-[#3a1f1d] text-[#F9F8F6] py-[14px] text-center text-[15px] hover:bg-black transition-colors"
+                className="flex-1 bg-[#3a1f1d] text-[#F9F8F6] py-7 text-center text-[15px] hover:bg-black transition-colors shadow-none rounded-none"
                 style={{ fontFamily: "'Jost', sans-serif", fontWeight: "normal" }}
                 id="buy-now-btn"
               >
                 Buy Now
-              </motion.button>
+              </Button>
             </div>
 
             {/* ── DESCRIPTION ── */}
