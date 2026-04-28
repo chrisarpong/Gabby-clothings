@@ -5,6 +5,7 @@ import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import App from "./App";
 import "./index.css";
+import { HelmetProvider } from "react-helmet-async";
 
 const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
@@ -21,10 +22,12 @@ const convex = new ConvexReactClient(convexUrl);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={publishableKey}>
-      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <App />
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+    <HelmetProvider>
+      <ClerkProvider publishableKey={publishableKey}>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          <App />
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    </HelmetProvider>
   </React.StrictMode>
 );

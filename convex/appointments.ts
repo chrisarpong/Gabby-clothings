@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAdmin } from "./users";
 
 // 1. Submit a new Appointment Booking
 export const bookAppointment = mutation({
@@ -33,7 +34,7 @@ export const bookAppointment = mutation({
 export const getAppointmentsAdmin = query({
   args: {},
   handler: async (ctx) => {
-    // In the future, wrap this in an isAdmin check!
+    await requireAdmin(ctx);
     return await ctx.db.query("appointments").order("desc").collect();
   },
 });
@@ -53,5 +54,25 @@ export const getMyAppointments = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
+  },
+});
+
+// 4. Admin Mutation: Update appointment status
+export const updateAppointmentStatus = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(args.appointmentId, {
+      status: args.status,
+    });
+    return { success: true };
   },
 });

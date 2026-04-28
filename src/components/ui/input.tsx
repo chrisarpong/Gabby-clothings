@@ -1,35 +1,20 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
-  leftIcon?: React.ReactNode
-  size?: "sm" | "md" | "lg"
-}
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, leftIcon, size = "md", ...props }, ref) => (
-    <div className="relative w-full">
-      {leftIcon && (
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-hu-muted-foreground pointer-events-none">
-          {leftIcon}
-        </div>
+  ({ className, type, ...props }, ref) => (
+    <input
+      type={type}
+      className={cn(
+        "flex w-full border-0 border-b border-[#3a1f1d]/20 rounded-none bg-transparent px-0 py-3 text-[15px] text-[#3a1f1d] placeholder:text-[#3a1f1d]/30 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#3a1f1d] shadow-none transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50",
+        className
       )}
-      <input
-        type={type}
-        className={cn(
-          "flex w-full rounded-lg border-2 border-hu-border bg-white text-base text-hu-foreground transition-all duration-200 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#3a1f1d] disabled:cursor-not-allowed disabled:opacity-50",
-          leftIcon && "pl-11",
-          size === "sm" && "h-10 text-sm px-3",
-          size === "md" && "h-14 text-base px-4",
-          size === "lg" && "h-16 text-lg px-5",
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
-    </div>
+      ref={ref}
+      {...props}
+    />
   )
 )
 Input.displayName = "Input"

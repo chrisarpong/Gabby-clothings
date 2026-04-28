@@ -3,12 +3,17 @@ import { Button } from '../components/ui/button';
 import HeroSection from '../components/HeroSection';
 import OurStory from '../components/OurStory';
 import CollectionsGrid from '../components/Collections';
+import { Helmet } from 'react-helmet-async';
 
 import parallaxImage from '../assets/parallax-bg.jpg';
 
 const Home = () => {
   return (
     <main className="w-full bg-[#F5F5F3]">
+      <Helmet>
+        <title>Gabby Newluk | Bespoke Tailoring & Luxury Ready-to-Wear</title>
+        <meta name="description" content="Experience the pinnacle of Ghanaian luxury tailoring with Gabby Newluk. Bespoke custom garments and exclusive ready-to-wear collections." />
+      </Helmet>
       <div className="mb-32 md:mb-48">
         <HeroSection />
       </div>

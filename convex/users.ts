@@ -1,5 +1,25 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
+
+// ─── ADMIN SECURITY HELPER ──────────────────────────────────────────────
+export async function requireAdmin(ctx: QueryCtx | MutationCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Unauthenticated call. You must be logged in.");
+  }
+
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+    .unique();
+
+  if (!user || user.role !== "admin") {
+    throw new Error("Unauthorized: Admin access required.");
+  }
+
+  return user;
+}
+// ────────────────────────────────────────────────────────────────────────
 
 export const syncUser = mutation({
   args: {
@@ -25,7 +45,7 @@ export const syncUser = mutation({
       });
     }
     
-    // 2. EXISTING USER: Update basic info if it changed in Clerk (keeps roles/measurements safe)
+    // 2. EXISTING USER: Update basic info if it changed in Clerk
     await ctx.db.patch(existingUser._id, {
       email: args.email,
       firstName: args.firstName,

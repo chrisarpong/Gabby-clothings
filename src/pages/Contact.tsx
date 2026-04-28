@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TextField } from '@mui/material';
 import { Button } from '../components/ui/button';
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { toast } from "sonner";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -14,11 +17,18 @@ const fadeUp = {
 const Contact = () => {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sent, setSent] = useState(false);
+  const submitMessage = useMutation(api.contact.submitMessage);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: wire to backend / EmailJS / Resend
-    setSent(true);
+    try {
+      await submitMessage(form);
+      setSent(true);
+      toast.success("Your message has been received. Our concierge will contact you shortly.");
+      setForm({ name: '', email: '', subject: '', message: '' });
+    } catch (e) {
+      toast.error("Failed to send message. Please try again.");
+    }
   };
 
   const muiBrandStyles = {

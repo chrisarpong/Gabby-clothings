@@ -6,10 +6,13 @@ import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/mater
 import { Button } from "../components/ui/button";
 import { ImageUpload } from "../components/ui/image-upload";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const { user: clerkUser } = useUser();
   const profiles = useQuery(api.users.getMeasurementProfiles);
+  const orders = useQuery(api.orders.getMyOrders);
+  const navigate = useNavigate();
   const updateMeasurements = useMutation(api.users.updateMeasurements);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   
@@ -150,6 +153,41 @@ const Profile = () => {
             </Button>
           </div>
         </form>
+      </div>
+
+      <div className="w-full max-w-[800px] mt-24">
+        <div className="flex items-center justify-between mb-10 border-b border-[#3a1f1d]/10 pb-4">
+          <h2 className="text-[16px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d]">Order History</h2>
+        </div>
+
+        {orders === undefined ? (
+          <div className="py-12 text-center text-[13px] opacity-50 uppercase tracking-widest">Loading...</div>
+        ) : orders.length === 0 ? (
+          <div className="py-16 text-center border border-[#3a1f1d]/10 bg-[#F9F8F6]">
+            <p className="text-[14px] opacity-70 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>You haven't placed any orders yet.</p>
+            <Button onClick={() => navigate("/shop")} variant="outline" className="border-[#3a1f1d] text-[#3a1f1d] rounded-none hover:bg-[#3a1f1d] hover:text-white px-8 uppercase tracking-widest text-[11px]">
+              Shop Collection
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {orders.map((order) => (
+              <div key={order._id} className="p-6 border border-[#3a1f1d]/10 flex flex-col md:flex-row justify-between md:items-center gap-6 group hover:border-[#3a1f1d]/30 transition-colors">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-[12px] font-mono opacity-60">#{order.paystackReference.slice(-8).toUpperCase()}</span>
+                    <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 border border-[#3a1f1d]/20 bg-[#F9F8F6]">{order.status}</span>
+                  </div>
+                  <p className="text-[13px] opacity-70">{new Date(order._creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+                <div className="flex flex-col md:items-end">
+                  <span className="text-[16px] font-medium mb-1">GH₵ {order.totalAmount.toFixed(2)}</span>
+                  <span className="text-[11px] opacity-50">{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

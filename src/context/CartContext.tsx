@@ -20,6 +20,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  size?: string;
 }
 
 interface CartContextType {
@@ -53,15 +54,15 @@ function writeGuestCart(items: CartItem[]) {
 }
 
 function addItemToArray(prev: CartItem[], item: CartItem): CartItem[] {
-  const existing = prev.find((i) => i.productId === item.productId);
+  const existing = prev.find((i) => i.productId === item.productId && i.size === item.size);
   if (existing) {
     return prev.map((i) =>
-      i.productId === item.productId
+      i.productId === item.productId && i.size === item.size
         ? { ...i, quantity: i.quantity + item.quantity }
         : i
     );
   }
-  return [...prev, { ...item, id: item.productId }];
+  return [...prev, { ...item, id: `${item.productId}-${item.size || 'default'}` }];
 }
 
 // ---------- Provider ----------

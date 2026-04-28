@@ -49,10 +49,11 @@ export default defineSchema({
     category: v.optional(v.string()),
     type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
     inStock: v.boolean(),
-    stock: v.optional(v.number()),
+    stock: v.number(),
   })
     .index("by_slug", ["slug"])
-    .index("by_category", ["category"]),
+    .index("by_category", ["category"])
+    .searchIndex("search_name", { searchField: "name" }),
 
   // 3. CART ITEMS TABLE (server-side cart for authenticated users)
   cartItems: defineTable({
@@ -65,7 +66,7 @@ export default defineSchema({
 
   // 4. ORDERS TABLE
   orders: defineTable({
-    userId: v.string(), // Clerk tokenIdentifier
+    userId: v.optional(v.string()), // Optional for guests, Clerk tokenIdentifier for logged in users
     paystackReference: v.string(), // Transaction reference from Paystack
     items: v.array(
       v.object({
@@ -81,7 +82,8 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("processing"),
       v.literal("shipped"),
-      v.literal("completed")
+      v.literal("completed"),
+      v.literal("cancelled")
     ),
 
     // THE BESPOKE BUSINESS LOGIC (handled separately after order)
@@ -102,7 +104,7 @@ export default defineSchema({
       address: v.string(),
       city: v.string(),
       region: v.string(),
-      country: v.string(),
+      country: v.optional(v.string()),
     }),
   })
     .index("by_user", ["userId"])
@@ -126,4 +128,46 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_date", ["date"]),
+
+  // 6. WISHLISTS TABLE
+  wishlists: defineTable({
+    userId: v.string(), // Clerk tokenIdentifier
+    productId: v.id("products"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_product", ["productId"])
+    .index("by_user_product", ["userId", "productId"]),
+
+  // 7. NEWSLETTER TABLE
+  newsletter: defineTable({
+    email: v.string(),
+    subscribedAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  // 8. REVIEWS TABLE
+  reviews: defineTable({
+    productId: v.id("products"),
+    userId: v.string(),
+    userName: v.string(),
+    rating: v.number(),
+    comment: v.string(),
+    createdAt: v.number(),
+  }).index("by_product", ["productId"]),
+
+  // 9. CONTACT MESSAGES TABLE
+  contactMessages: defineTable({
+    name: v.string(),
+    email: v.string(),
+    subject: v.string(),
+    message: v.string(),
+    status: v.string(),
+    createdAt: v.number(),
+  }),
+
+  // 10. PROMO CODES TABLE
+  promoCodes: defineTable({
+    code: v.string(),
+    discountPercentage: v.number(),
+    isActive: v.boolean(),
+  }).index("by_code", ["code"]),
 });

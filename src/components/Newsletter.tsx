@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { TextField } from '@mui/material';
 import { Button } from './ui/button';
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { toast } from "sonner";
 
 const muiBrandStyles = {
   '& .MuiOutlinedInput-root': {
@@ -12,11 +15,18 @@ const muiBrandStyles = {
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
+  const subscribe = useMutation(api.newsletter.subscribe);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Subscribed: ${email}`);
-    setEmail('');
+    if (!email) return;
+    try {
+      await subscribe({ email });
+      toast.success("Subscribed to the Gabby Newluk editorial.");
+      setEmail('');
+    } catch (error) {
+      toast.error("Failed to subscribe.");
+    }
   };
 
   return (

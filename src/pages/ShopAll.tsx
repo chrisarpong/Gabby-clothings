@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useCart } from '../context/CartContext';
+import { Helmet } from 'react-helmet-async';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1593030761757-71fae46fa0c5?q=80&w=600&auto=format&fit=crop';
@@ -12,6 +14,7 @@ const ShopAll = () => {
   const { addToCart } = useCart();
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
   const [visibleCount, setVisibleCount] = useState(4);
+  const [sortBy, setSortBy] = useState('newest');
 
   // ── Live data from Convex ──
   const products = useQuery(api.products.getProducts);
@@ -80,7 +83,17 @@ const ShopAll = () => {
     );
   }
 
-  const visibleProducts = products.slice(0, visibleCount);
+  let sortedProducts = [...products];
+  if (sortBy === 'price-low') {
+    sortedProducts.sort((a, b) => a.price - b.price);
+  } else if (sortBy === 'price-high') {
+    sortedProducts.sort((a, b) => b.price - a.price);
+  } else {
+    // Newest is default (assuming items are naturally sorted by creation from Convex or we sort by id)
+    sortedProducts.sort((a, b) => b._creationTime - a._creationTime);
+  }
+
+  const visibleProducts = sortedProducts.slice(0, visibleCount);
 
   return (
     <motion.div
@@ -90,9 +103,13 @@ const ShopAll = () => {
       className="min-h-[100vh] w-full bg-[#F5F5F3]"
       style={{ padding: '6rem 5% 8rem' }}
     >
+      <Helmet>
+        <title>Shop All | Gabby Newluk</title>
+        <meta name="description" content="Discover the complete collection of bespoke and ready-to-wear luxury garments from Gabby Newluk." />
+      </Helmet>
       <h1
         style={{
-          marginBottom: '4rem',
+          marginBottom: '2rem',
           textAlign: 'center',
           fontFamily: "'Playfair Display', serif",
           fontStyle: 'italic',
@@ -102,6 +119,22 @@ const ShopAll = () => {
       >
         Shop All
       </h1>
+
+      {/* ── FILTER/SORT BAR ── */}
+      <div className="mx-auto w-full max-w-[1400px] px-5 mb-8 flex justify-end">
+        <div className="w-48">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="border-[#3a1f1d]/20 text-[#3a1f1d] uppercase tracking-widest text-[11px] h-10 rounded-none bg-transparent focus:ring-0 focus:ring-offset-0">
+              <SelectValue placeholder="SORT BY" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-[#3a1f1d]/20">
+              <SelectItem value="newest" className="text-[11px] uppercase tracking-widest text-[#3a1f1d] focus:bg-[#3a1f1d]/5">Newest Arrivals</SelectItem>
+              <SelectItem value="price-low" className="text-[11px] uppercase tracking-widest text-[#3a1f1d] focus:bg-[#3a1f1d]/5">Price: Low to High</SelectItem>
+              <SelectItem value="price-high" className="text-[11px] uppercase tracking-widest text-[#3a1f1d] focus:bg-[#3a1f1d]/5">Price: High to Low</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <div className="w-full flex flex-col items-center">
         {/* 4-column grid on large screens, 2 on medium, 1 on mobile */}

@@ -14,20 +14,20 @@ const QuantitySelector = ({
   max = 99,
 }: QuantitySelectorProps) => {
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       <label
-        className="block text-[13px] mb-2 font-medium uppercase tracking-wider"
-        style={{ fontFamily: "'Jost', sans-serif" }}
+        className="block text-[15px] mb-3 text-[#3a1f1d]"
+        style={{ fontFamily: "'Jost', sans-serif", fontWeight: "normal" }}
       >
-        Quantity
+        Quantity *
       </label>
-      <div className="flex items-center border border-[#3a1f1d]/30 h-11 w-[130px] select-none">
+      <div className="flex items-center border border-[#3a1f1d]/30 h-[52px] w-[130px] select-none bg-transparent">
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          type="button"
           whileTap={{ scale: 0.95 }}
           onClick={() => onChange(Math.max(min, quantity - 1))}
           disabled={quantity <= min}
-          className="flex-1 h-full text-lg hover:bg-[#3a1f1d]/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-12 h-full text-xl text-[#3a1f1d] hover:bg-[#3a1f1d]/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-light"
           aria-label="Decrease quantity"
         >
           −
@@ -44,15 +44,15 @@ const QuantitySelector = ({
           min={min}
           max={max}
           step={1}
-          className="flex-1 text-center text-[14px] bg-transparent outline-none border-x border-[#3a1f1d]/15 h-full w-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="flex-1 text-center text-[15px] text-[#3a1f1d] bg-transparent outline-none h-full w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           style={{ fontFamily: "'Jost', sans-serif" }}
         />
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          type="button"
           whileTap={{ scale: 0.95 }}
           onClick={() => onChange(Math.min(max, quantity + 1))}
           disabled={quantity >= max}
-          className="flex-1 h-full text-lg hover:bg-[#3a1f1d]/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-12 h-full text-xl text-[#3a1f1d] hover:bg-[#3a1f1d]/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-light"
           aria-label="Increase quantity"
         >
           +

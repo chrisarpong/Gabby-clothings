@@ -11,37 +11,29 @@ interface ProductInfoSectionsProps {
 }
 
 const ProductInfoSections = ({ sections }: ProductInfoSectionsProps) => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0); // Default first section open
 
   const toggle = (idx: number) => {
     setOpenIndex((prev) => (prev === idx ? null : idx));
   };
 
   return (
-    <div className="border-t border-[#3a1f1d]/20">
+    <div className="w-full">
       {sections.map((section, idx) => (
-        <motion.div
+        <div
           key={idx}
-          className="border-b border-[#3a1f1d]/20 cursor-pointer"
-          whileHover={{
-            borderColor: "rgba(58, 31, 29, 0.4)",
-          }}
-          transition={{ duration: 0.2 }}
+          className="border-b border-[#3a1f1d]/20"
         >
           <button
             onClick={() => toggle(idx)}
-            className="flex justify-between items-center w-full py-4 text-left text-[15px] font-normal"
-            style={{ fontFamily: "'Jost', sans-serif" }}
+            className="flex justify-between items-center w-full py-5 text-left text-[16px] text-[#3a1f1d] hover:opacity-70 transition-opacity"
+            style={{ fontFamily: "'Jost', sans-serif", fontWeight: "normal" }}
             aria-expanded={openIndex === idx}
           >
             <span>{section.title}</span>
-            <motion.span
-              animate={{ rotate: openIndex === idx ? 45 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-xl font-light"
-            >
-              +
-            </motion.span>
+            <span className="text-[18px] font-light">
+              {openIndex === idx ? "—" : "+"}
+            </span>
           </button>
 
           <AnimatePresence initial={false}>
@@ -55,7 +47,7 @@ const ProductInfoSections = ({ sections }: ProductInfoSectionsProps) => {
                 className="overflow-hidden"
               >
                 <p
-                  className="pb-5 text-[14px] opacity-80 leading-relaxed"
+                  className="pb-6 pt-1 text-[15px] text-[#3a1f1d]/80 leading-relaxed"
                   style={{ fontFamily: "'Jost', sans-serif" }}
                 >
                   {section.content}
@@ -63,7 +55,7 @@ const ProductInfoSections = ({ sections }: ProductInfoSectionsProps) => {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
