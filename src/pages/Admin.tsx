@@ -105,7 +105,7 @@ const Admin = () => {
     }
   };
 
-  const handleStatusChange = (orderId: any, newStatus: string) => {
+  const handleStatusChange = (orderId: any, newStatus: any) => {
     toast.promise(updateOrderStatus({ orderId, status: newStatus }), {
       loading: 'Updating status...',
       success: 'Order status updated!',
@@ -438,7 +438,7 @@ const Admin = () => {
                             <select 
                               value={apt.status}
                               onChange={(e) => {
-                                toast.promise(updateAppointmentStatus({ appointmentId: apt._id, status: e.target.value }), {
+                                toast.promise(updateAppointmentStatus({ appointmentId: apt._id, status: e.target.value as any }), {
                                   loading: 'Updating...', success: 'Appointment updated!', error: 'Failed to update'
                                 });
                               }}

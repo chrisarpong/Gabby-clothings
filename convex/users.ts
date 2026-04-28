@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
+import type { QueryCtx, MutationCtx } from "./_generated/server";
 
 // ─── ADMIN SECURITY HELPER ──────────────────────────────────────────────
 export async function requireAdmin(ctx: QueryCtx | MutationCtx) {

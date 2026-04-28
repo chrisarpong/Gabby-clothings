@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import clsx from "clsx";
 import { Button } from "@/components/ui/button-1";
@@ -16,7 +17,7 @@ const UndoIcon = () => (
 );
 
 type Toast = {
-  id: number; text: string | ReactNode; measuredHeight?: number; timeout?: NodeJS.Timeout; remaining?: number; start?: number;
+  id: number; text: string | ReactNode; measuredHeight?: number; timeout?: ReturnType<typeof setTimeout>; remaining?: number; start?: number;
   pause?: () => void; resume?: () => void; preserve?: boolean; action?: string; onAction?: () => void; onUndoAction?: () => void;
   type: "message" | "success" | "warning" | "error";
 };

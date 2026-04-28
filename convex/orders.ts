@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./users"; // Importing the security block
-import { Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 
 // 1. Create a new order after a successful Paystack payment
 export const createOrder = mutation({
