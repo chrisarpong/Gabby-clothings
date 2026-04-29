@@ -15,7 +15,7 @@ http.route({
 
     const payload = await request.text();
     // @ts-ignore
-    const secret = process.env.VITE_PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET_KEY;
+    const secret = process.env.PAYSTACK_SECRET_KEY;
     
     if (!secret) {
       console.error("Missing PAYSTACK_SECRET_KEY");

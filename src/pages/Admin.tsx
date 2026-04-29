@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { motion } from 'framer-motion';
 import { Input } from '../components/ui/input';
 import { Spinner } from '../components/ui/spinner-1';
 import { Button } from '../components/ui/button';
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Admin = () => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inventory' | 'appointments' | 'concierge' | 'newsletter'>('overview');
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -36,14 +36,14 @@ const Admin = () => {
   const subscribers = useQuery(api.newsletter.getSubscribers, isAdmin ? {} : "skip");
   const stats = useQuery(api.analytics.getDashboardStats, isAdmin ? {} : "skip");
 
-  // Route Protection (Temporarily disabled so you don't get kicked out)
-  // useEffect(() => {
-  //   if (userProfile !== undefined) {
-  //     if (!userProfile || userProfile.role !== "admin") {
-  //       navigate("/");
-  //     }
-  //   }
-  // }, [userProfile, navigate]);
+  // Route Protection
+  useEffect(() => {
+    if (userProfile !== undefined) {
+      if (!userProfile || userProfile.role !== "admin") {
+        navigate("/");
+      }
+    }
+  }, [userProfile, navigate]);
 
   const [formData, setFormData] = useState({
     name: '', price: '', description: '', imageUrl: '', imageFile: null as File | null, type: 'custom' as 'custom' | 'ready-to-wear', stock: '0'
@@ -153,10 +153,14 @@ const Admin = () => {
       ════════════════════════════════════════════ */}
       <div className="max-w-[1400px] mx-auto w-full px-6 md:px-12 flex flex-col lg:flex-row gap-10 items-start">
         
-        {/* DEBUG BANNER */}
+        {/* Access Guard */}
         {!isAdmin && (
-          <div className="absolute top-0 left-0 w-full bg-red-600 text-white p-3 text-center text-[13px] font-bold z-50">
-            SYSTEM DIAGNOSTIC: You are currently seen by the system as {userProfile ? `Role: "${userProfile.role}" (${userProfile.email})` : "LOGGED OUT"}. Data will not load.
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#F9F8F6]">
+            <div className="text-center">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-[#3a1f1d]/40 mb-3">Access Restricted</p>
+              <h2 className="text-[28px] italic text-[#3a1f1d] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>Atelier Portal</h2>
+              <p className="text-[14px] text-[#3a1f1d]/50">This area is reserved for authorised personnel.</p>
+            </div>
           </div>
         )}
         
