@@ -45,11 +45,12 @@ export default defineSchema({
     productInfo: v.optional(v.string()),
     returnPolicy: v.optional(v.string()),
     shippingInfo: v.optional(v.string()),
+    imageId: v.optional(v.id("_storage")),
     images: v.array(v.string()),
     category: v.optional(v.string()),
     type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
     inStock: v.boolean(),
-    stock: v.number(),
+    stock: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["category"])
@@ -151,7 +152,6 @@ export default defineSchema({
     userName: v.string(),
     rating: v.number(),
     comment: v.string(),
-    createdAt: v.number(),
   }).index("by_product", ["productId"]),
 
   // 9. CONTACT MESSAGES TABLE
@@ -161,7 +161,6 @@ export default defineSchema({
     subject: v.string(),
     message: v.string(),
     status: v.string(),
-    createdAt: v.number(),
   }),
 
   // 10. PROMO CODES TABLE

@@ -16,7 +16,6 @@ export const submitMessage = mutation({
       subject: args.subject,
       message: args.message,
       status: "unread",
-      createdAt: Date.now(),
     });
     return { success: true };
   },
@@ -26,5 +25,17 @@ export const getMessages = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
     return await ctx.db.query("contactMessages").order("desc").collect();
+  },
+});
+
+export const updateMessageStatus = mutation({
+  args: {
+    messageId: v.id("contactMessages"),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(args.messageId, { status: args.status });
+    return { success: true };
   },
 });

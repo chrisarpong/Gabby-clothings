@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Show, RedirectToSignIn } from '@clerk/react';
-import { TextField } from '@mui/material';
+import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 
 const Account = () => {
@@ -13,12 +13,7 @@ const Account = () => {
     neck: ''
   });
 
-  const muiBrandStyles = {
-    '& .MuiOutlinedInput-root': {
-      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
-    },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-  };
+
 
   return (
     <>
@@ -53,14 +48,15 @@ const Account = () => {
 
               <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={(e) => e.preventDefault()}>
                 {Object.keys(measurements).map((key) => (
-                  <TextField 
-                    key={key}
-                    fullWidth variant="outlined" label={key.toUpperCase()}
-                    placeholder={`Enter ${key} in inches`}
-                    value={measurements[key as keyof typeof measurements]}
-                    onChange={(e) => setMeasurements({...measurements, [key]: e.target.value})}
-                    sx={muiBrandStyles}
-                  />
+                  <div key={key} className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">{key}</label>
+                    <Input 
+                      placeholder={`Enter ${key} in inches`}
+                      value={measurements[key as keyof typeof measurements]}
+                      onChange={(e: any) => setMeasurements({...measurements, [key]: e.target.value})}
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d]"
+                    />
+                  </div>
                 ))}
                 
                 <div className="md:col-span-2 mt-8">

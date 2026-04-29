@@ -39,7 +39,8 @@ export const createProduct = mutation({
     productInfo: v.optional(v.string()),
     returnPolicy: v.optional(v.string()),
     shippingInfo: v.optional(v.string()),
-    images: v.array(v.string()),
+    imageId: v.optional(v.id("_storage")),
+    images: v.optional(v.array(v.string())),
     category: v.optional(v.string()),
     type: v.union(v.literal("custom"), v.literal("ready-to-wear")),
     inStock: v.boolean(),
@@ -47,7 +48,14 @@ export const createProduct = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
-    return await ctx.db.insert("products", args);
+    let images = args.images || [];
+    if (args.imageId) {
+      const url = await ctx.storage.getUrl(args.imageId);
+      if (url) {
+        images = [url];
+      }
+    }
+    return await ctx.db.insert("products", { ...args, images });
   },
 });
 
@@ -62,6 +70,7 @@ export const updateProduct = mutation({
     productInfo: v.optional(v.string()),
     returnPolicy: v.optional(v.string()),
     shippingInfo: v.optional(v.string()),
+    imageId: v.optional(v.id("_storage")),
     images: v.optional(v.array(v.string())),
     category: v.optional(v.string()),
     type: v.optional(v.union(v.literal("custom"), v.literal("ready-to-wear"))),
@@ -71,6 +80,19 @@ export const updateProduct = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
     const { id, ...updates } = args;
+    
+    let images = updates.images;
+    if (updates.imageId) {
+      const url = await ctx.storage.getUrl(updates.imageId);
+      if (url) {
+        images = [url];
+      }
+    }
+    
+    if (images !== undefined) {
+        updates.images = images;
+    }
+
     await ctx.db.patch(id, updates);
     return { success: true };
   },
@@ -97,5 +119,20 @@ export const searchProducts = query({
       .query("products")
       .withSearchIndex("search_name", (q) => q.search("name", args.searchTerm))
       .collect();
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getFileUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
   },
 });

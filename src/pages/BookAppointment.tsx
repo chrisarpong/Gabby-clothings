@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { TextField } from '@mui/material';
+import { Input } from '../components/ui/input';
 import { CheckCircle, CalendarDays, Clock, User, Phone } from 'lucide-react';
 import Stepper, { Step } from '../components/ui/Stepper';
 import { toast } from 'sonner';
@@ -28,29 +28,21 @@ const BookAppointment = () => {
   const validateStep = (step: number) => {
     if (step === 1) {
       if (!formData.date || !formData.time) {
-        toast.error("Please select both a date and time to continue.");
+        toast.error('Please select both a date and time.');
         return false;
       }
     }
     if (step === 2) {
       if (!formData.name || !formData.email || !formData.phone) {
-        toast.error("Please complete all contact details to continue.");
+        toast.error('Please complete all contact details.');
         return false;
       }
     }
     return true;
   };
 
-  const handleStepChange = (step: number) => {
-    if (step === 2) {
-      toast.success("Date & Time Saved", {
-        description: "Please provide your contact details.",
-      });
-    } else if (step === 3) {
-      toast.success("Details Captured", {
-        description: "Review your appointment before confirming.",
-      });
-    }
+  const handleStepChange = (_step: number) => {
+    // step changed
   };
 
   const handleFinalSubmit = async () => {
@@ -64,25 +56,14 @@ const BookAppointment = () => {
         notes: formData.notes
       });
       
-      // Show success toast
-      toast.success("Appointment Confirmed", {
-        description: "We look forward to seeing you.",
-      });
-      
-      // Trigger Success Screen
       setIsSubmitted(true);
     } catch (error) {
       console.error(error);
-      toast.error("Booking Failed", {
-        description: "There was an issue scheduling your appointment.",
-      });
+      toast.error('Booking failed. Please try again.');
     }
   };
 
-  const muiBrandStyles = {
-    '& .MuiOutlinedInput-root': { '&.Mui-focused fieldset': { borderColor: '#3a1f1d' } },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-  };
+
 
   // ==========================================
   // SUCCESS SCREEN (Renders after completion)
@@ -141,11 +122,11 @@ const BookAppointment = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">Appointment Date</label>
-                  <TextField fullWidth type="date" name="date" value={formData.date} onChange={handleChange} sx={muiBrandStyles} />
+                  <Input type="date" name="date" value={formData.date} onChange={handleChange as any} className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">Appointment Time</label>
-                  <TextField fullWidth type="time" name="time" value={formData.time} onChange={handleChange} sx={muiBrandStyles} />
+                  <Input type="time" name="time" value={formData.time} onChange={handleChange as any} className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
                 </div>
               </div>
             </div>
@@ -158,10 +139,17 @@ const BookAppointment = () => {
                 <h2 className="text-xl font-medium text-[#3a1f1d] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Your Details</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <TextField fullWidth label="FULL NAME" name="name" value={formData.name} onChange={handleChange} sx={muiBrandStyles} />
-                <TextField fullWidth label="PHONE NUMBER" name="phone" type="tel" value={formData.phone} onChange={handleChange} sx={muiBrandStyles} />
-                <div className="md:col-span-2">
-                  <TextField fullWidth label="EMAIL ADDRESS" name="email" type="email" value={formData.email} onChange={handleChange} sx={muiBrandStyles} />
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">FULL NAME</label>
+                  <Input name="name" value={formData.name} onChange={handleChange as any} className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">PHONE NUMBER</label>
+                  <Input name="phone" type="tel" value={formData.phone} onChange={handleChange as any} className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
+                </div>
+                <div className="md:col-span-2 flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.1em] font-medium text-[#3a1f1d] ml-1">EMAIL ADDRESS</label>
+                  <Input name="email" type="email" value={formData.email} onChange={handleChange as any} className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
                 </div>
               </div>
             </div>

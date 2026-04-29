@@ -1,17 +1,9 @@
 import { useState } from 'react';
-import { TextField } from '@mui/material';
+import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-
-const muiBrandStyles = {
-  '& .MuiOutlinedInput-root': {
-    '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
-    '& fieldset': { borderColor: 'rgba(58, 31, 29, 0.2)' },
-  },
-  '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-};
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
@@ -50,14 +42,13 @@ const Newsletter = () => {
           className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto w-full"
           id="newsletter-form"
         >
-          <TextField
-            fullWidth
+          <Input
             type="email"
             required
-            label="EMAIL ADDRESS"
+            placeholder="EMAIL ADDRESS"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            sx={muiBrandStyles}
+            onChange={(e: any) => setEmail(e.target.value)}
+            className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full flex-1"
           />
           <Button
             type="submit"

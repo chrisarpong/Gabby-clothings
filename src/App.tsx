@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import SyncUser from "./components/SyncUser";
 import { CartProvider } from "./context/CartContext";
+import { Toaster } from "./components/ui/toast";
 
 import Home from "./pages/Home";
 import ShopAll from "./pages/ShopAll";
@@ -53,6 +54,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <Toaster />
         </div>
       </BrowserRouter>
     </CartProvider>

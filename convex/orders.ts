@@ -40,13 +40,15 @@ export const createOrder = mutation({
         throw new Error(`Product not found: ${item.name}`);
       }
       
-      if (product.stock < item.quantity) {
-        throw new Error(`Out of stock: ${product.name}`);
+      if (product.stock !== undefined) {
+        if (product.stock < item.quantity) {
+          throw new Error(`Out of stock: ${product.name}`);
+        }
+        
+        await ctx.db.patch(product._id, {
+          stock: product.stock - item.quantity
+        });
       }
-      
-      await ctx.db.patch(product._id, {
-        stock: product.stock - item.quantity
-      });
     }
 
     // Insert the order

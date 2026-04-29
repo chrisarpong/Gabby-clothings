@@ -1,61 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { motion } from 'framer-motion';
-import { TextField, MenuItem, CircularProgress } from '@mui/material';
+import { Input } from '../components/ui/input';
+import { Spinner } from '../components/ui/spinner-1';
 import { Button } from '../components/ui/button';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Admin = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inventory' | 'appointments' | 'concierge' | 'newsletter'>('overview');
   const [editingId, setEditingId] = useState<string | null>(null);
   
   // Database Hooks
   const userProfile = useQuery(api.users.getUserProfile);
+  const isAdmin = userProfile?.role === "admin";
+
   const createProduct = useMutation(api.products.createProduct);
   const updateProduct = useMutation(api.products.updateProduct);
   const deleteProduct = useMutation(api.products.deleteProduct);
+  const generateUploadUrl = useMutation(api.products.generateUploadUrl);
+  
+  // Public or conditionally skipped queries
   const products = useQuery(api.products.getProducts);
-  const orders = useQuery(api.orders.getOrders);
+  const orders = useQuery(api.orders.getOrders, isAdmin ? {} : "skip");
   const updateOrderStatus = useMutation(api.orders.updateOrderStatus);
-  const appointments = useQuery(api.appointments.getAppointmentsAdmin);
+  
+  const appointments = useQuery(api.appointments.getAppointmentsAdmin, isAdmin ? {} : "skip");
   const updateAppointmentStatus = useMutation(api.appointments.updateAppointmentStatus);
-  const messages = useQuery(api.contact.getMessages);
-  const subscribers = useQuery(api.newsletter.getSubscribers);
-  const stats = useQuery(api.analytics.getDashboardStats);
+  
+  const messages = useQuery(api.contact.getMessages, isAdmin ? {} : "skip");
+  const updateMessageStatus = useMutation(api.contact.updateMessageStatus);
+  
+  const subscribers = useQuery(api.newsletter.getSubscribers, isAdmin ? {} : "skip");
+  const stats = useQuery(api.analytics.getDashboardStats, isAdmin ? {} : "skip");
 
-  // Route Protection
-  useEffect(() => {
-    if (userProfile !== undefined) {
-      if (!userProfile || userProfile.role !== "admin") {
-        navigate("/");
-      }
-    }
-  }, [userProfile, navigate]);
+  // Route Protection (Temporarily disabled so you don't get kicked out)
+  // useEffect(() => {
+  //   if (userProfile !== undefined) {
+  //     if (!userProfile || userProfile.role !== "admin") {
+  //       navigate("/");
+  //     }
+  //   }
+  // }, [userProfile, navigate]);
 
   const [formData, setFormData] = useState({
-    name: '', price: '', description: '', imageUrl: '', type: 'custom' as 'custom' | 'ready-to-wear', stock: '0'
+    name: '', price: '', description: '', imageUrl: '', imageFile: null as File | null, type: 'custom' as 'custom' | 'ready-to-wear', stock: '0'
   });
 
-  const muiBrandStyles = {
-    '& .MuiOutlinedInput-root': {
-      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
-    },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let imageId = editingId ? products?.find(p => p._id === editingId)?.imageId : undefined;
+      
+      if (formData.imageFile) {
+        const postUrl = await generateUploadUrl();
+        const result = await fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": formData.imageFile.type },
+          body: formData.imageFile,
+        });
+        const { storageId } = await result.json();
+        imageId = storageId;
+      }
+
       if (editingId) {
         await updateProduct({
           id: editingId as any,
           name: formData.name,
           price: parseFloat(formData.price),
           description: formData.description,
-          images: [formData.imageUrl], 
+          images: [], 
+          imageId: imageId,
           type: formData.type,
           stock: parseInt(formData.stock) || 0,
         });
@@ -65,14 +84,15 @@ const Admin = () => {
           name: formData.name,
           price: parseFloat(formData.price),
           description: formData.description,
-          images: [formData.imageUrl], 
+          images: [], 
+          imageId: imageId,
           type: formData.type,
           inStock: true,
           stock: parseInt(formData.stock) || 0,
         });
         toast.success('Masterpiece published successfully!');
       }
-      setFormData({ name: '', price: '', description: '', imageUrl: '', type: 'custom', stock: '0' });
+      setFormData({ name: '', price: '', description: '', imageUrl: '', imageFile: null, type: 'custom', stock: '0' });
       setEditingId(null);
     } catch (error) {
       console.error(error);
@@ -87,6 +107,7 @@ const Admin = () => {
       price: product.price.toString(),
       description: product.description,
       imageUrl: product.images?.[0] || '',
+      imageFile: null,
       type: product.type,
       stock: (product.stock || 0).toString()
     });
@@ -116,7 +137,7 @@ const Admin = () => {
   if (userProfile === undefined) {
     return (
       <div className="min-h-screen bg-[#F9F8F6] flex flex-col items-center justify-center pt-16">
-        <CircularProgress sx={{ color: '#3a1f1d' }} size={40} thickness={2} />
+        <Spinner size={40} color="#3a1f1d" />
         <p className="mt-4 text-[12px] uppercase tracking-widest text-[#3a1f1d]/70">Authenticating Access...</p>
       </div>
     );
@@ -131,6 +152,13 @@ const Admin = () => {
           MASTER GRID LAYOUT (Padded & Centered)
       ════════════════════════════════════════════ */}
       <div className="max-w-[1400px] mx-auto w-full px-6 md:px-12 flex flex-col lg:flex-row gap-10 items-start">
+        
+        {/* DEBUG BANNER */}
+        {!isAdmin && (
+          <div className="absolute top-0 left-0 w-full bg-red-600 text-white p-3 text-center text-[13px] font-bold z-50">
+            SYSTEM DIAGNOSTIC: You are currently seen by the system as {userProfile ? `Role: "${userProfile.role}" (${userProfile.email})` : "LOGGED OUT"}. Data will not load.
+          </div>
+        )}
         
         {/* ════════════════════════════════════════════
             SIDEBAR (Floating Premium Card)
@@ -199,7 +227,7 @@ const Admin = () => {
 
               {stats === undefined ? (
                 <div className="flex justify-center items-center py-20">
-                  <CircularProgress sx={{ color: '#3a1f1d' }} size={40} thickness={2} />
+                  <Spinner size={40} color="#3a1f1d" />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -295,45 +323,62 @@ const Admin = () => {
                 </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <TextField 
-                    fullWidth variant="outlined" required label="PRODUCT NAME"
-                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                    sx={muiBrandStyles}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">PRODUCT NAME</label>
+                    <Input 
+                      required 
+                      value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d]"
+                    />
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <TextField 
-                      fullWidth variant="outlined" required label="PRICE (GH₵)" type="number"
-                      value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
-                      sx={muiBrandStyles}
-                    />
-                    <TextField 
-                      fullWidth select variant="outlined" label="GARMENT TYPE"
-                      value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}
-                      sx={muiBrandStyles}
-                    >
-                      <MenuItem value="custom">Bespoke Custom Made</MenuItem>
-                      <MenuItem value="ready-to-wear">Ready to Wear</MenuItem>
-                    </TextField>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">PRICE (GH₵)</label>
+                      <Input 
+                        required type="number"
+                        value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
+                        className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">GARMENT TYPE</label>
+                      <select 
+                        value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}
+                        className="border border-[#3a1f1d]/20 px-3 py-2 h-10 rounded-none text-[13px] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#3a1f1d] w-full"
+                      >
+                        <option value="custom">Bespoke Custom Made</option>
+                        <option value="ready-to-wear">Ready to Wear</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <TextField 
-                    fullWidth variant="outlined" required label="COVER IMAGE URL" type="url"
-                    placeholder="https://..."
-                    value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                    sx={muiBrandStyles}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2" style={{ fontFamily: "'Jost', sans-serif" }}>COVER IMAGE</label>
+                    <input 
+                      type="file" accept="image/*"
+                      onChange={(e) => setFormData({...formData, imageFile: e.target.files?.[0] || null})}
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] file:mr-4 file:py-2 file:px-4 file:border-0 file:text-[11px] file:uppercase file:tracking-[0.2em] file:bg-[#3a1f1d] file:text-[#F9F8F6] hover:file:bg-[#3a1f1d]/90 cursor-pointer w-full bg-transparent"
+                    />
+                    {(formData.imageUrl || editingId) && !formData.imageFile && <span className="text-[11px] opacity-50 ml-2">Current Image Exists. Upload to replace.</span>}
+                  </div>
 
-                  <TextField 
-                    fullWidth variant="outlined" required label="STOCK QUANTITY" type="number"
-                    value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})}
-                    sx={muiBrandStyles}
-                  />
-                  <TextField 
-                    fullWidth variant="outlined" required label="EDITORIAL DESCRIPTION" multiline rows={5}
-                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
-                    sx={muiBrandStyles}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">STOCK QUANTITY</label>
+                    <Input 
+                      required type="number"
+                      value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})}
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">EDITORIAL DESCRIPTION</label>
+                    <textarea 
+                      required rows={5}
+                      value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#3a1f1d] w-full resize-none"
+                    />
+                  </div>
 
                   <div className="flex gap-4 mt-4">
                     <Button 
@@ -347,7 +392,7 @@ const Admin = () => {
                         type="button" 
                         onClick={() => {
                           setEditingId(null);
-                          setFormData({ name: '', price: '', description: '', imageUrl: '', type: 'custom', stock: '0' });
+                          setFormData({ name: '', price: '', description: '', imageUrl: '', imageFile: null, type: 'custom', stock: '0' });
                         }}
                         variant="outline"
                         style={{ borderColor: '#3a1f1d', color: '#3a1f1d', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem', width: '50%' }}
@@ -478,20 +523,37 @@ const Admin = () => {
                       <th className="pb-6 text-[10px] uppercase tracking-[0.2em] font-medium opacity-50 border-b border-[#3a1f1d]/10">Client</th>
                       <th className="pb-6 text-[10px] uppercase tracking-[0.2em] font-medium opacity-50 border-b border-[#3a1f1d]/10">Subject</th>
                       <th className="pb-6 text-[10px] uppercase tracking-[0.2em] font-medium opacity-50 border-b border-[#3a1f1d]/10">Message</th>
+                      <th className="pb-6 text-[10px] uppercase tracking-[0.2em] font-medium opacity-50 border-b border-[#3a1f1d]/10 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#3a1f1d]/5">
                     {messages === undefined ? (
-                      <tr><td colSpan={4} className="py-12 text-center text-[14px] opacity-50">Loading messages...</td></tr>
+                      <tr><td colSpan={5} className="py-12 text-center text-[14px] opacity-50">Loading messages...</td></tr>
                     ) : messages.length === 0 ? (
-                      <tr><td colSpan={4} className="py-12 text-center text-[14px] opacity-50">No messages yet.</td></tr>
+                      <tr><td colSpan={5} className="py-12 text-center text-[14px] opacity-50">No messages yet.</td></tr>
                     ) : (
                       messages.map((msg) => (
-                        <tr key={msg._id} className="group hover:bg-[#F9F8F6]/50 transition-colors">
-                          <td className="py-6 pr-4 text-[13px] opacity-70">{new Date(msg.createdAt).toLocaleDateString()}</td>
+                        <tr key={msg._id} className={`group hover:bg-[#F9F8F6]/50 transition-colors ${msg.status === 'resolved' ? 'opacity-50' : ''}`}>
+                          <td className="py-6 pr-4 text-[13px] opacity-70">{new Date(msg._creationTime).toLocaleDateString()}</td>
                           <td className="py-6 pr-4 text-[14px] font-medium">{msg.name}<br/><span className="text-[12px] opacity-60 font-normal">{msg.email}</span></td>
                           <td className="py-6 pr-4 text-[14px]">{msg.subject || "No Subject"}</td>
                           <td className="py-6 pr-4 text-[14px] max-w-[300px] truncate">{msg.message}</td>
+                          <td className="py-6 text-right">
+                            {msg.status === 'unread' ? (
+                              <button 
+                                onClick={() => {
+                                  toast.promise(updateMessageStatus({ messageId: msg._id, status: 'resolved' }), {
+                                    loading: 'Updating...', success: 'Marked as resolved', error: 'Failed to update'
+                                  });
+                                }}
+                                className="text-[10px] uppercase tracking-widest font-medium opacity-70 hover:opacity-100 transition-opacity bg-[#3a1f1d] text-white px-4 py-2"
+                              >
+                                Resolve
+                              </button>
+                            ) : (
+                              <span className="text-[10px] uppercase tracking-widest font-medium opacity-40">Resolved</span>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}

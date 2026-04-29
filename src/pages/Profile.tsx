@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useUser } from '@clerk/react';
-import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Input } from '../components/ui/input';
 import { Button } from "../components/ui/button";
 import { ImageUpload } from "../components/ui/image-upload";
 import { toast } from "sonner";
@@ -56,7 +56,7 @@ const Profile = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profileName.trim()) { toast.error("Please provide a name for this profile."); return; }
+    if (!profileName.trim()) { toast.error('Please provide a name for this profile.'); return; }
     setIsSaving(true);
     
     try {
@@ -86,9 +86,9 @@ const Profile = () => {
       });
 
       setActiveProfileName(profileName.trim());
-      toast.success("Profile successfully saved to your catalogue.");
+      toast.success('Measurements saved successfully.');
     } catch (error) {
-      console.error("Failed to save:", error); toast.error("Failed to save profile. Please check your connection.");
+      console.error("Failed to save:", error); toast.error('Failed to save. Please check your connection.');
     } finally {
       setIsSaving(false);
     }
@@ -96,42 +96,56 @@ const Profile = () => {
 
   if (!clerkUser) return <div className="p-20 text-center uppercase tracking-widest text-sm">Please log in.</div>;
 
-  const muiBrandStyles = { '& .MuiOutlinedInput-root': { '&.Mui-focused fieldset': { borderColor: '#3a1f1d' } }, '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' } };
+
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center py-16 px-6 relative">
-      <div className="text-center">
-        <h1 className="text-4xl md:text-5xl italic font-medium text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Welcome back, {clerkUser.firstName}</h1>
+    <div className="min-h-screen bg-[#F9F8F6] flex flex-col items-center pt-32 pb-24 px-6 relative" style={{ fontFamily: "'Jost', sans-serif" }}>
+      <div className="text-center mb-4">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#3a1f1d]/40 mb-3">Your Atelier</p>
+        <h1 className="text-4xl md:text-5xl italic font-normal text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Welcome back, {clerkUser.firstName}</h1>
       </div>
-      <div className="h-8 md:h-12 w-full shrink-0"></div>
+      <div className="h-10 md:h-14 w-full shrink-0" />
       
-      <div className="w-full max-w-[800px] bg-white">
+      <div className="w-full max-w-[860px] bg-white p-8 md:p-14 border border-[#3a1f1d]/8">
         <form onSubmit={handleSave} className="flex flex-col gap-10">
           <div>
             {profiles && profiles.length > 0 && (
-              <div className="mb-10 max-w-[300px] mx-auto">
-                <FormControl fullWidth variant="outlined" sx={muiBrandStyles}>
-                  <InputLabel id="profile-select-label">LOAD SAVED PROFILE</InputLabel>
-                  <Select labelId="profile-select-label" value={activeProfileName || "CREATE_NEW"} onChange={handleProfileSelect} label="LOAD SAVED PROFILE">
-                    {profiles.map((p: any) => <MenuItem key={p._id} value={p.profileName}>{p.profileName}</MenuItem>)}
-                    <MenuItem value="CREATE_NEW" sx={{ fontStyle: 'italic', opacity: 0.7 }}>+ Create New Profile</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
+              <div className="mb-12 max-w-[340px] mx-auto flex flex-col gap-3">
+                  <label className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d]/40">Load Saved Profile</label>
+                  <select value={activeProfileName || "CREATE_NEW"} onChange={handleProfileSelect} className="border border-[#3a1f1d]/12 px-5 py-3 h-[48px] rounded-none text-[14px] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#3a1f1d] w-full">
+                    {profiles.map((p: any) => <option key={p._id} value={p.profileName}>{p.profileName}</option>)}
+                    <option value="CREATE_NEW">+ Create New Profile</option>
+                  </select>
+                </div>
             )}
-            <h2 className="text-[13px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] mb-10 text-center">Menswear Measurements <span className="opacity-50 text-[10px]">(INCHES)</span></h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-              <div className="sm:col-span-2 md:col-span-3">
-                <TextField fullWidth variant="outlined" label="PROFILE NAME (e.g. Primary Profile, Wedding Suit)" name="profileName" value={profileName} onChange={(e) => setProfileName(e.target.value)} sx={muiBrandStyles} required />
+            
+            <div className="flex items-center gap-4 mb-10">
+              <div className="h-px flex-1 bg-[#3a1f1d]/8" />
+              <h2 className="text-[18px] italic text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Body Measurements</h2>
+              <div className="h-px flex-1 bg-[#3a1f1d]/8" />
+            </div>
+            <p className="text-[12px] text-[#3a1f1d]/40 text-center mb-10 uppercase tracking-[0.15em]">All measurements in inches</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-7">
+              <div className="sm:col-span-2 md:col-span-3 flex flex-col gap-3">
+                <label className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d]/40 ml-1">Profile Name</label>
+                <Input required name="profileName" value={profileName} onChange={(e: any) => setProfileName(e.target.value)} className="border border-[#3a1f1d]/12 h-[56px] px-5 rounded-none text-[14px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
               </div>
               {Object.keys(measurements).map((key) => (
-                <TextField {...({ inputProps: { step: "0.5" } } as any)} key={key} fullWidth variant="outlined" label={key.replace(/([A-Z])/g, ' $1').trim().toUpperCase()} type="number" name={key} value={measurements[key as keyof typeof measurements]} onChange={handleChange} sx={muiBrandStyles} />
+                <div key={key} className="flex flex-col gap-3">
+                  <label className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d]/40 ml-1">{key.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}</label>
+                  <Input step="0.5" type="number" name={key} value={measurements[key as keyof typeof measurements]} onChange={handleChange as any} className="border border-[#3a1f1d]/12 h-[56px] px-5 rounded-none text-[14px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full" />
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="pt-6">
-            <h2 className="text-[13px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d] mb-10 text-center">Reference Photography</h2>
+          <div className="pt-12 mt-8 border-t border-[#3a1f1d]/8">
+            <div className="flex items-center gap-4 mb-10">
+              <div className="h-px flex-1 bg-[#3a1f1d]/8" />
+              <h2 className="text-[18px] italic text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Reference Photography</h2>
+              <div className="h-px flex-1 bg-[#3a1f1d]/8" />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* BRAND NEW IMAGE UPLOADERS INSTALLED */}
               <ImageUpload 
@@ -147,45 +161,62 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-center">
-            <Button type="submit" disabled={isSaving} style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', padding: '1rem 4rem', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+          <div className="mt-12 flex justify-center">
+            <Button type="submit" disabled={isSaving} className="h-[58px] px-16 bg-[#3a1f1d] hover:bg-black text-[#F9F8F6] text-[12px] uppercase tracking-[0.25em] rounded-none shadow-none transition-colors" style={{ fontWeight: 'normal' }}>
               {isSaving ? 'Saving...' : 'Save Measurements'}
             </Button>
           </div>
         </form>
       </div>
 
-      <div className="w-full max-w-[800px] mt-24">
-        <div className="flex items-center justify-between mb-10 border-b border-[#3a1f1d]/10 pb-4">
-          <h2 className="text-[16px] uppercase tracking-[0.2em] font-medium text-[#3a1f1d]">Order History</h2>
+      <div className="w-full max-w-[860px] mt-20">
+        <div className="flex items-center gap-4 mb-12">
+          <div className="h-px flex-1 bg-[#3a1f1d]/8" />
+          <h2 className="text-[18px] italic text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>Order History</h2>
+          <div className="h-px flex-1 bg-[#3a1f1d]/8" />
         </div>
 
         {orders === undefined ? (
-          <div className="py-12 text-center text-[13px] opacity-50 uppercase tracking-widest">Loading...</div>
+          <div className="py-16 text-center text-[12px] opacity-40 uppercase tracking-[0.2em]">Loading your orders…</div>
         ) : orders.length === 0 ? (
-          <div className="py-16 text-center border border-[#3a1f1d]/10 bg-[#F9F8F6]">
-            <p className="text-[14px] opacity-70 mb-6" style={{ fontFamily: "'Jost', sans-serif" }}>You haven't placed any orders yet.</p>
-            <Button onClick={() => navigate("/shop")} variant="outline" className="border-[#3a1f1d] text-[#3a1f1d] rounded-none hover:bg-[#3a1f1d] hover:text-white px-8 uppercase tracking-widest text-[11px]">
+          <div className="py-20 text-center bg-white border border-[#3a1f1d]/8">
+            <p className="text-[14px] text-[#3a1f1d]/50 mb-8" style={{ fontFamily: "'Jost', sans-serif" }}>You haven’t placed any orders yet.</p>
+            <Button onClick={() => navigate("/shop")} variant="outline" className="border-[#3a1f1d] text-[#3a1f1d] rounded-none hover:bg-[#3a1f1d] hover:text-white h-[50px] px-10 uppercase tracking-[0.2em] text-[11px] shadow-none">
               Shop Collection
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order._id} className="p-6 border border-[#3a1f1d]/10 flex flex-col md:flex-row justify-between md:items-center gap-6 group hover:border-[#3a1f1d]/30 transition-colors">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[12px] font-mono opacity-60">#{order.paystackReference.slice(-8).toUpperCase()}</span>
-                    <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 border border-[#3a1f1d]/20 bg-[#F9F8F6]">{order.status}</span>
+          <div className="space-y-5">
+            {orders.map((order) => {
+              const statusColors: Record<string, string> = {
+                pending: 'bg-amber-50 text-amber-700 border-amber-200',
+                processing: 'bg-blue-50 text-blue-700 border-blue-200',
+                shipped: 'bg-violet-50 text-violet-700 border-violet-200',
+                completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                cancelled: 'bg-red-50 text-red-600 border-red-200',
+              };
+              const badgeClass = statusColors[order.status] || 'bg-gray-50 text-gray-600 border-gray-200';
+              
+              return (
+                <div key={order._id} className="bg-white border border-[#3a1f1d]/8 p-7 md:p-8 group hover:border-[#3a1f1d]/20 transition-colors">
+                  <div className="flex flex-col md:flex-row justify-between md:items-start gap-5">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-3">
+                        <span className="text-[13px] font-mono text-[#3a1f1d]/60">#{order.paystackReference.slice(-8).toUpperCase()}</span>
+                        <span className={`text-[10px] uppercase tracking-[0.15em] px-3 py-1 border ${badgeClass}`}>{order.status}</span>
+                      </div>
+                      <p className="text-[13px] text-[#3a1f1d]/50">
+                        {new Date(order._creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
+                    <div className="flex flex-col md:items-end gap-1">
+                      <span className="text-[20px] font-normal text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>GH₵ {order.totalAmount.toFixed(2)}</span>
+                      <span className="text-[11px] text-[#3a1f1d]/40 uppercase tracking-[0.15em]">{order.items.length} {order.items.length === 1 ? 'piece' : 'pieces'}</span>
+                    </div>
                   </div>
-                  <p className="text-[13px] opacity-70">{new Date(order._creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-                <div className="flex flex-col md:items-end">
-                  <span className="text-[16px] font-medium mb-1">GH₵ {order.totalAmount.toFixed(2)}</span>
-                  <span className="text-[11px] opacity-50">{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

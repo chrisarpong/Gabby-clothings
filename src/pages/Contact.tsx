@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TextField } from '@mui/material';
+import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -24,19 +24,13 @@ const Contact = () => {
     try {
       await submitMessage(form);
       setSent(true);
-      toast.success("Your message has been received. Our concierge will contact you shortly.");
       setForm({ name: '', email: '', subject: '', message: '' });
-    } catch (e) {
-      toast.error("Failed to send message. Please try again.");
+    } catch (_e) {
+      toast.error('Failed to send message. Please try again.');
     }
   };
 
-  const muiBrandStyles = {
-    '& .MuiOutlinedInput-root': {
-      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
-    },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-  };
+
 
   return (
     <motion.div
@@ -133,27 +127,42 @@ const Contact = () => {
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <TextField 
-                    fullWidth variant="outlined" required label="YOUR NAME"
-                    value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="Kofi Mensah" sx={muiBrandStyles}
-                  />
-                  <TextField 
-                    fullWidth variant="outlined" required label="EMAIL ADDRESS" type="email"
-                    value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                    placeholder="kofi@example.com" sx={muiBrandStyles}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">YOUR NAME</label>
+                    <Input 
+                      required 
+                      value={form.name} onChange={(e: any) => setForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="Kofi Mensah"
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">EMAIL ADDRESS</label>
+                    <Input 
+                      required type="email"
+                      value={form.email} onChange={(e: any) => setForm(f => ({ ...f, email: e.target.value }))}
+                      placeholder="kofi@example.com"
+                      className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">SUBJECT</label>
+                  <Input 
+                    value={form.subject} onChange={(e: any) => setForm(f => ({ ...f, subject: e.target.value }))}
+                    placeholder="e.g. Bespoke Suit Inquiry"
+                    className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full"
                   />
                 </div>
-                <TextField 
-                  fullWidth variant="outlined" label="SUBJECT"
-                  value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-                  placeholder="e.g. Bespoke Suit Inquiry" sx={muiBrandStyles}
-                />
-                <TextField 
-                  fullWidth variant="outlined" required label="YOUR MESSAGE" multiline rows={6}
-                  value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                  placeholder="Tell us how we can help you..." sx={muiBrandStyles}
-                />
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-60 ml-2">YOUR MESSAGE</label>
+                  <textarea 
+                    required rows={6}
+                    value={form.message} onChange={(e: any) => setForm(f => ({ ...f, message: e.target.value }))}
+                    placeholder="Tell us how we can help you..."
+                    className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#3a1f1d] w-full resize-none"
+                  />
+                </div>
                 <Button
                   type="submit"
                   style={{ backgroundColor: '#3a1f1d', borderColor: '#3a1f1d', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.2em', padding: '1.25rem' }}

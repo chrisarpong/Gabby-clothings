@@ -1,12 +1,6 @@
-import { TextField } from '@mui/material';
+import { Input } from './ui/input';
 
 const Footer = () => {
-  const muiBrandStyles = {
-    '& .MuiOutlinedInput-root': {
-      '&.Mui-focused fieldset': { borderColor: '#3a1f1d' },
-    },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#3a1f1d' },
-  };
 
   return (
     <footer 
@@ -32,12 +26,11 @@ const Footer = () => {
             Early access, private sales, and the latest from our studio, straight to your inbox.
           </p>
           <form className="flex flex-col items-center md:items-start gap-5 font-[var(--font-sans)] w-full max-w-[280px] md:max-w-sm">
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="EMAIL ADDRESS"
+            <Input
+              required
               type="email"
-              sx={muiBrandStyles}
+              placeholder="EMAIL ADDRESS"
+              className="border border-[#3a1f1d]/20 p-3 rounded-none text-[13px] bg-transparent focus-visible:ring-1 focus-visible:ring-[#3a1f1d] w-full"
             />
             <label className="flex items-start md:items-center gap-3 text-sm mt-1 cursor-pointer text-[#3a1f1d] w-full text-left md:text-left">
               <input type="checkbox" className="accent-[#3a1f1d] mt-1 md:mt-0 w-4 h-4 shrink-0" />

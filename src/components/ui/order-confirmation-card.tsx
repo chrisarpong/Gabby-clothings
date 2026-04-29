@@ -1,6 +1,5 @@
-import * as React from "react";
+import type { FC } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OrderConfirmationCardProps {
@@ -11,127 +10,79 @@ interface OrderConfirmationCardProps {
   onGoToAccount: () => void;
 }
 
-export const OrderConfirmationCard: React.FC<OrderConfirmationCardProps> = ({
+export const OrderConfirmationCard: FC<OrderConfirmationCardProps> = ({
   orderId,
-  paymentMethod,
-  dateTime,
   totalAmount,
   onGoToAccount,
 }) => {
-  const formatOrderId = (id: string) => {
-    if (id.length > 18) {
-      return `${id.substring(0, 10)}...${id.substring(id.length - 4)}`;
-    }
-    return id;
-  };
+  const shortId = orderId.length > 14
+    ? `${orderId.substring(0, 6)}\u2026${orderId.substring(orderId.length - 6)}`
+    : orderId;
 
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="
-          w-full max-w-[520px]
-          bg-white
-          rounded-[28px]
-          shadow-[0_14px_40px_rgba(0,0,0,0.12)]
-          px-12 pt-14 pb-12
-          font-sans
-          flex flex-col
-        "
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 16 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="w-full max-w-[560px] bg-[#FAFAF8] px-10 sm:px-16 pt-20 pb-16 flex flex-col"
+        style={{ fontFamily: "'Jost', sans-serif" }}
       >
-        {/* ───── Icon ───── */}
-        <div className="flex justify-center mb-12">
-          <div className="
-            h-[72px] w-[72px]
-            rounded-full
-            border-[3px] border-[#4ade80]
-            flex items-center justify-center
-          ">
-            <Check className="h-9 w-9 text-[#4ade80]" strokeWidth={3} />
+        {/* ───── Minimal Check ───── */}
+        <div className="flex justify-center mb-14">
+          <div className="h-[64px] w-[64px] rounded-full border border-[#3a1f1d]/15 flex items-center justify-center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3a1f1d" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
         </div>
 
         {/* ───── Heading ───── */}
-        <h2 className="
-          text-center
-          text-[30px]
-          font-bold
-          leading-[1.35]
-          text-[#111111]
-          mb-16
-        ">
-          Your order has been<br />successfully submitted
+        <h2
+          className="text-center text-[36px] sm:text-[42px] leading-[1.1] text-[#3a1f1d] mb-5"
+          style={{ fontFamily: "'Playfair Display', serif", fontWeight: "normal", fontStyle: "italic" }}
+        >
+          Order Confirmed
         </h2>
+        <p className="text-center text-[14px] text-[#3a1f1d]/50 mb-16 leading-relaxed">
+          We&rsquo;ll begin preparing your pieces shortly.
+        </p>
 
-        {/* ───── Details ───── */}
-        <div className="flex flex-col">
-          <InfoRow label="Order ID" value={formatOrderId(orderId)} />
-          <Divider />
+        {/* ───── Receipt Divider ───── */}
+        <div className="w-full border-t border-dashed border-[#3a1f1d]/15 mb-10" />
 
-          <InfoRow label="Payment Method" value={paymentMethod} />
-          <Divider />
-
-          <InfoRow label="Date & Time" value={dateTime} />
-          <Divider />
-
-          {/* ───── Total Row ───── */}
-          <div className="flex items-center justify-between pt-10">
-            <span className="text-[18px] font-bold text-[#111111]">
-              Total
-            </span>
-            <span className="text-[24px] font-bold text-[#111111]">
+        {/* ───── Order Details ───── */}
+        <div className="space-y-6 mb-10">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[11px] uppercase tracking-[0.2em] text-[#3a1f1d]/40">Reference</span>
+            <span className="text-[14px] text-[#3a1f1d]/70 font-mono tracking-wide">{shortId}</span>
+          </div>
+          
+          {/* Total — dominant */}
+          <div className="flex items-baseline justify-between pt-6 border-t border-[#3a1f1d]/8">
+            <span className="text-[11px] uppercase tracking-[0.2em] text-[#3a1f1d]/40">Total Paid</span>
+            <span
+              className="text-[28px] text-[#3a1f1d]"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               {totalAmount}
             </span>
           </div>
         </div>
 
-        {/* ───── Button ───── */}
-        <div className="mt-14">
-          <Button
-            onClick={onGoToAccount}
-            className="
-              w-full
-              h-[60px]
-              rounded-[14px]
-              bg-[#111111]
-              hover:bg-black
-              text-white
-              text-[17px]
-              font-medium
-              shadow-none
-              transition-colors
-            "
-          >
-            Go to my account
-          </Button>
-        </div>
+        {/* ───── Receipt Divider ───── */}
+        <div className="w-full border-t border-dashed border-[#3a1f1d]/15 mb-12" />
+
+        {/* ───── CTA ───── */}
+        <Button
+          onClick={onGoToAccount}
+          className="w-full h-[58px] bg-[#3a1f1d] hover:bg-black text-[#F9F8F6] text-[12px] uppercase tracking-[0.25em] rounded-none shadow-none transition-colors"
+          style={{ fontWeight: "normal" }}
+        >
+          Continue Shopping
+        </Button>
       </motion.div>
     </AnimatePresence>
   );
 };
-
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between py-7">
-      <span className="text-[16px] text-gray-500 font-medium">
-        {label}
-      </span>
-      <span className="text-[16px] text-gray-700 text-right">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function Divider() {
-  return <div className="h-px w-full bg-gray-200" />;
-}

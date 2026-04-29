@@ -21,7 +21,6 @@ export const addReview = mutation({
       userName: userName,
       rating: args.rating,
       comment: args.comment,
-      createdAt: Date.now(),
     });
 
     return { success: true };

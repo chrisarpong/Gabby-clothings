@@ -83,9 +83,9 @@ const ProductDetails = () => {
       await addReview({ productId: product._id, rating, comment });
       setComment("");
       setRating(5);
-      toast.success("Thank you for your review.");
-    } catch (error) {
-      toast.error("Failed to submit review.");
+      toast.success('Thank you for your review.');
+    } catch (_error) {
+      toast.error('Failed to submit review.');
     }
   };
 
@@ -94,11 +94,9 @@ const ProductDetails = () => {
   const handleWishlistToggle = async () => {
     if (!product || userWishlist === undefined) return;
     try {
-      const res = await toggleWishlist({ productId: product._id });
-      if (res.added) toast.success("Added to wishlist");
-      else toast.success("Removed from wishlist");
-    } catch (e) {
-      toast.error("Please log in to save items.");
+      await toggleWishlist({ productId: product._id });
+    } catch (_e) {
+      toast.error('Please log in to save items.');
     }
   };
 
@@ -295,7 +293,7 @@ const ProductDetails = () => {
                       <div className="flex items-center gap-3 mb-3">
                         <span className="text-[13px] font-medium text-[#3a1f1d]" style={{ fontFamily: "'Jost', sans-serif" }}>{review.userName}</span>
                         <span className="text-[11px] uppercase tracking-widest text-[#3a1f1d]/40">
-                          {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          {new Date(review._creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
                       </div>
                       <p className="text-[14px] text-[#3a1f1d]/80 leading-relaxed" style={{ fontFamily: "'Jost', sans-serif" }}>{review.comment}</p>
@@ -332,7 +330,7 @@ const ProductDetails = () => {
                     <Button type="submit" className="self-start bg-[#3a1f1d] text-white px-8 h-[48px] text-[12px] uppercase tracking-widest rounded-none shadow-none hover:bg-[#3a1f1d]/90">
                       Submit Review
                     </Button>
-                  </form>
+                    </form>
                 </div>
               ) : (
                 <p className="text-[13px] uppercase tracking-widest text-[#3a1f1d]/60 mt-8">Please log in to leave a review.</p>

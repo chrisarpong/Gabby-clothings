@@ -4,7 +4,7 @@ import { usePaystackPayment } from "react-paystack";
 import { useMutation, useConvex } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useCart } from "../context/CartContext";
-import { useToasts } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -46,7 +46,6 @@ export default function Checkout() {
   const { cart, clearCart } = useCart();
   const createOrder = useMutation(api.orders.createOrder);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const toasts = useToasts();
   const convex = useConvex();
 
   const [promoInput, setPromoInput] = useState("");
@@ -127,7 +126,7 @@ export default function Checkout() {
           });
 
           clearCart();
-          toasts.success("Order placed successfully!");
+          toast.success("Order placed successfully!");
           
           // Format the date for the receipt
           const formattedDate = new Intl.DateTimeFormat('en-GB', {
@@ -147,7 +146,7 @@ export default function Checkout() {
 
         } catch (err) {
           console.error("Order creation failed:", err);
-          toasts.error(
+          toast.error(
             "We received your payment but couldn't finalize the order. Please contact our support team."
           );
         } finally {
@@ -156,7 +155,7 @@ export default function Checkout() {
       },
       onClose: () => {
         setIsSubmitting(false);
-        toasts.error("Payment was cancelled. Your items are still saved.");
+        toast.error("Payment was cancelled. Your items are still saved.");
       },
     });
   };
@@ -182,7 +181,7 @@ export default function Checkout() {
     );
   }
 
-  const inputClassName = "flex h-[52px] w-full bg-white border border-[#3a1f1d]/20 px-5 text-[15px] text-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 focus-visible:outline-none focus-visible:border-[#3a1f1d] disabled:cursor-not-allowed disabled:opacity-50 rounded-none";
+  const inputClassName = "flex items-center h-[64px] w-full bg-white border border-[#3a1f1d]/12 px-6 text-[15px] text-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/25 focus-visible:outline-none focus-visible:border-[#3a1f1d] disabled:cursor-not-allowed disabled:opacity-50 rounded-none";
 
   return (
     <>
@@ -214,11 +213,11 @@ export default function Checkout() {
               </h2>
 
               <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                <div className="space-y-5">
+                <div className="space-y-7">
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
                     <div>
-                      <Label htmlFor="firstName" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                      <Label htmlFor="firstName" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                         First Name
                       </Label>
                       <input
@@ -232,7 +231,7 @@ export default function Checkout() {
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="lastName" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                      <Label htmlFor="lastName" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                         Last Name
                       </Label>
                       <input
@@ -248,7 +247,7 @@ export default function Checkout() {
                   </div>
 
                   <div>
-                    <Label htmlFor="email" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                    <Label htmlFor="email" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                       Email Address
                     </Label>
                     <input
@@ -264,7 +263,7 @@ export default function Checkout() {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                    <Label htmlFor="phone" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                       Phone Number
                     </Label>
                     <PatternFormat
@@ -286,7 +285,7 @@ export default function Checkout() {
                   </div>
 
                   <div>
-                    <Label htmlFor="address" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                    <Label htmlFor="address" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                       Street Address
                     </Label>
                     <input
@@ -301,9 +300,9 @@ export default function Checkout() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
                     <div>
-                      <Label htmlFor="city" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                      <Label htmlFor="city" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                         City
                       </Label>
                       <input
@@ -317,7 +316,7 @@ export default function Checkout() {
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="state" className="text-[14px] font-normal text-[#3a1f1d]/80 mb-2 block">
+                      <Label htmlFor="state" className="text-[12px] font-normal text-[#3a1f1d]/50 mb-3 block uppercase tracking-[0.1em]">
                         Region
                       </Label>
                       <input
@@ -377,35 +376,38 @@ export default function Checkout() {
                 ))}
               </div>
 
-              <div className="mb-6 flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Promo Code"
-                  value={promoInput}
-                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                  className="flex-1 h-[42px] bg-white border border-[#3a1f1d]/20 px-4 text-[13px] text-[#3a1f1d] uppercase tracking-widest placeholder:text-[#3a1f1d]/30 focus:outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
-                />
-                <Button
-                  type="button"
-                  onClick={async () => {
-                    if (!promoInput.trim()) return;
-                    try {
-                      const discount = await convex.query(api.promotions.validateCode, { code: promoInput });
-                      if (discount) {
-                        setDiscountPercent(discount);
-                        toasts.success(`${discount}% discount applied!`);
-                      } else {
-                        toasts.error("Invalid or expired promo code.");
-                        setDiscountPercent(0);
+              <div className="mt-10 mb-8 border border-[#3a1f1d]/8 bg-[#FAFAF8] p-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#3a1f1d]/40 mb-4">Have a promo code?</p>
+                <div className="flex gap-3 items-stretch">
+                  <input
+                    type="text"
+                    placeholder="Enter code"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    className="flex-1 h-[56px] bg-white border border-[#3a1f1d]/12 px-6 text-[13px] text-[#3a1f1d] uppercase tracking-widest placeholder:text-[#3a1f1d]/25 focus:outline-none focus:border-[#3a1f1d] transition-colors rounded-none"
+                  />
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      if (!promoInput.trim()) return;
+                      try {
+                        const discount = await convex.query(api.promotions.validateCode, { code: promoInput });
+                        if (discount) {
+                          setDiscountPercent(discount);
+                          toast.success(`${discount}% discount applied!`);
+                        } else {
+                          toast.error("Invalid or expired promo code.");
+                          setDiscountPercent(0);
+                        }
+                      } catch (e) {
+                        toast.error("Failed to validate code.");
                       }
-                    } catch (e) {
-                      toasts.error("Failed to validate code.");
-                    }
-                  }}
-                  className="h-[42px] px-6 bg-transparent border border-[#3a1f1d] text-[#3a1f1d] hover:bg-[#3a1f1d] hover:text-white transition-colors rounded-none shadow-none text-[11px] uppercase tracking-[0.2em]"
-                >
-                  Apply
-                </Button>
+                    }}
+                    className="h-[56px] px-10 bg-[#3a1f1d] text-[#F9F8F6] hover:bg-black transition-colors rounded-none shadow-none text-[11px] uppercase tracking-[0.2em] shrink-0"
+                  >
+                    Apply
+                  </Button>
+                </div>
               </div>
 
               <div className="border-t border-[#3a1f1d]/10 pt-6 space-y-3">
