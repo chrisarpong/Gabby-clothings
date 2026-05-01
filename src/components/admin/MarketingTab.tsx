@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
-import { Search, Bell, UserCircle } from 'lucide-react';
-import { Card } from '../ui/card';
+import { Users, Mail, MousePointer } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,7 +9,6 @@ import {
   TableRow,
 } from '../ui/table';
 
-// Mock data for Audience Growth
 const audienceData = [
   { month: 'Apr', subs: 8000 },
   { month: 'May', subs: 8500 },
@@ -21,91 +18,96 @@ const audienceData = [
   { month: 'Sep', subs: 12400 },
 ];
 
-// Mock data for Recent Campaigns
 const recentCampaigns = [
-  { id: 1, subject: 'The Fall Collection Preview', date: 'Oct 12, 2023', openRate: '45%', status: 'Sent', statusColor: 'text-green-700' },
-  { id: 2, subject: 'Exclusive: Tailoring Masterclass', date: 'Oct 05, 2023', openRate: '38%', status: 'Sent', statusColor: 'text-green-700' },
-  { id: 3, subject: 'Invitation: Private Viewing', date: 'Sep 28, 2023', openRate: '51%', status: 'Sent', statusColor: 'text-green-700' },
-  { id: 4, subject: 'Winter Wardrobe Essentials', date: 'TBD', openRate: '-', status: 'Draft', statusColor: 'text-stone-500', isMuted: true },
-  { id: 5, subject: 'Holiday Gift Guide', date: 'Nov 15, 2023', openRate: '-', status: 'Scheduled', statusColor: 'text-blue-700', isMuted: true },
+  { id: 1, subject: 'The Fall Collection Preview', date: 'Oct 12, 2023', openRate: '45%', status: 'Sent', statusColor: 'text-emerald-600' },
+  { id: 2, subject: 'Exclusive: Tailoring Masterclass', date: 'Oct 05, 2023', openRate: '38%', status: 'Sent', statusColor: 'text-emerald-600' },
+  { id: 3, subject: 'Invitation: Private Viewing', date: 'Sep 28, 2023', openRate: '51%', status: 'Sent', statusColor: 'text-emerald-600' },
+  { id: 4, subject: 'Winter Wardrobe Essentials', date: 'TBD', openRate: '-', status: 'Draft', statusColor: 'text-[#3a1f1d]/30' },
+  { id: 5, subject: 'Holiday Gift Guide', date: 'Nov 15, 2023', openRate: '-', status: 'Scheduled', statusColor: 'text-blue-600' },
 ];
+
+const statusBadgeColors: Record<string, string> = {
+  Sent: 'bg-emerald-50 text-emerald-700',
+  Draft: 'bg-[#3a1f1d]/5 text-[#3a1f1d]/50',
+  Scheduled: 'bg-blue-50 text-blue-700',
+};
 
 export const MarketingTab = ({ subscribers }: { subscribers: any[] }) => {
   const totalSubscribers = subscribers ? subscribers.length : 0;
-  // Use a fallback of 12400 (from the mockup) if the DB is empty or still populating, to keep the UI looking rich
   const displaySubscribers = totalSubscribers > 0 ? totalSubscribers : 12400;
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-32">
-      {/* Header Section */}
-      <section className="flex justify-between items-end">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-[64px] font-normal leading-[1.1] tracking-[-0.02em] text-[#3a1f1d] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h2 className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
             Marketing
-          </h1>
-          <p className="text-[16px] tracking-[0.01em] text-[#504443] max-w-2xl" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Manage your subscriber base and campaign performance.
-          </p>
+          </h2>
+          <p className="text-sm text-[#3a1f1d]/60 mt-1">Manage campaigns and subscriber analytics</p>
         </div>
-        <button className="bg-[#3a1f1d] text-white text-[11px] font-semibold tracking-[0.15em] uppercase px-8 py-4 hover:opacity-90 transition-opacity border border-[#3a1f1d]" style={{ fontFamily: "'Jost', sans-serif" }}>
+        <button className="bg-[#3a1f1d] text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#2C1816] transition-colors">
           Create Campaign
         </button>
-      </section>
+      </div>
 
-      {/* Metrics Row */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="border border-[#d4c3c1]/30 p-8 flex flex-col items-center justify-center text-center rounded-none shadow-none bg-transparent">
-          <span className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase mb-4" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Total Subscribers
-          </span>
-          <span className="text-[32px] font-normal leading-[1.2] text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white rounded-xl p-6 border border-[#3a1f1d]/8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Subscribers</span>
+            <div className="w-8 h-8 rounded-lg bg-[#3a1f1d]/5 flex items-center justify-center">
+              <Users className="w-4 h-4 text-[#3a1f1d]" />
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
             {displaySubscribers.toLocaleString()}
           </span>
-        </Card>
-        <Card className="border border-[#d4c3c1]/30 p-8 flex flex-col items-center justify-center text-center rounded-none shadow-none bg-transparent">
-          <span className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase mb-4" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Avg. Open Rate
-          </span>
-          <span className="text-[32px] font-normal leading-[1.2] text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-[#3a1f1d]/8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Avg Open Rate</span>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Mail className="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
             42%
           </span>
-        </Card>
-        <Card className="border border-[#d4c3c1]/30 p-8 flex flex-col items-center justify-center text-center rounded-none shadow-none bg-transparent">
-          <span className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase mb-4" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Click Rate
-          </span>
-          <span className="text-[32px] font-normal leading-[1.2] text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-[#3a1f1d]/8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Click Rate</span>
+            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+              <MousePointer className="w-4 h-4 text-purple-600" />
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
             18%
           </span>
-        </Card>
-      </section>
+        </div>
+      </div>
 
-      {/* Chart & Table Area */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-32">
-        {/* Chart */}
-        <div className="lg:col-span-5 border border-[#d4c3c1]/30 p-8 flex flex-col h-96">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-normal leading-[1.2] text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Audience Growth
-            </h2>
-            <span className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-              Last 6 Months
-            </span>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-semibold text-[#2C1816]">Audience Growth</h3>
+            <span className="text-xs text-[#3a1f1d]/50">Last 6 months</span>
           </div>
-          <div className="flex-1 w-full bg-[#f4f3f1] relative overflow-hidden">
+          <div className="h-56 bg-[#F5F2EE] rounded-lg p-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={audienceData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorSubs" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3a1f1d" stopOpacity={0.2}/>
+                    <stop offset="0%" stopColor="#3a1f1d" stopOpacity={0.15}/>
                     <stop offset="100%" stopColor="#3a1f1d" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(212,195,193,0.3)', fontFamily: "'Jost', sans-serif", fontSize: '12px', borderRadius: 0 }}
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e8e4e2', borderRadius: '8px', fontFamily: "'Jost', sans-serif", fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                   itemStyle={{ color: '#3a1f1d' }}
-                  labelStyle={{ color: '#504443' }}
-                  formatter={(value: number) => [`${value.toLocaleString()}`, 'Subscribers']}
+                  labelStyle={{ color: '#8B7D7B' }}
+                  formatter={(value: any) => [`${value.toLocaleString()}`, 'Subscribers']}
                 />
                 <Area type="monotone" dataKey="subs" stroke="#3a1f1d" strokeWidth={2} fillOpacity={1} fill="url(#colorSubs)" />
               </AreaChart>
@@ -113,35 +115,34 @@ export const MarketingTab = ({ subscribers }: { subscribers: any[] }) => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="lg:col-span-7 border border-[#d4c3c1]/30 p-8 overflow-hidden flex flex-col h-96">
-          <h2 className="text-xl font-normal leading-[1.2] text-[#3a1f1d] mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Recent Campaigns
-          </h2>
-          <div className="w-full overflow-y-auto flex-1 pr-4">
+        <div className="lg:col-span-3 bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm">
+          <div className="p-6 pb-4">
+            <h3 className="text-sm font-semibold text-[#2C1816]">Recent Campaigns</h3>
+          </div>
+          <div className="max-h-56 overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-[#d4c3c1]/30 hover:bg-transparent">
-                  <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase font-normal" style={{ fontFamily: "'Jost', sans-serif" }}>Subject Line</TableHead>
-                  <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase font-normal" style={{ fontFamily: "'Jost', sans-serif" }}>Send Date</TableHead>
-                  <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase font-normal text-right" style={{ fontFamily: "'Jost', sans-serif" }}>Open Rate</TableHead>
-                  <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase font-normal pl-8" style={{ fontFamily: "'Jost', sans-serif" }}>Status</TableHead>
+                <TableRow className="border-b border-[#3a1f1d]/8 hover:bg-transparent">
+                  <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Subject</TableHead>
+                  <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Date</TableHead>
+                  <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide text-right">Open Rate</TableHead>
+                  <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="text-[16px] tracking-[0.01em]" style={{ fontFamily: "'Jost', sans-serif" }}>
+              <TableBody>
                 {recentCampaigns.map((campaign) => (
-                  <TableRow key={campaign.id} className="border-b border-[#d4c3c1]/10 hover:bg-[#f4f3f1] transition-colors">
-                    <TableCell className={`py-4 text-[#3a1f1d] ${campaign.isMuted ? 'text-opacity-50' : ''}`}>
+                  <TableRow key={campaign.id} className="border-b border-[#3a1f1d]/5 hover:bg-[#FDFBF9] transition-colors">
+                    <TableCell className="py-3 px-6 font-medium text-[#2C1816]">
                       {campaign.subject}
                     </TableCell>
-                    <TableCell className="py-4 text-[#504443]">
+                    <TableCell className="py-3 px-6 text-sm text-[#3a1f1d]/60">
                       {campaign.date}
                     </TableCell>
-                    <TableCell className="py-4 text-[#3a1f1d] text-right">
+                    <TableCell className="py-3 px-6 text-right text-sm font-medium text-[#2C1816]">
                       {campaign.openRate}
                     </TableCell>
-                    <TableCell className="py-4 pl-8">
-                      <span className={`text-xs uppercase tracking-wider ${campaign.statusColor}`}>
+                    <TableCell className="py-3 px-6 text-right">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusBadgeColors[campaign.status] || 'bg-gray-50 text-gray-600'}`}>
                         {campaign.status}
                       </span>
                     </TableCell>
@@ -151,7 +152,7 @@ export const MarketingTab = ({ subscribers }: { subscribers: any[] }) => {
             </Table>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };

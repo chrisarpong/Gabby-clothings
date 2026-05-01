@@ -1,15 +1,6 @@
-import React, { useState } from 'react';
-import { MoreHorizontal, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Tag, Archive } from 'lucide-react';
 import { toast } from 'sonner';
-import { Card } from '../ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../ui/table';
 
 interface PromotionsTabProps {
   promoCodes: any[];
@@ -70,202 +61,154 @@ export const PromotionsTab = ({
   };
 
   return (
-    <div className="w-full">
-      {/* Page Header */}
-      <div className="mb-32 max-w-3xl">
-        <h1 className="text-[64px] font-normal leading-[1.1] tracking-[-0.02em] text-[#220b09] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-          VIP Promotions & Incentives
-        </h1>
-        <p className="text-[16px] tracking-[0.01em] text-[#504443] max-w-xl" style={{ fontFamily: "'Jost', sans-serif" }}>
-          Curate and manage exclusive offers for our distinguished clientele. Precision in every detail, from fabric to incentive.
-        </p>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Promotions
+        </h2>
+        <p className="text-sm text-[#3a1f1d]/60 mt-1">Create and manage discount codes</p>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Active Promotions & History */}
-        <div className="lg:col-span-8 flex flex-col gap-32">
-
-          {/* Active Promotions Grid */}
-          <section>
-            <div className="flex justify-between items-end mb-6 border-b border-[#827472]/20 pb-4">
-              <h2 className="text-[32px] font-normal leading-[1.2] text-[#220b09]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                Active Promotions
-              </h2>
-            </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-8">
+          <div>
+            <h3 className="text-base font-semibold text-[#2C1816] mb-4">Active Promotions</h3>
             {promoCodes === undefined ? (
-              <p className="text-[13px] text-[#504443] italic">Loading promotions...</p>
+              <p className="text-sm text-[#3a1f1d]/40">Loading promotions...</p>
             ) : activePromos.length === 0 ? (
-              <p className="text-[13px] text-[#504443] italic">No active promotions.</p>
+              <div className="bg-white rounded-xl border border-[#3a1f1d]/8 p-8 text-center">
+                <Tag className="w-8 h-8 text-[#3a1f1d]/20 mx-auto mb-3" />
+                <p className="text-sm text-[#3a1f1d]/40">No active promotions. Create one to get started.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activePromos.map((promo) => (
-                  <Card key={promo._id} className="border border-[#827472]/20 p-6 flex flex-col bg-[#faf9f7] hover:bg-[#ffffff] transition-colors duration-300 group rounded-none shadow-none">
-                    <div className="flex justify-between items-start mb-8">
-                      <span className="text-[11px] font-semibold tracking-[0.15em] text-[#220b09] bg-[#220b09]/5 px-2 py-1 uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
+                  <div key={promo._id} className="bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm p-5 group">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
                         Active
                       </span>
                       <button
                         onClick={() => handleToggle(promo._id, promo.isActive)}
-                        className="text-[#504443] hover:text-[#220b09] transition-colors"
-                        title="Deactivate"
+                        className="text-xs text-[#3a1f1d]/40 hover:text-[#3a1f1d] transition-colors"
                       >
-                        <MoreHorizontal className="w-5 h-5" />
+                        Deactivate
                       </button>
                     </div>
-                    <div className="mb-6">
-                      <h3 className="text-[32px] font-normal leading-[1.2] text-[#220b09] tracking-wider uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        {promo.code}
-                      </h3>
-                      <div className="text-[16px] tracking-[0.01em] text-[#504443] mt-2" style={{ fontFamily: "'Jost', sans-serif" }}>
-                        {promo.discountPercentage > 0
-                          ? `${promo.discountPercentage}% OFF ALL COLLECTIONS`
-                          : 'FREE SHIPPING'}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-end mt-auto pt-6 border-t border-[#827472]/10">
+                    <h4 className="text-lg font-mono font-semibold text-[#2C1816] tracking-wider uppercase mb-2">
+                      {promo.code}
+                    </h4>
+                    <p className="text-sm text-[#3a1f1d]/60 mb-4">
+                      {promo.discountPercentage > 0
+                        ? `${promo.discountPercentage}% OFF ALL COLLECTIONS`
+                        : 'FREE SHIPPING'}
+                    </p>
+                    <div className="flex justify-between items-center pt-4 border-t border-[#3a1f1d]/8">
                       <div>
-                        <div className="text-[10px] tracking-[0.05em] text-[#504443] uppercase mb-1" style={{ fontFamily: "'Jost', sans-serif" }}>
-                          Discount
-                        </div>
-                        <div className="text-[24px] font-normal leading-none text-[#220b09]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        <span className="text-xs text-[#3a1f1d]/40">Discount</span>
+                        <p className="text-lg font-semibold text-[#2C1816]">
                           {promo.discountPercentage > 0 ? `${promo.discountPercentage}%` : '—'}
-                        </div>
+                        </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-[10px] tracking-[0.05em] text-[#504443] uppercase mb-1" style={{ fontFamily: "'Jost', sans-serif" }}>
-                          Created
-                        </div>
-                        <div className="text-[16px] tracking-[0.01em] text-[#220b09]" style={{ fontFamily: "'Jost', sans-serif" }}>
+                        <span className="text-xs text-[#3a1f1d]/40">Created</span>
+                        <p className="text-sm text-[#3a1f1d]/70">
                           {new Date(promo._creationTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </div>
+                        </p>
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}
-          </section>
+          </div>
 
-          {/* Archived History Table */}
-          <section>
-            <div className="flex justify-between items-end mb-6 border-b border-[#827472]/20 pb-4">
-              <h2 className="text-[32px] font-normal leading-[1.2] text-[#220b09]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                Archived History
-              </h2>
-            </div>
-            <div className="w-full">
-              {/* Grid-based header to match HTML */}
-              <div className="grid grid-cols-12 gap-4 pb-4 border-b border-[#827472]/10 text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                <div className="col-span-3">Code</div>
-                <div className="col-span-3">Value</div>
-                <div className="col-span-2">Discount</div>
-                <div className="col-span-4 text-right">Status</div>
-              </div>
-
-              {archivedPromos.length === 0 ? (
-                <div className="py-8 text-center text-[#504443] italic text-sm">No archived promotions.</div>
-              ) : (
-                archivedPromos.map((promo) => (
-                  <div key={promo._id} className="grid grid-cols-12 gap-4 py-6 border-b border-[#827472]/10 items-center hover:bg-[#ffffff] transition-colors">
-                    <div className="col-span-3 text-[18px] text-[#220b09] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
-                      {promo.code}
-                    </div>
-                    <div className="col-span-3 text-[16px] tracking-[0.01em] text-[#504443]" style={{ fontFamily: "'Jost', sans-serif" }}>
-                      {promo.discountPercentage > 0 ? `${promo.discountPercentage}% Off` : 'Free Shipping'}
-                    </div>
-                    <div className="col-span-2 text-[18px] text-[#220b09]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                      {promo.discountPercentage > 0 ? `${promo.discountPercentage}%` : '—'}
-                    </div>
-                    <div className="col-span-4 text-right">
+          {archivedPromos.length > 0 && (
+            <div>
+              <h3 className="text-base font-semibold text-[#2C1816] mb-4">Archived</h3>
+              <div className="bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm overflow-hidden">
+                <div className="divide-y divide-[#3a1f1d]/5">
+                  {archivedPromos.map((promo) => (
+                    <div key={promo._id} className="flex items-center justify-between p-4 hover:bg-[#FDFBF9] transition-colors">
+                      <div className="flex items-center gap-4">
+                        <Archive className="w-4 h-4 text-[#3a1f1d]/30" />
+                        <div>
+                          <span className="font-mono font-medium text-[#2C1816] uppercase">{promo.code}</span>
+                          <p className="text-xs text-[#3a1f1d]/50 mt-0.5">
+                            {promo.discountPercentage > 0 ? `${promo.discountPercentage}% Off` : 'Free Shipping'}
+                          </p>
+                        </div>
+                      </div>
                       <button
                         onClick={() => handleToggle(promo._id, promo.isActive)}
-                        className="text-[10px] tracking-[0.05em] text-[#ba1a1a] uppercase hover:text-[#220b09] transition-colors cursor-pointer"
-                        style={{ fontFamily: "'Jost', sans-serif" }}
+                        className="text-xs font-medium text-[#3a1f1d] hover:text-[#2C1816] transition-colors"
                       >
-                        Deactivated — Reactivate?
+                        Reactivate
                       </button>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))}
+                </div>
+              </div>
             </div>
-          </section>
+          )}
         </div>
 
-        {/* Right Column: Generate Code Form */}
-        <div className="lg:col-span-4">
-          <div className="lg:sticky lg:top-12 border border-[#827472]/20 p-8 bg-[#ffffff]">
-            <h2 className="text-[24px] font-normal text-[#220b09] mb-8 border-b border-[#827472]/20 pb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Generate Code
-            </h2>
-            <form className="flex flex-col gap-8" onSubmit={(e) => e.preventDefault()}>
-              {/* Code Name */}
-              <div className="relative">
-                <label className="block text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>
-                  Code Name
-                </label>
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm p-6 sticky top-6">
+            <h3 className="text-base font-semibold text-[#2C1816] mb-5">Generate Code</h3>
+            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+              <div>
+                <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Code Name</label>
                 <input
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full bg-transparent border-0 border-b border-[#827472]/30 px-0 py-2 text-[20px] text-[#220b09] focus:ring-0 focus:border-[#220b09] placeholder:text-[#827472]/30 uppercase tracking-wider transition-colors outline-none"
-                  placeholder="e.g. VIPEXCLUSIVE"
+                  className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm font-mono text-[#2C1816] uppercase tracking-wider focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
+                  placeholder="VIPEXCLUSIVE"
                   type="text"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
                 />
               </div>
 
-              {/* Discount Type */}
-              <div className="relative">
-                <label className="block text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>
-                  Discount Type
-                </label>
-                <select
-                  value={formData.discountType}
-                  onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
-                  className="w-full bg-transparent border-0 border-b border-[#827472]/30 px-0 py-2 text-[16px] tracking-[0.01em] text-[#220b09] focus:ring-0 focus:border-[#220b09] transition-colors appearance-none cursor-pointer outline-none"
-                  style={{ fontFamily: "'Jost', sans-serif" }}
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount (GHS)</option>
-                  <option value="shipping">Free Shipping</option>
-                </select>
-                <ChevronDown className="absolute right-0 bottom-3 w-4 h-4 text-[#827472]/50 pointer-events-none" />
+              <div>
+                <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Discount Type</label>
+                <div className="relative">
+                  <select
+                    value={formData.discountType}
+                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
+                    className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors cursor-pointer appearance-none outline-none"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (GHS)</option>
+                    <option value="shipping">Free Shipping</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a1f1d]/30 pointer-events-none" />
+                </div>
               </div>
 
-              {/* Value */}
               {formData.discountType !== 'shipping' && (
-                <div className="relative">
-                  <label className="block text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase mb-2" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    Value
-                  </label>
+                <div>
+                  <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Value</label>
                   <input
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    className="w-full bg-transparent border-0 border-b border-[#827472]/30 px-0 py-2 text-[20px] text-[#220b09] focus:ring-0 focus:border-[#220b09] placeholder:text-[#827472]/30 transition-colors outline-none"
+                    className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
                     placeholder="20"
                     type="number"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
                   />
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="pt-8 flex gap-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ code: '', discountType: 'percentage', value: '' })}
-                  className="w-full border border-[#220b09]/20 text-[#220b09] text-[11px] font-semibold tracking-[0.15em] uppercase py-4 hover:bg-[#220b09]/5 transition-colors"
-                  style={{ fontFamily: "'Jost', sans-serif" }}
+                  className="flex-1 border border-[#3a1f1d]/15 text-[#3a1f1d] text-sm font-medium py-2.5 rounded-lg hover:bg-[#3a1f1d]/5 transition-colors"
                 >
-                  Cancel
+                  Reset
                 </button>
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  className="w-full bg-[#220b09] text-white text-[11px] font-semibold tracking-[0.15em] uppercase py-4 hover:bg-[#220b09]/90 transition-colors"
-                  style={{ fontFamily: "'Jost', sans-serif" }}
+                  className="flex-1 bg-[#3a1f1d] text-white text-sm font-medium py-2.5 rounded-lg hover:bg-[#2C1816] transition-colors"
                 >
                   Generate
                 </button>

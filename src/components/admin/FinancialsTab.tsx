@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Download } from 'lucide-react';
-import { Card } from '../ui/card';
+import { Download, TrendingUp, Wallet, Receipt } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -14,8 +13,7 @@ import {
 export const FinancialsTab = ({ orders }: { orders: any[] }) => {
   const [chartView, setChartView] = useState<'monthly' | 'quarterly'>('quarterly');
 
-  // --- Financial KPIs ---
-  const { grossRevenue, aov, netProfit, completedCount } = useMemo(() => {
+  const { grossRevenue, aov, netProfit } = useMemo(() => {
     if (!orders) return { grossRevenue: 0, aov: 0, netProfit: 0, completedCount: 0 };
     
     const paidOrders = orders.filter(o => ['completed', 'shipped', 'processing'].includes(o.status));
@@ -25,12 +23,10 @@ export const FinancialsTab = ({ orders }: { orders: any[] }) => {
     return {
       grossRevenue: total,
       aov: aovCalc,
-      netProfit: total * 0.70, // 70% margin as requested
-      completedCount: paidOrders.length
+      netProfit: total * 0.70,
     };
   }, [orders]);
 
-  // --- Chart Data ---
   const chartData = useMemo(() => {
     if (!orders) return [];
     
@@ -38,14 +34,12 @@ export const FinancialsTab = ({ orders }: { orders: any[] }) => {
     const paidOrders = orders.filter(o => ['completed', 'shipped', 'processing'].includes(o.status));
 
     if (chartView === 'monthly') {
-      // Group by month
       paidOrders.forEach(o => {
         const d = new Date(o._creationTime);
         const monthKey = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
         data[monthKey] = (data[monthKey] || 0) + o.totalAmount;
       });
     } else {
-      // Group by quarter
       paidOrders.forEach(o => {
         const d = new Date(o._creationTime);
         const q = Math.floor(d.getMonth() / 3) + 1;
@@ -54,7 +48,6 @@ export const FinancialsTab = ({ orders }: { orders: any[] }) => {
       });
     }
 
-    // Sort the keys based on real dates
     const sortedKeys = Object.keys(data).sort((a, b) => {
       if (chartView === 'monthly') {
         const [monthA, yearA] = a.split(' ');
@@ -77,76 +70,77 @@ export const FinancialsTab = ({ orders }: { orders: any[] }) => {
   }, [orders, chartView]);
 
   return (
-    <div className="w-full">
-      {/* Header */}
-      <header className="mb-16 flex justify-between items-end">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-[32px] font-normal leading-[1.2] text-[#220b09]" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Financial Performance
-          </h1>
-          <p className="text-[10px] tracking-[0.05em] text-[#827472] mt-2 uppercase tracking-widest" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Q3 2023 Overview
-          </p>
+          <h2 className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Financials
+          </h2>
+          <p className="text-sm text-[#3a1f1d]/60 mt-1">Revenue trends and transaction history</p>
         </div>
-        <button className="border border-[#827472]/20 px-6 py-3 text-[11px] font-semibold tracking-[0.15em] text-[#220b09] hover:bg-[#e3e2e0] transition-colors uppercase flex items-center gap-2" style={{ fontFamily: "'Jost', sans-serif" }}>
+        <button className="inline-flex items-center gap-2 bg-white border border-[#3a1f1d]/15 text-[#3a1f1d] text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#3a1f1d]/5 transition-colors">
           Download Report <Download className="w-4 h-4" />
         </button>
-      </header>
+      </div>
 
-      {/* KPIs */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32">
-        <Card className="border border-[#827472]/10 p-8 relative flex flex-col justify-between h-40 bg-transparent rounded-none shadow-none">
-          <p className="text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase tracking-widest" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Gross Revenue
-          </p>
-          <p className="text-[32px] font-normal leading-[1.2] text-[#220b09] mt-auto" style={{ fontFamily: "'Playfair Display', serif" }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white rounded-xl p-6 border border-[#3a1f1d]/8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Gross Revenue</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
             GHS {grossRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-        </Card>
-        <Card className="border border-[#827472]/10 p-8 relative flex flex-col justify-between h-40 bg-transparent rounded-none shadow-none">
-          <p className="text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase tracking-widest" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Average Order Value
-          </p>
-          <p className="text-[32px] font-normal leading-[1.2] text-[#220b09] mt-auto" style={{ fontFamily: "'Playfair Display', serif" }}>
-            GHS {aov.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-        </Card>
-        <Card className="border border-[#827472]/10 p-8 relative flex flex-col justify-between h-40 bg-transparent rounded-none shadow-none">
-          <p className="text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase tracking-widest" style={{ fontFamily: "'Jost', sans-serif" }}>
-            Net Profit
-          </p>
-          <p className="text-[32px] font-normal leading-[1.2] text-[#220b09] mt-auto" style={{ fontFamily: "'Playfair Display', serif" }}>
-            GHS {netProfit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-        </Card>
-      </section>
+          </span>
+        </div>
 
-      {/* Chart Section */}
-      <section className="mb-32 border border-[#827472]/10 p-8">
-        <div className="flex justify-between items-center mb-12">
-          <h2 className="text-[24px] font-normal text-[#220b09]" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Revenue Trends
-          </h2>
-          <div className="flex gap-4">
-            <span 
+        <div className="bg-white rounded-xl p-6 border border-[#3a1f1d]/8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Avg Order Value</span>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Wallet className="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
+            GHS {aov.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-[#3a1f1d]/8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Net Profit</span>
+            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+              <Receipt className="w-4 h-4 text-purple-600" />
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
+            GHS {netProfit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </span>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-base font-semibold text-[#2C1816]">Revenue Trends</h3>
+          <div className="flex bg-[#F5F2EE] rounded-lg p-1">
+            <button 
               onClick={() => setChartView('quarterly')}
-              className={`text-[11px] font-semibold tracking-[0.15em] uppercase pb-1 cursor-pointer transition-colors ${chartView === 'quarterly' ? 'text-[#220b09] border-b border-[#220b09]' : 'text-[#827472] hover:text-[#220b09] border-b border-transparent'}`} 
-              style={{ fontFamily: "'Jost', sans-serif" }}
+              className={`text-xs font-medium px-3 py-1.5 rounded-md transition-all ${chartView === 'quarterly' ? 'bg-white text-[#2C1816] shadow-sm' : 'text-[#3a1f1d]/50'}`}
             >
               Quarterly
-            </span>
-            <span 
+            </button>
+            <button 
               onClick={() => setChartView('monthly')}
-              className={`text-[11px] font-semibold tracking-[0.15em] uppercase pb-1 cursor-pointer transition-colors ${chartView === 'monthly' ? 'text-[#220b09] border-b border-[#220b09]' : 'text-[#827472] hover:text-[#220b09] border-b border-transparent'}`} 
-              style={{ fontFamily: "'Jost', sans-serif" }}
+              className={`text-xs font-medium px-3 py-1.5 rounded-md transition-all ${chartView === 'monthly' ? 'bg-white text-[#2C1816] shadow-sm' : 'text-[#3a1f1d]/50'}`}
             >
               Monthly
-            </span>
+            </button>
           </div>
         </div>
         
-        {/* Recharts Area Chart */}
-        <div className="w-full h-96 relative border-l border-b border-[#827472]/10">
+        <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
@@ -159,88 +153,80 @@ export const FinancialsTab = ({ orders }: { orders: any[] }) => {
                 dataKey="name" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 10, fill: '#827472', fontFamily: "'Jost', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                tick={{ fontSize: 11, fill: '#8B7D7B' }}
                 dy={15}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 10, fill: '#827472', fontFamily: "'Jost', sans-serif" }}
+                tick={{ fontSize: 11, fill: '#8B7D7B' }}
                 tickFormatter={(val) => `GHS ${val.toLocaleString()}`}
               />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(130,116,114,0.2)', fontFamily: "'Jost', sans-serif", fontSize: '12px', borderRadius: 0 }}
-                itemStyle={{ color: '#220b09' }}
-                formatter={(value: number) => [`GHS ${value.toLocaleString()}`, 'Revenue']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e8e4e2', borderRadius: '8px', fontFamily: "'Jost', sans-serif", fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                itemStyle={{ color: '#2C1816' }}
+                formatter={(value: any) => [`GHS ${value.toLocaleString()}`, 'Revenue']}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#3a1f1d" strokeWidth={1.5} fillOpacity={1} fill="url(#colorTrend)" />
+              <Area type="monotone" dataKey="revenue" stroke="#3a1f1d" strokeWidth={2} fillOpacity={1} fill="url(#colorTrend)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </div>
 
-      {/* Ledger Section */}
-      <section>
-        <h2 className="text-[24px] font-normal text-[#220b09] mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
-          Transaction Ledger
-        </h2>
-        <div className="w-full border-t border-[#827472]/10 overflow-x-auto">
-          <Table className="min-w-[800px]">
-            <TableHeader>
-              <TableRow className="border-b border-[#827472]/10 hover:bg-transparent">
-                <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase font-normal w-32" style={{ fontFamily: "'Jost', sans-serif" }}>ID</TableHead>
-                <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase font-normal col-span-2" style={{ fontFamily: "'Jost', sans-serif" }}>Client</TableHead>
-                <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase font-normal" style={{ fontFamily: "'Jost', sans-serif" }}>Type</TableHead>
-                <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase font-normal" style={{ fontFamily: "'Jost', sans-serif" }}>Amount</TableHead>
-                <TableHead className="py-4 text-[11px] font-semibold tracking-[0.15em] text-[#827472] uppercase font-normal text-right" style={{ fontFamily: "'Jost', sans-serif" }}>Status</TableHead>
+      <div className="bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm overflow-hidden">
+        <div className="p-6 pb-4">
+          <h3 className="text-base font-semibold text-[#2C1816]">Transaction Ledger</h3>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-[#3a1f1d]/8 hover:bg-transparent">
+              <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">ID</TableHead>
+              <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Client</TableHead>
+              <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Items</TableHead>
+              <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Amount</TableHead>
+              <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide text-right">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders === undefined ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-[#3a1f1d]/40">Loading transactions...</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody className="text-[16px] tracking-[0.01em] text-[#220b09]" style={{ fontFamily: "'Jost', sans-serif" }}>
-              {orders === undefined ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-[#827472] italic">Loading transactions...</TableCell>
-                </TableRow>
-              ) : orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-[#827472] italic">No transactions found.</TableCell>
-                </TableRow>
-              ) : (
-                orders.map((order) => {
-                  const itemsStr = order.items.map((i: any) => i.name).join(', ');
-                  const isPaid = ['completed', 'shipped', 'processing'].includes(order.status);
-                  
-                  return (
-                    <TableRow key={order._id} className="border-b border-[#827472]/5 hover:bg-[#e3e2e0]/30 transition-colors py-2">
-                      <TableCell className="text-[10px] tracking-[0.05em] text-[#827472] uppercase">
-                        TRX-{order._id.substring(order._id.length - 4).toUpperCase()}
-                      </TableCell>
-                      <TableCell className="text-[18px]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        {order.shippingAddress.firstName[0]}. {order.shippingAddress.lastName}
-                      </TableCell>
-                      <TableCell className="text-[16px] text-[#220b09] truncate max-w-[200px]">
-                        {itemsStr}
-                      </TableCell>
-                      <TableCell className="text-[18px]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        GHS {order.totalAmount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className={`inline-block border px-3 py-1 text-[9px] font-semibold tracking-[0.15em] uppercase ${isPaid ? 'border-[#827472]/20 text-[#220b09]' : 'border-[#827472]/20 text-[#827472]'}`} style={{ fontFamily: "'Jost', sans-serif" }}>
-                          {isPaid ? 'Paid' : 'Pending'}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="mt-8 flex justify-center">
-          <button className="text-[11px] font-semibold tracking-[0.15em] text-[#827472] hover:text-[#220b09] transition-colors border-b border-transparent hover:border-[#220b09] pb-1 uppercase tracking-widest" style={{ fontFamily: "'Jost', sans-serif" }}>
-            View Full Ledger
-          </button>
-        </div>
-      </section>
+            ) : orders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-[#3a1f1d]/40">No transactions found.</TableCell>
+              </TableRow>
+            ) : (
+              orders.map((order) => {
+                const itemsStr = order.items.map((i: any) => i.name).join(', ');
+                const isPaid = ['completed', 'shipped', 'processing'].includes(order.status);
+                
+                return (
+                  <TableRow key={order._id} className="border-b border-[#3a1f1d]/5 hover:bg-[#FDFBF9] transition-colors">
+                    <TableCell className="py-4 px-6 text-xs font-mono text-[#3a1f1d]/50">
+                      TRX-{order._id.substring(order._id.length - 4).toUpperCase()}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 font-medium text-[#2C1816]">
+                      {order.shippingAddress.firstName[0]}. {order.shippingAddress.lastName}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-sm text-[#3a1f1d]/70 truncate max-w-[200px]">
+                      {itemsStr}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 font-medium text-[#2C1816]">
+                      GHS {order.totalAmount.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${isPaid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {isPaid ? 'Paid' : 'Pending'}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

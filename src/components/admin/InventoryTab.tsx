@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { Upload, ImageIcon, Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -51,264 +50,201 @@ export const InventoryTab = ({
   };
 
   return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-[#2C1816]" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Inventory
+        </h2>
+        <p className="text-sm text-[#3a1f1d]/60 mt-1">{products ? products.length : 0} products in your collection</p>
+      </div>
 
-      {/* Left Column: Inventory List */}
-      <section className="lg:col-span-8 flex flex-col">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h2 className="text-[64px] font-normal leading-[1.1] tracking-[-0.02em] text-[#3a1f1d] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Inventory
-            </h2>
-            <p className="text-[10px] tracking-[0.05em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-              {products ? products.length : 0} MASTERPIECES AVAILABLE
-            </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-[#3a1f1d]/8 hover:bg-transparent">
+                <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide w-16"></TableHead>
+                <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Product</TableHead>
+                <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide">Category</TableHead>
+                <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide text-right">Price</TableHead>
+                <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide text-right">Stock</TableHead>
+                <TableHead className="py-3 px-6 text-xs font-medium text-[#3a1f1d]/60 uppercase tracking-wide text-right w-24">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products === undefined ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-[#3a1f1d]/40">Loading products...</TableCell>
+                </TableRow>
+              ) : products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-[#3a1f1d]/40">No products yet. Add your first masterpiece.</TableCell>
+                </TableRow>
+              ) : (
+                products.map((p) => (
+                  <TableRow key={p._id} className="border-b border-[#3a1f1d]/5 hover:bg-[#FDFBF9] transition-colors group">
+                    <TableCell className="py-4 px-6">
+                      <div className="w-12 h-14 rounded-lg bg-[#F5F2EE] overflow-hidden border border-[#3a1f1d]/8">
+                        {p.images?.[0] ? (
+                          <img alt={p.name} className="w-full h-full object-cover" src={p.images[0]} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="w-5 h-5 text-[#3a1f1d]/20" />
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <span className="font-medium text-[#2C1816]">{p.name}</span>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#3a1f1d]/5 text-[#3a1f1d]">
+                        {p.type === 'custom' ? 'Bespoke' : 'Ready-to-wear'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right font-medium text-[#2C1816]">
+                      GHS {p.price.toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <span className={`text-sm ${p.stock > 10 ? 'text-emerald-600' : p.stock > 0 ? 'text-amber-600' : 'text-red-600'}`}>
+                        {p.stock || 0}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(p); }}
+                          className="p-2 rounded-lg text-[#3a1f1d]/40 hover:text-[#3a1f1d] hover:bg-[#3a1f1d]/5 transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(p._id); }}
+                          className="p-2 rounded-lg text-red-700/40 hover:text-red-700 hover:bg-red-50 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-xl border border-[#3a1f1d]/8 shadow-sm p-6 sticky top-6">
+            <h3 className="text-lg font-semibold text-[#2C1816] mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+              {editingId ? 'Edit Product' : 'Add Product'}
+            </h3>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div
+                onClick={handleDropzoneClick}
+                className="w-full aspect-[4/3] rounded-lg border-2 border-dashed border-[#3a1f1d]/20 flex flex-col items-center justify-center cursor-pointer hover:border-[#3a1f1d]/40 hover:bg-[#F5F2EE] transition-all duration-200 group relative overflow-hidden"
+              >
+                {formData.imageFile ? (
+                  <img src={URL.createObjectURL(formData.imageFile)} alt="Preview" className="w-full h-full object-cover absolute inset-0" />
+                ) : formData.imageUrl ? (
+                  <img src={formData.imageUrl} alt="Current" className="w-full h-full object-cover absolute inset-0 opacity-60" />
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-[#3a1f1d]/30 mb-2 group-hover:text-[#3a1f1d]/50 transition-colors" />
+                    <span className="text-xs text-[#3a1f1d]/50">Upload image</span>
+                  </>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Product Name</label>
+                  <input
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
+                    placeholder="e.g. Linen Suit"
+                    type="text"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Category</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors cursor-pointer outline-none"
+                  >
+                    <option value="ready-to-wear">Ready-to-wear</option>
+                    <option value="custom">Bespoke</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Price (GHS)</label>
+                    <input
+                      required
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
+                      placeholder="0.00"
+                      type="number"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Stock</label>
+                    <input
+                      required
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
+                      placeholder="0"
+                      type="number"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-[#3a1f1d]/60 mb-1.5 block">Description</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-white border border-[#3a1f1d]/15 rounded-lg px-3 py-2 text-sm text-[#2C1816] focus:ring-2 focus:ring-[#3a1f1d]/20 focus:border-[#3a1f1d] transition-colors placeholder:text-[#3a1f1d]/30 resize-none outline-none"
+                    placeholder="Describe the piece..."
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-[#3a1f1d] text-white text-sm font-medium py-2.5 rounded-lg hover:bg-[#2C1816] transition-colors"
+              >
+                {editingId ? 'Save Changes' : 'Add to Inventory'}
+              </button>
+
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setFormData({ name: '', price: '', description: '', imageUrl: '', imageFile: null, type: 'custom', stock: '0' });
+                  }}
+                  className="w-full border border-[#3a1f1d]/20 text-[#3a1f1d] text-sm font-medium py-2.5 rounded-lg hover:bg-[#3a1f1d]/5 transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+            </form>
           </div>
         </div>
-
-        {/* Table Header (Grid-based to match HTML layout) */}
-        <div className="grid grid-cols-12 gap-4 pb-4 border-b border-[#3a1f1d]/10 text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-          <div className="col-span-1"></div>
-          <div className="col-span-4">Piece</div>
-          <div className="col-span-3">Category</div>
-          <div className="col-span-2 text-right">Price (GHS)</div>
-          <div className="col-span-2 text-right">Stock</div>
-        </div>
-
-        {/* Inventory Items */}
-        <div className="flex flex-col">
-          {products === undefined ? (
-            <div className="py-12 text-center text-[#504443] italic text-sm">Syncing database...</div>
-          ) : products.length === 0 ? (
-            <div className="py-16 text-center border border-dashed border-[#3a1f1d]/20 mt-4">
-              <ImageIcon className="w-8 h-8 text-[#3a1f1d]/30 mx-auto mb-4" />
-              <p className="text-[14px] text-[#504443] opacity-50">Your atelier is currently empty.</p>
-            </div>
-          ) : (
-            products.map((p) => (
-              <div
-                key={p._id}
-                className="grid grid-cols-12 gap-4 py-6 border-b border-[#3a1f1d]/10 items-center group cursor-pointer hover:bg-[#f4f3f1] transition-colors duration-300 -mx-4 px-4"
-              >
-                {/* Thumbnail */}
-                <div className="col-span-1">
-                  <div className="w-12 h-16 bg-[#efeeec] overflow-hidden">
-                    {p.images?.[0] ? (
-                      <img
-                        alt={p.name}
-                        className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                        src={p.images[0]}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-5 h-5 text-[#3a1f1d]/30" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Name + Ref */}
-                <div className="col-span-4 flex flex-col justify-center">
-                  <span className="text-[20px] text-[#3a1f1d]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {p.name}
-                  </span>
-                  <span className="text-[10px] tracking-[0.05em] text-[#504443] mt-1 uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    #REF-{p._id.substring(p._id.length - 4).toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Category */}
-                <div className="col-span-3 flex items-center">
-                  <span className="text-[16px] tracking-[0.01em] text-[#1a1c1b] capitalize" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    {p.type === 'custom' ? 'Bespoke' : 'Ready-to-wear'}
-                  </span>
-                </div>
-
-                {/* Price */}
-                <div className="col-span-2 flex items-center justify-end">
-                  <span className="text-[16px] tracking-[0.01em] text-[#3a1f1d]" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    {p.price.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                  </span>
-                </div>
-
-                {/* Stock + Actions */}
-                <div className="col-span-2 flex items-center justify-end gap-4">
-                  <span className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] px-3 py-1 border border-[#3a1f1d]/10" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    {p.stock || 0}
-                  </span>
-                  <div className="hidden group-hover:flex items-center gap-2 ml-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleEdit(p); }}
-                      className="text-[#3a1f1d]/40 hover:text-[#3a1f1d] transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(p._id); }}
-                      className="text-red-700/40 hover:text-red-700 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Right Column: Add Masterpiece Panel */}
-      <aside className="lg:col-span-4 lg:pl-8 lg:border-l border-[#3a1f1d]/10">
-        <div className="lg:sticky lg:top-28">
-          <h3 className="text-[32px] font-normal leading-[1.2] text-[#3a1f1d] mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
-            {editingId ? 'Edit Masterpiece' : 'Add Masterpiece'}
-          </h3>
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-            {/* Media Upload Dropzone */}
-            <div
-              onClick={handleDropzoneClick}
-              className="w-full aspect-[3/4] border border-dashed border-[#3a1f1d]/20 flex flex-col items-center justify-center cursor-pointer hover:border-[#3a1f1d]/50 hover:bg-[#f4f3f1] transition-all duration-300 group relative overflow-hidden"
-            >
-              {formData.imageFile ? (
-                <img
-                  src={URL.createObjectURL(formData.imageFile)}
-                  alt="Preview"
-                  className="w-full h-full object-cover absolute inset-0"
-                />
-              ) : formData.imageUrl ? (
-                <img
-                  src={formData.imageUrl}
-                  alt="Current"
-                  className="w-full h-full object-cover absolute inset-0 opacity-60"
-                />
-              ) : (
-                <>
-                  <Upload className="w-8 h-8 text-[#3a1f1d]/40 mb-4 group-hover:text-[#3a1f1d] transition-colors" />
-                  <span className="text-[11px] font-semibold tracking-[0.15em] text-[#3a1f1d]/60 uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    Upload Cover
-                  </span>
-                </>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </div>
-
-            {/* Form Fields */}
-            <div className="flex flex-col gap-6">
-              {/* Piece Name */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                  Piece Name
-                </label>
-                <input
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-transparent border-0 border-b border-[#3a1f1d]/20 p-0 pb-2 text-[16px] tracking-[0.01em] text-[#3a1f1d] focus:border-[#3a1f1d] focus:ring-0 transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
-                  placeholder="e.g. Linen Suit"
-                  type="text"
-                  style={{ fontFamily: "'Jost', sans-serif" }}
-                />
-              </div>
-
-              {/* Category */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                  Category
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="bg-transparent border-0 border-b border-[#3a1f1d]/20 p-0 pb-2 text-[16px] tracking-[0.01em] text-[#3a1f1d] focus:border-[#3a1f1d] focus:ring-0 transition-colors cursor-pointer appearance-none outline-none"
-                  style={{ fontFamily: "'Jost', sans-serif" }}
-                >
-                  <option value="ready-to-wear">Ready-to-wear</option>
-                  <option value="custom">Bespoke</option>
-                </select>
-              </div>
-
-              {/* Price & Stock Grid */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    Price (GHS)
-                  </label>
-                  <input
-                    required
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="bg-transparent border-0 border-b border-[#3a1f1d]/20 p-0 pb-2 text-[16px] tracking-[0.01em] text-[#3a1f1d] focus:border-[#3a1f1d] focus:ring-0 transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
-                    placeholder="0.00"
-                    type="number"
-                    style={{ fontFamily: "'Jost', sans-serif" }}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                    Stock
-                  </label>
-                  <input
-                    required
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    className="bg-transparent border-0 border-b border-[#3a1f1d]/20 p-0 pb-2 text-[16px] tracking-[0.01em] text-[#3a1f1d] focus:border-[#3a1f1d] focus:ring-0 transition-colors placeholder:text-[#3a1f1d]/30 outline-none"
-                    placeholder="0"
-                    type="number"
-                    style={{ fontFamily: "'Jost', sans-serif" }}
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-semibold tracking-[0.15em] text-[#504443] uppercase" style={{ fontFamily: "'Jost', sans-serif" }}>
-                  Description
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-transparent border-0 border-b border-[#3a1f1d]/20 p-0 pb-2 text-[16px] tracking-[0.01em] text-[#3a1f1d] focus:border-[#3a1f1d] focus:ring-0 transition-colors placeholder:text-[#3a1f1d]/30 resize-none outline-none"
-                  placeholder="Describe the piece..."
-                  style={{ fontFamily: "'Jost', sans-serif" }}
-                />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full bg-[#3a1f1d] text-white text-[11px] font-semibold tracking-[0.15em] uppercase py-4 hover:bg-black transition-colors duration-300 mt-4"
-              style={{ fontFamily: "'Jost', sans-serif" }}
-            >
-              {editingId ? 'Save Changes' : 'Save to Inventory'}
-            </button>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setFormData({ name: '', price: '', description: '', imageUrl: '', imageFile: null, type: 'custom', stock: '0' });
-                }}
-                className="w-full border border-[#3a1f1d] text-[#3a1f1d] text-[11px] font-semibold tracking-[0.15em] uppercase py-4 hover:bg-[#3a1f1d] hover:text-white transition-colors duration-300"
-                style={{ fontFamily: "'Jost', sans-serif" }}
-              >
-                Cancel Editing
-              </button>
-            )}
-          </form>
-        </div>
-      </aside>
+      </div>
     </div>
   );
 };
