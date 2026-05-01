@@ -158,3 +158,24 @@ export const updateMeasurements = mutation({
     return { success: true };
   },
 });
+
+export const getAllClients = query({
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    return await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("role"), "customer"))
+      .collect();
+  },
+});
+
+export const getMeasurementProfilesAdmin = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    return await ctx.db
+      .query("measurementProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});

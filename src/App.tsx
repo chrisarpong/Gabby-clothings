@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import SyncUser from "./components/SyncUser";
@@ -24,38 +24,47 @@ import NotFound from "./pages/NotFound";
 import Search from "./pages/Search";
 import Wishlist from "./pages/Wishlist";
 
+const AppContent = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  return (
+    <div className={`min-h-screen ${!isAdminPage ? 'bg-[var(--color-bg-primary)] flex flex-col' : 'bg-white'}`}>
+      {!isAdminPage && <Header />}
+      <main className={!isAdminPage ? "flex-1 w-full" : "w-full h-screen"}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<ShopAll />} />
+          <Route path="/collections" element={<Collections />} />
+          <Route path="/category/:slug" element={<CategoryPage />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/size-guide" element={<SizeGuide />} />
+          <Route path="/shipping-returns" element={<ShippingReturns />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/book-appointment" element={<BookAppointment />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      {!isAdminPage && <Footer />}
+      <Toaster />
+    </div>
+  );
+};
+
 function App() {
   return (
     <CartProvider>
       <BrowserRouter>
         <SyncUser />
-        <div className="min-h-screen bg-[var(--color-bg-primary)] flex flex-col">
-          <Header />
-          <main className="flex-1 w-full">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/shop" element={<ShopAll />} />
-              <Route path="/collections" element={<Collections />} />
-              <Route path="/category/:slug" element={<CategoryPage />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/size-guide" element={<SizeGuide />} />
-              <Route path="/shipping-returns" element={<ShippingReturns />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/legal" element={<Legal />} />
-              <Route path="/book-appointment" element={<BookAppointment />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-          <Toaster />
-        </div>
+        <AppContent />
       </BrowserRouter>
     </CartProvider>
   );

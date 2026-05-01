@@ -21,6 +21,7 @@ import type * as products from "../products.js";
 import type * as promotions from "../promotions.js";
 import type * as reviews from "../reviews.js";
 import type * as seed from "../seed.js";
+import type * as settings from "../settings.js";
 import type * as users from "../users.js";
 import type * as wishlist from "../wishlist.js";
 
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   promotions: typeof promotions;
   reviews: typeof reviews;
   seed: typeof seed;
+  settings: typeof settings;
   users: typeof users;
   wishlist: typeof wishlist;
 }>;

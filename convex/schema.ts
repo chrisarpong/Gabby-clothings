@@ -152,6 +152,7 @@ export default defineSchema({
     userName: v.string(),
     rating: v.number(),
     comment: v.string(),
+    status: v.optional(v.union(v.literal("approved"), v.literal("hidden"))),
   }).index("by_product", ["productId"]),
 
   // 9. CONTACT MESSAGES TABLE
@@ -169,4 +170,12 @@ export default defineSchema({
     discountPercentage: v.number(),
     isActive: v.boolean(),
   }).index("by_code", ["code"]),
+
+  // 11. STORE SETTINGS TABLE (single-document)
+  storeSettings: defineTable({
+    shippingRate: v.number(),
+    taxPercentage: v.number(),
+    announcementBannerText: v.string(),
+    announcementBannerEnabled: v.boolean(),
+  }),
 });
