@@ -84,7 +84,7 @@ export default function Checkout() {
       name: `${user?.firstName || 'Guest'} ${user?.lastName || ''}`,
       custom_fields: []
     },
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "",
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6",
     text: "PAY WITH PAYSTACK",
     onSuccess: handlePaystackSuccessAction,
     onClose: handlePaystackCloseAction,
