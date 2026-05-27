@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #220b09;
+  --color-on-primary: #ffffff;
+  --color-secondary: #735c00;
+  --color-on-secondary: #ffffff;
+  --color-surface: #f9f9f7;
+  --color-on-surface: #1a1c1b;
+  --color-surface-variant: #e2e3e1;
+  --color-on-surface-variant: #504443;
+  --color-surface-container: #eeeeec;
+  --color-surface-container-lowest: #ffffff;
+  --color-tertiary: #12120e;
+  --color-outline: #827472;
+  --color-outline-variant: #d4c3c1;
+
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "DM Sans", sans-serif;
+  --font-label: "Metropolis", sans-serif;
+  
+  --spacing-gutter: 1.5rem;
+  --spacing-section: 7.5rem;
+}
+
+@layer utilities {
+  .text-label {
+    @apply font-label text-[11px] font-bold tracking-[0.15em] uppercase;
+  }
+  .parallax {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+  .reveal-overlay {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .group:hover .reveal-overlay {
+    opacity: 1;
+  }
+}
+

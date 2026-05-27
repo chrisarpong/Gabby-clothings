@@ -1,0 +1,261 @@
+import { Link, useNavigate } from "react-router-dom";
+import { Lock, Truck, Minus, Plus, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { useCartStore } from "../store/cartStore";
+import { useQuery, useMutation } from "@/hooks/useConvex";
+import { api } from "../../convex/_generated/api";
+import { useUser } from "@clerk/clerk-react";
+import { PaystackButton } from "react-paystack";
+import { toast } from "sonner";
+import { useState } from "react";
+
+export default function CartPage() {
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const { items, removeItem, updateQuantity, clearCart } = useCartStore();
+  
+  const allProducts = useQuery(api.products.getAll);
+
+  const [shippingAddress, setShippingAddress] = useState({
+    street: "123 Test St",
+    city: "Accra",
+    state: "Greater Accra",
+    zip: "00000",
+    country: "Ghana",
+  });
+
+  // Wait until products load
+  const cartItemsWithDetails = allProducts === undefined ? [] : items.map(item => {
+    const product = allProducts.find(p => p._id === item.productId);
+    let size = item.variantSku || "Custom Fit";
+    return {
+      ...item,
+      product,
+      size,
+    };
+  }).filter(i => i.product);
+
+  const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
+  const shippingAmount = 150.00; // Flat fee for example
+  const totalAmount = subtotal + shippingAmount;
+
+  const paystackConfig = {
+    reference: (new Date()).getTime().toString(),
+    email: user?.primaryEmailAddress?.emailAddress || "guest@gabbynewluk.com", 
+    amount: totalAmount * 100, // Paystack amount is in pesewas
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
+    currency: "GHS",
+  };
+
+  const createOrder = useMutation(api.orders.create);
+
+  const handlePaystackSuccessAction = async (reference: any) => {
+    if (!user) {
+      toast.error("Please sign in to complete checkout");
+      return;
+    }
+    
+    try {
+      await createOrder({
+        userId: user.id,
+        customerDetails: {
+          firstName: user.firstName || "Guest",
+          lastName: user.lastName || "",
+          email: user.primaryEmailAddress?.emailAddress || "guest@example.com",
+        },
+        items: items.map(item => ({
+          productId: item.productId as any,
+          variantSku: item.variantSku,
+          quantity: item.quantity,
+        })),
+        shippingAmount,
+        paymentStatus: "paid",
+        paystackReference: reference.reference,
+        shippingAddress
+      });
+      
+      toast.success(`Payment successful! Reference: ${reference.reference}`);
+      clearCart();
+      navigate('/success');
+    } catch (error) {
+      toast.error("Error creating order. Please contact support.");
+      console.error(error);
+    }
+  };
+
+  const handlePaystackCloseAction = () => {
+    toast.error("Payment cancelled");
+  };
+
+  const componentProps = {
+    ...paystackConfig,
+    text: "Pay with Paystack",
+    onSuccess: (reference: any) => handlePaystackSuccessAction(reference),
+    onClose: handlePaystackCloseAction,
+  };
+
+  return (
+    <main className="min-h-screen bg-surface text-on-surface flex flex-col pt-32 md:pt-40 pb-24">
+      <div className="max-w-[1536px] mx-auto px-5 md:px-20 w-full flex-1">
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 md:mb-16"
+        >
+          <h1 className="font-serif text-4xl md:text-6xl text-primary italic">Your Selection</h1>
+        </motion.div>
+
+        {items.length > 0 && allProducts === undefined ? (
+           <div className="text-center py-20 animate-pulse text-on-surface-variant font-sans text-sm">
+             Loading cart items...
+           </div>
+        ) : cartItemsWithDetails.length === 0 ? (
+          <div className="text-center py-20">
+            <h2 className="font-serif text-2xl text-primary mb-4 italic">Your cart is empty</h2>
+            <Link to="/shop" className="text-primary hover:underline uppercase tracking-widest text-xs font-label">Continue Shopping</Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+            
+            {/* Left Column: Cart Items */}
+            <div className="lg:col-span-8 flex flex-col gap-8">
+              <div className="flex border-b border-surface-variant pb-4 mb-4">
+                <span className="font-label text-[11px] tracking-widest uppercase text-outline">Product</span>
+              </div>
+
+              {cartItemsWithDetails.map((item, index) => {
+                const currentSize = item.product?.variants?.find(v => v.sku === item.variantSku)?.size || "Custom Fit";
+                return (
+                <motion.div 
+                  key={item.cartItemId}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-6 md:gap-10 border-b border-outline-variant/30 pb-8"
+                >
+                  <div className="w-[100px] sm:w-[120px] shrink-0 aspect-[3/4] bg-surface-container overflow-hidden">
+                    <img src={item.product?.images?.[0] || "/assets/1.jpg"} alt={item.product?.name || "Product"} className="w-full h-full object-cover" />
+                  </div>
+                  
+                  <div className="flex-1 flex flex-col gap-2 w-full">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        <h3 className="font-serif text-xl md:text-2xl text-primary mb-2">{item.product?.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <span className="font-sans text-sm text-on-surface-variant">Size:</span>
+                          <select 
+                            className="bg-transparent border border-surface-variant text-primary font-sans text-sm py-1 px-2 pr-8 focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                            value={item.variantSku || "custom"}
+                            onChange={(e) => {
+                              // We could update size via store, but it requires standardizing cartStore updates.
+                              // Let's implement an update mechanism.
+                              const storeItem = items.find(i => i.cartItemId === item.cartItemId);
+                              if (storeItem) {
+                                // Since we don't have updateVariant in store, we delete and add (with same cartItemId ideally, but re-adding creates new ID, so just re-add)
+                                removeItem(item.cartItemId);
+                                useCartStore.getState().addItem({
+                                  productId: storeItem.productId,
+                                  variantSku: e.target.value === "custom" ? undefined : e.target.value,
+                                  quantity: storeItem.quantity
+                                });
+                              }
+                            }}
+                          >
+                            {item.product?.variants?.map(v => (
+                              <option key={v.sku} value={v.sku}>{v.size}</option>
+                            ))}
+                            <option value="custom">Custom Fit</option>
+                          </select>
+                        </div>
+                      </div>
+                      <span className="font-label text-sm tracking-widest text-primary hidden sm:block">GH₵{(item.product?.basePrice ?? 0).toFixed(2)}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 sm:mt-6">
+                      {/* Quantity Selector */}
+                      <div className="flex items-center border border-outline-variant">
+                        <button 
+                          onClick={() => updateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
+                          className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors"
+                        >
+                          <Minus className="w-3 h-3" strokeWidth={1.5} />
+                        </button>
+                        <span className="w-10 font-label text-sm text-center text-primary">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                          className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors"
+                        >
+                          <Plus className="w-3 h-3" strokeWidth={1.5} />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-4">
+                        <span className="font-label text-sm tracking-widest text-primary sm:hidden mb-2">GH₵{(item.product?.basePrice ?? 0).toFixed(2)}</span>
+                        <button 
+                          onClick={() => removeItem(item.cartItemId)}
+                          className="font-label text-[10px] tracking-widest uppercase text-outline hover:text-primary transition-colors flex items-center gap-1 border-b border-transparent hover:border-primary pb-px"
+                        >
+                          <X className="w-3 h-3" /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )})}
+            </div>
+
+            {/* Right Column: Order Summary */}
+            <div className="lg:col-span-4">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="sticky top-32 bg-surface-container/50 backdrop-blur-md border border-surface-variant p-8 md:p-12 mb-8"
+              >
+                <h2 className="font-serif text-2xl text-primary italic mb-8">Order Summary</h2>
+                
+                <div className="flex flex-col gap-4 font-sans text-sm text-on-surface-variant mb-8 border-b border-outline-variant/30 pb-8">
+                  <div className="flex justify-between items-center">
+                    <span>Subtotal</span>
+                    <span className="text-primary tracking-widest font-label">GH₵{subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Shipping</span>
+                    <span>GH₵{shippingAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-end mb-10">
+                  <span className="font-serif text-lg text-primary">Estimated Total</span>
+                  <span className="font-label text-lg tracking-widest text-primary">GH₵{totalAmount.toFixed(2)}</span>
+                </div>
+
+                {!user ? (
+                   <p className="text-sm text-brand-espresso mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
+                ) : (
+                  <PaystackButton 
+                    {...componentProps} 
+                    className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors mb-8" 
+                  />
+                )}
+
+                {/* Trust Badges */}
+                <div className="flex flex-col gap-4 mt-6">
+                  <div className="flex items-center gap-4 text-on-surface-variant">
+                    <Lock className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                    <span className="font-sans text-xs">Secure Checkout. 256-bit encryption.</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-on-surface-variant">
+                    <Truck className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                    <span className="font-sans text-xs">Nationwide priority delivery.</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
