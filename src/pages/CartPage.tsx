@@ -76,7 +76,7 @@ export default function CartPage() {
       
       toast.success(`Payment successful! Reference: ${reference.reference}`);
       clearCart();
-      navigate('/success');
+      navigate(`/success?reference=${reference.reference}`);
     } catch (error) {
       toast.error("Error creating order. Please contact support.");
       console.error(error);
