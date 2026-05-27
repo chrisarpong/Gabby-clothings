@@ -192,7 +192,19 @@ export const seed = mutation({
       { name: "Classic Linen Kaftan Set", basePrice: 5500, category: "Kaftans", images: ["/assets/4.jpg"], description: "An airy oversized Kaftan made from raw artisanal linen. Lightweight and bold.", type: "physical", status: "active" },
       { name: "Bespoke Navy Two-Piece", basePrice: 18200, category: "Suiting", images: ["/assets/5.jpg"], description: "Custom-fitted navy suit tailored to exact measurements.", type: "physical", status: "active" },
       { name: "Heritage Jacquard Agbada", basePrice: 9800, category: "Agbadas", images: ["/assets/6.jpg"], description: "A tailored set featuring custom woven jacquard motifs inspired by heritage textiles.", type: "physical", status: "active" },
-      { name: "Ivory Silk Kaftan", basePrice: 11200, category: "Kaftans", images: ["/assets/7.jpg"], description: "Exquisite ivory kaftan offering a tailored silhouette and unmatched elegance.", type: "physical", status: "active" }
+      { name: "Ivory Silk Kaftan", basePrice: 11200, category: "Kaftans", images: ["/assets/7.jpg"], description: "Exquisite ivory kaftan offering a tailored silhouette and unmatched elegance.", type: "physical", status: "active" },
+      { name: "Crimson Velvet Kaftan", basePrice: 8500, category: "Kaftans", images: ["/assets/agbada 2.jpeg"], description: "A bold crimson velvet kaftan for special traditional events.", type: "physical", status: "active" },
+      { name: "Charcoal Pinstripe Suit", basePrice: 14000, category: "Suiting", images: ["/assets/kaftan.jpeg"], description: "Classic charcoal pinstripe suit, single-breasted with sharp peak lapels.", type: "physical", status: "active" },
+      { name: "Sahara Linen Trousers", basePrice: 2200, category: "Suiting", images: ["/assets/Royalty .jpeg"], description: "Breathable, wide-leg linen trousers for relaxed elegance.", type: "physical", status: "active" },
+      { name: "Golden Embroidery Agbada", basePrice: 21000, category: "Agbadas", images: ["/assets/3.jpg"], description: "Luxurious agbada featuring hand-woven gold thread embroidery.", type: "physical", status: "active" },
+      { name: "Modern Minimalist Tunic", basePrice: 4800, category: "Kaftans", images: ["/assets/4.jpg"], description: "A minimalist approach to the traditional tunic, featuring a concealed placket.", type: "physical", status: "active" },
+      { name: "Double-Breasted Wool Blazer", basePrice: 7500, category: "Suiting", images: ["/assets/5.jpg"], description: "Structured double-breasted blazer cut from premium Italian wool.", type: "physical", status: "active" },
+      { name: "Onyx Senator Style Suit", basePrice: 9200, category: "Kaftans", images: ["/assets/6.jpg"], description: "Contemporary Senator style suit in pitch-black onyx fabric.", type: "physical", status: "active" },
+      { name: "Regal White Agbada Set", basePrice: 17500, category: "Agbadas", images: ["/assets/7.jpg"], description: "Pristine white agbada set meant for royalty and grand celebrations.", type: "physical", status: "active" },
+      { name: "Earth Tone Cotton Kaftan", basePrice: 3200, category: "Kaftans", images: ["/assets/agbada 2.jpeg"], description: "A comfortable, everyday cotton kaftan in muted earth tones.", type: "physical", status: "active" },
+      { name: "Textured Silk Pocket Square", basePrice: 800, category: "Accessories", images: ["/assets/kaftan.jpeg"], description: "Hand-rolled silk pocket square to complement any bespoke suit.", type: "physical", status: "active" },
+      { name: "Leather Monk Strap Shoes", basePrice: 4500, category: "Accessories", images: ["/assets/Royalty .jpeg"], description: "Hand-polished leather monk straps, the ultimate gentleman's footwear.", type: "physical", status: "active" },
+      { name: "Velvet Loafers with Crest", basePrice: 5200, category: "Accessories", images: ["/assets/3.jpg"], description: "Premium velvet loafers featuring a custom embroidered crest.", type: "physical", status: "active" }
     ];
 
     const variants = [
