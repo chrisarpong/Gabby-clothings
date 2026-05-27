@@ -12,8 +12,8 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 
-// Fallback to prod URL if Vercel doesn't have the env var set
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL || "https://silent-albatross-823.convex.cloud";
+// Forcing the Prod URL temporarily to rule out Vercel Env Var issues
+const CONVEX_URL = "https://silent-albatross-823.convex.cloud";
 const convex = new ConvexReactClient(CONVEX_URL);
 
 createRoot(document.getElementById('root')!).render(
