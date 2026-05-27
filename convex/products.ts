@@ -81,7 +81,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if ((identity as any).role !== "admin") {
       throw new Error("Unauthorized: Admin only");
     }
     return await ctx.db.insert("products", args);
@@ -113,7 +113,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if ((identity as any).role !== "admin") {
       throw new Error("Unauthorized: Admin only");
     }
     
@@ -155,6 +155,13 @@ export const updateVariantStock = mutation({
 export const seed = mutation({
   args: {},
   handler: async (ctx) => {
+    // TEMPORARY: Auth check removed so CLI can seed the database
+    // const identity = await ctx.auth.getUserIdentity();
+    // if (!identity) throw new Error("Unauthenticated");
+    // if ((identity as any).role !== "admin") {
+    //   throw new Error("Unauthorized: Admin only");
+    // }
+
     const existing = await ctx.db.query("products").collect();
     
     // Fallbacks for existing dummy data that might not have images

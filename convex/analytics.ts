@@ -1,49 +1,79 @@
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { query } from "./_generated/server";
 
 export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    // if (!identity || (identity as any).role !== "admin") throw new Error("Unauthorized");
 
     const orders = await ctx.db.query("orders").collect();
+    const users = await ctx.db.query("users").collect();
+    const appointments = await ctx.db.query("appointments").collect();
     
     let totalRevenue = 0;
     let activeOrders = 0;
 
     for (const o of orders) {
       if (o.status !== "cancelled") {
-        totalRevenue += o.totalAmount;
+        totalRevenue += o.totalAmount || 0;
       }
       if (o.status === "pending" || o.status === "processing") {
         activeOrders++;
       }
     }
 
-    // Top sellers is a bit manual
-    const productCounts: Record<string, number> = {};
-    for (const o of orders) {
-      for (const item of o.items) {
-        productCounts[item.productId] = (productCounts[item.productId] || 0) + item.quantity;
+    const pendingAppointments = appointments.filter(a => a.status === "pending" || a.status === "confirmed");
+
+    // Monthly revenue for the last 6 months
+    const now = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyRevenue: { name: string; revenue: number; orders: number }[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStart = d.getTime();
+      const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+      
+      let rev = 0;
+      let count = 0;
+      for (const o of orders) {
+        if (o._creationTime >= monthStart && o._creationTime < monthEnd && o.status !== "cancelled") {
+          rev += o.totalAmount || 0;
+          count++;
+        }
       }
+      monthlyRevenue.push({ name: monthNames[d.getMonth()], revenue: rev, orders: count });
     }
 
-    const topProductIds = Object.entries(productCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(entry => entry[0]);
+    // Recent activity (last 5 orders)
+    const recentOrders = [...orders]
+      .sort((a, b) => b._creationTime - a._creationTime)
+      .slice(0, 5);
 
-    const topSellers = [];
-    for (const pid of topProductIds) {
-      const p = await ctx.db.get(pid as any);
-      if (p) topSellers.push(p);
-    }
+    const recentActivity = recentOrders.map(o => ({
+      action: o.status === "processing" ? "New order placed" : `Order ${o.status}`,
+      client: `${o.customerDetails?.firstName || "Guest"} ${o.customerDetails?.lastName || ""}`.trim(),
+      time: getRelativeTime(o._creationTime),
+      amount: `GH₵${(o.totalAmount || 0).toLocaleString()}`,
+    }));
 
     return {
       totalRevenue,
+      totalOrders: orders.length,
       activeOrders,
-      topSellers,
+      totalClients: users.length,
+      upcomingAppointments: pendingAppointments.length,
+      monthlyRevenue,
+      recentActivity,
     };
   }
 });
+
+function getRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}

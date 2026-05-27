@@ -68,10 +68,7 @@ export default function Header() {
               <MenuIcon className="w-5 h-5" strokeWidth={1.5} />
               <span className="hidden md:block font-label text-[11px] tracking-[0.2em] uppercase mt-[2px] group-hover:text-surface-tint">Menu</span>
             </button>
-            <button className="hover:text-surface-tint transition-colors hidden md:flex items-center gap-2 group">
-              <Search className="w-5 h-5" strokeWidth={1.5} />
-              <span className="hidden lg:block font-label text-[11px] tracking-[0.2em] uppercase mt-[2px] group-hover:text-surface-tint">Search</span>
-            </button>
+
           </div>
 
           {/* Center: Logo */}
@@ -86,9 +83,7 @@ export default function Header() {
 
           {/* Right: User, Wishlist, Cart */}
           <div className="flex items-center justify-end gap-5 md:gap-6 w-1/3 text-primary">
-            <button className="hover:text-surface-tint transition-colors md:hidden">
-              <Search className="w-5 h-5" strokeWidth={1.5} />
-            </button>
+
             <div className="flex items-center gap-3">
               <SignedOut>
                 <SignInButton mode="modal">

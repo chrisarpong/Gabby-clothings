@@ -2,27 +2,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { Lock, Truck, Minus, Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../store/cartStore";
-import { useQuery, useMutation } from "@/hooks/useConvex";
+import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
-import { PaystackButton } from "react-paystack";
 import { toast } from "sonner";
-import { useState } from "react";
 
 export default function CartPage() {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { items, removeItem, updateQuantity, clearCart } = useCartStore();
+  const { items, removeItem, updateQuantity } = useCartStore();
   
   const allProducts = useQuery(api.products.getAll);
-
-  const [shippingAddress, setShippingAddress] = useState({
-    street: "123 Test St",
-    city: "Accra",
-    state: "Greater Accra",
-    zip: "00000",
-    country: "Ghana",
-  });
 
   // Wait until products load
   const cartItemsWithDetails = allProducts === undefined ? [] : items.map(item => {
@@ -38,61 +28,6 @@ export default function CartPage() {
   const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
   const shippingAmount = 150.00; // Flat fee for example
   const totalAmount = subtotal + shippingAmount;
-
-  const paystackConfig = {
-    reference: (new Date()).getTime().toString(),
-    email: user?.primaryEmailAddress?.emailAddress || "guest@gabbynewluk.com", 
-    amount: totalAmount * 100, // Paystack amount is in pesewas
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
-    currency: "GHS",
-  };
-
-  const createOrder = useMutation(api.orders.create);
-
-  const handlePaystackSuccessAction = async (reference: any) => {
-    if (!user) {
-      toast.error("Please sign in to complete checkout");
-      return;
-    }
-    
-    try {
-      await createOrder({
-        userId: user.id,
-        customerDetails: {
-          firstName: user.firstName || "Guest",
-          lastName: user.lastName || "",
-          email: user.primaryEmailAddress?.emailAddress || "guest@example.com",
-        },
-        items: items.map(item => ({
-          productId: item.productId as any,
-          variantSku: item.variantSku,
-          quantity: item.quantity,
-        })),
-        shippingAmount,
-        paymentStatus: "paid",
-        paystackReference: reference.reference,
-        shippingAddress
-      });
-      
-      toast.success(`Payment successful! Reference: ${reference.reference}`);
-      clearCart();
-      navigate(`/success?reference=${reference.reference}`);
-    } catch (error) {
-      toast.error("Error creating order. Please contact support.");
-      console.error(error);
-    }
-  };
-
-  const handlePaystackCloseAction = () => {
-    toast.error("Payment cancelled");
-  };
-
-  const componentProps = {
-    ...paystackConfig,
-    text: "Pay with Paystack",
-    onSuccess: (reference: any) => handlePaystackSuccessAction(reference),
-    onClose: handlePaystackCloseAction,
-  };
 
   return (
     <main className="min-h-screen bg-surface text-on-surface flex flex-col pt-32 md:pt-40 pb-24">
@@ -234,10 +169,12 @@ export default function CartPage() {
                 {!user ? (
                    <p className="text-sm text-brand-espresso mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
                 ) : (
-                  <PaystackButton 
-                    {...componentProps} 
-                    className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors mb-8" 
-                  />
+                <button 
+                  onClick={() => navigate('/checkout')}
+                  className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors mb-8" 
+                >
+                  Proceed to Checkout
+                </button>
                 )}
 
                 {/* Trust Badges */}

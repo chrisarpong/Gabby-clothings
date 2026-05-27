@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 export default function InventoryTab() {
   const products = useQuery(api.products.getAll);
   const createProduct = useMutation(api.products.create);
+  const [editingProductId, setEditingProductId] = useState<any>(null);
+  const updateProduct = useMutation(api.products.update);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,11 +23,17 @@ export default function InventoryTab() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setFormData({ name: '', basePrice: 0, description: '', category: 'suits', type: 'bespoke', status: 'draft', images: '' });
+    setEditingProductId(null);
+    setIsFormOpen(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      await createProduct({
+      const productData = {
         name: formData.name,
         basePrice: Number(formData.basePrice),
         description: formData.description,
@@ -33,16 +41,46 @@ export default function InventoryTab() {
         type: formData.type,
         status: formData.status,
         images: formData.images ? formData.images.split(',').map(i => i.trim()) : [],
-        // variants defaults to empty or undefined initially
-      });
-      toast.success('Product created successfully');
-      setFormData({ name: '', basePrice: 0, description: '', category: 'suits', type: 'bespoke', status: 'draft', images: '' });
-      setIsFormOpen(false);
+      };
+
+      if (editingProductId) {
+        await updateProduct({ id: editingProductId, ...productData });
+        toast.success('Product updated successfully');
+      } else {
+        await createProduct(productData);
+        toast.success('Product created successfully');
+      }
+      resetForm();
     } catch (error) {
-      toast.error('Failed to create product');
+      toast.error(editingProductId ? 'Failed to update product' : 'Failed to create product');
       console.error(error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (product: any) => {
+    setFormData({
+      name: product.name,
+      basePrice: product.basePrice ?? 0,
+      description: product.description,
+      category: product.category,
+      type: product.type || 'bespoke',
+      status: product.status,
+      images: product.images?.join(', ') || ''
+    });
+    setEditingProductId(product._id);
+    setIsFormOpen(true);
+  };
+
+  const handleArchive = async (product: any) => {
+    if (confirm(`Are you sure you want to archive "${product.name}"?`)) {
+      try {
+        await updateProduct({ id: product._id, status: 'archived' });
+        toast.success('Product archived successfully');
+      } catch (error) {
+        toast.error('Failed to archive product');
+      }
     }
   };
 
@@ -69,7 +107,7 @@ export default function InventoryTab() {
           <p className="font-sans text-brand-charcoal/70 text-sm mt-2">Manage products, variants, and stock levels.</p>
         </div>
         <button 
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => { resetForm(); setIsFormOpen(true); }}
           className="flex items-center gap-2 bg-brand-espresso text-brand-bone px-6 py-3 font-sans text-xs tracking-widest uppercase hover:bg-brand-charcoal transition-colors border border-brand-espresso rounded-none"
         >
           <Plus className="w-4 h-4" />
@@ -100,7 +138,7 @@ export default function InventoryTab() {
             <h3 className="font-serif text-2xl text-brand-espresso mb-2">No Products Found</h3>
             <p className="font-sans text-brand-charcoal/60 max-w-md">Your catalog is currently empty. Start by adding your first bespoke or ready-to-wear piece.</p>
             <button 
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => { resetForm(); setIsFormOpen(true); }}
               className="mt-8 bg-brand-gold text-brand-espresso px-8 py-3 font-sans text-xs tracking-widest uppercase hover:bg-brand-gold/80 transition-colors rounded-none"
             >
               Configure First Product
@@ -140,8 +178,8 @@ export default function InventoryTab() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="text-brand-charcoal/50 hover:text-brand-espresso"><Edit2 className="w-4 h-4" /></button>
-                        <button className="text-brand-charcoal/50 hover:text-red-600"><Archive className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(product)} className="text-brand-charcoal/50 hover:text-brand-espresso"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleArchive(product)} className="text-brand-charcoal/50 hover:text-red-600"><Archive className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -158,7 +196,7 @@ export default function InventoryTab() {
           <div className="w-[500px] h-full bg-white shadow-2xl border-l border-brand-espresso/10 flex flex-col pt-8">
             <div className="flex justify-between items-center px-8 border-b border-brand-espresso/10 pb-6">
               <h2 className="font-serif text-2xl text-brand-espresso">Catalog Entry</h2>
-              <button onClick={() => setIsFormOpen(false)} className="text-brand-charcoal/50 hover:text-brand-espresso transition-colors">
+              <button onClick={resetForm} className="text-brand-charcoal/50 hover:text-brand-espresso transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>

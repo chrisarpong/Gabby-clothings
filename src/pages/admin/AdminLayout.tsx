@@ -25,7 +25,7 @@ const AdminLayout = () => {
   }
 
   // RBAC Check
-  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.primaryEmailAddress?.emailAddress?.toLowerCase() === 'christiananietie10@gmail.com';
+  const isAdmin = user?.publicMetadata?.role === 'admin';
 
   if (!user) {
     return (

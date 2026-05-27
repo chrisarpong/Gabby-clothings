@@ -63,3 +63,33 @@ export const addReview = mutation({
     });
   },
 });
+
+export const getAll = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    return await ctx.db.query("reviews").order("desc").collect();
+  },
+});
+
+export const updateStatus = mutation({
+  args: {
+    reviewId: v.id("reviews"),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    await ctx.db.patch(args.reviewId, { status: args.status });
+  },
+});
+
+export const deleteReview = mutation({
+  args: { reviewId: v.id("reviews") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    await ctx.db.delete(args.reviewId);
+  },
+});

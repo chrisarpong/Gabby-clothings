@@ -6,7 +6,7 @@ export const getAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if ((identity as any).role !== "admin") {
       throw new Error("Unauthorized: Admin only");
     }
     return await ctx.db.query("users").collect();
@@ -22,7 +22,7 @@ export const syncUser = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId && identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if (identity.subject !== args.clerkId && (identity as any).role !== "admin") {
       throw new Error("Unauthorized");
     }
 
@@ -62,7 +62,7 @@ export const updateMeasurements = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId && identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if (identity.subject !== args.clerkId && (identity as any).role !== "admin") {
       throw new Error("Unauthorized");
     }
 

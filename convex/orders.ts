@@ -1,6 +1,6 @@
 import { mutation, query, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 export const verifyAndCreate = action({
   args: {
@@ -36,8 +36,7 @@ export const verifyAndCreate = action({
     // 1. Verify Payment with Paystack
     const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecret) {
-      console.warn("PAYSTACK_SECRET_KEY not set. Skipping verification for dev.");
-      // In production, you would throw an error here.
+      throw new Error("Payment verification failed: Server configuration error.");
     } else {
       const resp = await fetch(`https://api.paystack.co/transaction/verify/${args.paystackReference}`, {
         method: "GET",
@@ -53,8 +52,8 @@ export const verifyAndCreate = action({
       // Ideally, also verify data.data.amount matches the expected subtotal
     }
 
-    // 2. Call internal mutation to insert order
-    const orderId = await ctx.runMutation(internal.orders.createInternal, {
+    // 2. Call mutation to insert order
+    const orderId = await ctx.runMutation(api.orders.create, {
       userId: args.userId,
       customerDetails: args.customerDetails,
       items: args.items,
@@ -68,7 +67,7 @@ export const verifyAndCreate = action({
   },
 });
 
-export const createInternal = internalMutation({
+export const create = mutation({
   args: {
     userId: v.string(),
     customerDetails: v.object({
@@ -80,47 +79,26 @@ export const createInternal = internalMutation({
       productId: v.id("products"),
       variantSku: v.optional(v.string()),
       quantity: v.number(),
-      measurements: v.optional(v.any()), // sizes, etc.
+      measurements: v.optional(v.any()),
     })),
     shippingAmount: v.number(),
     paymentStatus: v.string(),
     paystackReference: v.optional(v.string()),
-    shippingAddress: v.object({
-      street: v.string(),
-      city: v.string(),
-      state: v.string(),
-      zip: v.string(),
-      country: v.string(),
-    }),
+    shippingAddress: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.userId) {
-      throw new Error("Unauthorized");
-    }
+    if (!identity) throw new Error("Please sign in to complete checkout.");
 
-    // SECURITY MANDATE: recalculate total using database prices
     let calculatedSubtotal = 0;
-    const finalItems = [];
+    const finalItems: any[] = [];
 
     for (const item of args.items) {
       const product = await ctx.db.get(item.productId);
       if (!product) throw new Error(`Product not found: ${item.productId}`);
       
-      let itemPrice = product.basePrice;
-      let variantName = "";
+      const itemPrice = product.basePrice ?? (product as any).price ?? 0;
       
-      if (item.variantSku && product.variants) {
-         const variant = product.variants.find(v => v.sku === item.variantSku);
-         if (variant) {
-           variantName = variant.size;
-           if (variant.stock < item.quantity) {
-             throw new Error(`Insufficient stock for product ${product.name} - ${variant.size}`);
-           }
-         }
-      }
-
       calculatedSubtotal += itemPrice * item.quantity;
 
       finalItems.push({
@@ -134,35 +112,19 @@ export const createInternal = internalMutation({
 
     const calculatedTotalAmount = calculatedSubtotal + args.shippingAmount;
 
+    // Insert using exact schema field names
     const orderId = await ctx.db.insert("orders", {
       userId: args.userId,
       customerDetails: args.customerDetails,
       items: finalItems,
       subtotal: calculatedSubtotal,
+      shippingFee: args.shippingAmount,   // schema uses shippingFee
       totalAmount: calculatedTotalAmount,
-      status: "processing", // initial status
+      status: "processing",
       paymentStatus: args.paymentStatus,
       paystackReference: args.paystackReference,
       shippingAddress: args.shippingAddress,
     });
-    
-    // Decrease stock correctly if variantSku is present
-    for (const item of args.items) {
-       const product = await ctx.db.get(item.productId);
-       if(product) {
-         if (item.variantSku && product.variants) {
-            const updatedVariants = product.variants.map((v) => {
-              if (v.sku === item.variantSku && v.stock >= item.quantity) {
-                return { ...v, stock: v.stock - item.quantity };
-              }
-              return v;
-            });
-            await ctx.db.patch(item.productId, { variants: updatedVariants });
-         } else if (product.basePrice && (product as any).stock !== undefined) {
-             // Fallback for non-variants if we kept stock globally (not requested but safe)
-         }
-       }
-    }
 
     return orderId;
   },
@@ -173,7 +135,7 @@ export const getAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if ((identity as any).role !== "admin") {
       throw new Error("Unauthorized: Admin only");
     }
     return await ctx.db.query("orders").collect();
@@ -189,7 +151,7 @@ export const getUserOrders = query({
     if (!identity) return [];
     
     // Admins can see any order, specific user can see their own
-    if (identity.subject !== args.userId && identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if (identity.subject !== args.userId && (identity as any).role !== "admin") {
       return [];
     }
     return await ctx.db
@@ -207,7 +169,7 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if ((identity as any).role !== "admin") {
       throw new Error("Unauthorized: Admin only");
     }
     return await ctx.db.patch(args.orderId, {
