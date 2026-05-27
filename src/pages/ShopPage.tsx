@@ -40,7 +40,7 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
 
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState("All");
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(8);
   const categories = ["All", "Outerwear", "Suiting", "Eveningwear", "Accessories", "Kuid", "Kaftans", "Agbadas"]; 
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
@@ -59,7 +59,7 @@ export default function ShopPage() {
   };
 
   useEffect(() => {
-    setVisibleCount(20);
+    setVisibleCount(8);
   }, [activeCategory]);
 
   const handleQuickAdd = (e: React.MouseEvent, product: any) => {
