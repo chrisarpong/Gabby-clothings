@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useCartStore } from "../store/cartStore";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
+import { Doc } from '../../convex/_generated/dataModel';
 import { useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
 
@@ -15,17 +16,17 @@ export default function CartPage() {
   const allProducts = useQuery(api.products.getAll);
 
   // Wait until products load
-  const cartItemsWithDetails = allProducts === undefined ? [] : items.map(item => {
-    const product = allProducts.find(p => p._id === item.productId);
+  const cartItemsWithDetails = allProducts === undefined ? [] : items.map((item: any) => {
+    const product = allProducts.find((p: Doc<"products">) => p._id === item.productId);
     let size = item.variantSku || "Custom Fit";
     return {
       ...item,
       product,
       size,
     };
-  }).filter(i => i.product);
+  }).filter((i: any) => i.product);
 
-  const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
+  const subtotal = cartItemsWithDetails.reduce((sum: number, item: any) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
   const shippingAmount = 150.00; // Flat fee for example
   const totalAmount = subtotal + shippingAmount;
 
@@ -59,8 +60,8 @@ export default function CartPage() {
                 <span className="font-label text-[11px] tracking-widest uppercase text-outline">Product</span>
               </div>
 
-              {cartItemsWithDetails.map((item, index) => {
-                const currentSize = item.product?.variants?.find(v => v.sku === item.variantSku)?.size || "Custom Fit";
+              {cartItemsWithDetails.map((item: any, index: number) => {
+                const currentSize = item.product?.variants?.find((v: any) => v.sku === item.variantSku)?.size || "Custom Fit";
                 return (
                 <motion.div 
                   key={item.cartItemId}
@@ -87,7 +88,7 @@ export default function CartPage() {
                               useCartStore.getState().updateItemSize(item.cartItemId, newSku);
                             }}
                           >
-                            {item.product?.variants?.map(v => (
+                            {item.product?.variants?.map((v: any) => (
                               <option key={v.sku} value={v.sku}>{v.size}</option>
                             ))}
                             <option value="custom">Custom Fit</option>

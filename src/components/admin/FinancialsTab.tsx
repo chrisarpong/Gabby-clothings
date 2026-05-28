@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc } from '../../../convex/_generated/dataModel';
 import { DollarSign, ArrowUpRight, TrendingUp, ShoppingBag } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -21,11 +22,11 @@ export default function FinancialsTab() {
     );
   }
 
-  const validOrders = orders.filter(o => o.status !== "cancelled");
-  const totalRevenue = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const validOrders = orders.filter((o: Doc<"orders">) => o.status !== "cancelled");
+  const totalRevenue = validOrders.reduce((sum: number, o: Doc<"orders">) => sum + (o.totalAmount || 0), 0);
   const totalOrders = orders.length;
   const avgOrderValue = totalOrders > 0 ? totalRevenue / validOrders.length : 0;
-  const paidOrders = orders.filter(o => o.paymentStatus === "paid").length;
+  const paidOrders = orders.filter((o: Doc<"orders">) => o.paymentStatus === "paid").length;
 
   // Group revenue by day of the week from order creation time
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -114,7 +115,7 @@ export default function FinancialsTab() {
             {recentOrders.length === 0 ? (
               <tr><td colSpan={5} className="p-8 text-center text-on-surface-variant italic text-sm">No transactions yet.</td></tr>
             ) : (
-              recentOrders.map((order) => (
+              recentOrders.map((order: Doc<"orders">) => (
                 <tr key={order._id} className="border-b border-outline-variant/10 hover:bg-surface-container/20 transition-colors">
                   <td className="p-4 text-xs font-mono text-primary">{order._id.slice(-8).toUpperCase()}</td>
                   <td className="p-4 text-sm text-primary">{order.customerDetails?.firstName || "Guest"} {order.customerDetails?.lastName || ""}</td>

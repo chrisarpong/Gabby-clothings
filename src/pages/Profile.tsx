@@ -170,7 +170,24 @@ export default function Profile() {
 
           {/* Content Area */}
           <div className="flex-1 min-h-[500px]">
-            <AnimatePresence mode="wait">
+            <SignedOut>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="py-20 text-center border border-dashed border-surface-variant"
+              >
+                <p className="font-serif text-2xl italic text-primary mb-6">Authentication Required</p>
+                <p className="font-sans text-on-surface-variant text-sm mb-8">Please sign in to view and manage your profile settings.</p>
+                <SignInButton mode="modal">
+                  <button className="bg-primary text-on-primary px-8 py-4 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </motion.div>
+            </SignedOut>
+
+            <SignedIn>
+              <AnimatePresence mode="wait">
               
               {activeTab === "measurements" && (
                 <motion.div
@@ -318,25 +335,12 @@ export default function Profile() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <SignedIn>
-                    <UserProfile routing="hash" appearance={{
-                      elements: {
-                        card: "shadow-none border border-surface-variant rounded-none bg-surface",
-                        navbar: "hidden",
-                      }
-                    }} />
-                  </SignedIn>
-                  <SignedOut>
-                    <div className="py-20 text-center border border-dashed border-surface-variant">
-                      <p className="font-serif text-2xl italic text-primary mb-6">Authentication Required</p>
-                      <p className="font-sans text-on-surface-variant text-sm mb-8">Please sign in to view and manage your profile settings.</p>
-                      <SignInButton mode="modal">
-                        <button className="bg-primary text-on-primary px-8 py-4 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors">
-                          Sign In
-                        </button>
-                      </SignInButton>
-                    </div>
-                  </SignedOut>
+                  <UserProfile routing="hash" appearance={{
+                    elements: {
+                      card: "shadow-none border border-surface-variant rounded-none bg-surface",
+                      navbar: "hidden",
+                    }
+                  }} />
                 </motion.div>
               )}
 
@@ -395,9 +399,7 @@ export default function Profile() {
                 </motion.div>
               )}
 
-            </AnimatePresence>
 
-            <AnimatePresence>
               {activeTab === "appointments" && (
                 <motion.div
                   key="appointments"
@@ -562,6 +564,7 @@ export default function Profile() {
                 </motion.div>
               )}
             </AnimatePresence>
+            </SignedIn>
           </div>
         </div>
       </div>

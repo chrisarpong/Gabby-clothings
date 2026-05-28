@@ -24,9 +24,9 @@ export default function CustomTailoring() {
     length: "",
   });
 
-  const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    countryCode: "+233",
     phone: "",
     garmentType: "",
     fittingDate: "",
@@ -113,7 +113,7 @@ export default function CustomTailoring() {
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
-        phone: formData.phone,
+        phone: `${formData.countryCode} ${formData.phone}`,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
         time: formData.time,
@@ -131,6 +131,7 @@ export default function CustomTailoring() {
       setFormData({
         fullName: "",
         email: "",
+        countryCode: "+233",
         phone: "",
         garmentType: "",
         fittingDate: "",
@@ -182,7 +183,7 @@ export default function CustomTailoring() {
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
-        phone: formData.phone,
+        phone: `${formData.countryCode} ${formData.phone}`,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
         time: formData.time,
@@ -197,6 +198,7 @@ export default function CustomTailoring() {
       setFormData({
         fullName: "",
         email: "",
+        countryCode: "+233",
         phone: "",
         garmentType: "",
         fittingDate: "",
@@ -366,16 +368,32 @@ export default function CustomTailoring() {
                   />
                 </div>
                 <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="font-label text-[11px] tracking-widest text-on-surface-variant uppercase">Phone / WhatsApp *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleFormChange}
-                    className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary placeholder:text-outline/50"
-                    placeholder="+233 XXX XXX XXX"
-                    required
-                  />
+                  <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Phone Number</label>
+                  <div className="flex gap-4">
+                    <select
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary w-24 appearance-none"
+                    >
+                      <option value="+233">🇬🇭 +233</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+234">🇳🇬 +234</option>
+                      <option value="+27">🇿🇦 +27</option>
+                      <option value="+33">🇫🇷 +33</option>
+                      <option value="+49">🇩🇪 +49</option>
+                      <option value="+971">🇦🇪 +971</option>
+                    </select>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary flex-1"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </div>

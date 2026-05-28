@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc } from '../../../convex/_generated/dataModel';
 import { Save, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -31,7 +32,7 @@ export default function SettingsTab() {
   // Sync db state to local state
   useEffect(() => {
     if (settingsRecords) {
-      const dbSettings = settingsRecords.reduce((acc, curr) => {
+      const dbSettings = settingsRecords.reduce((acc: any, curr: Doc<"settings">) => {
         acc[curr.key] = curr.value;
         return acc;
       }, {} as Record<string, any>);

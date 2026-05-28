@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 
 export default function OrdersTab() {
   const orders = useQuery(api.orders.getAll);
   const updateStatus = useMutation(api.orders.updateStatus);
 
-  const handleStatusChange = async (orderId: any, newStatus: string) => {
+  const handleStatusChange = async (orderId: Id<"orders">, newStatus: string) => {
     try {
       await updateStatus({ orderId, status: newStatus });
       toast.success(`Order status updated to ${newStatus}`);
@@ -44,13 +45,13 @@ export default function OrdersTab() {
                 <td colSpan={5} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No orders found.</td>
               </tr>
             )}
-            {orders.map((order) => (
+            {orders.map((order: Doc<"orders">) => (
               <tr key={order._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors pointer-events-auto">
                 <td className="p-4 text-xs font-mono text-brand-espresso">{order._id.substring(0, 10)}</td>
                 <td className="p-4">
                   <div className="flex flex-col">
-                    <span className="text-sm text-brand-espresso">{order.customerDetails.firstName} {order.customerDetails.lastName}</span>
-                    <span className="text-[10px] text-brand-charcoal/70">{order.customerDetails.email}</span>
+                    <span className="text-sm text-brand-espresso">{order.customerDetails?.firstName} {order.customerDetails?.lastName}</span>
+                    <span className="text-[10px] text-brand-charcoal/70">{order.customerDetails?.email}</span>
                   </div>
                 </td>
                 <td className="p-4 text-sm text-brand-charcoal">{new Date(order._creationTime).toLocaleDateString()}</td>

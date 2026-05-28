@@ -2,6 +2,7 @@
 import React from 'react';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Mail, Users, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,10 +25,10 @@ export default function MarketingTab() {
     );
   }
 
-  const unreadCount = messages.filter(m => m.status === "unread").length;
-  const activeSubscribers = subscribers.filter(s => s.status === "active").length;
+  const unreadCount = messages.filter((m: Doc<"messages">) => m.status === "unread").length;
+  const activeSubscribers = subscribers.filter((s: Doc<"subscribers">) => s.status === "active").length;
 
-  const handleMarkRead = async (messageId: any) => {
+  const handleMarkRead = async (messageId: Id<"messages">) => {
     try {
       await markAsRead({ messageId });
       toast.success("Marked as read");
@@ -80,7 +81,7 @@ export default function MarketingTab() {
             {messages.length === 0 ? (
               <div className="p-8 text-center text-on-surface-variant italic text-sm">No messages yet.</div>
             ) : (
-              messages.map((msg) => (
+              messages.map((msg: Doc<"messages">) => (
                 <div key={msg._id} className={`p-4 border-b border-outline-variant/10 ${msg.status === 'unread' ? 'bg-surface-container/10' : ''}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -122,7 +123,7 @@ export default function MarketingTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {subscribers.map((sub) => (
+                  {subscribers.map((sub: Doc<"subscribers">) => (
                     <tr key={sub._id} className="border-b border-outline-variant/10">
                       <td className="p-4 text-sm text-primary">{sub.email}</td>
                       <td className="p-4">

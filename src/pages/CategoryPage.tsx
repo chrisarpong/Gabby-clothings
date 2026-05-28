@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
+import { Doc } from '../../convex/_generated/dataModel';
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
@@ -42,7 +43,7 @@ export default function CategoryPage() {
           <div className="py-32 text-center text-primary font-serif italic text-2xl">Loading collection...</div>
         ) : results.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-16">
-            {results.map((product, index) => (
+            {results.map((product: Doc<"products">, index: number) => (
               <motion.div
                 key={product._id}
                 initial={{ opacity: 0, y: 20 }}

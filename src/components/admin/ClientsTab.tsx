@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc } from '../../../convex/_generated/dataModel';
 import { X } from 'lucide-react';
 
 export default function ClientsTab() {
   const clients = useQuery(api.users.getAll);
-  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Doc<"users"> | null>(null);
 
   if (clients === undefined) return <div className="p-8 font-sans">Loading clients...</div>;
 
@@ -34,7 +35,7 @@ export default function ClientsTab() {
                 <td colSpan={4} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No clients found.</td>
               </tr>
             )}
-            {clients.map((client) => (
+            {clients.map((client: Doc<"users">) => (
               <tr key={client._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
                 <td className="p-4 text-sm text-brand-espresso font-medium">{client.firstName || "N/A"} {client.lastName || ""}</td>
                 <td className="p-4 text-sm text-brand-charcoal">{client.email}</td>

@@ -54,7 +54,7 @@ export const verifyAndCreate = action({
     }
 
     // 2. Call mutation to insert order
-    const orderId = await ctx.runMutation(api.orders.create, {
+    const orderId: any = await ctx.runMutation(api.orders.create, {
       userId: args.userId,
       customerDetails: args.customerDetails,
       items: args.items,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Star, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,31 +22,31 @@ export default function ReviewsTab() {
   }
 
   const avgRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((sum: number, r: Doc<"reviews">) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : "0.0";
 
-  const pendingCount = reviews.filter(r => r.status === "pending").length;
+  const pendingCount = reviews.filter((r: Doc<"reviews">) => r.status === "pending").length;
 
   const getProductName = (productId: string) => {
-    const product = products.find(p => p._id === productId);
+    const product = products.find((p: Doc<"products">) => p._id === productId);
     return product?.name || "Unknown Product";
   };
 
-  const handleApprove = async (reviewId: any) => {
+  const handleApprove = async (reviewId: Id<"reviews">) => {
     try {
       await updateStatus({ reviewId, status: "approved" });
       toast.success("Review approved");
     } catch { toast.error("Failed to update review"); }
   };
 
-  const handleReject = async (reviewId: any) => {
+  const handleReject = async (reviewId: Id<"reviews">) => {
     try {
       await updateStatus({ reviewId, status: "rejected" });
       toast.success("Review rejected");
     } catch { toast.error("Failed to update review"); }
   };
 
-  const handleDelete = async (reviewId: any) => {
+  const handleDelete = async (reviewId: Id<"reviews">) => {
     try {
       await deleteReview({ reviewId });
       toast.success("Review deleted");
@@ -81,7 +82,7 @@ export default function ReviewsTab() {
         </div>
       ) : (
         <div className="space-y-6">
-          {reviews.map((review) => (
+          {reviews.map((review: Doc<"reviews">) => (
             <div key={review._id} className="bg-white border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-6 shadow-sm">
               <div className="md:w-64 shrink-0 flex flex-col gap-2">
                 <span className="font-sans font-medium text-primary">{review.userId?.slice(0, 12) || "Anonymous"}</span>

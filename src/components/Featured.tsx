@@ -4,6 +4,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
+import { Doc } from '../../convex/_generated/dataModel';
 import { useCartStore } from "../store/cartStore";
 import { toast } from "sonner";
 
@@ -31,7 +32,7 @@ export default function Featured() {
   const allProducts = useQuery(api.products.getAll);
   const featuredProducts = allProducts ? allProducts.slice(0, 4) : [];
 
-  const handleQuickAdd = (e: React.MouseEvent, product: any) => {
+  const handleQuickAdd = (e: React.MouseEvent, product: Doc<"products">) => {
     e.stopPropagation();
     
     let variantSku = undefined;
@@ -60,7 +61,7 @@ export default function Featured() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
           {!allProducts ? (
             <div className="col-span-1 border border-surface-variant p-4">Loading curated selections...</div>
-          ) : featuredProducts.map((product) => (
+          ) : featuredProducts.map((product: Doc<"products">) => (
             <div key={product._id} className="group cursor-pointer" onClick={() => navigate(`/product/${product._id}`)}>
               <div className="relative aspect-[3/4] mb-6 bg-surface-container overflow-hidden">
                 <ProductImage src={product?.images?.[0] || "/assets/1.jpg"} alt={product?.name || "Product"} />

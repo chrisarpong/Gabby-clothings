@@ -136,13 +136,13 @@ export default function Success() {
               </div>
               <div className="flex justify-between items-center mb-6 border-b border-surface-variant pb-6">
                 <span className="font-sans text-sm text-on-surface-variant">Shipping</span>
-                <span className="font-sans text-sm text-primary">GH₵{(currentOrder.shippingAmount || 0).toFixed(2)}</span>
+                <span className="font-sans text-sm text-primary">GH₵{((currentOrder as any).shippingAmount || 0).toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between items-end">
                 <span className="font-serif text-xl text-primary">Total Paid</span>
                 <span className="font-label text-xl tracking-widest text-primary">
-                  GH₵{(currentOrder.items.reduce((sum: number, item: any) => sum + ((allProducts.find(p => p._id === item.productId)?.basePrice || 0) * item.quantity), 0) + (currentOrder.shippingAmount || 0)).toFixed(2)}
+                  GH₵{(currentOrder.items.reduce((sum: number, item: any) => sum + ((allProducts.find(p => p._id === item.productId)?.basePrice || 0) * item.quantity), 0) + ((currentOrder as any).shippingAmount || 0)).toFixed(2)}
                 </span>
               </div>
             </div>

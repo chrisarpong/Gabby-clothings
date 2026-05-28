@@ -45,7 +45,7 @@ export default function ClientRelationsTab() {
                 <td colSpan={6} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No upcoming appointments.</td>
               </tr>
             )}
-            {appointments.map((apt) => (
+            {appointments.map((apt: any) => (
               <tr key={apt._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
                 <td className="p-4">
                   <div className="flex flex-col">

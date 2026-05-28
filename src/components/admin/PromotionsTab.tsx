@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 
 export default function PromotionsTab() {
@@ -56,7 +57,7 @@ export default function PromotionsTab() {
                   <td colSpan={3} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No promo codes active.</td>
                 </tr>
               )}
-              {promos.map((promo) => (
+              {promos.map((promo: Doc<"promotions">) => (
                 <tr key={promo._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
                   <td className="p-4 text-sm font-mono text-brand-espresso">{promo.code}</td>
                   <td className="p-4 text-sm text-brand-charcoal">{promo.discountValue}%</td>

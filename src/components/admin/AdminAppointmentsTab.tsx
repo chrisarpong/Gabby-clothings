@@ -29,7 +29,7 @@ export default function AdminAppointmentsTab() {
   const exportToCSV = () => {
     if (!appointments) return;
     const headers = ["Client Name", "Email", "Phone", "Date", "Time", "Type", "Status", "Notes"];
-    const rows = appointments.map(apt => [
+    const rows = appointments.map((apt: any) => [
       `"${(apt.name || apt.clientName || '').replace(/"/g, '""')}"`,
       `"${(apt.email || apt.clientEmail || '').replace(/"/g, '""')}"`,
       `"${(apt.phone || apt.clientPhone || '').replace(/"/g, '""')}"`,
@@ -78,7 +78,7 @@ export default function AdminAppointmentsTab() {
 
   if (appointments === undefined) return <div className="p-8 font-sans">Loading appointments...</div>;
 
-  const events = appointments.map((apt) => {
+  const events = appointments.map((apt: any) => {
     // If we only have date, use it as allDay
     let start = new Date(apt.date || apt.requestedDate || Date.now());
     let end = new Date(start);
@@ -183,7 +183,7 @@ export default function AdminAppointmentsTab() {
                     <td colSpan={7} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No upcoming appointments.</td>
                   </tr>
                 )}
-                {appointments.map((apt) => (
+                {appointments.map((apt: any) => (
                   <tr key={apt._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
                     <td className="p-4">
                       <div className="flex flex-col">

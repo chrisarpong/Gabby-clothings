@@ -210,6 +210,8 @@ export const getAvailableSlots = query({
       bufferTime = 30 
     } = availabilitySetting.value;
 
+    const safeBufferTime = bufferTime > 0 ? bufferTime : 30;
+
     // Check if the requested date is a working day
     const requestDate = new Date(`${args.date}T12:00:00`); // Use noon to avoid timezone shift
     const dayOfWeek = requestDate.getDay();
@@ -250,7 +252,7 @@ export const getAvailableSlots = query({
       .filter(apt => apt.time && apt._id !== args.ignoreAppointmentId)
       .map(apt => {
         const aptStart = toMinutes(apt.time!);
-        return { start: aptStart, end: aptStart + appointmentDuration + bufferTime };
+        return { start: aptStart, end: aptStart + appointmentDuration + safeBufferTime };
       });
 
     // 3. Generate candidate slots every 30 minutes

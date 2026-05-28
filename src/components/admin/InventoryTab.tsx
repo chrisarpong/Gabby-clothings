@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Plus, X, Edit2, Archive, PackageOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function InventoryTab() {
   const products = useQuery(api.products.getAll);
   const createProduct = useMutation(api.products.create);
-  const [editingProductId, setEditingProductId] = useState<any>(null);
+  const [editingProductId, setEditingProductId] = useState<Id<"products"> | null>(null);
   const updateProduct = useMutation(api.products.update);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -59,21 +60,21 @@ export default function InventoryTab() {
     }
   };
 
-  const handleEdit = (product: any) => {
+  const handleEdit = (product: Doc<"products">) => {
     setFormData({
       name: product.name,
       basePrice: product.basePrice ?? 0,
       description: product.description,
       category: product.category,
       type: product.type || 'bespoke',
-      status: product.status,
+      status: product.status || 'draft',
       images: product.images?.join(', ') || ''
     });
     setEditingProductId(product._id);
     setIsFormOpen(true);
   };
 
-  const handleArchive = async (product: any) => {
+  const handleArchive = async (product: Doc<"products">) => {
     if (confirm(`Are you sure you want to archive "${product.name}"?`)) {
       try {
         await updateProduct({ id: product._id, status: 'archived' });
@@ -84,14 +85,14 @@ export default function InventoryTab() {
     }
   };
 
-  const calculateStock = (product: any) => {
+  const calculateStock = (product: Doc<"products">) => {
     if (product.variants && product.variants.length > 0) {
       return product.variants.reduce((acc: number, v: any) => acc + (v.stock || 0), 0);
     }
     return 0; // Or whatever fallback
   };
 
-  const lowStockItems = products?.flatMap((p: any) => {
+  const lowStockItems = products?.flatMap((p: Doc<"products">) => {
     return (p.variants || []).filter((v: any) => v.stock < 5).map((v: any) => ({
       productName: p.name,
       variantName: v.name,
@@ -158,7 +159,7 @@ export default function InventoryTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-espresso/5">
-                {products.map((product) => (
+                {products.map((product: Doc<"products">) => (
                   <tr key={product._id} className="hover:bg-brand-bone/20 group transition-colors">
                     <td className="px-6 py-4 text-brand-espresso font-medium">{product.name}</td>
                     <td className="px-6 py-4 text-brand-charcoal/70 capitalize">{product.category}</td>

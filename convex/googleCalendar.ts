@@ -82,13 +82,13 @@ export const createEvent = internalAction({
         conferenceDataVersion: conferenceData ? 1 : 0,
       });
 
-      let meetLink;
+      let meetLink: string | undefined;
       if (response.data.conferenceData?.entryPoints) {
         const videoEntryPoint = response.data.conferenceData.entryPoints.find(
           ep => ep.entryPointType === 'video'
         );
         if (videoEntryPoint) {
-          meetLink = videoEntryPoint.uri;
+          meetLink = videoEntryPoint.uri ?? undefined;
         }
       }
 

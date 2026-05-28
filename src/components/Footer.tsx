@@ -31,7 +31,7 @@ export default function Footer() {
             <h4 className="text-[10px] tracking-widest uppercase font-label text-primary mb-6">Help</h4>
             <ul className="flex flex-col gap-4">
               <li><Link to="/contact" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">Contact Us</Link></li>
-              <li><Link to="/contact" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">FAQ</Link></li>
+              <li><a href="/#faq" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">FAQ</a></li>
               <li><Link to="/shipping" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">Shipping & Returns</Link></li>
               <li><Link to="/size-guide" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">Size Guide</Link></li>
               <li><Link to="/how-to-measure" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">How to Measure</Link></li>

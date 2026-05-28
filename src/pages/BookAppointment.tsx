@@ -12,6 +12,7 @@ export default function BookAppointment() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    countryCode: "+233",
     phone: "",
     date: "",
     time: "",
@@ -38,18 +39,19 @@ export default function BookAppointment() {
 
   const isFormValid = formData.name && formData.email && formData.phone && formData.date && formData.time && formData.garmentType;
 
-  const handlePaystackSuccessAction = async (reference: any) => {
+  const handlePaystackSuccessAction = async (reference: { reference: string }) => {
     setIsSubmitting(true);
     try {
       await bookAppointment({
         ...formData,
+        phone: `${formData.countryCode} ${formData.phone}`,
         paystackReference: reference.reference,
         amountPaid: bookingDepositAmount,
       });
       toast.success("Appointment Confirmed", {
         description: "We've received your request and deposit. A confirmation email has been sent."
       });
-      setFormData({ name: "", email: "", phone: "", date: "", time: "", garmentType: "", notes: "" });
+      setFormData({ name: "", email: "", countryCode: "+233", phone: "", date: "", time: "", garmentType: "", notes: "" });
     } catch (error) {
        toast.error("Failed to book appointment", { description: String(error) });
     } finally {
@@ -81,6 +83,7 @@ export default function BookAppointment() {
     try {
       await bookAppointment({
         ...formData,
+        phone: `${formData.countryCode} ${formData.phone}`,
       });
 
       toast.success("Appointment Confirmed", {
@@ -90,6 +93,7 @@ export default function BookAppointment() {
       setFormData({
         name: "",
         email: "",
+        countryCode: "+233",
         phone: "",
         date: "",
         time: "",
@@ -163,14 +167,31 @@ export default function BookAppointment() {
                   <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase flex items-center gap-2">
                     <Phone className="w-3 h-3" /> Phone Number
                   </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleFormChange}
-                    className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
-                    required
-                  />
+                  <div className="flex gap-4">
+                    <select
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary w-24 appearance-none"
+                    >
+                      <option value="+233">🇬🇭 +233</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+234">🇳🇬 +234</option>
+                      <option value="+27">🇿🇦 +27</option>
+                      <option value="+33">🇫🇷 +33</option>
+                      <option value="+49">🇩🇪 +49</option>
+                      <option value="+971">🇦🇪 +971</option>
+                    </select>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary flex-1"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
