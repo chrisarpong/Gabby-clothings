@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { useMutation  } from '@/hooks/useConvex';
+import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { PaystackButton } from "react-paystack";
 
 export default function CustomTailoring() {
   const [searchParams] = useSearchParams();
@@ -28,6 +29,7 @@ export default function CustomTailoring() {
     phone: "",
     garmentType: "",
     fittingDate: "",
+    time: "",
     details: productTitle ? `I am requesting custom sizing for the ${productTitle}.` : "",
   });
 
@@ -67,7 +69,70 @@ export default function CustomTailoring() {
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      if (name === 'fittingDate') {
+        return { ...prev, [name]: value, time: "" };
+      }
+      return { ...prev, [name]: value };
+    });
+  };
+
+  const availableSlots = useQuery(api.appointments.getAvailableSlots, formData.fittingDate ? { date: formData.fittingDate } : "skip");
+  const commercialsSetting = useQuery(api.settings.getByKey, { key: "commercials" });
+  const bookingDepositAmount = commercialsSetting?.value?.bookingDepositAmount || 0;
+
+  const isFormValid = formData.fullName && formData.email && formData.phone && formData.fittingDate && formData.time && formData.garmentType && designInspoPreview && bodyPhotoPreview;
+
+  const handlePaystackSuccessAction = async (reference: any) => {
+    try {
+      await bookAppointment({
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        date: formData.fittingDate || new Date().toISOString(),
+        garmentType: formData.garmentType,
+        time: formData.time,
+        notes: formData.details,
+        paystackReference: reference.reference,
+        amountPaid: bookingDepositAmount,
+      });
+
+      toast.success("Appointment request received!", {
+        description: "We've received your deposit and request. A confirmation email has been sent."
+      });
+      
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        garmentType: "",
+        fittingDate: "",
+        time: "",
+        details: "",
+      });
+      setDesignInspoPreview(null);
+      setBodyPhotoPreview(null);
+    } catch (error) {
+       toast.error("Failed to book appointment", { description: String(error) });
+    }
+  };
+
+  const handlePaystackCloseAction = () => {
+    toast("Payment window closed.");
+  };
+
+  const paystackProps = {
+    email: formData.email,
+    amount: Math.round(bookingDepositAmount * 100),
+    metadata: {
+      name: formData.fullName,
+      custom_fields: []
+    },
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6",
+    text: `PAY DEPOSIT (GH₵${bookingDepositAmount})`,
+    onSuccess: handlePaystackSuccessAction,
+    onClose: handlePaystackCloseAction,
   };
 
   const saveMeasurements = () => {
@@ -85,11 +150,12 @@ export default function CustomTailoring() {
         phone: formData.phone,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
+        time: formData.time,
         notes: formData.details,
       });
 
-      toast.success("Appointment request received! A confirmation email has been sent.", {
-        description: "Our tailoring team will review your request and contact you shortly."
+      toast.success("Appointment request received!", {
+        description: "A confirmation email has been sent."
       });
       setFormData({
         fullName: "",
@@ -97,6 +163,7 @@ export default function CustomTailoring() {
         phone: "",
         garmentType: "",
         fittingDate: "",
+        time: "",
         details: "",
       });
       setDesignInspoPreview(null);
@@ -339,15 +406,41 @@ export default function CustomTailoring() {
                   </select>
                 </div>
                 
-                <div className="flex flex-col gap-2">
-                  <label className="font-label text-[11px] tracking-widest text-on-surface-variant uppercase">Preferred Fitting Date</label>
-                  <input
-                    type="date"
-                    name="fittingDate"
-                    value={formData.fittingDate}
-                    onChange={handleFormChange}
-                    className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label text-[11px] tracking-widest text-on-surface-variant uppercase">Preferred Fitting Date</label>
+                    <input
+                      type="date"
+                      name="fittingDate"
+                      min={new Date().toISOString().split('T')[0]}
+                      value={formData.fittingDate}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label text-[11px] tracking-widest text-on-surface-variant uppercase">Time</label>
+                    <select
+                      name="time"
+                      value={formData.time}
+                      onChange={handleFormChange}
+                      disabled={!formData.fittingDate || availableSlots === undefined}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary appearance-none rounded-none cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="" disabled>
+                        {!formData.fittingDate 
+                          ? "Select a date first" 
+                          : availableSlots === undefined 
+                            ? "Loading times..." 
+                            : availableSlots.length === 0 
+                              ? "No times available" 
+                              : "Select a time..."}
+                      </option>
+                      {availableSlots?.map(slot => (
+                        <option key={slot} value={slot}>{slot}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-4 md:col-span-2">
@@ -396,12 +489,36 @@ export default function CustomTailoring() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="mt-8 bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-8 hover:bg-surface-tint transition-colors w-full sm:w-auto self-center min-w-[250px]"
-            >
-              Request a Fitting
-            </button>
+            <div className="flex flex-col items-center mt-12 pt-12 border-t border-surface-variant">
+              {bookingDepositAmount > 0 && (
+                <p className="font-sans text-sm text-on-surface-variant mb-6 text-center max-w-md">
+                  To secure your bespoke fitting, a fully-refundable commitment deposit of <span className="text-primary font-medium">GH₵{bookingDepositAmount}</span> is required. This will be applied toward the final cost of your garment.
+                </p>
+              )}
+              
+              {!isFormValid ? (
+                 <button 
+                   disabled 
+                   className="bg-surface-variant text-on-surface-variant font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 transition-colors cursor-not-allowed w-full md:w-auto"
+                 >
+                   FILL ALL REQUIRED FIELDS & UPLOAD PHOTOS
+                 </button>
+              ) : bookingDepositAmount > 0 ? (
+                <div className="w-full sm:w-auto self-center min-w-[250px]">
+                  <PaystackButton 
+                    {...paystackProps} 
+                    className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
+                  />
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-8 hover:bg-surface-tint transition-colors w-full sm:w-auto self-center min-w-[250px]"
+                >
+                  Request a Fitting
+                </button>
+              )}
+            </div>
 
           </form>
         </motion.div>

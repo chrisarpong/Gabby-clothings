@@ -29,6 +29,39 @@ export default function Profile() {
   const wishlistItems = useQuery(api.wishlists.getUserWishlist);
   const toggleWishlist = useMutation(api.wishlists.toggleItem);
 
+  const appointments = useQuery(api.appointments.getUserAppointments, user ? { userId: user.id } : "skip");
+  const updateAppointmentStatus = useMutation(api.appointments.updateStatus);
+  const rescheduleAppointment = useMutation(api.appointments.reschedule);
+
+  const [rescheduleData, setRescheduleData] = useState<{ id: any; date: string; time: string; } | null>(null);
+  const availableSlots = useQuery(api.appointments.getAvailableSlots, rescheduleData?.date ? { date: rescheduleData.date } : "skip");
+
+  const handleCancelAppointment = async (id: any) => {
+    if (confirm("Are you sure you want to cancel this appointment?")) {
+      try {
+        await updateAppointmentStatus({ id, status: "cancelled" });
+        toast.success("Appointment cancelled successfully.");
+      } catch (e) {
+        toast.error("Failed to cancel appointment.");
+      }
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!rescheduleData || !rescheduleData.date) return;
+    try {
+      await rescheduleAppointment({
+        appointmentId: rescheduleData.id,
+        date: rescheduleData.date,
+        time: rescheduleData.time,
+      });
+      toast.success("Appointment rescheduled successfully.");
+      setRescheduleData(null);
+    } catch (e) {
+      toast.error("Failed to reschedule appointment.");
+    }
+  };
+
   useEffect(() => {
     if (convexMeasurements) {
       setMeasurements({
@@ -74,6 +107,7 @@ export default function Profile() {
   const menuItems = [
     { id: "profile", label: "My Profile" },
     { id: "orders", label: "Order History" },
+    { id: "appointments", label: "My Appointments" },
     { id: "measurements", label: "My Measurements" },
     { id: "saved", label: "Saved Items" },
   ];
@@ -361,6 +395,172 @@ export default function Profile() {
                 </motion.div>
               )}
 
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {activeTab === "appointments" && (
+                <motion.div
+                  key="appointments"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h2 className="font-serif text-3xl text-primary italic mb-6">My Appointments</h2>
+                  <p className="font-sans text-on-surface-variant text-sm mb-12">
+                    Manage your upcoming consultations and fittings.
+                  </p>
+
+                  {appointments === undefined ? (
+                    <p className="text-sm font-sans italic text-outline">Loading appointments...</p>
+                  ) : appointments.length === 0 ? (
+                    <p className="text-sm font-sans text-outline">You have no scheduled appointments.</p>
+                  ) : (
+                    <div className="flex flex-col gap-12">
+                      {/* Upcoming Appointments */}
+                      <div>
+                        <h3 className="font-label text-sm tracking-widest uppercase text-primary mb-6 border-b border-surface-variant pb-2">Upcoming</h3>
+                        <div className="flex flex-col gap-6">
+                          {appointments.filter(apt => {
+                            const aptDate = new Date(`${apt.date}T${apt.time || '00:00'}`);
+                            return aptDate >= new Date() && apt.status !== 'completed' && apt.status !== 'cancelled';
+                          }).length === 0 ? (
+                            <p className="text-sm font-sans text-outline">No upcoming appointments.</p>
+                          ) : (
+                            appointments.filter(apt => {
+                              const aptDate = new Date(`${apt.date}T${apt.time || '00:00'}`);
+                              return aptDate >= new Date() && apt.status !== 'completed' && apt.status !== 'cancelled';
+                            }).map((apt) => (
+                        <div key={apt._id} className="border border-surface-variant p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                          <div className="flex flex-col gap-2">
+                            <h3 className="font-serif text-xl text-primary capitalize">{apt.garmentType || 'Fitting'}</h3>
+                            <div className="flex gap-4 text-sm text-on-surface-variant">
+                              <span><strong className="text-primary font-medium">Date:</strong> {apt.date}</span>
+                              {apt.time && <span><strong className="text-primary font-medium">Time:</strong> {apt.time}</span>}
+                            </div>
+                            <span className={`text-[10px] tracking-widest uppercase inline-block px-3 py-1 mt-2 w-max ${
+                              apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-surface-variant text-primary'
+                            }`}>
+                              {apt.status}
+                            </span>
+                            {apt.meetLink && apt.status !== 'cancelled' && (
+                              <a href={apt.meetLink} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs mt-2 inline-block">
+                                Join Google Meet
+                              </a>
+                            )}
+                          </div>
+
+                          {apt.status !== "cancelled" && apt.status !== "completed" && (
+                            <div className="flex gap-4 w-full md:w-auto">
+                              <button
+                                onClick={() => setRescheduleData({ id: apt._id, date: apt.date, time: apt.time || "" })}
+                                className="border border-primary text-primary px-4 py-2 font-label text-[10px] tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors flex-1 md:flex-none"
+                              >
+                                Reschedule
+                              </button>
+                              <button
+                                onClick={() => handleCancelAppointment(apt._id)}
+                                className="border border-red-200 text-red-600 px-4 py-2 font-label text-[10px] tracking-widest uppercase hover:bg-red-50 transition-colors flex-1 md:flex-none"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                        </div>
+                      </div>
+
+                      {/* Past & Cancelled Appointments */}
+                      <div>
+                        <h3 className="font-label text-sm tracking-widest uppercase text-primary mb-6 border-b border-surface-variant pb-2">History</h3>
+                        <div className="flex flex-col gap-6">
+                          {appointments.filter(apt => {
+                            const aptDate = new Date(`${apt.date}T${apt.time || '00:00'}`);
+                            return aptDate < new Date() || apt.status === 'completed' || apt.status === 'cancelled';
+                          }).length === 0 ? (
+                            <p className="text-sm font-sans text-outline">No past appointments.</p>
+                          ) : (
+                            appointments.filter(apt => {
+                              const aptDate = new Date(`${apt.date}T${apt.time || '00:00'}`);
+                              return aptDate < new Date() || apt.status === 'completed' || apt.status === 'cancelled';
+                            }).map((apt) => (
+                              <div key={apt._id} className="border border-surface-variant p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 opacity-60 hover:opacity-100 transition-opacity">
+                                <div className="flex flex-col gap-2">
+                                  <h3 className="font-serif text-xl text-primary capitalize">{apt.garmentType || 'Fitting'}</h3>
+                                  <div className="flex gap-4 text-sm text-on-surface-variant">
+                                    <span><strong className="text-primary font-medium">Date:</strong> {apt.date}</span>
+                                    {apt.time && <span><strong className="text-primary font-medium">Time:</strong> {apt.time}</span>}
+                                  </div>
+                                  <span className={`text-[10px] tracking-widest uppercase inline-block px-3 py-1 mt-2 w-max ${
+                                    apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                    apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                    'bg-surface-variant text-primary'
+                                  }`}>
+                                    {apt.status}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {rescheduleData && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                      <div className="bg-surface p-8 max-w-md w-full border border-surface-variant">
+                        <h3 className="font-serif text-2xl text-primary mb-6">Reschedule Appointment</h3>
+                        <div className="flex flex-col gap-4 mb-8">
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label text-[10px] tracking-widest uppercase text-outline">New Date</label>
+                            <input 
+                              type="date" 
+                              value={rescheduleData.date}
+                              onChange={(e) => setRescheduleData({...rescheduleData, date: e.target.value, time: ""})}
+                              min={new Date().toISOString().split('T')[0]}
+                              className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label text-[10px] tracking-widest uppercase text-outline">New Time</label>
+                            <select
+                              value={rescheduleData.time}
+                              onChange={(e) => setRescheduleData({...rescheduleData, time: e.target.value})}
+                              disabled={!availableSlots || availableSlots.length === 0}
+                              className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                            >
+                              <option value="">{availableSlots?.length ? "Select time..." : "No times available"}</option>
+                              {availableSlots?.map(slot => (
+                                <option key={slot} value={slot}>{slot}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex gap-4">
+                          <button 
+                            onClick={handleReschedule}
+                            disabled={!rescheduleData.date || !rescheduleData.time}
+                            className="bg-primary text-on-primary font-label text-[10px] tracking-widest uppercase py-3 px-6 hover:bg-surface-tint transition-colors flex-1 disabled:opacity-50"
+                          >
+                            Confirm
+                          </button>
+                          <button 
+                            onClick={() => setRescheduleData(null)}
+                            className="border border-surface-variant text-primary font-label text-[10px] tracking-widest uppercase py-3 px-6 hover:bg-surface-variant transition-colors flex-1"
+                          >
+                            Back
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>

@@ -12,13 +12,17 @@ export default function SettingsTab() {
     storeName: 'Gabby Newluk',
     contactEmail: 'contact@gabbynewluk.com',
     standardShippingRate: 50,
+    bookingDepositAmount: 500,
     maintenanceMode: false,
     isBannerActive: true,
     announcementBannerText: 'Complimentary shipping on all bespoke suiting orders.',
     availability: {
       workingDays: [1, 2, 3, 4, 5],
       startHour: '09:00',
-      endHour: '17:00'
+      endHour: '17:00',
+      lunchStart: '12:00',
+      lunchEnd: '13:00',
+      bufferTime: 30
     }
   });
 
@@ -175,6 +179,38 @@ export default function SettingsTab() {
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                 />
               </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Lunch Break Start</label>
+                <input
+                  type="time"
+                  value={formData.availability?.lunchStart || '12:00'}
+                  onChange={(e) => setFormData({...formData, availability: {...formData.availability, lunchStart: e.target.value}})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Lunch Break End</label>
+                <input
+                  type="time"
+                  value={formData.availability?.lunchEnd || '13:00'}
+                  onChange={(e) => setFormData({...formData, availability: {...formData.availability, lunchEnd: e.target.value}})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Buffer Time Between Appointments (Minutes)</label>
+                <select
+                  value={formData.availability?.bufferTime || 30}
+                  onChange={(e) => setFormData({...formData, availability: {...formData.availability, bufferTime: parseInt(e.target.value)}})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors appearance-none cursor-pointer"
+                >
+                  <option value={0}>0 mins (No Buffer)</option>
+                  <option value={15}>15 mins</option>
+                  <option value={30}>30 mins</option>
+                  <option value={45}>45 mins</option>
+                  <option value={60}>60 mins</option>
+                </select>
+              </div>
             </div>
           </section>
 
@@ -188,6 +224,15 @@ export default function SettingsTab() {
                   type="number" 
                   value={formData.standardShippingRate}
                   onChange={(e) => setFormData({...formData, standardShippingRate: parseFloat(e.target.value)})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Booking Deposit Amount (GH₵)</label>
+                <input 
+                  type="number" 
+                  value={formData.bookingDepositAmount}
+                  onChange={(e) => setFormData({...formData, bookingDepositAmount: parseFloat(e.target.value)})}
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                 />
               </div>

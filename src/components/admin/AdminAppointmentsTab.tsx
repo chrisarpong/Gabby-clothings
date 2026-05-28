@@ -6,7 +6,7 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Calendar as CalendarIcon, List } from 'lucide-react';
+import { Calendar as CalendarIcon, List, Download, Printer } from 'lucide-react';
 
 const locales = {
   'en-US': enUS,
@@ -23,7 +23,36 @@ const localizer = dateFnsLocalizer({
 export default function AdminAppointmentsTab() {
   const appointments = useQuery(api.appointments.getUpcoming);
   const updateStatus = useMutation(api.appointments.updateStatus);
+  const assignTailor = useMutation(api.appointments.assignTailor);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+
+  const exportToCSV = () => {
+    if (!appointments) return;
+    const headers = ["Client Name", "Email", "Phone", "Date", "Time", "Type", "Status", "Notes"];
+    const rows = appointments.map(apt => [
+      `"${(apt.name || apt.clientName || '').replace(/"/g, '""')}"`,
+      `"${(apt.email || apt.clientEmail || '').replace(/"/g, '""')}"`,
+      `"${(apt.phone || apt.clientPhone || '').replace(/"/g, '""')}"`,
+      `"${apt.date || apt.requestedDate || ''}"`,
+      `"${(apt.time || '').replace(/"/g, '""')}"`,
+      `"${(apt.garmentType || '').replace(/"/g, '""')}"`,
+      `"${(apt.status || '').replace(/"/g, '""')}"`,
+      `"${(apt.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n" 
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `appointments_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Appointments exported to CSV");
+  };
 
   const handleStatusUpdate = async (id: any, newStatus: string) => {
     try {
@@ -33,6 +62,19 @@ export default function AdminAppointmentsTab() {
        toast.error("Failed to update appointment");
     }
   }
+
+  const handleAssignTailor = async (id: any, tailorName: string) => {
+    try {
+      await assignTailor({ appointmentId: id, tailorName });
+      toast.success("Tailor assigned successfully");
+    } catch (e) {
+      toast.error("Failed to assign tailor");
+    }
+  };
+
+  const handlePrintSchedule = () => {
+    window.print();
+  };
 
   if (appointments === undefined) return <div className="p-8 font-sans">Loading appointments...</div>;
 
@@ -66,19 +108,33 @@ export default function AdminAppointmentsTab() {
           <h2 className="font-serif text-3xl text-brand-espresso mb-1">Atelier Appointments</h2>
           <p className="text-sm text-brand-charcoal/70">Manage tailoring schedules and consultation requests.</p>
         </div>
-        <div className="flex bg-brand-bone rounded overflow-hidden border border-brand-espresso/10">
+        <div className="flex gap-4">
           <button 
-            onClick={() => setViewMode('calendar')}
-            className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'calendar' ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+            onClick={handlePrintSchedule}
+            className="px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-widest border border-brand-espresso text-brand-espresso hover:bg-brand-espresso hover:text-white transition-colors print:hidden"
           >
-            <CalendarIcon className="w-4 h-4" /> Calendar
+            <Printer className="w-4 h-4" /> Print Daily Schedule
           </button>
           <button 
-            onClick={() => setViewMode('list')}
-            className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'list' ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+            onClick={exportToCSV}
+            className="px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-widest border border-brand-espresso text-brand-espresso hover:bg-brand-espresso hover:text-white transition-colors print:hidden"
           >
-            <List className="w-4 h-4" /> List
+            <Download className="w-4 h-4" /> Export CSV
           </button>
+          <div className="flex bg-brand-bone rounded overflow-hidden border border-brand-espresso/10">
+            <button 
+              onClick={() => setViewMode('calendar')}
+              className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'calendar' ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+            >
+              <CalendarIcon className="w-4 h-4" /> Calendar
+            </button>
+            <button 
+              onClick={() => setViewMode('list')}
+              className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'list' ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+            >
+              <List className="w-4 h-4" /> List
+            </button>
+          </div>
         </div>
       </div>
       
@@ -115,14 +171,16 @@ export default function AdminAppointmentsTab() {
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Date & Time</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Type</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium w-48">Notes</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Status</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Assigned Tailor</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Status & Payment</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Meet Link</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {appointments.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No upcoming appointments.</td>
+                    <td colSpan={7} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No upcoming appointments.</td>
                   </tr>
                 )}
                 {appointments.map((apt) => (
@@ -142,7 +200,35 @@ export default function AdminAppointmentsTab() {
                     <td className="p-4 text-sm text-brand-charcoal capitalize">{apt.garmentType}</td>
                     <td className="p-4 text-xs text-brand-charcoal/80 max-w-xs truncate" title={apt.notes}>{apt.notes || '-'}</td>
                     <td className="p-4">
-                       <span className={`text-[10px] uppercase tracking-widest px-2 py-1 ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : apt.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'text-brand-charcoal/50 bg-brand-bone'}`}>{apt.status}</span>
+                      <input 
+                        type="text" 
+                        placeholder="Assign Tailor..." 
+                        defaultValue={apt.assignedTo || ""}
+                        onBlur={(e) => handleAssignTailor(apt._id, e.target.value)}
+                        className="bg-transparent border-b border-brand-charcoal/20 text-xs py-1 focus:outline-none focus:border-brand-espresso transition-colors print:border-none"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-2 items-start">
+                        <span className={`text-[10px] uppercase tracking-widest px-2 py-1 ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : apt.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'text-brand-charcoal/50 bg-brand-bone'}`}>
+                          {apt.status}
+                        </span>
+                        {apt.paymentStatus === 'paid' && (
+                          <span className="text-[10px] uppercase tracking-widest px-2 py-1 bg-blue-100 text-blue-800 flex flex-col">
+                            PAID {apt.amountPaid ? `(GH₵${apt.amountPaid})` : ''}
+                            {apt.paystackReference && <span className="text-[8px] opacity-70">Ref: {apt.paystackReference}</span>}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      {apt.meetLink ? (
+                        <a href={apt.meetLink} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
+                          Join Meet
+                        </a>
+                      ) : (
+                        <span className="text-brand-charcoal/30 text-xs">-</span>
+                      )}
                     </td>
                     <td className="p-4 flex justify-end gap-2">
                       {apt.status === 'pending' && (

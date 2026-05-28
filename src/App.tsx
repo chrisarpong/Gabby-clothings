@@ -26,6 +26,7 @@ const BookAppointment = lazy(() => import('./pages/BookAppointment'));
 
 // Static Info Pages
 const SizeGuide = lazy(() => import('./pages/SizeGuide'));
+const HowToMeasure = lazy(() => import('./pages/HowToMeasure'));
 const ShippingReturns = lazy(() => import('./pages/ShippingReturns'));
 const Legal = lazy(() => import('./pages/Legal'));
 
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/book" element={<BookAppointment />} />
           <Route path="/size-guide" element={<SizeGuide />} />
+          <Route path="/how-to-measure" element={<HowToMeasure />} />
           <Route path="/shipping" element={<ShippingReturns />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="*" element={<NotFound />} />

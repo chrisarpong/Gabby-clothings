@@ -34,6 +34,7 @@ export default function Footer() {
               <li><Link to="/contact" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">FAQ</Link></li>
               <li><Link to="/shipping" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">Shipping & Returns</Link></li>
               <li><Link to="/size-guide" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">Size Guide</Link></li>
+              <li><Link to="/how-to-measure" className="font-sans text-sm text-on-surface-variant hover:text-primary transition-colors">How to Measure</Link></li>
             </ul>
           </div>
 

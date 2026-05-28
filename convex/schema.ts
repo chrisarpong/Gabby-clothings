@@ -83,9 +83,15 @@ export default defineSchema({
     phone: v.string(),
     date: v.string(),
     time: v.optional(v.string()),
-    garmentType: v.optional(v.string()), // 'suit', 'shirts', 'trousers', 'wedding'
+    garmentType: v.optional(v.string()), // 'suit', 'shirts', 'trousers', 'wedding', 'consultation'
     notes: v.optional(v.string()),
     status: v.string(), // 'pending', 'confirmed', 'completed', 'cancelled'
+    paymentStatus: v.optional(v.string()), // 'pending', 'paid'
+    paystackReference: v.optional(v.string()),
+    amountPaid: v.optional(v.number()),
+    meetLink: v.optional(v.string()),
+    googleEventId: v.optional(v.string()), // ID from Google Calendar
+    assignedTo: v.optional(v.string()), // ID or name of the assigned tailor
   }).index("by_userId", ["userId"]).index("by_status", ["status"]),
 
   reviews: defineTable({

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useMutation } from "@/hooks/useConvex";
+import { useMutation, useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Calendar, Clock, User, Mail, Phone, MessageSquare } from "lucide-react";
+import { PaystackButton } from "react-paystack";
 
 export default function BookAppointment() {
   const bookAppointment = useMutation(api.appointments.book);
@@ -21,7 +22,56 @@ export default function BookAppointment() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      // If date changes, reset time
+      if (name === 'date') {
+        return { ...prev, [name]: value, time: "" };
+      }
+      return { ...prev, [name]: value };
+    });
+  };
+
+  const availableSlots = useQuery(api.appointments.getAvailableSlots, formData.date ? { date: formData.date } : "skip");
+  const commercialsSetting = useQuery(api.settings.getByKey, { key: "commercials" });
+  const bookingDepositAmount = commercialsSetting?.value?.bookingDepositAmount || 0;
+
+  const isFormValid = formData.name && formData.email && formData.phone && formData.date && formData.time && formData.garmentType;
+
+  const handlePaystackSuccessAction = async (reference: any) => {
+    setIsSubmitting(true);
+    try {
+      await bookAppointment({
+        ...formData,
+        paystackReference: reference.reference,
+        amountPaid: bookingDepositAmount,
+      });
+      toast.success("Appointment Confirmed", {
+        description: "We've received your request and deposit. A confirmation email has been sent."
+      });
+      setFormData({ name: "", email: "", phone: "", date: "", time: "", garmentType: "", notes: "" });
+    } catch (error) {
+       toast.error("Failed to book appointment", { description: String(error) });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePaystackCloseAction = () => {
+    toast("Payment window closed.");
+  };
+
+  const paystackProps = {
+    email: formData.email,
+    amount: Math.round(bookingDepositAmount * 100),
+    metadata: {
+      name: formData.name,
+      custom_fields: []
+    },
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6",
+    text: `PAY DEPOSIT (GH₵${bookingDepositAmount})`,
+    onSuccess: handlePaystackSuccessAction,
+    onClose: handlePaystackCloseAction,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,13 +79,7 @@ export default function BookAppointment() {
     setIsSubmitting(true);
     try {
       await bookAppointment({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        date: formData.date,
-        time: formData.time,
-        garmentType: formData.garmentType,
-        notes: formData.notes,
+        ...formData,
       });
 
       toast.success("Appointment Confirmed", {
@@ -170,14 +214,27 @@ export default function BookAppointment() {
                     <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase flex items-center gap-2">
                       <Clock className="w-3 h-3" /> Time
                     </label>
-                    <input
-                      type="time"
+                    <select
                       name="time"
                       value={formData.time}
                       onChange={handleFormChange}
-                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                      disabled={!formData.date || availableSlots === undefined}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary appearance-none rounded-none cursor-pointer disabled:opacity-50"
                       required
-                    />
+                    >
+                      <option value="" disabled>
+                        {!formData.date 
+                          ? "Select a date first" 
+                          : availableSlots === undefined 
+                            ? "Loading times..." 
+                            : availableSlots.length === 0 
+                              ? "No times available" 
+                              : "Select a time..."}
+                      </option>
+                      {availableSlots?.map(slot => (
+                        <option key={slot} value={slot}>{slot}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -197,13 +254,37 @@ export default function BookAppointment() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-4 bg-primary text-on-primary font-label text-xs tracking-widest uppercase py-4 px-8 hover:bg-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Processing..." : "Confirm Appointment"}
-            </button>
+            <div className="flex flex-col items-center mt-12 pt-12 border-t border-surface-variant">
+              {bookingDepositAmount > 0 && (
+                <p className="font-sans text-sm text-on-surface-variant mb-6 text-center max-w-md">
+                  To secure your fitting, a fully-refundable commitment deposit of <span className="text-primary font-medium">GH₵{bookingDepositAmount}</span> is required. This will be applied toward the final cost of your garment.
+                </p>
+              )}
+              
+              {!isFormValid ? (
+                 <button 
+                   disabled 
+                   className="bg-surface-variant text-on-surface-variant font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 transition-colors cursor-not-allowed w-full md:w-auto"
+                 >
+                   FILL ALL REQUIRED FIELDS
+                 </button>
+              ) : bookingDepositAmount > 0 ? (
+                <div className="w-full md:w-auto">
+                  <PaystackButton 
+                    {...paystackProps} 
+                    className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
+                  />
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto"
+                >
+                  {isSubmitting ? "Confirming..." : "Confirm Appointment"}
+                </button>
+              )}
+            </div>
           </form>
         </motion.div>
       </div>

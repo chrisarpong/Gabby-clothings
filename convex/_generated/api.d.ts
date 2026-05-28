@@ -11,6 +11,8 @@
 import type * as analytics from "../analytics.js";
 import type * as appointments from "../appointments.js";
 import type * as crons from "../crons.js";
+import type * as email from "../email.js";
+import type * as googleCalendar from "../googleCalendar.js";
 import type * as messages from "../messages.js";
 import type * as orders from "../orders.js";
 import type * as products from "../products.js";
@@ -31,6 +33,8 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   appointments: typeof appointments;
   crons: typeof crons;
+  email: typeof email;
+  googleCalendar: typeof googleCalendar;
   messages: typeof messages;
   orders: typeof orders;
   products: typeof products;
