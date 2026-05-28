@@ -52,6 +52,7 @@ export default function Header() {
     { name: "Custom Tailoring", path: "/custom-tailoring" },
     { name: "Our Story", path: "/story" },
     { name: "Contact", path: "/contact" },
+    { name: "Book Appointment", path: "/book" },
   ];
 
   return (
@@ -68,22 +69,27 @@ export default function Header() {
               <MenuIcon className="w-5 h-5" strokeWidth={1.5} />
               <span className="hidden md:block font-label text-[11px] tracking-[0.2em] uppercase mt-[2px] group-hover:text-surface-tint">Menu</span>
             </button>
-
+            <button className="hover:text-surface-tint transition-colors hidden md:flex items-center gap-2 group">
+              <Search className="w-5 h-5" strokeWidth={1.5} />
+              <span className="hidden lg:block font-label text-[11px] tracking-[0.2em] uppercase mt-[2px] group-hover:text-surface-tint">Search</span>
+            </button>
           </div>
 
           {/* Center: Logo */}
           <div className="flex-1 md:flex-none flex justify-center w-1/3">
-            <Link to="/" className="flex items-center justify-center gap-3">
-              <img src="/assets/logo.png" alt="Gabby Newluk Logo" className="h-8 md:h-12 lg:h-14 w-auto object-contain" />
-              <span className="font-serif text-2xl md:text-3xl lg:text-4xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
-                Gabby Newluk
-              </span>
+            <Link to="/" className="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
+              Gabby Newluk
             </Link>
           </div>
 
           {/* Right: User, Wishlist, Cart */}
           <div className="flex items-center justify-end gap-5 md:gap-6 w-1/3 text-primary">
-
+            <Link to="/book" className="hidden lg:block font-label text-[10px] tracking-widest uppercase border border-primary px-4 py-2 hover:bg-primary hover:text-on-primary transition-colors">
+              Book Appointment
+            </Link>
+            <button className="hover:text-surface-tint transition-colors md:hidden">
+              <Search className="w-5 h-5" strokeWidth={1.5} />
+            </button>
             <div className="flex items-center gap-3">
               <SignedOut>
                 <SignInButton mode="modal">
@@ -188,7 +194,7 @@ export default function Header() {
                   </Link>
                   
                   <div className="flex gap-8 mt-6 pt-6 border-t border-surface-variant">
-                    <a href="https://www.instagram.com/gabbynewlukclothing/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Instagram</a>
+                    <a href="#" className="hover:text-primary transition-colors">Instagram</a>
                     <a href="#" className="hover:text-primary transition-colors">Pinterest</a>
                     <a href="#" className="hover:text-primary transition-colors">Twitter</a>
                   </div>

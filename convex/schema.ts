@@ -121,4 +121,11 @@ export default defineSchema({
     userId: v.string(),
     items: v.array(v.id("products")),
   }).index("by_userId", ["userId"]),
+
+  reminders: defineTable({
+    appointmentId: v.id("appointments"),
+    scheduledFor: v.string(), // ISO date
+    status: v.string(), // 'pending', 'sent'
+    type: v.string(), // '24h_reminder'
+  }).index("by_status", ["status"]),
 });

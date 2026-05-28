@@ -85,6 +85,7 @@ export default function CustomTailoring() {
         phone: formData.phone,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
+        notes: formData.details,
       });
 
       toast.success("Appointment request received! A confirmation email has been sent.", {

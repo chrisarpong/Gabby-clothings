@@ -51,8 +51,8 @@ export default function ProductDetailPage() {
   if (product === undefined) return <div className="min-h-screen pt-40 px-20">Loading product details...</div>;
   if (product === null) return <div className="min-h-screen pt-40 px-20 text-brand-charcoal/50">Product not found.</div>;
 
-  const sizes = product.variants && product.variants.length > 0 && product.variants[0].size
-    ? Array.from(new Set(product.variants.map(v => v.size)))
+  const sizes: string[] = product.variants && product.variants.length > 0 && product.variants[0].size
+    ? Array.from(new Set(product.variants.map((v: any) => v.size as string)))
     : ["M", "L", "XL", "Custom Fit"];
   const relatedProducts = allProducts ? allProducts.filter(p => p._id !== product._id).slice(0, 4) : [];
 

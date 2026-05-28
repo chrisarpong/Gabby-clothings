@@ -24,7 +24,7 @@ import OrdersTab from '../components/admin/OrdersTab';
 import ClientsTab from '../components/admin/ClientsTab';
 import DashboardTab from '../components/admin/DashboardTab';
 import PromotionsTab from '../components/admin/PromotionsTab';
-import ClientRelationsTab from '../components/admin/ClientRelationsTab';
+import AdminAppointmentsTab from '../components/admin/AdminAppointmentsTab';
 import ReviewsTab from '../components/admin/ReviewsTab';
 import FinancialsTab from '../components/admin/FinancialsTab';
 import MarketingTab from '../components/admin/MarketingTab';
@@ -37,7 +37,7 @@ const DummyTab = ({ title }: { title: string }) => (
   </div>
 );
 
-type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'client-relations' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings';
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -88,7 +88,7 @@ export default function Admin() {
     { key: 'orders', name: 'Orders', icon: ShoppingCart },
     { key: 'inventory', name: 'Inventory', icon: Package },
     { key: 'clients', name: 'Clients', icon: Users },
-    { key: 'client-relations', name: 'Client Relations', icon: HeartHandshake },
+    { key: 'appointments', name: 'Appointments', icon: HeartHandshake },
     { key: 'reviews', name: 'Reviews', icon: Star },
     { key: 'financials', name: 'Financials', icon: LineChart },
     { key: 'marketing', name: 'Marketing', icon: Volume2 },
@@ -103,7 +103,7 @@ export default function Admin() {
       case 'orders': return <OrdersTab />;
       case 'promotions': return <PromotionsTab />;
       case 'clients': return <ClientsTab />;
-      case 'client-relations': return <ClientRelationsTab />;
+      case 'appointments': return <AdminAppointmentsTab />;
       case 'reviews': return <ReviewsTab />;
       case 'financials': return <FinancialsTab />;
       case 'marketing': return <MarketingTab />;

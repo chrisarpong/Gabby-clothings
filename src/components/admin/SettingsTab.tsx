@@ -15,6 +15,11 @@ export default function SettingsTab() {
     maintenanceMode: false,
     isBannerActive: true,
     announcementBannerText: 'Complimentary shipping on all bespoke suiting orders.',
+    availability: {
+      workingDays: [1, 2, 3, 4, 5],
+      startHour: '09:00',
+      endHour: '17:00'
+    }
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -115,6 +120,59 @@ export default function SettingsTab() {
                   value={formData.contactEmail}
                   onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors placeholder:text-brand-charcoal/30"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Availability Management */}
+          <section>
+            <h2 className="font-serif text-xl border-b border-brand-espresso/10 pb-4 mb-6 text-brand-espresso flex items-center gap-2">
+              <Settings className="w-5 h-5 opacity-50" />
+              Availability Management
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="md:col-span-2">
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Working Days</label>
+                <div className="flex flex-wrap gap-4">
+                  {[0, 1, 2, 3, 4, 5, 6].map((day) => {
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    return (
+                      <label key={day} className="flex items-center gap-2 font-sans text-sm text-brand-charcoal cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.availability?.workingDays?.includes(day)}
+                          onChange={(e) => {
+                            const currentDays = formData.availability?.workingDays || [];
+                            const newDays = e.target.checked
+                              ? [...currentDays, day]
+                              : currentDays.filter((d) => d !== day);
+                            setFormData({ ...formData, availability: { ...formData.availability, workingDays: newDays } });
+                          }}
+                          className="accent-brand-espresso w-4 h-4"
+                        />
+                        {days[day]}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Start Time</label>
+                <input
+                  type="time"
+                  value={formData.availability?.startHour || '09:00'}
+                  onChange={(e) => setFormData({...formData, availability: {...formData.availability, startHour: e.target.value}})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">End Time</label>
+                <input
+                  type="time"
+                  value={formData.availability?.endHour || '17:00'}
+                  onChange={(e) => setFormData({...formData, availability: {...formData.availability, endHour: e.target.value}})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                 />
               </div>
             </div>
