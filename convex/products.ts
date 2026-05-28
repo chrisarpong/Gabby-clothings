@@ -32,8 +32,7 @@ export const getByCategory = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("products")
-      .withIndex("by_category", (q) => q.eq("category", args.category))
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_category_status", (q) => q.eq("category", args.category).eq("status", "active"))
       .collect();
   },
 });

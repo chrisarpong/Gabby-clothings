@@ -83,18 +83,8 @@ export default function CartPage() {
                             className="bg-transparent border border-surface-variant text-primary font-sans text-sm py-1 px-2 pr-8 focus:outline-none focus:border-primary transition-colors cursor-pointer"
                             value={item.variantSku || "custom"}
                             onChange={(e) => {
-                              // We could update size via store, but it requires standardizing cartStore updates.
-                              // Let's implement an update mechanism.
-                              const storeItem = items.find(i => i.cartItemId === item.cartItemId);
-                              if (storeItem) {
-                                // Since we don't have updateVariant in store, we delete and add (with same cartItemId ideally, but re-adding creates new ID, so just re-add)
-                                removeItem(item.cartItemId);
-                                useCartStore.getState().addItem({
-                                  productId: storeItem.productId,
-                                  variantSku: e.target.value === "custom" ? undefined : e.target.value,
-                                  quantity: storeItem.quantity
-                                });
-                              }
+                              const newSku = e.target.value === "custom" ? undefined : e.target.value;
+                              useCartStore.getState().updateItemSize(item.cartItemId, newSku);
                             }}
                           >
                             {item.product?.variants?.map(v => (

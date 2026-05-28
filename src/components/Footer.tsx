@@ -63,7 +63,7 @@ export default function Footer() {
             © {new Date().getFullYear()} GABBY NEWLUK. ALL RIGHTS RESERVED.
           </p>
           <div className="flex items-center gap-6">
-            {['INSTAGRAM', 'FACEBOOK', 'TWITTER'].map((social) => (
+            {['INSTAGRAM'].map((social) => (
               <a key={social} href={social === 'INSTAGRAM' ? "https://www.instagram.com/gabbynewlukclothing/" : "#"} target={social === 'INSTAGRAM' ? "_blank" : undefined} rel={social === 'INSTAGRAM' ? "noopener noreferrer" : undefined} className="text-label text-on-surface-variant hover:text-primary transition-colors">
                 {social}
               </a>

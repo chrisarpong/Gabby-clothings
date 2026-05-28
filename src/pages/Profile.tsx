@@ -4,7 +4,7 @@ import { SignOutButton, UserProfile, SignedIn, SignedOut, SignInButton, useUser 
 import { Link } from "react-router-dom";
 import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
-import { products } from "../data/products"; // Will keep for fallback if needed, but we'll use wishlist
+
 import { toast } from "sonner";
 
 export default function Profile() {

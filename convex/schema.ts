@@ -15,8 +15,7 @@ export default defineSchema({
 
   products: defineTable({
     name: v.string(),
-    basePrice: v.optional(v.number()),
-    price: v.optional(v.number()),
+    basePrice: v.number(),
     description: v.string(),
     images: v.array(v.string()),
     category: v.string(), 
@@ -39,7 +38,9 @@ export default defineSchema({
         })
       )
     ),
-  }).index("by_category", ["category"]).index("by_status", ["status"]),
+  }).index("by_category", ["category"])
+    .index("by_status", ["status"])
+    .index("by_category_status", ["category", "status"]),
 
   orders: defineTable({
     userId: v.optional(v.string()), // clerkId

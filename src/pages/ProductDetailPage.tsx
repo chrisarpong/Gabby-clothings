@@ -77,17 +77,19 @@ export default function ProductDetailPage() {
               />
             </div>
             {/* Thumbnails */}
-            <div className="grid grid-cols-3 gap-6">
-              {[1,2,3].map((num) => (
-                <div key={num} className="aspect-[3/4] bg-surface-container overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
-                  <img 
-                    src={product?.images?.[0] || "/assets/1.jpg"} 
-                    alt={`Thumbnail ${num}`} 
-                    className="w-full h-full object-cover grayscale-[20%]"
-                  />
-                </div>
-              ))}
-            </div>
+            {product?.images && product.images.length > 1 && (
+              <div className="grid grid-cols-3 gap-6">
+                {product.images.map((img, idx) => (
+                  <div key={idx} className="aspect-[3/4] bg-surface-container overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
+                    <img 
+                      src={img} 
+                      alt={`Thumbnail ${idx + 1}`} 
+                      className="w-full h-full object-cover grayscale-[20%]"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Right Side: Product Info */}
@@ -121,7 +123,7 @@ export default function ProductDetailPage() {
             <div className="mb-12">
               <div className="flex justify-between items-center mb-4">
                 <span className="font-label text-xs tracking-[0.2em] uppercase text-primary">Select Size</span>
-                <button className="text-on-surface-variant text-xs underline hover:text-primary transition-colors">Size Guide</button>
+                <Link to="/size-guide" className="text-on-surface-variant text-xs underline hover:text-primary transition-colors">Size Guide</Link>
               </div>
               <div className="grid grid-cols-4 gap-4">
                 {sizes.map((size) => (
