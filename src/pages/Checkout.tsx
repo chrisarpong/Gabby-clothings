@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../store/cartStore";
-import { useQuery, useMutation } from "@/hooks/useConvex";
+import { useQuery, useAction } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import { PaystackButton } from "react-paystack";
@@ -38,7 +38,7 @@ export default function Checkout() {
   const shippingAmount = 150.00;
   const totalAmount = subtotal + shippingAmount;
 
-  const createOrder = useMutation(api.orders.create);
+  const createOrder = useAction(api.orders.verifyAndCreate);
 
   const handlePaystackSuccessAction = async (reference: any) => {
     if (!user) {
@@ -54,13 +54,13 @@ export default function Checkout() {
           firstName: user.firstName || "Guest",
           lastName: user.lastName || "User"
         },
-        items: items.map(i => ({
+        items: cartItemsWithDetails.map(i => ({
           productId: i.productId as any,
           variantSku: i.variantSku,
           quantity: i.quantity,
+          productName: i.product?.name || i.productName || "Unknown Product",
         })),
         shippingAmount,
-        paymentStatus: "paid",
         paystackReference: reference.reference,
         shippingAddress
       });

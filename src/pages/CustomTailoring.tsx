@@ -12,6 +12,7 @@ export default function CustomTailoring() {
   const productTitle = searchParams.get("title");
   
   const bookAppointment = useMutation(api.appointments.book);
+  const generateUploadUrl = useMutation(api.appointments.generateUploadUrl);
 
   const [measurements, setMeasurements] = useState({
     chest: "",
@@ -37,12 +38,16 @@ export default function CustomTailoring() {
 
   const [designInspoPreview, setDesignInspoPreview] = useState<string | null>(null);
   const [bodyPhotoPreview, setBodyPhotoPreview] = useState<string | null>(null);
+  const [designInspoFile, setDesignInspoFile] = useState<File | null>(null);
+  const [bodyPhotoFile, setBodyPhotoFile] = useState<File | null>(null);
 
   const handleInspoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setDesignInspoFile(file);
       setDesignInspoPreview(URL.createObjectURL(file));
     } else {
+      setDesignInspoFile(null);
       setDesignInspoPreview(null);
     }
   };
@@ -50,8 +55,10 @@ export default function CustomTailoring() {
   const handleBodyPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setBodyPhotoFile(file);
       setBodyPhotoPreview(URL.createObjectURL(file));
     } else {
+      setBodyPhotoFile(null);
       setBodyPhotoPreview(null);
     }
   };
@@ -84,8 +91,25 @@ export default function CustomTailoring() {
 
   const isFormValid = formData.fullName && formData.email && formData.phone && formData.fittingDate && formData.time && formData.garmentType && designInspoPreview && bodyPhotoPreview;
 
+  const uploadFile = async (file: File | null) => {
+    if (!file) return null;
+    const postUrl = await generateUploadUrl();
+    const result = await fetch(postUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    const { storageId } = await result.json();
+    return storageId;
+  };
+
   const handlePaystackSuccessAction = async (reference: any) => {
     try {
+      toast.loading("Uploading reference images...");
+      const inspoStorageId = await uploadFile(designInspoFile);
+      const bodyStorageId = await uploadFile(bodyPhotoFile);
+      const storageIds = [inspoStorageId, bodyStorageId].filter(Boolean) as string[];
+
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
@@ -96,8 +120,10 @@ export default function CustomTailoring() {
         notes: formData.details,
         paystackReference: reference.reference,
         amountPaid: bookingDepositAmount,
+        referenceImages: storageIds.length > 0 ? (storageIds as any) : undefined,
       });
 
+      toast.dismiss();
       toast.success("Appointment request received!", {
         description: "We've received your deposit and request. A confirmation email has been sent."
       });
@@ -111,9 +137,12 @@ export default function CustomTailoring() {
         time: "",
         details: "",
       });
+      setDesignInspoFile(null);
       setDesignInspoPreview(null);
+      setBodyPhotoFile(null);
       setBodyPhotoPreview(null);
     } catch (error) {
+       toast.dismiss();
        toast.error("Failed to book appointment", { description: String(error) });
     }
   };
@@ -143,7 +172,13 @@ export default function CustomTailoring() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (bookingDepositAmount > 0) return; // Prevent double-booking: let Paystack handle it
     try {
+      toast.loading("Uploading reference images...");
+      const inspoStorageId = await uploadFile(designInspoFile);
+      const bodyStorageId = await uploadFile(bodyPhotoFile);
+      const storageIds = [inspoStorageId, bodyStorageId].filter(Boolean) as string[];
+
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
@@ -152,8 +187,10 @@ export default function CustomTailoring() {
         garmentType: formData.garmentType,
         time: formData.time,
         notes: formData.details,
+        referenceImages: storageIds.length > 0 ? (storageIds as any) : undefined,
       });
 
+      toast.dismiss();
       toast.success("Appointment request received!", {
         description: "A confirmation email has been sent."
       });
@@ -166,9 +203,12 @@ export default function CustomTailoring() {
         time: "",
         details: "",
       });
+      setDesignInspoFile(null);
       setDesignInspoPreview(null);
+      setBodyPhotoFile(null);
       setBodyPhotoPreview(null);
     } catch (error) {
+       toast.dismiss();
        toast.error("Failed to book appointment", { description: String(error) });
     }
   }
@@ -507,6 +547,8 @@ export default function CustomTailoring() {
                 <div className="w-full sm:w-auto self-center min-w-[250px]">
                   <PaystackButton 
                     {...paystackProps} 
+                    // @ts-ignore
+                    type="button"
                     className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
                   />
                 </div>

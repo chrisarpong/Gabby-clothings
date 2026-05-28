@@ -68,7 +68,8 @@ export const getAll = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     return await ctx.db.query("reviews").order("desc").collect();
   },
 });
@@ -80,7 +81,8 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     await ctx.db.patch(args.reviewId, { status: args.status });
   },
 });
@@ -89,7 +91,8 @@ export const deleteReview = mutation({
   args: { reviewId: v.id("reviews") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     await ctx.db.delete(args.reviewId);
   },
 });

@@ -4,7 +4,9 @@ import { v } from "convex/values";
 export const getPromoCodes = query({
   args: {},
   handler: async (ctx) => {
-    // Basic auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     return await ctx.db.query("promotions").order("desc").collect();
   }
 });
@@ -19,7 +21,8 @@ export const createPromoCode = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     return await ctx.db.insert("promotions", args);
   }
 });

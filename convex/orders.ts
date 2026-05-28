@@ -14,6 +14,7 @@ export const verifyAndCreate = action({
       productId: v.id("products"),
       variantSku: v.optional(v.string()),
       quantity: v.number(),
+      productName: v.string(),
       measurements: v.optional(v.any()),
     })),
     shippingAmount: v.number(),
@@ -57,7 +58,7 @@ export const verifyAndCreate = action({
       userId: args.userId,
       customerDetails: args.customerDetails,
       items: args.items,
-      shippingAmount: args.shippingAmount,
+      shippingFee: args.shippingAmount,
       paymentStatus: "paid",
       paystackReference: args.paystackReference,
       shippingAddress: args.shippingAddress,
@@ -79,9 +80,10 @@ export const create = mutation({
       productId: v.id("products"),
       variantSku: v.optional(v.string()),
       quantity: v.number(),
+      productName: v.string(),
       measurements: v.optional(v.any()),
     })),
-    shippingAmount: v.number(),
+    shippingFee: v.number(),
     paymentStatus: v.string(),
     paystackReference: v.optional(v.string()),
     shippingAddress: v.optional(v.any()),
@@ -106,11 +108,12 @@ export const create = mutation({
         variantSku: item.variantSku,
         quantity: item.quantity,
         priceAtPurchase: itemPrice,
+        productName: item.productName,
         measurements: item.measurements,
       });
     }
 
-    const calculatedTotalAmount = calculatedSubtotal + args.shippingAmount;
+    const calculatedTotalAmount = calculatedSubtotal + args.shippingFee;
 
     // Insert using exact schema field names
     const orderId = await ctx.db.insert("orders", {
@@ -118,7 +121,7 @@ export const create = mutation({
       customerDetails: args.customerDetails,
       items: finalItems,
       subtotal: calculatedSubtotal,
-      shippingFee: args.shippingAmount,   // schema uses shippingFee
+      shippingFee: args.shippingFee,
       totalAmount: calculatedTotalAmount,
       status: "processing",
       paymentStatus: args.paymentStatus,

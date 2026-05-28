@@ -130,6 +130,7 @@ export const updateVariantStock = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
 
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");

@@ -76,6 +76,7 @@ export default function BookAppointment() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (bookingDepositAmount > 0) return; // Prevent double-booking: let Paystack handle it
     setIsSubmitting(true);
     try {
       await bookAppointment({
@@ -272,6 +273,8 @@ export default function BookAppointment() {
                 <div className="w-full md:w-auto">
                   <PaystackButton 
                     {...paystackProps} 
+                    // @ts-ignore
+                    type="button"
                     className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
                   />
                 </div>

@@ -56,7 +56,7 @@ export default defineSchema({
         quantity: v.number(),
         priceAtPurchase: v.optional(v.number()),
         priceAtTime: v.optional(v.number()),
-        name: v.optional(v.string()),
+        productName: v.string(),
         measurements: v.optional(v.any()), // Custom measurements for bespoke at time of order
       })
     ),
@@ -92,7 +92,8 @@ export default defineSchema({
     meetLink: v.optional(v.string()),
     googleEventId: v.optional(v.string()), // ID from Google Calendar
     assignedTo: v.optional(v.string()), // ID or name of the assigned tailor
-  }).index("by_userId", ["userId"]).index("by_status", ["status"]),
+    referenceImages: v.optional(v.array(v.id("_storage"))),
+  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]),
 
   reviews: defineTable({
     productId: v.id("products"),

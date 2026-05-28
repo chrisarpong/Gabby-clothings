@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 
-export { useQuery, useMutation };
+export { useQuery, useMutation, useAction };
 

@@ -4,6 +4,8 @@ export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
 
     const orders = await ctx.db.query("orders").collect();
     const users = await ctx.db.query("users").collect();

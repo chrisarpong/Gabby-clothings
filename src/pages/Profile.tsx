@@ -34,7 +34,7 @@ export default function Profile() {
   const rescheduleAppointment = useMutation(api.appointments.reschedule);
 
   const [rescheduleData, setRescheduleData] = useState<{ id: any; date: string; time: string; } | null>(null);
-  const availableSlots = useQuery(api.appointments.getAvailableSlots, rescheduleData?.date ? { date: rescheduleData.date } : "skip");
+  const availableSlots = useQuery(api.appointments.getAvailableSlots, rescheduleData?.date ? { date: rescheduleData.date, ignoreAppointmentId: rescheduleData.id } : "skip");
 
   const handleCancelAppointment = async (id: any) => {
     if (confirm("Are you sure you want to cancel this appointment?")) {
@@ -255,7 +255,7 @@ export default function Profile() {
                               <span className="font-sans text-sm italic text-primary mt-1">{order.items.length} item(s)</span>
                             </div>
                             <div className="flex flex-col md:items-end gap-3 flex-1 md:flex-none">
-                              <span className="font-label text-sm tracking-widest text-primary">${order.totalAmount.toFixed(2)}</span>
+                              <span className="font-label text-sm tracking-widest text-primary">GH₵{order.totalAmount.toFixed(2)}</span>
                               <div className="flex items-center gap-2 text-xs font-label uppercase tracking-widest text-outline group-open:text-primary transition-colors">
                                 View Details 
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">

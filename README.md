@@ -1,20 +1,15 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Gabby Newluk - Bespoke Tailoring & E-Commerce Platform
 
-# Run and deploy your AI Studio app
+Gabby Newluk is a premium bespoke tailoring and e-commerce platform built for the modern fashion era. It offers a seamless experience for clients to request custom fittings, order ready-to-wear pieces, and track their orders.
 
-This contains everything you need to run your app locally.
+## Features
+- **Bespoke Tailoring Requests**: Clients can submit their measurements, upload reference photos, and book fitting appointments.
+- **E-Commerce Shop**: Browse and purchase ready-to-wear collections.
+- **Real-Time Database**: Powered by Convex for instant UI updates and robust data integrity.
+- **Admin Dashboard**: Manage inventory, appointments, reviews, and storefront configuration easily.
 
-View your app in AI Studio: https://ai.studio/apps/db81dee7-2c87-416b-9696-70b3f5ab096e
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Tech Stack
+- Frontend: React (Vite), Tailwind CSS, Framer Motion
+- Backend/Database: Convex
+- Authentication: Clerk
+- Payments: Paystack

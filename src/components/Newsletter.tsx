@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useMutation } from '@/hooks/useConvex';
+import { api } from '../../convex/_generated/api';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitted'>('idle');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const subscribe = useMutation(api.subscribers.subscribe);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      setStatus('submitted');
-      setTimeout(() => {
-        setEmail('');
-        setStatus('idle');
-      }, 3000);
+      try {
+        await subscribe({ email });
+        setStatus('submitted');
+        setTimeout(() => {
+          setEmail('');
+          setStatus('idle');
+        }, 3000);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 

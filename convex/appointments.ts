@@ -13,6 +13,7 @@ export const book = mutation({
     notes: v.optional(v.string()),
     paystackReference: v.optional(v.string()),
     amountPaid: v.optional(v.number()),
+    referenceImages: v.optional(v.array(v.id("_storage"))),
   },
   handler: async (ctx, args) => {
     // Optionally link to identity if available
@@ -26,7 +27,7 @@ export const book = mutation({
 
     if (availabilitySetting && availabilitySetting.value && args.time) {
       const { workingDays, startHour, endHour } = availabilitySetting.value;
-      const appointmentDate = new Date(`${args.date}T${args.time}`);
+      const appointmentDate = new Date(`${args.date}T12:00:00`);
       const dayOfWeek = appointmentDate.getDay(); // 0 is Sunday
 
       if (workingDays && !workingDays.includes(dayOfWeek)) {
@@ -39,12 +40,44 @@ export const book = mutation({
         }
       }
     }
+
+    if (args.time) {
+      const toMinutes = (timeStr: string) => {
+        if (!timeStr) return 0;
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+      };
+
+      const appointmentDuration = 60;
+      const bufferTime = availabilitySetting?.value?.bufferTime || 30;
+      const newSlotStart = toMinutes(args.time);
+      const newSlotEnd = newSlotStart + appointmentDuration + bufferTime;
+
+      const existingApts = await ctx.db
+        .query("appointments")
+        .withIndex("by_date", (q) => q.eq("date", args.date))
+        .filter((q) => q.neq(q.field("status"), "cancelled"))
+        .collect();
+
+      for (const apt of existingApts) {
+        if (apt.time === args.time) {
+          throw new Error("This time slot has just been booked by someone else. Please select another time.");
+        }
+        if (!apt.time) continue;
+        const aptStart = toMinutes(apt.time);
+        const aptEnd = aptStart + appointmentDuration + bufferTime;
+        if (newSlotStart < aptEnd && newSlotEnd > aptStart) {
+          throw new Error("This time slot is no longer available.");
+        }
+      }
+    }
     
     const appointmentId = await ctx.db.insert("appointments", {
       ...args,
       userId: identity ? identity.subject : undefined,
       status: "pending",
       paymentStatus: args.paystackReference ? "paid" : "pending",
+      referenceImages: args.referenceImages,
     });
 
     // Create 24h Reminder
@@ -80,14 +113,16 @@ export const book = mutation({
   },
 });
 
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
+});
+
 export const getUpcoming = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     return await ctx.db.query("appointments").collect();
   },
 });
@@ -100,7 +135,7 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.email !== "christiananietie10@gmail.com" && (identity as any).role !== "admin") {
+    if ((identity as any).role !== "admin") {
       throw new Error("Unauthorized: Admin only");
     }
     
@@ -153,6 +188,7 @@ export const sendReminders = internalMutation({
 export const getAvailableSlots = query({
   args: {
     date: v.string(), // YYYY-MM-DD
+    ignoreAppointmentId: v.optional(v.id("appointments")),
   },
   handler: async (ctx, args) => {
     // 1. Get availability settings
@@ -203,17 +239,15 @@ export const getAvailableSlots = query({
     // 2. Fetch existing appointments for the given date that are not cancelled
     const existingApts = await ctx.db
       .query("appointments")
-      .filter((q) => q.and(
-        q.eq(q.field("date"), args.date),
-        q.neq(q.field("status"), "cancelled")
-      ))
+      .withIndex("by_date", (q) => q.eq("date", args.date))
+      .filter((q) => q.neq(q.field("status"), "cancelled"))
       .collect();
 
     const appointmentDuration = 60; // Standard 60 mins per appointment
 
     // Each appointment blocks [aptTime, aptTime + duration + buffer]
     const blockedIntervals = existingApts
-      .filter(apt => apt.time)
+      .filter(apt => apt.time && apt._id !== args.ignoreAppointmentId)
       .map(apt => {
         const aptStart = toMinutes(apt.time!);
         return { start: aptStart, end: aptStart + appointmentDuration + bufferTime };
@@ -247,7 +281,8 @@ export const getAvailableSlots = query({
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
       if (args.date === todayStr) {
-        const currentMinsNow = today.getHours() * 60 + today.getMinutes();
+        // Use getUTCHours since Ghana time is UTC+0
+        const currentMinsNow = today.getUTCHours() * 60 + today.getUTCMinutes();
         if (current <= currentMinsNow) {
           isPast = true;
         }
@@ -293,9 +328,8 @@ export const assignTailor = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || (identity as any).role !== "admin") {
-      // Basic check, in reality should use a proper role check if available
-    }
+    if (!identity) throw new Error("Unauthenticated");
+    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
     
     await ctx.db.patch(args.appointmentId, {
       assignedTo: args.tailorName,
@@ -314,7 +348,8 @@ export const reschedule = mutation({
     const apt = await ctx.db.get(args.appointmentId);
     if (!apt) throw new Error("Appointment not found");
 
-    if (identity && identity.subject !== apt.userId && (identity as any).role !== "admin") {
+    if (!identity) throw new Error("Unauthenticated");
+    if (identity.subject !== apt.userId && (identity as any).role !== "admin") {
       throw new Error("Unauthorized to reschedule this appointment");
     }
 
