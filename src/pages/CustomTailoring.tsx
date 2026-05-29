@@ -24,6 +24,7 @@ export default function CustomTailoring() {
     length: "",
   });
 
+  const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     countryCode: "+233",

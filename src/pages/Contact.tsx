@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export default function Contact() {
   const submitMessage = useMutation(api.messages.submitMessage);
   
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     countryCode: "+233",
@@ -17,6 +18,7 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    try {
       await submitMessage({
         ...formData,
         phone: formData.phone ? `${formData.countryCode} ${formData.phone}` : undefined

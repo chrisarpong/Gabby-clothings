@@ -56,7 +56,8 @@ export default defineSchema({
         quantity: v.number(),
         priceAtPurchase: v.optional(v.number()),
         priceAtTime: v.optional(v.number()),
-        productName: v.string(),
+        productName: v.optional(v.string()),
+        name: v.optional(v.string()), // legacy field
         measurements: v.optional(v.any()), // Custom measurements for bespoke at time of order
       })
     ),
