@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { query } from "./_generated/server";
 
 export const getDashboardStats = query({
@@ -5,7 +6,7 @@ export const getDashboardStats = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
 
     const orders = await ctx.db.query("orders").collect();
     const users = await ctx.db.query("users").collect();

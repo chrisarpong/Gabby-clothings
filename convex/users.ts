@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -6,9 +7,7 @@ export const getAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
     return await ctx.db.query("users").collect();
   },
 });
@@ -22,8 +21,8 @@ export const syncUser = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId && (identity as any).role !== "admin") {
-      throw new Error("Unauthorized");
+    if (identity.subject !== args.clerkId) {
+      await checkAdmin(ctx, identity);
     }
 
     const existingUser = await ctx.db
@@ -62,8 +61,8 @@ export const updateMeasurements = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId && (identity as any).role !== "admin") {
-      throw new Error("Unauthorized");
+    if (identity.subject !== args.clerkId) {
+      await checkAdmin(ctx, identity);
     }
 
     const user = await ctx.db

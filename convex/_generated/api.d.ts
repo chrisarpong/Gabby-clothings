@@ -10,6 +10,7 @@
 
 import type * as analytics from "../analytics.js";
 import type * as appointments from "../appointments.js";
+import type * as authHelper from "../authHelper.js";
 import type * as crons from "../crons.js";
 import type * as email from "../email.js";
 import type * as googleCalendar from "../googleCalendar.js";
@@ -20,6 +21,7 @@ import type * as promotions from "../promotions.js";
 import type * as reviews from "../reviews.js";
 import type * as settings from "../settings.js";
 import type * as subscribers from "../subscribers.js";
+import type * as temp from "../temp.js";
 import type * as users from "../users.js";
 import type * as wishlists from "../wishlists.js";
 
@@ -32,6 +34,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   appointments: typeof appointments;
+  authHelper: typeof authHelper;
   crons: typeof crons;
   email: typeof email;
   googleCalendar: typeof googleCalendar;
@@ -42,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   reviews: typeof reviews;
   settings: typeof settings;
   subscribers: typeof subscribers;
+  temp: typeof temp;
   users: typeof users;
   wishlists: typeof wishlists;
 }>;

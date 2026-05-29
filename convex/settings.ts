@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -26,9 +27,7 @@ export const setSetting = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
 
     const existing = await ctx.db
       .query("settings")

@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -80,9 +81,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
     return await ctx.db.insert("products", args);
   },
 });
@@ -112,9 +111,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
     
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
@@ -130,7 +127,7 @@ export const updateVariantStock = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
 
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");
@@ -157,9 +154,7 @@ export const seed = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
 
     const existing = await ctx.db.query("products").collect();
     

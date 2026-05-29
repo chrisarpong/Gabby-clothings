@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser, SignOutButton, SignInButton } from '@clerk/clerk-react';
+import { useMutation } from '@/hooks/useConvex';
+import { api } from '../../convex/_generated/api';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -50,6 +52,17 @@ export default function Admin() {
 
   // RBAC
   const isAdmin = user?.publicMetadata?.role === 'admin';
+  const syncUser = useMutation(api.users.syncUser);
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      syncUser({
+        clerkId: user.id,
+        email: user.primaryEmailAddress?.emailAddress || "",
+        role: "admin"
+      }).catch(console.error);
+    }
+  }, [user, isAdmin]);
 
   if (!user) {
     return (

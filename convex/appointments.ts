@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
@@ -122,7 +123,7 @@ export const getUpcoming = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     return await ctx.db.query("appointments").collect();
   },
 });
@@ -135,9 +136,7 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
     
     const appointment = await ctx.db.get(args.id);
     
@@ -331,7 +330,7 @@ export const assignTailor = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     
     await ctx.db.patch(args.appointmentId, {
       assignedTo: args.tailorName,
@@ -351,8 +350,8 @@ export const reschedule = mutation({
     if (!apt) throw new Error("Appointment not found");
 
     if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== apt.userId && (identity as any).role !== "admin") {
-      throw new Error("Unauthorized to reschedule this appointment");
+    if (identity.subject !== apt.userId) {
+      await checkAdmin(ctx, identity);
     }
 
     // Optional: 24h block check

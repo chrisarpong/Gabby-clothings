@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { mutation, query, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
@@ -138,9 +139,7 @@ export const getAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
     return await ctx.db.query("orders").collect();
   },
 });
@@ -154,8 +153,8 @@ export const getUserOrders = query({
     if (!identity) return [];
     
     // Admins can see any order, specific user can see their own
-    if (identity.subject !== args.userId && (identity as any).role !== "admin") {
-      return [];
+    if (identity.subject !== args.userId) {
+      await checkAdmin(ctx, identity);
     }
     return await ctx.db
       .query("orders")
@@ -172,9 +171,7 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") {
-      throw new Error("Unauthorized: Admin only");
-    }
+    await checkAdmin(ctx, identity);
     return await ctx.db.patch(args.orderId, {
       status: args.status,
     });

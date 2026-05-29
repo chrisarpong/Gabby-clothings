@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
@@ -69,7 +70,7 @@ export const getAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     return await ctx.db.query("reviews").order("desc").collect();
   },
 });
@@ -82,7 +83,7 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     await ctx.db.patch(args.reviewId, { status: args.status });
   },
 });
@@ -92,7 +93,7 @@ export const deleteReview = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     await ctx.db.delete(args.reviewId);
   },
 });

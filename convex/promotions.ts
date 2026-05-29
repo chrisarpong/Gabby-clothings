@@ -1,3 +1,4 @@
+import { checkAdmin } from "./authHelper";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -6,7 +7,7 @@ export const getPromoCodes = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     return await ctx.db.query("promotions").order("desc").collect();
   }
 });
@@ -22,7 +23,7 @@ export const createPromoCode = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    if ((identity as any).role !== "admin") throw new Error("Unauthorized: Admin access required");
+    await checkAdmin(ctx, identity);
     return await ctx.db.insert("promotions", args);
   }
 });
