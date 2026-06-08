@@ -127,6 +127,7 @@ export default function Contact() {
                   required
                   className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary py-1"
                 />
+              </div>
               <div className="flex flex-col gap-2">
                 <label className="font-label text-[10px] tracking-widest text-outline uppercase">
                   Phone Number (Optional)
