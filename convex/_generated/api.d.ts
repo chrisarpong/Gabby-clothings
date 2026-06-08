@@ -14,6 +14,7 @@ import type * as authHelper from "../authHelper.js";
 import type * as crons from "../crons.js";
 import type * as email from "../email.js";
 import type * as googleCalendar from "../googleCalendar.js";
+import type * as http from "../http.js";
 import type * as messages from "../messages.js";
 import type * as orders from "../orders.js";
 import type * as products from "../products.js";
@@ -21,7 +22,6 @@ import type * as promotions from "../promotions.js";
 import type * as reviews from "../reviews.js";
 import type * as settings from "../settings.js";
 import type * as subscribers from "../subscribers.js";
-import type * as temp from "../temp.js";
 import type * as users from "../users.js";
 import type * as wishlists from "../wishlists.js";
 
@@ -38,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   email: typeof email;
   googleCalendar: typeof googleCalendar;
+  http: typeof http;
   messages: typeof messages;
   orders: typeof orders;
   products: typeof products;
@@ -45,7 +46,6 @@ declare const fullApi: ApiFromModules<{
   reviews: typeof reviews;
   settings: typeof settings;
   subscribers: typeof subscribers;
-  temp: typeof temp;
   users: typeof users;
   wishlists: typeof wishlists;
 }>;

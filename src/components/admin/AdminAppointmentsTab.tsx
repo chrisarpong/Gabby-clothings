@@ -171,6 +171,7 @@ export default function AdminAppointmentsTab() {
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Date & Time</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Type</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium w-48">Notes</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Ref. Images</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Assigned Tailor</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Status & Payment</th>
                   <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Meet Link</th>
@@ -199,6 +200,25 @@ export default function AdminAppointmentsTab() {
                     </td>
                     <td className="p-4 text-sm text-brand-charcoal capitalize">{apt.garmentType}</td>
                     <td className="p-4 text-xs text-brand-charcoal/80 max-w-xs truncate" title={apt.notes}>{apt.notes || '-'}</td>
+                    <td className="p-4">
+                      {apt.referenceImages && apt.referenceImages.length > 0 ? (
+                        <div className="flex gap-1">
+                          {apt.referenceImages.map((imgId: string, idx: number) => (
+                            <a
+                              key={idx}
+                              href={`${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${imgId}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:underline text-[10px] border border-blue-200 px-1.5 py-0.5"
+                            >
+                              📷 {idx + 1}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-brand-charcoal/30 text-xs">-</span>
+                      )}
+                    </td>
                     <td className="p-4">
                       <input 
                         type="text" 

@@ -27,3 +27,31 @@ export const createPromoCode = mutation({
     return await ctx.db.insert("promotions", args);
   }
 });
+
+export const validateCode = query({
+  args: { code: v.string() },
+  handler: async (ctx, args) => {
+    const promo = await ctx.db
+      .query("promotions")
+      .filter((q) => q.eq(q.field("code"), args.code))
+      .first();
+
+    if (!promo) {
+      throw new Error("Invalid promo code");
+    }
+
+    if (!promo.isActive) {
+      throw new Error("This promo code is no longer active");
+    }
+
+    if (promo.validUntil && Date.now() > promo.validUntil) {
+      throw new Error("This promo code has expired");
+    }
+
+    return {
+      _id: promo._id,
+      discountType: promo.discountType,
+      discountValue: promo.discountValue,
+    };
+  }
+});

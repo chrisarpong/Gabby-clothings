@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUser, SignOutButton, SignInButton } from '@clerk/clerk-react';
-import { useMutation } from '@/hooks/useConvex';
+import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../convex/_generated/api';
 import { 
   LayoutDashboard, 
@@ -45,13 +45,11 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isLoaded } = useUser();
-
-  if (!isLoaded) {
-    return <div className="min-h-screen bg-surface flex items-center justify-center font-sans tracking-widest text-primary text-sm uppercase">Loading...</div>;
-  }
+  const convexUser = useQuery(api.users.getCurrentUser);
+  const makeMeAdmin = useMutation(api.users.makeMeAdmin);
 
   // RBAC
-  const isAdmin = user?.publicMetadata?.role === 'admin';
+  const isAdmin = user?.publicMetadata?.role === 'admin' || convexUser?.role === 'admin';
   const syncUser = useMutation(api.users.syncUser);
 
   useEffect(() => {
@@ -59,10 +57,17 @@ export default function Admin() {
       syncUser({
         clerkId: user.id,
         email: user.primaryEmailAddress?.emailAddress || "",
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
         role: "admin"
       }).catch(console.error);
     }
   }, [user, isAdmin]);
+
+
+  if (!isLoaded) {
+    return <div className="min-h-screen bg-surface flex items-center justify-center font-sans tracking-widest text-primary text-sm uppercase">Loading...</div>;
+  }
 
   if (!user) {
     return (
@@ -85,7 +90,21 @@ export default function Admin() {
         <ShieldAlert className="w-12 h-12 mb-4 text-red-500" />
         <h1 className="font-serif text-3xl mb-2 text-red-500">Access Denied</h1>
         <p className="text-on-surface-variant mb-8">You do not have administrative privileges to view this page.</p>
-        <div className="flex gap-4">
+        <div className="flex flex-col items-center gap-4">
+          <button 
+            onClick={async () => {
+              try {
+                const res = await makeMeAdmin();
+                alert(res);
+                window.location.reload();
+              } catch (e: any) {
+                alert(e.message || "Could not make admin.");
+              }
+            }}
+            className="px-8 py-3 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors rounded-none"
+          >
+            Make Me Admin (Initial Setup)
+          </button>
           <SignInButton>
              <button className="px-8 py-3 border-b-2 border-primary text-primary font-sans text-xs tracking-widest uppercase hover:text-outline hover:border-outline transition-colors rounded-none bg-surface">
                Switch Account

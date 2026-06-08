@@ -33,11 +33,33 @@ const Legal = lazy(() => import('./pages/Legal'));
 const Admin = lazy(() => import('./pages/Admin'));
 
 import ScrollToTop from './components/ScrollToTop';
+import { useUser } from '@clerk/clerk-react';
+
+function UserSync() {
+  const { user, isLoaded } = useUser();
+  const syncUser = useMutation(api.users.syncUser);
+  const hasSynced = React.useRef(false);
+
+  useEffect(() => {
+    if (isLoaded && user && !hasSynced.current) {
+      hasSynced.current = true;
+      syncUser({
+        clerkId: user.id,
+        email: user.primaryEmailAddress?.emailAddress || "",
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+      }).catch(() => {}); // Silently fail — non-critical
+    }
+  }, [isLoaded, user]);
+
+  return null;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <UserSync />
       <Toaster position="top-center" toastOptions={{
         className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
       }} />

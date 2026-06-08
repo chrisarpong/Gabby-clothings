@@ -135,7 +135,14 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
               <div key={review._id} className="border-t border-surface-variant pt-8">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex flex-col gap-2">
-                    <span className="font-serif text-lg text-primary">{review.userFirstName} {review.userLastName}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-serif text-lg text-primary">{review.userFirstName} {review.userLastName}</span>
+                      {review.isVerifiedPurchase && (
+                        <span className="inline-flex items-center gap-1 font-label text-[9px] tracking-widest text-green-700 bg-green-50 px-2 py-1 uppercase rounded-sm border border-green-200">
+                          ✓ Verified Purchase
+                        </span>
+                      )}
+                    </div>
                     <span className="font-sans text-xs text-on-surface-variant">
                       {new Date(review._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>

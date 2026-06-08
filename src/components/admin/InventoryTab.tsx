@@ -19,13 +19,17 @@ export default function InventoryTab() {
     category: 'suits',
     type: 'bespoke',
     status: 'draft',
-    images: ''
+    images: '' // we keep this for existing URLs
   });
+  
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const generateUploadUrl = useMutation(api.products.generateUploadUrl);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
     setFormData({ name: '', basePrice: 0, description: '', category: 'suits', type: 'bespoke', status: 'draft', images: '' });
+    setImageFiles([]);
     setEditingProductId(null);
     setIsFormOpen(false);
   };
@@ -34,6 +38,23 @@ export default function InventoryTab() {
     e.preventDefault();
     try {
       setIsSubmitting(true);
+      
+      let imageUrls = formData.images ? formData.images.split(',').map(i => i.trim()).filter(i => i) : [];
+
+      if (imageFiles.length > 0) {
+        for (const file of imageFiles) {
+          const postUrl = await generateUploadUrl();
+          const result = await fetch(postUrl, {
+            method: "POST",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          const { storageId } = await result.json();
+          const url = `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${storageId}`;
+          imageUrls.push(url);
+        }
+      }
+
       const productData = {
         name: formData.name,
         basePrice: Number(formData.basePrice),
@@ -41,7 +62,7 @@ export default function InventoryTab() {
         category: formData.category,
         type: formData.type,
         status: formData.status,
-        images: formData.images ? formData.images.split(',').map(i => i.trim()) : [],
+        images: imageUrls,
       };
 
       if (editingProductId) {
@@ -278,7 +299,20 @@ export default function InventoryTab() {
               </div>
 
               <div>
-                <label className="block font-sans text-xs uppercase tracking-widest text-brand-charcoal mb-2">Images (Comma separated URLs)</label>
+                <label className="block font-sans text-xs uppercase tracking-widest text-brand-charcoal mb-2">Upload Images</label>
+                <input 
+                  type="file" 
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setImageFiles(Array.from(e.target.files));
+                    }
+                  }}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-3 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors mb-2"
+                />
+                
+                <label className="block font-sans text-xs uppercase tracking-widest text-brand-charcoal mb-2 mt-4">Or Existing Image URLs (Comma separated)</label>
                 <input 
                   type="text" 
                   value={formData.images}
@@ -286,6 +320,9 @@ export default function InventoryTab() {
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-3 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                   placeholder="https://..."
                 />
+                {imageFiles.length > 0 && (
+                  <p className="text-xs text-brand-charcoal/70 mt-2">{imageFiles.length} file(s) selected for upload</p>
+                )}
               </div>
 
               <div className="pt-8 border-t border-brand-espresso/10 mt-auto">

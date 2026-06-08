@@ -42,9 +42,10 @@ export default function BookAppointment() {
   const handlePaystackSuccessAction = async (reference: { reference: string }) => {
     setIsSubmitting(true);
     try {
+      const { countryCode, ...appointmentData } = formData;
       await bookAppointment({
-        ...formData,
-        phone: `${formData.countryCode} ${formData.phone}`,
+        ...appointmentData,
+        phone: `${countryCode} ${appointmentData.phone}`,
         paystackReference: reference.reference,
         amountPaid: bookingDepositAmount,
       });
@@ -81,9 +82,10 @@ export default function BookAppointment() {
     if (bookingDepositAmount > 0) return; // Prevent double-booking: let Paystack handle it
     setIsSubmitting(true);
     try {
+      const { countryCode, ...appointmentData } = formData;
       await bookAppointment({
-        ...formData,
-        phone: `${formData.countryCode} ${formData.phone}`,
+        ...appointmentData,
+        phone: `${countryCode} ${appointmentData.phone}`,
       });
 
       toast.success("Appointment Confirmed", {

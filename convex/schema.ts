@@ -63,6 +63,8 @@ export default defineSchema({
     ),
     subtotal: v.optional(v.number()),
     shippingFee: v.optional(v.number()),
+    discountAmount: v.optional(v.number()),
+    promoCodeId: v.optional(v.id("promotions")),
     totalAmount: v.number(),
     status: v.string(), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled'
     paymentStatus: v.optional(v.string()), // 'pending', 'paid', 'failed'
@@ -102,6 +104,7 @@ export default defineSchema({
     rating: v.number(),
     comment: v.string(),
     status: v.string(), // 'pending', 'approved', 'rejected'
+    isVerifiedPurchase: v.optional(v.boolean()),
   }).index("by_product", ["productId"]).index("by_status", ["status"]),
 
   subscribers: defineTable({
@@ -112,6 +115,7 @@ export default defineSchema({
   messages: defineTable({
     name: v.string(),
     email: v.string(),
+    phone: v.optional(v.string()),
     subject: v.string(),
     message: v.string(),
     status: v.string(), // 'unread', 'read', 'replied'

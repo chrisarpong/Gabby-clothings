@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation  } from '@/hooks/useConvex';
+import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
@@ -7,12 +7,14 @@ import { toast } from 'sonner';
 export default function PromotionsTab() {
   const promos = useQuery(api.promotions.getPromoCodes) || [];
   const createPromo = useMutation(api.promotions.createPromoCode);
+  const sendBroadcast = useAction(api.email.sendPromoBroadcast);
   
   const [formData, setFormData] = useState({
     code: '',
     discountPercentage: 10,
     isActive: true
   });
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +31,23 @@ export default function PromotionsTab() {
       setFormData({ code: '', discountPercentage: 10, isActive: true });
     } catch (e) {
       toast.error("Failed to create promo code");
+    }
+  };
+
+  const handleBroadcast = async (promoCode: string, discountValue: number) => {
+    const conf = window.confirm(`Are you sure you want to email ALL users about ${promoCode}?`);
+    if (!conf) return;
+    
+    setIsBroadcasting(true);
+    toast.info(`Sending broadcast for ${promoCode}...`);
+    try {
+      const result = await sendBroadcast({ promoCode, discountValue });
+      toast.success(result);
+    } catch (error) {
+      toast.error("Failed to send broadcast");
+      console.error(error);
+    } finally {
+      setIsBroadcasting(false);
     }
   };
 
@@ -61,10 +80,19 @@ export default function PromotionsTab() {
                 <tr key={promo._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
                   <td className="p-4 text-sm font-mono text-brand-espresso">{promo.code}</td>
                   <td className="p-4 text-sm text-brand-charcoal">{promo.discountValue}%</td>
-                  <td className="p-4">
+                  <td className="p-4 flex items-center gap-4">
                     <span className={`text-[10px] tracking-widest uppercase px-2 py-1 ${promo.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {promo.isActive ? 'Active' : 'Inactive'}
                     </span>
+                    {promo.isActive && (
+                      <button 
+                        disabled={isBroadcasting}
+                        onClick={() => handleBroadcast(promo.code, promo.discountValue)}
+                        className="text-[10px] tracking-widest uppercase px-3 py-1 bg-brand-espresso text-white hover:bg-brand-charcoal transition-colors ml-auto disabled:opacity-50"
+                      >
+                        {isBroadcasting ? 'Sending...' : 'Broadcast'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

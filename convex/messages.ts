@@ -6,6 +6,7 @@ export const submitMessage = mutation({
   args: {
     name: v.string(),
     email: v.string(),
+    phone: v.optional(v.string()),
     subject: v.string(),
     message: v.string(),
   },

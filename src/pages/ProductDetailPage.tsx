@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import { useQuery  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { useCartStore } from "../store/cartStore";
@@ -17,6 +17,11 @@ export default function ProductDetailPage() {
   
   const product = useQuery(api.products.getById, { id: id as Id<"products"> });
   const allProducts = useQuery(api.products.getAll);
+  const reviews = useQuery(api.reviews.getByProduct, id ? { productId: id as Id<"products"> } : "skip");
+  
+  const avgRating = reviews?.length 
+    ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length 
+    : 0;
   
   const [activeSize, setActiveSize] = useState("");
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
@@ -35,7 +40,13 @@ export default function ProductDetailPage() {
         return;
       }
       const variant = product.variants.find(v => v.size === activeSize);
-      if (variant) variantSku = variant.sku;
+      if (variant) {
+        if (variant.stock <= 0) {
+          toast.error("Sold out", { description: `Size ${activeSize} is currently out of stock.` });
+          return;
+        }
+        variantSku = variant.sku;
+      }
     }
 
     addItem({
@@ -111,9 +122,21 @@ export default function ProductDetailPage() {
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-primary italic leading-tight mb-4">
               {product.name}
             </h1>
-            <span className="font-label text-xl tracking-wide text-primary mb-8 block">
-              GH₵{(product?.basePrice ?? 0).toFixed(2)}
-            </span>
+            <div className="flex items-center gap-4 mb-8">
+              <span className="font-label text-xl tracking-wide text-primary block">
+                GH₵{(product?.basePrice ?? 0).toFixed(2)}
+              </span>
+              {reviews && reviews.length > 0 && (
+                <div className="flex items-center gap-2 border-l border-outline-variant pl-4">
+                  <div className="flex text-brand-gold">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className={`w-4 h-4 ${star <= Math.round(avgRating) ? 'fill-current' : 'text-outline-variant fill-transparent'}`} />
+                    ))}
+                  </div>
+                  <span className="font-sans text-xs text-on-surface-variant">({reviews.length})</span>
+                </div>
+              )}
+            </div>
 
             <p className="font-sans text-on-surface-variant text-base md:text-lg leading-relaxed mb-12 border-b border-surface-variant pb-12 whitespace-pre-wrap">
               {product.description}
@@ -173,8 +196,8 @@ export default function ProductDetailPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-6 font-sans text-on-surface-variant text-sm leading-relaxed">
-                        100% Pure Linen sourced locally. Hand wash cold with mild detergent. Do not bleach. Line dry in shade. Warm iron if needed.
+                      <p className="pb-6 font-sans text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
+                        {product.productInfo || "100% Pure Linen sourced locally. Hand wash cold with mild detergent. Do not bleach. Line dry in shade. Warm iron if needed."}
                       </p>
                     </motion.div>
                   )}
@@ -197,8 +220,8 @@ export default function ProductDetailPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-6 font-sans text-on-surface-variant text-sm leading-relaxed">
-                        Delivery within Accra in 2-3 days. Nationwide shipping available. Returns accepted within 14 days of delivery for standard sizes. Custom fit items are final sale.
+                      <p className="pb-6 font-sans text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
+                        {product.shippingInfo || product.returnPolicy || "Delivery within Accra in 2-3 days. Nationwide shipping available. Returns accepted within 14 days of delivery for standard sizes. Custom fit items are final sale."}
                       </p>
                     </motion.div>
                   )}

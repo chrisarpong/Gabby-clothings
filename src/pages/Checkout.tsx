@@ -4,6 +4,7 @@ import { Lock, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../store/cartStore";
 import { useQuery, useAction } from "@/hooks/useConvex";
+import { useConvex } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import { PaystackButton } from "react-paystack";
@@ -24,6 +25,11 @@ export default function Checkout() {
     country: "",
   });
 
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ id: string, type: string, value: number, code: string } | null>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const convex = useConvex();
+
   if (items.length === 0) {
     navigate("/cart");
     return null;
@@ -35,8 +41,39 @@ export default function Checkout() {
   }).filter(i => i.product);
 
   const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
+  
+  let discountAmount = 0;
+  if (appliedPromo) {
+    if (appliedPromo.type === "percentage") {
+      discountAmount = subtotal * (appliedPromo.value / 100);
+    } else if (appliedPromo.type === "fixed") {
+      discountAmount = appliedPromo.value;
+    }
+  }
+
   const shippingAmount = 150.00;
-  const totalAmount = subtotal + shippingAmount;
+  const totalAmount = subtotal - discountAmount + shippingAmount;
+
+  const handleApplyPromo = async () => {
+    if (!promoCodeInput.trim()) return;
+    setIsApplyingPromo(true);
+    try {
+      const result = await convex.query(api.promotions.validateCode, { code: promoCodeInput.trim() });
+      setAppliedPromo({
+        id: result._id,
+        type: result.discountType,
+        value: result.discountValue,
+        code: promoCodeInput.trim().toUpperCase(),
+      });
+      toast.success("Promo code applied!");
+      setPromoCodeInput("");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to apply promo code");
+      setAppliedPromo(null);
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
 
   const createOrder = useAction(api.orders.verifyAndCreate);
 
@@ -62,7 +99,8 @@ export default function Checkout() {
         })),
         shippingAmount,
         paystackReference: reference.reference,
-        shippingAddress
+        shippingAddress,
+        promoCodeId: appliedPromo?.id as any,
       });
 
       clearCart();
@@ -171,9 +209,35 @@ export default function Checkout() {
                   <span>Subtotal</span>
                   <span className="text-primary tracking-widest font-label">GH₵{subtotal.toFixed(2)}</span>
                 </div>
+                {appliedPromo && (
+                  <div className="flex justify-between items-center text-green-600">
+                    <span>Discount ({appliedPromo.code})</span>
+                    <span className="font-label tracking-widest">-GH₵{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span>Shipping</span>
                   <span>GH₵{shippingAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Promo Code Section */}
+              <div className="mb-8">
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Promo Code" 
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value)}
+                    className="flex-1 bg-surface border border-outline-variant px-4 py-3 font-sans text-xs focus:outline-none focus:border-primary uppercase placeholder:normal-case"
+                  />
+                  <button 
+                    onClick={handleApplyPromo}
+                    disabled={isApplyingPromo || !promoCodeInput.trim()}
+                    className="bg-transparent border border-outline-variant text-primary px-6 py-3 font-label text-[10px] tracking-widest uppercase hover:bg-surface-tint hover:text-on-primary transition-colors disabled:opacity-50"
+                  >
+                    {isApplyingPromo ? "..." : "Apply"}
+                  </button>
                 </div>
               </div>
 

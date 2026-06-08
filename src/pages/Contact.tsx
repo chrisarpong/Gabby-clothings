@@ -19,10 +19,11 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const { countryCode, ...messageData } = formData;
       await submitMessage({
-        ...formData,
-        phone: formData.phone ? `${formData.countryCode} ${formData.phone}` : undefined
-      } as any);
+        ...messageData,
+        phone: messageData.phone ? `${countryCode} ${messageData.phone}` : undefined
+      });
       toast.success("Message sent successfully!", { description: "We will get back to you shortly." });
       setFormData({ name: "", email: "", countryCode: "+233", phone: "", subject: "", message: "" });
     } catch (err) {
@@ -126,9 +127,6 @@ export default function Contact() {
                   required
                   className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary py-1"
                 />
-              </div>
-              </div>
-
               <div className="flex flex-col gap-2">
                 <label className="font-label text-[10px] tracking-widest text-outline uppercase">
                   Phone Number (Optional)

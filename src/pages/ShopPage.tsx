@@ -6,6 +6,9 @@ import { api } from "../../convex/_generated/api";
 import { ProductSkeleton } from "../components/ProductSkeleton";
 import { useCartStore } from "../store/cartStore";
 import { toast } from "sonner";
+import { Heart } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
+import { useMutation } from "@/hooks/useConvex";
 
 const RevealDiv: React.FC<{ children: React.ReactNode, className?: string, delay?: string }> = ({ children, className = "", delay = "" }) => {
   const { elementRef, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -44,8 +47,11 @@ export default function ShopPage() {
   const categories = ["All", "Outerwear", "Suiting", "Eveningwear", "Accessories", "Kuid", "Kaftans", "Agbadas"]; 
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
+  const { user } = useUser();
+  const wishlist = useQuery(api.wishlists.getUserWishlist);
+  const toggleWishlist = useMutation(api.wishlists.toggleItem);
 
-  const allProducts = useQuery(api.products.getAll);
+  const allProducts = useQuery(api.products.getActive);
   const isLoading = allProducts === undefined;
 
   const filteredProducts = isLoading ? [] : activeCategory === "All" 
@@ -67,7 +73,13 @@ export default function ShopPage() {
     
     let variantSku = undefined;
     if (product.variants && product.variants.length > 0) {
-      variantSku = product.variants[0].sku;
+      // Find first variant with stock > 0
+      const availableVariant = product.variants.find((v: any) => v.stock > 0);
+      if (!availableVariant) {
+        toast.error("Sold out", { description: "This item is currently out of stock." });
+        return;
+      }
+      variantSku = availableVariant.sku;
     }
 
     addItem({
@@ -77,6 +89,20 @@ export default function ShopPage() {
     });
 
     toast.success("Added to cart");
+  };
+
+  const handleToggleWishlist = async (e: React.MouseEvent, productId: any) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Please sign in to manage your wishlist.");
+      return;
+    }
+    try {
+      await toggleWishlist({ productId });
+      toast.success("Wishlist updated!");
+    } catch (err) {
+      toast.error("Failed to update wishlist");
+    }
   };
 
   return (
@@ -132,6 +158,15 @@ export default function ShopPage() {
               <div className="group cursor-pointer flex flex-col h-full" onClick={() => navigate(`/product/${product._id}`)}>
                 <div className="relative aspect-[3/4] mb-6 bg-surface-container overflow-hidden">
                   <ProductImage src={product?.images?.[0] || "/assets/1.jpg"} alt={product?.name || "Product"} />
+                  {/* Wishlist Button */}
+                  <button 
+                    onClick={(e) => handleToggleWishlist(e, product._id)}
+                    className="absolute top-4 right-4 z-20 p-2 bg-surface/50 backdrop-blur-sm rounded-full hover:bg-surface transition-colors"
+                  >
+                    <Heart 
+                      className={`w-5 h-5 transition-colors ${wishlist?.some((p: any) => p._id === product._id) ? 'fill-red-500 text-red-500' : 'text-primary'}`} 
+                    />
+                  </button>
                   {/* Quick Add Button */}
                   <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
                     <button 
