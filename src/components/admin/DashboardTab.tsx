@@ -1,10 +1,46 @@
 import React from 'react';
-import { useQuery } from '@/hooks/useConvex';
+import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
-import { TrendingUp, Users, ShoppingBag, Calendar, Activity, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Users, ShoppingBag, Calendar, Activity, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function DashboardTab() {
+// Error boundary to catch query errors gracefully
+class DashboardErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message || 'An unexpected error occurred' };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 font-sans flex flex-col items-center justify-center min-h-[400px] text-center">
+          <AlertTriangle className="w-10 h-10 text-amber-500 mb-4" />
+          <h3 className="font-serif text-xl text-primary mb-2">Dashboard Unavailable</h3>
+          <p className="text-sm text-on-surface-variant max-w-md mb-6">
+            {this.state.error.includes('Admin') || this.state.error.includes('Unauth')
+              ? 'Your session may have expired or your admin permissions are still syncing. Please refresh the page.'
+              : 'Something went wrong while loading the dashboard. Please refresh the page.'}
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: '' }); window.location.reload(); }}
+            className="px-6 py-2.5 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function DashboardContent() {
   const stats = useQuery(api.analytics.getDashboardStats);
 
   if (stats === undefined) {
@@ -119,5 +155,13 @@ export default function DashboardTab() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardTab() {
+  return (
+    <DashboardErrorBoundary>
+      <DashboardContent />
+    </DashboardErrorBoundary>
   );
 }
