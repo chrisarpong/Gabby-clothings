@@ -8,6 +8,7 @@ import { PaystackButton } from "react-paystack";
 
 export default function BookAppointment() {
   const bookAppointment = useMutation(api.appointments.book);
+  const updateAppointment = useMutation(api.appointments.updateDetails);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,9 +19,14 @@ export default function BookAppointment() {
     time: "",
     garmentType: "",
     notes: "",
+    occasionType: "",
+    targetEventDate: "",
+    ghanaPostGps: "",
+    landmarks: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdAppointmentId, setCreatedAppointmentId] = useState<any>(null);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -42,19 +48,18 @@ export default function BookAppointment() {
   const handlePaystackSuccessAction = async (reference: { reference: string }) => {
     setIsSubmitting(true);
     try {
-      const { countryCode, ...appointmentData } = formData;
-      await bookAppointment({
-        ...appointmentData,
-        phone: `${countryCode} ${appointmentData.phone}`,
+      await updateAppointment({
+        appointmentId: createdAppointmentId,
+        paymentStatus: 'paid',
         paystackReference: reference.reference,
-        amountPaid: bookingDepositAmount,
       });
       toast.success("Appointment Confirmed", {
         description: "We've received your request and deposit. A confirmation email has been sent."
       });
-      setFormData({ name: "", email: "", countryCode: "+233", phone: "", date: "", time: "", garmentType: "", notes: "" });
+      setCreatedAppointmentId(null);
+      setFormData({ name: "", email: "", countryCode: "+233", phone: "", date: "", time: "", garmentType: "", notes: "", occasionType: "", targetEventDate: "", ghanaPostGps: "", landmarks: "" });
     } catch (error) {
-       toast.error("Failed to book appointment", { description: String(error) });
+       toast.error("Failed to confirm payment", { description: String(error) });
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +76,7 @@ export default function BookAppointment() {
       name: formData.name,
       custom_fields: []
     },
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6",
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
     text: `PAY DEPOSIT (GH₵${bookingDepositAmount})`,
     onSuccess: handlePaystackSuccessAction,
     onClose: handlePaystackCloseAction,
@@ -79,29 +84,23 @@ export default function BookAppointment() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (bookingDepositAmount > 0) return; // Prevent double-booking: let Paystack handle it
     setIsSubmitting(true);
     try {
       const { countryCode, ...appointmentData } = formData;
-      await bookAppointment({
+      const aptId = await bookAppointment({
         ...appointmentData,
         phone: `${countryCode} ${appointmentData.phone}`,
+        paymentStatus: bookingDepositAmount > 0 ? "pending" : undefined,
       });
 
-      toast.success("Appointment Confirmed", {
-        description: "We've received your request and will contact you shortly."
-      });
-      
-      setFormData({
-        name: "",
-        email: "",
-        countryCode: "+233",
-        phone: "",
-        date: "",
-        time: "",
-        garmentType: "",
-        notes: "",
-      });
+      if (bookingDepositAmount > 0) {
+        setCreatedAppointmentId(aptId);
+      } else {
+        toast.success("Appointment Confirmed", {
+          description: "We've received your request and will contact you shortly."
+        });
+        setFormData({ name: "", email: "", countryCode: "+233", phone: "", date: "", time: "", garmentType: "", notes: "", occasionType: "", targetEventDate: "", ghanaPostGps: "", landmarks: "" });
+      }
     } catch (error) {
        toast.error("Failed to book appointment", { description: String(error) });
     } finally {
@@ -131,6 +130,26 @@ export default function BookAppointment() {
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
           
+          {createdAppointmentId ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center gap-6">
+              <div className="w-16 h-16 bg-surface-variant rounded-full flex items-center justify-center mb-4 text-primary">
+                <Clock className="w-8 h-8" />
+              </div>
+              <h2 className="font-serif text-3xl text-primary">Awaiting Payment</h2>
+              <p className="font-sans text-on-surface-variant max-w-md">
+                Your appointment details are saved securely. To confirm your slot, a deposit of <strong>GH₵{bookingDepositAmount}</strong> is required.
+              </p>
+              <div className="w-full md:w-auto mt-4">
+                <PaystackButton 
+                  {...paystackProps} 
+                  className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
+                />
+              </div>
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant/50 mt-4 max-w-sm">
+                If your mobile money prompt timed out, simply click the button above to retry.
+              </p>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Personal Details */}
@@ -195,6 +214,35 @@ export default function BookAppointment() {
                     />
                   </div>
                 </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                    GhanaPost GPS <span className="text-primary/70 ml-1">(Highly Recommended)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="ghanaPostGps"
+                    value={formData.ghanaPostGps}
+                    onChange={handleFormChange}
+                    className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                    placeholder="e.g. GA-123-4567"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                    Landmarks / Directions (Optional)
+                  </label>
+                  <textarea
+                    name="landmarks"
+                    rows={2}
+                    value={formData.landmarks}
+                    onChange={handleFormChange}
+                    className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary resize-none"
+                    placeholder="e.g. Opposite the total filling station, blue gate on the left"
+                  ></textarea>
+                </div>
+
               </div>
 
               {/* Appointment Details */}
@@ -262,6 +310,42 @@ export default function BookAppointment() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                      Occasion (Optional)
+                    </label>
+                    <select
+                      name="occasionType"
+                      value={formData.occasionType}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary appearance-none rounded-none cursor-pointer"
+                    >
+                      <option value="">None / General</option>
+                      <option value="Wedding">Wedding</option>
+                      <option value="Funeral">Funeral</option>
+                      <option value="Thanksgiving">Thanksgiving</option>
+                      <option value="Eid">Eid</option>
+                      <option value="Graduation">Graduation</option>
+                      <option value="December in GH">December in GH</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                      Target Event Date <span className="text-primary/70 ml-1">(Highly Recommended)</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="targetEventDate"
+                      min={new Date().toISOString().split('T')[0]}
+                      value={formData.targetEventDate}
+                      onChange={handleFormChange}
+                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-2">
                   <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase flex items-center gap-2">
                     <MessageSquare className="w-3 h-3" /> Additional Notes
@@ -292,26 +376,18 @@ export default function BookAppointment() {
                  >
                    FILL ALL REQUIRED FIELDS
                  </button>
-              ) : bookingDepositAmount > 0 ? (
-                <div className="w-full md:w-auto">
-                  <PaystackButton 
-                    {...paystackProps} 
-                    // @ts-ignore
-                    type="button"
-                    className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
-                  />
-                </div>
               ) : (
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto"
                 >
-                  {isSubmitting ? "Confirming..." : "Confirm Appointment"}
+                  {isSubmitting ? "Processing..." : bookingDepositAmount > 0 ? "Proceed to Payment" : "Confirm Appointment"}
                 </button>
               )}
             </div>
           </form>
+          )}
         </motion.div>
       </div>
     </main>

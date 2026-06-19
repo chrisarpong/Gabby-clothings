@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
+import { useQuery } from "@/hooks/useConvex";
+import { api } from "../../convex/_generated/api";
 
-const faqs = [
+const defaultFaqs = [
   {
     question: "Do you offer international shipping?",
     answer: "Yes, we ship globally via express couriers. Delivery times range from 3-7 business days depending on your location. Customs duties may apply and are the responsibility of the customer."
@@ -23,6 +25,11 @@ const faqs = [
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const contentBlock = useQuery(api.content.get, { key: "faq_items" });
+  
+  const faqs = (contentBlock?.data && Array.isArray(contentBlock.data) && contentBlock.data.length > 0) 
+    ? contentBlock.data 
+    : defaultFaqs;
 
   return (
     <section id="faq" className="py-24 px-5 md:px-20 bg-surface-container-lowest">

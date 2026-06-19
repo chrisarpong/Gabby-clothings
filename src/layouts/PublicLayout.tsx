@@ -24,7 +24,7 @@ export default function PublicLayout() {
 
   return (
     <div className="bg-surface text-on-surface font-sans antialiased selection:bg-primary/20 flex flex-col min-h-screen">
-      {isBannerActive?.value === true && announcementBannerText?.value && (
+      {(isBannerActive?.value === true || isBannerActive?.value === 'true') && announcementBannerText?.value && (
         <div className="bg-primary text-on-primary text-xs tracking-widest uppercase text-center py-2 px-4 font-label">
           {announcementBannerText.value}
         </div>

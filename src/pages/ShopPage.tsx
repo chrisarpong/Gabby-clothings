@@ -44,19 +44,28 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [visibleCount, setVisibleCount] = useState(8);
-  const categories = ["All", "Outerwear", "Suiting", "Eveningwear", "Accessories", "Kuid", "Kaftans", "Agbadas"]; 
+  const allProducts = useQuery(api.products.getActive);
+  const catalogs = useQuery(api.catalogs.getAll, {}) || [];
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
   const { user } = useUser();
   const wishlist = useQuery(api.wishlists.getUserWishlist);
   const toggleWishlist = useMutation(api.wishlists.toggleItem);
-
-  const allProducts = useQuery(api.products.getActive);
   const isLoading = allProducts === undefined;
+
+  const categories = Array.from(new Set([
+    "All", 
+    ...catalogs.map((c: any) => c.name), 
+    "Outerwear", "Suiting", "Eveningwear", "Accessories", "Kaftans", "Agbadas"
+  ])); 
 
   const filteredProducts = isLoading ? [] : activeCategory === "All" 
     ? allProducts 
-    : allProducts.filter(p => p.category.toLowerCase() === activeCategory.toLowerCase());
+    : allProducts.filter((p: any) => {
+        const catObj = catalogs.find((c: any) => c.name === activeCategory);
+        if (catObj && p.catalogIds?.includes(catObj._id)) return true;
+        return p.category?.toLowerCase() === activeCategory.toLowerCase();
+      });
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 

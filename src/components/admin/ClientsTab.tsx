@@ -75,13 +75,37 @@ export default function ClientsTab() {
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-brand-charcoal/50 mb-4 border-b border-brand-espresso/10 pb-2">Saved Measurements</p>
                 {selectedClient.savedMeasurements ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(selectedClient.savedMeasurements).map(([key, val]) => (
-                      <div key={key} className="bg-brand-bone shadow-sm border border-brand-espresso/5 p-3">
-                        <span className="text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">{key}</span>
-                        <span className="text-sm text-brand-espresso font-medium">{val ? `${val}"` : 'N/A'}</span>
-                      </div>
+                  <div className="flex flex-col gap-6">
+                    {['top', 'bottom', 'outerwear'].map(category => (
+                      selectedClient.savedMeasurements[category] && Object.keys(selectedClient.savedMeasurements[category]).length > 0 && (
+                        <div key={category}>
+                          <h4 className="text-[10px] tracking-widest uppercase text-brand-espresso mb-3 border-b border-brand-espresso/10 pb-1">{category}</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            {(Object.entries(selectedClient.savedMeasurements[category]) as [string, string][]).map(([key, val]) => (
+                              val && (
+                                <div key={key} className="bg-brand-bone shadow-sm border border-brand-espresso/5 p-3">
+                                  <span className="text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                  <span className="text-sm text-brand-espresso font-medium">{String(val)}"{' '}</span>
+                                </div>
+                              )
+                            ))}
+                          </div>
+                        </div>
+                      )
                     ))}
+                    {/* Fallback for legacy flat measurements */}
+                    {!selectedClient.savedMeasurements.top && !selectedClient.savedMeasurements.bottom && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {Object.entries(selectedClient.savedMeasurements).map(([key, val]) => (
+                          typeof val !== 'object' && val && (
+                            <div key={key} className="bg-brand-bone shadow-sm border border-brand-espresso/5 p-3">
+                              <span className="text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">{key}</span>
+                              <span className="text-sm text-brand-espresso font-medium">{String(val)}"{' '}</span>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-brand-charcoal/50 italic">No measurements saved for this client.</p>

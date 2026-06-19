@@ -7,6 +7,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Calendar as CalendarIcon, List, Download, Printer } from 'lucide-react';
+import AppointmentDrawer from './AppointmentDrawer';
 
 const locales = {
   'en-US': enUS,
@@ -24,7 +25,10 @@ export default function AdminAppointmentsTab() {
   const appointments = useQuery(api.appointments.getUpcoming);
   const updateStatus = useMutation(api.appointments.updateStatus);
   const assignTailor = useMutation(api.appointments.assignTailor);
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedApt, setSelectedApt] = useState<any | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState<any>('month');
 
   const exportToCSV = () => {
     if (!appointments) return;
@@ -101,6 +105,36 @@ export default function AdminAppointmentsTab() {
     };
   });
 
+  const CustomToolbar = (toolbar: any) => {
+    const goToBack = () => toolbar.onNavigate('PREV');
+    const goToNext = () => toolbar.onNavigate('NEXT');
+    const goToCurrent = () => toolbar.onNavigate('TODAY');
+
+    return (
+      <div className="flex justify-between items-center mb-6 bg-brand-bone/30 p-2 border border-brand-espresso/10 rounded">
+        <div className="flex gap-1">
+          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-brand-charcoal/20 text-brand-charcoal hover:border-brand-espresso hover:text-brand-espresso transition-colors bg-white shadow-sm" onClick={goToBack}>Prev</button>
+          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-brand-charcoal/20 text-brand-charcoal hover:border-brand-espresso hover:text-brand-espresso transition-colors bg-white shadow-sm" onClick={goToCurrent}>Today</button>
+          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-brand-charcoal/20 text-brand-charcoal hover:border-brand-espresso hover:text-brand-espresso transition-colors bg-white shadow-sm" onClick={goToNext}>Next</button>
+        </div>
+        <div className="text-xl font-serif text-brand-espresso capitalize">
+          {toolbar.label}
+        </div>
+        <div className="flex gap-1 bg-white p-1 border border-brand-charcoal/10 rounded shadow-sm">
+          {['month', 'week', 'day'].map(v => (
+            <button 
+              key={v}
+              className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-colors rounded ${toolbar.view === v ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+              onClick={() => toolbar.onView(v)}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-8 font-sans text-brand-charcoal h-full flex flex-col">
       <div className="flex justify-between items-end mb-8 border-b border-brand-charcoal/10 pb-4">
@@ -143,11 +177,16 @@ export default function AdminAppointmentsTab() {
           <div className="p-4 h-full min-h-[600px]">
             <style>
               {`
-                .rbc-calendar { font-family: inherit; }
-                .rbc-event { background-color: #3b2f2f; }
-                .rbc-today { background-color: #f8f6f0; }
-                .rbc-toolbar button { font-family: inherit; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
-                .rbc-toolbar button.rbc-active { background-color: #3b2f2f; color: white; border-color: #3b2f2f; }
+                .rbc-calendar { font-family: inherit; border: none; }
+                .rbc-month-view { border: 1px solid rgba(74, 60, 49, 0.1); border-radius: 4px; overflow: hidden; }
+                .rbc-header { padding: 10px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; color: #666; border-bottom: 1px solid rgba(74, 60, 49, 0.1); }
+                .rbc-month-row { border-top: 1px solid rgba(74, 60, 49, 0.1); }
+                .rbc-day-bg + .rbc-day-bg { border-left: 1px solid rgba(74, 60, 49, 0.1); }
+                .rbc-date-cell { padding-right: 8px; padding-top: 4px; font-size: 12px; font-weight: 500; color: #4a3c31; }
+                .rbc-event { background-color: #3b2f2f; border-radius: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 6px; }
+                .rbc-today { background-color: #fcfbf9; }
+                .rbc-off-range-bg { background-color: #f9f9f9; }
+                .rbc-toolbar { display: none; } /* Hide default toolbar as we use CustomToolbar */
               `}
             </style>
             <Calendar
@@ -157,8 +196,15 @@ export default function AdminAppointmentsTab() {
               endAccessor="end"
               style={{ height: '100%' }}
               views={['month', 'week', 'day']}
+              date={currentDate}
+              onNavigate={(date) => setCurrentDate(date)}
+              view={currentView}
+              onView={(view) => setCurrentView(view)}
+              components={{
+                toolbar: CustomToolbar
+              }}
               onSelectEvent={(event: any) => {
-                toast(`${event.title} at ${event.resource.time || 'All Day'} - Status: ${event.resource.status}`);
+                setSelectedApt(event.resource);
               }}
             />
           </div>
@@ -185,7 +231,11 @@ export default function AdminAppointmentsTab() {
                   </tr>
                 )}
                 {appointments.map((apt: any) => (
-                  <tr key={apt._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
+                  <tr 
+                    key={apt._id} 
+                    className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedApt(apt)}
+                  >
                     <td className="p-4">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-brand-espresso">{apt.name || apt.clientName}</span>
@@ -224,6 +274,7 @@ export default function AdminAppointmentsTab() {
                         type="text" 
                         placeholder="Assign Tailor..." 
                         defaultValue={apt.assignedTo || ""}
+                        onClick={(e) => e.stopPropagation()}
                         onBlur={(e) => handleAssignTailor(apt._id, e.target.value)}
                         className="bg-transparent border-b border-brand-charcoal/20 text-xs py-1 focus:outline-none focus:border-brand-espresso transition-colors print:border-none"
                       />
@@ -254,13 +305,13 @@ export default function AdminAppointmentsTab() {
                       {apt.status === 'pending' && (
                         <>
                           <button 
-                            onClick={() => handleStatusUpdate(apt._id, 'confirmed')}
+                            onClick={(e) => { e.stopPropagation(); handleStatusUpdate(apt._id, 'confirmed'); }}
                             className="text-[10px] tracking-widest uppercase py-1 px-3 border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
                           >
                             Approve
                           </button>
                           <button 
-                            onClick={() => handleStatusUpdate(apt._id, 'cancelled')}
+                            onClick={(e) => { e.stopPropagation(); handleStatusUpdate(apt._id, 'cancelled'); }}
                             className="text-[10px] tracking-widest uppercase py-1 px-3 border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
                           >
                             Decline
@@ -269,7 +320,7 @@ export default function AdminAppointmentsTab() {
                       )}
                       {apt.status === 'confirmed' && (
                         <button 
-                          onClick={() => handleStatusUpdate(apt._id, 'completed')}
+                          onClick={(e) => { e.stopPropagation(); handleStatusUpdate(apt._id, 'completed'); }}
                           className="text-[10px] tracking-widest uppercase py-1 px-3 border border-brand-espresso text-brand-espresso hover:bg-brand-espresso hover:text-white transition-colors"
                         >
                           Mark Done
@@ -283,6 +334,11 @@ export default function AdminAppointmentsTab() {
           </div>
         )}
       </div>
+
+      <AppointmentDrawer 
+        appointment={selectedApt} 
+        onClose={() => setSelectedApt(null)} 
+      />
     </div>
   );
 }

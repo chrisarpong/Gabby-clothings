@@ -1,5 +1,5 @@
 import { checkAdmin } from "./authHelper";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getAll = query({
@@ -12,9 +12,20 @@ export const getAll = query({
   },
 });
 
+export const getUserByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId)).first();
+  }
+});
+
 export const getAllEmails = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
     // Used by internal actions to get mailing list
     const users = await ctx.db.query("users").collect();
     return users.map(u => ({ email: u.email, name: u.firstName || "Valued Client" })).filter(u => u.email);
@@ -63,15 +74,7 @@ export const syncUser = mutation({
 export const updateMeasurements = mutation({
   args: {
     clerkId: v.string(),
-    measurements: v.object({
-      chest: v.optional(v.number()),
-      waist: v.optional(v.number()),
-      hips: v.optional(v.number()),
-      inseam: v.optional(v.number()),
-      shoulders: v.optional(v.number()),
-      height: v.optional(v.number()),
-      weight: v.optional(v.number()),
-    }),
+    measurements: v.any(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -122,28 +125,6 @@ export const getCurrentUser = query({
   },
 });
 
-export const makeMeAdmin = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    
-    // For development/initial setup: allow the first user to become admin, 
-    // or allow anyone to become admin if there are NO admins yet.
-    const admins = await ctx.db.query("users").filter(q => q.eq(q.field("role"), "admin")).collect();
-    
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) throw new Error("User record not synced yet. Try logging out and back in.");
-
-    if (admins.length > 0 && user.role !== "admin") {
-       throw new Error("An admin already exists. You cannot make yourself admin.");
-    }
-
-    await ctx.db.patch(user._id, { role: "admin" });
-    return "You are now an admin!";
-  }
-});
+// NOTE: Admin provisioning is done directly via the Convex Dashboard.
+// Go to Data → users table → find your user → set role to "admin".
+// There is no callable mutation for this to prevent privilege escalation.

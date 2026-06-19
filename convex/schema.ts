@@ -19,8 +19,9 @@ export default defineSchema({
     description: v.string(),
     images: v.array(v.string()),
     category: v.string(), 
-    type: v.string(), // 'bespoke' | 'ready_to_wear'
+    type: v.string(), // 'bespoke' | 'ready_to_wear' | 'showcase_template'
     status: v.optional(v.string()), // 'active' | 'draft' | 'archived'
+    fabricRequirement: v.optional(v.string()), // e.g. "4.5 yards"
     inStock: v.optional(v.boolean()),
     productInfo: v.optional(v.string()),
     returnPolicy: v.optional(v.string()),
@@ -96,6 +97,15 @@ export default defineSchema({
     googleEventId: v.optional(v.string()), // ID from Google Calendar
     assignedTo: v.optional(v.string()), // ID or name of the assigned tailor
     referenceImages: v.optional(v.array(v.id("_storage"))),
+    appointmentType: v.optional(v.string()), // 'Virtual Consultation', 'In-Person Measurement', 'First Fitting', 'Final Fitting'
+    linkedOrderId: v.optional(v.id("orders")),
+    fabricAndStyling: v.optional(v.any()), // JSON object for fabrics, color codes, button preferences
+    adminNotes: v.optional(v.string()), // Tailor notes
+    measurementsCaptured: v.optional(v.boolean()),
+    occasionType: v.optional(v.string()), // 'Wedding', 'Funeral', 'Graduation', etc
+    targetEventDate: v.optional(v.string()), // Actual event date for triage
+    ghanaPostGps: v.optional(v.string()),
+    landmarks: v.optional(v.string()),
   }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]),
 
   reviews: defineTable({
@@ -140,4 +150,32 @@ export default defineSchema({
     status: v.string(), // 'pending', 'sent'
     type: v.string(), // '24h_reminder'
   }).index("by_status", ["status"]),
+
+  contentBlocks: defineTable({
+    key: v.string(), // e.g., "home_hero", "faq_items", "legal_privacy"
+    data: v.any(), // Flexible JSON payload containing text, array lists, or image storage IDs
+    status: v.optional(v.string()), // 'draft' | 'published'
+    seo: v.optional(v.object({
+      metaTitle: v.optional(v.string()),
+      metaDescription: v.optional(v.string()),
+      ogImageId: v.optional(v.string()),
+    })),
+    updatedAt: v.optional(v.number()),
+    updatedBy: v.optional(v.string()), // clerkId of admin
+  }).index("by_key", ["key"]),
+
+  catalogs: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    coverImageId: v.optional(v.string()), // Optional image for the catalog
+    status: v.string(), // 'active', 'archived'
+    slug: v.string(), // URL friendly name
+  }).index("by_slug", ["slug"]).index("by_status", ["status"]),
+
+  rateLimits: defineTable({
+    identifier: v.string(),
+    endpoint: v.string(),
+    count: v.number(),
+    lastAttempt: v.number(),
+  }).index("by_identifier_endpoint", ["identifier", "endpoint"]),
 });

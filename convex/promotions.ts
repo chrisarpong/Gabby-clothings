@@ -1,4 +1,4 @@
-import { checkAdmin } from "./authHelper";
+import { checkAdmin, checkRateLimit } from "./authHelper";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -28,30 +28,28 @@ export const createPromoCode = mutation({
   }
 });
 
-export const validateCode = query({
-  args: { code: v.string() },
+export const applyPromoCode = mutation({
+  args: { code: v.string(), subtotal: v.number() },
   handler: async (ctx, args) => {
+    await checkRateLimit(ctx, "applyPromoCode", 5, 60000);
+    const now = Date.now();
+
     const promo = await ctx.db
       .query("promotions")
-      .filter((q) => q.eq(q.field("code"), args.code))
+      .withIndex("by_code", (q) => q.eq("code", args.code))
       .first();
 
-    if (!promo) {
-      throw new Error("Invalid promo code");
+    if (!promo || !promo.isActive || (promo.validUntil && now > promo.validUntil)) {
+      return { valid: false, discountAmount: 0 };
     }
 
-    if (!promo.isActive) {
-      throw new Error("This promo code is no longer active");
+    let discountAmount = 0;
+    if (promo.discountType === "percentage") {
+      discountAmount = args.subtotal * (promo.discountValue / 100);
+    } else if (promo.discountType === "fixed") {
+      discountAmount = promo.discountValue;
     }
 
-    if (promo.validUntil && Date.now() > promo.validUntil) {
-      throw new Error("This promo code has expired");
-    }
-
-    return {
-      _id: promo._id,
-      discountType: promo.discountType,
-      discountValue: promo.discountValue,
-    };
+    return { valid: true, discountAmount };
   }
 });

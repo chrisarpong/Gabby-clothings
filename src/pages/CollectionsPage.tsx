@@ -1,8 +1,20 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@/hooks/useConvex";
+import { api } from "../../convex/_generated/api";
 
 export default function CollectionsPage() {
-  const collections = [
+  const catalogs = useQuery(api.catalogs.getAll, {}) || [];
+  
+  // Transform convex catalogs to local structure or fallback
+  const collections = catalogs.length > 0 ? catalogs.map((cat: any) => ({
+    title: cat.name,
+    desc: cat.description || '',
+    slug: cat.slug,
+    img: cat.coverImageId 
+      ? `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${cat.coverImageId}` 
+      : "/assets/18.jpeg"
+  })) : [
     {
       title: "Heritage Kaftans",
       desc: "Fluid silhouettes honoring traditional craftsmanship with modern textiles.",

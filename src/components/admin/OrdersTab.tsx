@@ -23,8 +23,8 @@ export default function OrdersTab() {
     <div className="p-8 font-sans text-brand-charcoal h-full flex flex-col">
       <div className="flex justify-between items-end mb-8 border-b border-brand-charcoal/10 pb-4">
         <div>
-          <h2 className="font-serif text-3xl text-brand-espresso mb-1">Orders</h2>
-          <p className="text-sm text-brand-charcoal/70">Manage and track all customer commissions.</p>
+          <h2 className="font-serif text-3xl text-brand-espresso mb-1">Commissions</h2>
+          <p className="text-sm text-brand-charcoal/70">Manage and track all customer commissions (orders).</p>
         </div>
       </div>
       
@@ -32,7 +32,7 @@ export default function OrdersTab() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-brand-bone border-b border-brand-espresso/10">
-              <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Order ID</th>
+              <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Project ID</th>
               <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Customer</th>
               <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Date</th>
               <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Total</th>
@@ -42,7 +42,7 @@ export default function OrdersTab() {
           <tbody>
             {orders.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No orders found.</td>
+                <td colSpan={5} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No commissions found.</td>
               </tr>
             )}
             {orders.map((order: Doc<"orders">) => (
@@ -63,9 +63,12 @@ export default function OrdersTab() {
                     className="bg-transparent border border-brand-espresso/20 text-xs font-sans p-2 rounded-none focus:outline-none focus:border-brand-espresso"
                   >
                     <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
+                    <option value="fabric_sourced">Fabric Sourced</option>
+                    <option value="cutting_phase">Cutting Phase</option>
+                    <option value="first_fitting_ready">First Fitting Ready</option>
+                    <option value="final_adjustments">Final Adjustments</option>
+                    <option value="ready_for_pickup">Ready for Pickup</option>
+                    <option value="dispatched">Dispatched</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </td>

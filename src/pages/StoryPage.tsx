@@ -1,6 +1,22 @@
 import { motion } from "framer-motion";
+import { useQuery } from "@/hooks/useConvex";
+import { api } from "../../convex/_generated/api";
+import ReactMarkdown from "react-markdown";
 
 export default function StoryPage() {
+  const contentBlock = useQuery(api.content.get, { key: "story_page" });
+  const data = contentBlock?.data || {};
+
+  const coverImageUrl = data.imageId 
+    ? `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${data.imageId}` 
+    : "/assets/17.jpeg";
+
+  const heading = data.heading || "Obsessed with the Architecture of the Human Form.";
+  const markdownBody = data.markdownBody || `
+Gabby's journey began in the bustling markets of Accra, surrounded by a kaleidoscope of printed wax fabrics and the rhythmic hum of vintage sewing machines. He learned early that a garment must endure both the physical climate and the test of time.
+
+After decades of honing the craft, the dedication remains the same: an absolute obsession with perfect fit and form. Every seam is intentional, every dart calculated. It is a quiet rebellion against mass production—a return to the intimately personal relationship between an artisan and their patron.
+  `;
   return (
     <main className="min-h-screen bg-surface text-on-surface flex flex-col">
       {/* Hero Section */}
@@ -45,7 +61,7 @@ export default function StoryPage() {
             className="w-full lg:w-1/2 aspect-[4/5] bg-surface-container overflow-hidden"
           >
             <img 
-              src="/assets/17.jpeg" 
+              src={coverImageUrl} 
               alt="Portrait of the Master Tailor" 
               className="w-full h-full object-cover grayscale"
             />
@@ -62,15 +78,10 @@ export default function StoryPage() {
               The Master Tailor
             </span>
             <h2 className="font-serif text-4xl md:text-5xl text-primary mb-8 italic">
-              Obsessed with the Architecture of the Human Form.
+              {heading}
             </h2>
-            <div className="space-y-6 font-sans text-lg text-on-surface-variant leading-relaxed">
-              <p>
-                Gabby's journey began in the bustling markets of Accra, surrounded by a kaleidoscope of printed wax fabrics and the rhythmic hum of vintage sewing machines. He learned early that a garment must endure both the physical climate and the test of time.
-              </p>
-              <p>
-                After decades of honing the craft, the dedication remains the same: an absolute obsession with perfect fit and form. Every seam is intentional, every dart calculated. It is a quiet rebellion against mass production—a return to the intimately personal relationship between an artisan and their patron.
-              </p>
+            <div className="space-y-6 font-sans text-lg text-on-surface-variant leading-relaxed prose prose-lg prose-p:text-on-surface-variant max-w-none">
+              <ReactMarkdown>{markdownBody}</ReactMarkdown>
             </div>
           </motion.div>
         </div>

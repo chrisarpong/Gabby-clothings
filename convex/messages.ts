@@ -1,5 +1,6 @@
 import { checkAdmin } from "./authHelper";
 import { query, mutation } from "./_generated/server";
+import { checkRateLimit } from "./authHelper";
 import { v } from "convex/values";
 
 export const submitMessage = mutation({
@@ -11,6 +12,7 @@ export const submitMessage = mutation({
     message: v.string(),
   },
   handler: async (ctx, args) => {
+    await checkRateLimit(ctx, "submitMessage", 5, 60000); // 5 per minute
     return await ctx.db.insert("messages", {
       ...args,
       status: "unread",

@@ -14,6 +14,11 @@
   --color-tertiary: #12120e;
   --color-outline: #827472;
   --color-outline-variant: #d4c3c1;
+  
+  --color-brand-charcoal: #1f1f1f;
+  --color-brand-espresso: #2e1c18;
+  --color-brand-bone: #f4ebd9;
+  --color-brand-gold: #c5a059;
 
   --font-serif: "Playfair Display", serif;
   --font-sans: "DM Sans", sans-serif;

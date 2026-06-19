@@ -57,7 +57,7 @@ export default function Header() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 z-50 w-full bg-surface/90 backdrop-blur-md border-b border-surface-variant transition-transform duration-500 ease-in-out ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <header className={`sticky top-0 z-50 w-full bg-surface/90 backdrop-blur-md border-b border-surface-variant transition-transform duration-500 ease-in-out ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="max-w-[1536px] mx-auto px-5 md:px-10 lg:px-20 h-20 md:h-24 flex items-center justify-between">
           
           {/* Left: Menu & Search */}

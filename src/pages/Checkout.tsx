@@ -20,13 +20,13 @@ export default function Checkout() {
   const [shippingAddress, setShippingAddress] = useState({
     street: "",
     city: "",
-    state: "",
-    zip: "",
-    country: "",
+    region: "",
+    postalCode: "",
+    country: "Ghana",
   });
 
   const [promoCodeInput, setPromoCodeInput] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<{ id: string, type: string, value: number, code: string } | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{ discountAmount: number, code: string } | null>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const convex = useConvex();
 
@@ -42,14 +42,7 @@ export default function Checkout() {
 
   const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
   
-  let discountAmount = 0;
-  if (appliedPromo) {
-    if (appliedPromo.type === "percentage") {
-      discountAmount = subtotal * (appliedPromo.value / 100);
-    } else if (appliedPromo.type === "fixed") {
-      discountAmount = appliedPromo.value;
-    }
-  }
+  let discountAmount = appliedPromo?.discountAmount || 0;
 
   const shippingAmount = 150.00;
   const totalAmount = subtotal - discountAmount + shippingAmount;
@@ -58,14 +51,17 @@ export default function Checkout() {
     if (!promoCodeInput.trim()) return;
     setIsApplyingPromo(true);
     try {
-      const result = await convex.query(api.promotions.validateCode, { code: promoCodeInput.trim() });
-      setAppliedPromo({
-        id: result._id,
-        type: result.discountType,
-        value: result.discountValue,
-        code: promoCodeInput.trim().toUpperCase(),
-      });
-      toast.success("Promo code applied!");
+      const result = await convex.mutation(api.promotions.applyPromoCode, { code: promoCodeInput.trim(), subtotal });
+      if (result.valid) {
+        setAppliedPromo({
+          discountAmount: result.discountAmount,
+          code: promoCodeInput.trim().toUpperCase(),
+        });
+        toast.success("Promo code applied!");
+      } else {
+        toast.error("Invalid or expired promo code");
+        setAppliedPromo(null);
+      }
       setPromoCodeInput("");
     } catch (e: any) {
       toast.error(e.message || "Failed to apply promo code");
@@ -100,7 +96,7 @@ export default function Checkout() {
         shippingAmount,
         paystackReference: reference.reference,
         shippingAddress,
-        promoCodeId: appliedPromo?.id as any,
+        promoCode: appliedPromo?.code,
       });
 
       clearCart();
@@ -122,13 +118,13 @@ export default function Checkout() {
       name: `${user?.firstName || 'Guest'} ${user?.lastName || ''}`,
       custom_fields: []
     },
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6",
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
     text: "PAY WITH PAYSTACK",
     onSuccess: handlePaystackSuccessAction,
     onClose: handlePaystackCloseAction,
   };
 
-  const isFormValid = shippingAddress.street && shippingAddress.city && shippingAddress.state && shippingAddress.zip && shippingAddress.country;
+  const isFormValid = shippingAddress.street && shippingAddress.city && shippingAddress.region && shippingAddress.postalCode && shippingAddress.country;
 
   return (
     <main className="min-h-screen pt-32 pb-24 px-6 md:px-12 bg-surface text-on-surface">
@@ -161,11 +157,11 @@ export default function Checkout() {
                   />
                 </div>
                 <div>
-                  <label className="block font-sans text-xs uppercase tracking-widest text-on-surface-variant mb-2">State / Region</label>
+                  <label className="block font-sans text-xs uppercase tracking-widest text-on-surface-variant mb-2">Region</label>
                   <input 
                     type="text" 
-                    value={shippingAddress.state}
-                    onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})}
+                    value={shippingAddress.region}
+                    onChange={(e) => setShippingAddress({...shippingAddress, region: e.target.value})}
                     className="w-full bg-surface border border-outline-variant p-4 font-sans text-sm focus:outline-none focus:border-primary transition-colors text-primary"
                     required
                   />
@@ -173,11 +169,11 @@ export default function Checkout() {
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block font-sans text-xs uppercase tracking-widest text-on-surface-variant mb-2">ZIP Code</label>
+                  <label className="block font-sans text-xs uppercase tracking-widest text-on-surface-variant mb-2">Postal Code</label>
                   <input 
                     type="text" 
-                    value={shippingAddress.zip}
-                    onChange={(e) => setShippingAddress({...shippingAddress, zip: e.target.value})}
+                    value={shippingAddress.postalCode}
+                    onChange={(e) => setShippingAddress({...shippingAddress, postalCode: e.target.value})}
                     className="w-full bg-surface border border-outline-variant p-4 font-sans text-sm focus:outline-none focus:border-primary transition-colors text-primary"
                     required
                   />

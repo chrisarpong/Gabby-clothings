@@ -12,13 +12,9 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("profile");
 
   const [measurements, setMeasurements] = useState({
-    chest: "",
-    waist: "",
-    hips: "",
-    shoulder: "",
-    sleeve: "",
-    inseam: "",
-    length: "",
+    top: { neck: "", chest: "", shoulder: "", sleeveLength: "", armhole: "", stomach: "", topLength: "" },
+    bottom: { trouserWaist: "", hips: "", thigh: "", kneeAnkle: "", trouserLength: "", crotch: "" },
+    outerwear: { agbadaLength: "", agbadaWidth: "" }
   });
 
   const [isSaved, setIsSaved] = useState(false);
@@ -30,7 +26,7 @@ export default function Profile() {
   const toggleWishlist = useMutation(api.wishlists.toggleItem);
 
   const appointments = useQuery(api.appointments.getUserAppointments, user ? { userId: user.id } : "skip");
-  const updateAppointmentStatus = useMutation(api.appointments.updateStatus);
+  const cancelOwnAppointment = useMutation(api.appointments.cancelOwnAppointment);
   const rescheduleAppointment = useMutation(api.appointments.reschedule);
 
   const [rescheduleData, setRescheduleData] = useState<{ id: any; date: string; time: string; } | null>(null);
@@ -39,7 +35,7 @@ export default function Profile() {
   const handleCancelAppointment = async (id: any) => {
     if (confirm("Are you sure you want to cancel this appointment?")) {
       try {
-        await updateAppointmentStatus({ id, status: "cancelled" });
+        await cancelOwnAppointment({ appointmentId: id });
         toast.success("Appointment cancelled successfully.");
       } catch (e) {
         toast.error("Failed to cancel appointment.");
@@ -65,19 +61,21 @@ export default function Profile() {
   useEffect(() => {
     if (convexMeasurements) {
       setMeasurements({
-        chest: convexMeasurements.chest?.toString() || "",
-        waist: convexMeasurements.waist?.toString() || "",
-        hips: convexMeasurements.hips?.toString() || "",
-        shoulder: convexMeasurements.shoulders?.toString() || "",
-        sleeve: convexMeasurements.sleeve?.toString() || "", // added to db if needed, or mapped to notes
-        inseam: convexMeasurements.inseam?.toString() || "",
-        length: convexMeasurements.height?.toString() || "", // map height to length for now
+        top: convexMeasurements.top || { neck: "", chest: "", shoulder: "", sleeveLength: "", armhole: "", stomach: "", topLength: "" },
+        bottom: convexMeasurements.bottom || { trouserWaist: "", hips: "", thigh: "", kneeAnkle: "", trouserLength: "", crotch: "" },
+        outerwear: convexMeasurements.outerwear || { agbadaLength: "", agbadaWidth: "" }
       });
     }
   }, [convexMeasurements]);
 
-  const handleMeasurementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMeasurements((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleMeasurementChange = (category: 'top' | 'bottom' | 'outerwear', field: string, value: string) => {
+    setMeasurements((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [field]: value
+      }
+    }));
     setIsSaved(false);
   };
 
@@ -86,14 +84,7 @@ export default function Profile() {
     try {
       await updateMeasurements({
         clerkId: user.id,
-        measurements: {
-          chest: Number(measurements.chest) || undefined,
-          waist: Number(measurements.waist) || undefined,
-          hips: Number(measurements.hips) || undefined,
-          shoulders: Number(measurements.shoulder) || undefined,
-          inseam: Number(measurements.inseam) || undefined,
-          height: Number(measurements.length) || undefined,
-        }
+        measurements: measurements
       });
       setIsSaved(true);
       toast.success("Measurements saved successfully!");
@@ -203,31 +194,91 @@ export default function Profile() {
                   </p>
 
                   <div className="bg-surface-container/30 border border-surface-variant p-8 md:p-12 mb-8">
-                    <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10" onSubmit={e => { e.preventDefault(); saveMeasurements(); }}>
-                      {[
-                        { label: "Chest / Bust", name: "chest" },
-                        { label: "Waist", name: "waist" },
-                        { label: "Hips", name: "hips" },
-                        { label: "Shoulder Width", name: "shoulder" },
-                        { label: "Sleeve Length", name: "sleeve" },
-                        { label: "Inseam", name: "inseam" },
-                        { label: "Total Length", name: "length" },
-                      ].map((field) => (
-                        <div key={field.name} className="flex flex-col gap-2">
-                          <label htmlFor={field.name} className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
-                            {field.label}
-                          </label>
-                          <input
-                            type="number"
-                            id={field.name}
-                            name={field.name}
-                            value={measurements[field.name as keyof typeof measurements]}
-                            onChange={handleMeasurementChange}
-                            placeholder='e.g. 40"'
-                            className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary text-xl font-serif italic placeholder:text-outline-variant/30 placeholder:not-italic"
-                          />
+                    <form className="flex flex-col gap-12" onSubmit={e => { e.preventDefault(); saveMeasurements(); }}>
+                      
+                      {/* TOP SECTION */}
+                      <div>
+                        <h3 className="font-label text-sm tracking-widest uppercase text-primary mb-6 border-b border-surface-variant pb-2">Top / Shirt (Kaftans & Suits)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
+                          {[
+                            { label: "Neck", name: "neck", placeholder: "e.g. 16\"" },
+                            { label: "Chest", name: "chest", placeholder: "e.g. 40\"" },
+                            { label: "Shoulder", name: "shoulder", placeholder: "e.g. 18\"" },
+                            { label: "Sleeve Length", name: "sleeveLength", placeholder: "e.g. 25\"" },
+                            { label: "Armhole / Bicep", name: "armhole", placeholder: "e.g. 15\"" },
+                            { label: "Stomach / Waist", name: "stomach", placeholder: "e.g. 36\"" },
+                            { label: "Top Length", name: "topLength", placeholder: "e.g. 38\"" },
+                          ].map((field) => (
+                            <div key={field.name} className="flex flex-col gap-2">
+                              <label htmlFor={`top-${field.name}`} className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                                {field.label}
+                              </label>
+                              <input
+                                type="text"
+                                id={`top-${field.name}`}
+                                value={measurements.top[field.name as keyof typeof measurements.top]}
+                                onChange={(e) => handleMeasurementChange('top', field.name, e.target.value)}
+                                placeholder={field.placeholder}
+                                className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary text-xl font-serif italic placeholder:text-outline-variant/30 placeholder:not-italic"
+                              />
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+
+                      {/* BOTTOM SECTION */}
+                      <div>
+                        <h3 className="font-label text-sm tracking-widest uppercase text-primary mb-6 border-b border-surface-variant pb-2">Bottom / Trousers</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
+                          {[
+                            { label: "Trouser Waist", name: "trouserWaist", placeholder: "e.g. 34\"" },
+                            { label: "Hips / Seat", name: "hips", placeholder: "e.g. 42\"" },
+                            { label: "Thigh", name: "thigh", placeholder: "e.g. 24\"" },
+                            { label: "Knee & Ankle (Base)", name: "kneeAnkle", placeholder: "e.g. 14\"" },
+                            { label: "Trouser Length", name: "trouserLength", placeholder: "e.g. 40\"" },
+                            { label: "Crotch / Rise (Flap)", name: "crotch", placeholder: "e.g. 28\"" },
+                          ].map((field) => (
+                            <div key={field.name} className="flex flex-col gap-2">
+                              <label htmlFor={`bottom-${field.name}`} className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                                {field.label}
+                              </label>
+                              <input
+                                type="text"
+                                id={`bottom-${field.name}`}
+                                value={measurements.bottom[field.name as keyof typeof measurements.bottom]}
+                                onChange={(e) => handleMeasurementChange('bottom', field.name, e.target.value)}
+                                placeholder={field.placeholder}
+                                className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary text-xl font-serif italic placeholder:text-outline-variant/30 placeholder:not-italic"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* OUTERWEAR SECTION */}
+                      <div>
+                        <h3 className="font-label text-sm tracking-widest uppercase text-primary mb-6 border-b border-surface-variant pb-2">Outerwear (Agbadas)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
+                          {[
+                            { label: "Agbada Length", name: "agbadaLength", placeholder: "e.g. 55\"" },
+                            { label: "Agbada Width (Armspan)", name: "agbadaWidth", placeholder: "e.g. 48\"" },
+                          ].map((field) => (
+                            <div key={field.name} className="flex flex-col gap-2">
+                              <label htmlFor={`outerwear-${field.name}`} className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
+                                {field.label}
+                              </label>
+                              <input
+                                type="text"
+                                id={`outerwear-${field.name}`}
+                                value={measurements.outerwear[field.name as keyof typeof measurements.outerwear]}
+                                onChange={(e) => handleMeasurementChange('outerwear', field.name, e.target.value)}
+                                placeholder={field.placeholder}
+                                className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary text-xl font-serif italic placeholder:text-outline-variant/30 placeholder:not-italic"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                       <div className="md:col-span-2 lg:col-span-3 pt-6 border-t border-surface-variant mt-4">
                         <button 
                           type="submit"

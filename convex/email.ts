@@ -1,6 +1,7 @@
-import { internalAction } from "./_generated/server";
+import { internalAction, action } from "./_generated/server";
 import { v } from "convex/values";
 import { Resend } from "resend";
+import { api } from "./_generated/api";
 
 export const sendAppointmentReminder = internalAction({
   args: {
@@ -112,6 +113,7 @@ export const sendOrderStatusUpdate = internalAction({
         `,
       });
       console.log(`Successfully sent order update to ${args.email}`);
+    } catch (error) {
       console.error("Failed to send order email via Resend:", error);
     }
   },
@@ -165,45 +167,66 @@ export const sendOrderConfirmation = internalAction({
   },
 });
 
-export const sendAppointmentConfirmation = internalAction({
+export const sendAppointmentUpdate = internalAction({
   args: {
     email: v.string(),
     name: v.string(),
     date: v.string(),
-    time: v.string(),
+    time: v.optional(v.string()),
+    status: v.string(), // 'confirmed', 'rescheduled', 'cancelled'
   },
   handler: async (ctx, args) => {
     const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) return;
+    if (!resendApiKey) {
+      console.log(`[Email Mock] Would send appointment ${args.status} update to ${args.email}`);
+      return;
+    }
 
     const resend = new Resend(resendApiKey);
+
+    let subject = "Appointment Update - Gabby Newluk";
+    let message = "";
+
+    if (args.status === 'confirmed') {
+      subject = "Appointment Confirmed - Gabby Newluk";
+      message = `Hello ${args.name}, your bespoke tailoring appointment has been successfully booked and confirmed.`;
+    } else if (args.status === 'rescheduled') {
+      subject = "Appointment Rescheduled - Gabby Newluk";
+      message = `Hello ${args.name}, your bespoke tailoring appointment has been rescheduled.`;
+    } else if (args.status === 'cancelled') {
+      subject = "Appointment Cancelled - Gabby Newluk";
+      message = `Hello ${args.name}, your bespoke tailoring appointment has been cancelled. If this was a mistake, please reach out to us.`;
+    }
 
     try {
       await resend.emails.send({
         from: "Gabby Atelier <appointments@gabbynewluk.com>",
         to: args.email,
-        subject: "Appointment Confirmed - Gabby Newluk",
+        subject,
         html: `
 <div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
   <div style="text-align: center; margin-bottom: 40px;">
     <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
   </div>
   
-  <h2 style="font-size: 20px; font-weight: normal;">Appointment Confirmed</h2>
-  <p style="line-height: 1.6; color: #555;">Hello ${args.name}, your bespoke tailoring appointment has been successfully booked.</p>
+  <h2 style="font-size: 20px; font-weight: normal; text-transform: capitalize;">Appointment ${args.status}</h2>
+  <p style="line-height: 1.6; color: #555;">${message}</p>
   
+  ${args.status !== 'cancelled' ? `
   <div style="background-color: #f9f8f6; padding: 25px; border-left: 3px solid #4a3c31; margin: 30px 0;">
     <p style="margin: 0 0 10px 0; color: #666;"><strong>Date:</strong> ${args.date}</p>
-    <p style="margin: 0 0 10px 0; color: #666;"><strong>Time:</strong> ${args.time}</p>
-    <p style="margin: 0; color: #666;"><strong>Location:</strong> Our Atelier</p>
+    ${args.time ? `<p style="margin: 0 0 10px 0; color: #666;"><strong>Time:</strong> ${args.time}</p>` : ''}
+    <p style="margin: 0; color: #666;"><strong>Location:</strong> Our Atelier / Virtual</p>
   </div>
+  ` : ''}
 
-  <p style="line-height: 1.6; color: #555;">If you need to reschedule, please contact us at least 24 hours in advance.</p>
+  <p style="line-height: 1.6; color: #555;">If you have any questions, please contact us.</p>
 </div>
         `,
       });
+      console.log(`Successfully sent appointment ${args.status} update to ${args.email}`);
     } catch (error) {
-      console.error("Failed to send appointment confirmation:", error);
+      console.error(`Failed to send appointment ${args.status} update:`, error);
     }
   },
 });
@@ -214,9 +237,16 @@ export const sendPromoBroadcast = action({
     discountValue: v.number(),
   },
   handler: async (ctx, args) => {
+    // Admin-only guard: actions don't have ctx.db, so verify identity
+    // and rely on getAllEmails (which itself enforces admin via checkAdmin).
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated: You must be signed in.");
+
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) throw new Error("Resend API key not configured");
 
+    // This call will throw "Unauthorized: Admin access required" if the
+    // caller is not an admin, because getAllEmails enforces checkAdmin.
     const users = await ctx.runQuery(api.users.getAllEmails);
     const resend = new Resend(resendApiKey);
 
@@ -267,6 +297,6 @@ export const sendPromoBroadcast = action({
         console.error("Failed to send promo to", user.email, err);
       }
     }
-    return \`Broadcast sent to \${sentCount} users.\`;
+    return `Broadcast sent to ${sentCount} users.`;
   }
 });

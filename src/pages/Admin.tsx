@@ -16,7 +16,8 @@ import {
   LogOut,
   ShieldAlert,
   Menu,
-  X 
+  X,
+  FileText
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
@@ -30,6 +31,7 @@ import AdminAppointmentsTab from '../components/admin/AdminAppointmentsTab';
 import ReviewsTab from '../components/admin/ReviewsTab';
 import FinancialsTab from '../components/admin/FinancialsTab';
 import MarketingTab from '../components/admin/MarketingTab';
+import ContentTab from '../components/admin/ContentTab';
 
 // Dummy components for uncompleted sections
 const DummyTab = ({ title }: { title: string }) => (
@@ -39,14 +41,14 @@ const DummyTab = ({ title }: { title: string }) => (
   </div>
 );
 
-type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings';
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isLoaded } = useUser();
   const convexUser = useQuery(api.users.getCurrentUser);
-  const makeMeAdmin = useMutation(api.users.makeMeAdmin);
+
 
   // RBAC
   const isAdmin = user?.publicMetadata?.role === 'admin' || convexUser?.role === 'admin';
@@ -91,20 +93,7 @@ export default function Admin() {
         <h1 className="font-serif text-3xl mb-2 text-red-500">Access Denied</h1>
         <p className="text-on-surface-variant mb-8">You do not have administrative privileges to view this page.</p>
         <div className="flex flex-col items-center gap-4">
-          <button 
-            onClick={async () => {
-              try {
-                const res = await makeMeAdmin();
-                alert(res);
-                window.location.reload();
-              } catch (e: any) {
-                alert(e.message || "Could not make admin.");
-              }
-            }}
-            className="px-8 py-3 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors rounded-none"
-          >
-            Make Me Admin (Initial Setup)
-          </button>
+          <p className="text-sm text-on-surface-variant max-w-sm text-center">If you are the site owner, grant admin access via the Convex Dashboard (Data → users → set role to "admin").</p>
           <SignInButton>
              <button className="px-8 py-3 border-b-2 border-primary text-primary font-sans text-xs tracking-widest uppercase hover:text-outline hover:border-outline transition-colors rounded-none bg-surface">
                Switch Account
@@ -125,6 +114,7 @@ export default function Admin() {
     { key: 'financials', name: 'Financials', icon: LineChart },
     { key: 'marketing', name: 'Marketing', icon: Volume2 },
     { key: 'promotions', name: 'Promotions', icon: Tag },
+    { key: 'content', name: 'Pages & Content', icon: FileText },
   ];
 
   const renderContent = () => {
@@ -139,6 +129,7 @@ export default function Admin() {
       case 'reviews': return <ReviewsTab />;
       case 'financials': return <FinancialsTab />;
       case 'marketing': return <MarketingTab />;
+      case 'content': return <ContentTab />;
       default: return <DummyTab title={tabs.find(t => t.key === activeTab)?.name || 'Settings'} />;
     }
   };

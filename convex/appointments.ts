@@ -1,4 +1,4 @@
-import { checkAdmin } from "./authHelper";
+import { checkAdmin, checkRateLimit } from "./authHelper";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
@@ -15,8 +15,15 @@ export const book = mutation({
     paystackReference: v.optional(v.string()),
     amountPaid: v.optional(v.number()),
     referenceImages: v.optional(v.array(v.id("_storage"))),
+    occasionType: v.optional(v.string()),
+    targetEventDate: v.optional(v.string()),
+    ghanaPostGps: v.optional(v.string()),
+    landmarks: v.optional(v.string()),
+    paymentStatus: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await checkRateLimit(ctx, "bookAppointment", 5, 60000); // 5 per minute
+
     // Optionally link to identity if available
     const identity = await ctx.auth.getUserIdentity();
     
@@ -77,7 +84,7 @@ export const book = mutation({
       ...args,
       userId: identity ? identity.subject : undefined,
       status: "pending",
-      paymentStatus: args.paystackReference ? "paid" : "pending",
+      paymentStatus: args.paymentStatus || (args.paystackReference ? "paid" : "pending"),
       referenceImages: args.referenceImages,
     });
 
@@ -115,6 +122,8 @@ export const book = mutation({
 });
 
 export const generateUploadUrl = mutation(async (ctx) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Unauthenticated: You must be signed in to upload files.");
   return await ctx.storage.generateUploadUrl();
 });
 
@@ -139,6 +148,7 @@ export const updateStatus = mutation({
     await checkAdmin(ctx, identity);
     
     const appointment = await ctx.db.get(args.id);
+    if (!appointment) throw new Error("Appointment not found");
     
     await ctx.db.patch(args.id, {
       status: args.status,
@@ -150,6 +160,15 @@ export const updateStatus = mutation({
         status: args.status,
       });
     }
+
+    // Trigger email notification hook
+    await ctx.scheduler.runAfter(0, internal.email.sendAppointmentUpdate, {
+      email: appointment.email,
+      name: appointment.name,
+      date: appointment.date,
+      time: appointment.time,
+      status: args.status,
+    });
   },
 });
 
@@ -182,6 +201,19 @@ export const sendReminders = internalMutation({
       await ctx.db.patch(reminder._id, { status: "sent" });
     }
   },
+});
+
+export const getFileOwner = internalQuery({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db.query("appointments").collect();
+    for (const appt of appointments) {
+      if (appt.referenceImages && appt.referenceImages.includes(args.storageId)) {
+        return { isPrivate: true, ownerId: appt.userId };
+      }
+    }
+    return { isPrivate: false };
+  }
 });
 
 export const getAvailableSlots = query({
@@ -315,6 +347,14 @@ export const saveGoogleEventId = internalMutation({
 export const getUserAppointments = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    // Only the owner or an admin can view appointments
+    if (identity.subject !== args.userId) {
+      await checkAdmin(ctx, identity);
+    }
+
     return await ctx.db
       .query("appointments")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
@@ -354,12 +394,6 @@ export const reschedule = mutation({
       await checkAdmin(ctx, identity);
     }
 
-    // Optional: 24h block check
-    // const aptDate = new Date(`${apt.date}T${apt.time || "00:00"}`);
-    // if (aptDate.getTime() - Date.now() < 24 * 60 * 60 * 1000) {
-    //   throw new Error("Cannot reschedule within 24 hours of appointment");
-    // }
-
     await ctx.db.patch(args.appointmentId, {
       date: args.date,
       time: args.time,
@@ -372,5 +406,36 @@ export const reschedule = mutation({
         time: args.time,
       });
     }
+
+    // Send rescheduling email
+    await ctx.scheduler.runAfter(0, internal.email.sendAppointmentUpdate, {
+      email: apt.email,
+      name: apt.name,
+      date: args.date,
+      time: args.time,
+      status: "rescheduled",
+    });
   },
+});
+
+export const updateDetails = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    appointmentType: v.optional(v.string()),
+    assignedTo: v.optional(v.string()),
+    fabricAndStyling: v.optional(v.any()),
+    adminNotes: v.optional(v.string()),
+    depositAmount: v.optional(v.number()),
+    paystackReference: v.optional(v.string()),
+    paymentStatus: v.optional(v.string()),
+    measurementsCaptured: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const { appointmentId, ...updates } = args;
+    await ctx.db.patch(appointmentId, updates);
+  }
 });

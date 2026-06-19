@@ -66,6 +66,12 @@ export const create = mutation({
     category: v.string(),
     type: v.string(),
     status: v.string(),
+    fabricRequirement: v.optional(v.string()),
+    catalogIds: v.optional(v.array(v.id("catalogs"))),
+    seo: v.optional(v.object({
+      metaTitle: v.optional(v.string()),
+      metaDescription: v.optional(v.string()),
+    })),
     variants: v.optional(
       v.array(
         v.object({
@@ -96,6 +102,12 @@ export const update = mutation({
     category: v.optional(v.string()),
     type: v.optional(v.string()),
     status: v.optional(v.string()),
+    fabricRequirement: v.optional(v.string()),
+    catalogIds: v.optional(v.array(v.id("catalogs"))),
+    seo: v.optional(v.object({
+      metaTitle: v.optional(v.string()),
+      metaDescription: v.optional(v.string()),
+    })),
     variants: v.optional(
       v.array(
         v.object({
@@ -152,6 +164,10 @@ export const updateVariantStock = mutation({
 export const seed = mutation({
   args: {},
   handler: async (ctx) => {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Danger: Seed mutation is strictly disabled in production environments.");
+    }
+    
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
     await checkAdmin(ctx, identity);
@@ -254,6 +270,9 @@ export const seed = mutation({
 });
 
 export const generateUploadUrl = mutation(async (ctx) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Unauthenticated: You must be signed in to upload.");
+  await checkAdmin(ctx, identity);
   return await ctx.storage.generateUploadUrl();
 });
 

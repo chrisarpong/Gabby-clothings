@@ -160,7 +160,7 @@ export default function CustomTailoring() {
       name: formData.fullName,
       custom_fields: []
     },
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_b986f2a5ddf031f129c32b4b055a2c05653f7ea6",
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
     text: `PAY DEPOSIT (GH₵${bookingDepositAmount})`,
     onSuccess: handlePaystackSuccessAction,
     onClose: handlePaystackCloseAction,
