@@ -1,12 +1,17 @@
-import { checkAdmin } from "./authHelper";
 import { query } from "./_generated/server";
 
 export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+    if (!identity) return null; // Auth token not synced yet — return null, don't throw
+
+    // Check admin role — return null if not admin (frontend already gates access)
+    const adminRoles = ["admin", "superadmin"];
+    if (!adminRoles.includes(identity?.role as string)) {
+      const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
+      if (!user || !adminRoles.includes(user.role)) return null;
+    }
 
     const orders = await ctx.db.query("orders").collect();
     const users = await ctx.db.query("users").collect();

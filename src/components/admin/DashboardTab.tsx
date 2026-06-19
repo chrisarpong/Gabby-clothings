@@ -43,7 +43,8 @@ class DashboardErrorBoundary extends React.Component<
 function DashboardContent() {
   const stats = useQuery(api.analytics.getDashboardStats);
 
-  if (stats === undefined) {
+  // undefined = query still loading, null = auth not ready yet — show skeleton for both
+  if (stats === undefined || stats === null) {
     return (
       <div className="p-8 font-sans space-y-8">
         <div className="h-10 bg-surface-variant/30 animate-pulse rounded-sm w-1/3" />
