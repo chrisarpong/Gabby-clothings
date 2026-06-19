@@ -43,6 +43,7 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
 
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("newest");
   const [visibleCount, setVisibleCount] = useState(8);
   const allProducts = useQuery(api.products.getActive);
   const catalogs = useQuery(api.catalogs.getAll, {}) || [];
@@ -59,13 +60,21 @@ export default function ShopPage() {
     "Outerwear", "Suiting", "Eveningwear", "Accessories", "Kaftans", "Agbadas"
   ])); 
 
-  const filteredProducts = isLoading ? [] : activeCategory === "All" 
-    ? allProducts 
+  let filteredProducts = isLoading ? [] : activeCategory === "All" 
+    ? [...allProducts]
     : allProducts.filter((p: any) => {
         const catObj = catalogs.find((c: any) => c.name === activeCategory);
         if (catObj && p.catalogIds?.includes(catObj._id)) return true;
         return p.category?.toLowerCase() === activeCategory.toLowerCase();
       });
+
+  if (sortBy === "price_asc") {
+    filteredProducts.sort((a: any, b: any) => (a.basePrice || 0) - (b.basePrice || 0));
+  } else if (sortBy === "price_desc") {
+    filteredProducts.sort((a: any, b: any) => (b.basePrice || 0) - (a.basePrice || 0));
+  } else if (sortBy === "newest") {
+    filteredProducts.sort((a: any, b: any) => (b._creationTime || 0) - (a._creationTime || 0));
+  }
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
@@ -131,25 +140,34 @@ export default function ShopPage() {
       {/* Filters & Utility Bar */}
       <div className="w-full border-y border-outline-variant/30 py-4 mb-16">
         <div className="max-w-[1536px] mx-auto px-5 md:px-20 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-6 md:gap-10 overflow-x-auto no-scrollbar w-full md:w-auto pb-2 md:pb-0">
+          <div className="flex items-center gap-6 md:gap-10 overflow-x-auto no-scrollbar w-full md:flex-1 md:w-auto pb-2 md:pb-0 md:mr-16">
             {categories.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
+                key={cat as string}
+                onClick={() => setActiveCategory(cat as string)}
                 className={`font-label text-[11px] md:text-xs tracking-[0.15em] uppercase transition-all duration-300 py-2 relative group whitespace-nowrap ${
                   activeCategory === cat ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-primary'
                 }`}
               >
-                {cat}
+                {String(cat)}
                 {/* Hover Underline */}
                 <span className={`absolute bottom-0 left-0 w-full h-[1px] bg-primary transition-transform origin-left duration-500 ease-out ${activeCategory === cat ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`} />
               </button>
             ))}
           </div>
-          <div className="hidden md:block shrink-0">
-            <span className="font-label text-[11px] tracking-[0.15em] text-on-surface-variant uppercase cursor-pointer hover:text-primary transition-colors">
-              Sort By: Newest ▼
-            </span>
+          <div className="hidden md:flex shrink-0 items-center bg-surface relative">
+            <select 
+               value={sortBy} 
+               onChange={(e) => setSortBy(e.target.value)}
+               className="font-label text-[11px] tracking-[0.15em] text-on-surface-variant uppercase cursor-pointer hover:text-primary transition-colors bg-transparent border-none outline-none appearance-none pr-6 focus:ring-0"
+            >
+              <option value="newest">Sort By: Newest</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-on-surface-variant">
+              <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
           </div>
         </div>
       </div>

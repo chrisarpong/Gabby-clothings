@@ -28,6 +28,11 @@ export default defineSchema({
     shippingInfo: v.optional(v.string()),
     slug: v.optional(v.string()),
     stock: v.optional(v.number()),
+    catalogIds: v.optional(v.array(v.id("catalogs"))),
+    seo: v.optional(v.object({
+      metaTitle: v.optional(v.string()),
+      metaDescription: v.optional(v.string()),
+    })),
     variants: v.optional(
       v.array(
         v.object({

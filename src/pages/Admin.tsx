@@ -87,21 +87,7 @@ export default function Admin() {
   }
 
   if (!isAdmin) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-surface text-primary font-sans">
-        <ShieldAlert className="w-12 h-12 mb-4 text-red-500" />
-        <h1 className="font-serif text-3xl mb-2 text-red-500">Access Denied</h1>
-        <p className="text-on-surface-variant mb-8">You do not have administrative privileges to view this page.</p>
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-sm text-on-surface-variant max-w-sm text-center">If you are the site owner, grant admin access via the Convex Dashboard (Data → users → set role to "admin").</p>
-          <SignInButton>
-             <button className="px-8 py-3 border-b-2 border-primary text-primary font-sans text-xs tracking-widest uppercase hover:text-outline hover:border-outline transition-colors rounded-none bg-surface">
-               Switch Account
-             </button>
-          </SignInButton>
-        </div>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   const tabs: { key: TabKey; name: string; icon: React.ElementType }[] = [

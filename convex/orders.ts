@@ -60,8 +60,9 @@ export const verifyAndCreate = action({
       },
     });
     const data = await resp.json();
-    if (!data.status || data.data.status !== "success") {
-      throw new Error("Payment verification failed");
+    console.log("Paystack Verification Response:", data);
+    if (!data.status || data.data?.status !== "success") {
+      throw new Error(`Payment verification failed: ${data.message || JSON.stringify(data)}`);
     }
 
     // 2. Verify paid amount covers at least the base cost

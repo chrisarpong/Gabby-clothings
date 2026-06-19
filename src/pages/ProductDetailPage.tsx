@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import { useQuery  } from '@/hooks/useConvex';
@@ -26,6 +26,19 @@ export default function ProductDetailPage() {
   const [activeSize, setActiveSize] = useState("");
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
+  const [measurements, setMeasurements] = useState({
+    chest: "", waist: "", hips: "", shoulder: "", sleeve: "", inseam: "", length: ""
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("gabby_newluk_measurements");
+    if (saved) setMeasurements(JSON.parse(saved));
+  }, []);
+
+  const handleMeasurementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMeasurements(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   const toggleAccordion = (section: string) => {
     setOpenAccordion(openAccordion === section ? null : section);
   };
@@ -34,7 +47,17 @@ export default function ProductDetailPage() {
     if (!product) return;
     
     let variantSku = undefined;
-    if (product.variants && product.variants.length > 0) {
+    if (activeSize === "Custom Fit") {
+      const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
+      for (const field of required) {
+        if (!measurements[field as keyof typeof measurements]) {
+          toast.error("Missing Measurement", { description: `Please enter your ${field} measurement in inches.` });
+          return;
+        }
+      }
+      localStorage.setItem("gabby_newluk_measurements", JSON.stringify(measurements));
+      variantSku = "custom";
+    } else if (product.variants && product.variants.length > 0) {
       if (!activeSize) {
         toast.error("Please select a size first.");
         return;
@@ -63,7 +86,7 @@ export default function ProductDetailPage() {
   if (product === null) return <div className="min-h-screen pt-40 px-20 text-brand-charcoal/50">Product not found.</div>;
 
   const sizes: string[] = product.variants && product.variants.length > 0 && product.variants[0].size
-    ? Array.from(new Set(product.variants.map((v: any) => v.size as string)))
+    ? [...Array.from(new Set(product.variants.map((v: any) => v.size as string))), "Custom Fit"]
     : ["M", "L", "XL", "Custom Fit"];
   const relatedProducts = allProducts ? allProducts.filter(p => p._id !== product._id).slice(0, 4) : [];
 
@@ -165,16 +188,46 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
+            {/* Custom Fit Measurements Panel */}
+            <AnimatePresence>
+              {activeSize === "Custom Fit" && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden mb-8"
+                >
+                  <div className="bg-surface-container p-6 lg:p-8 border border-outline-variant/30">
+                    <h3 className="font-serif text-xl text-primary mb-3 italic">Your Measurements</h3>
+                    <p className="font-sans text-xs text-on-surface-variant mb-8 leading-relaxed">
+                      Please provide your exact measurements in inches for a perfect fit. 
+                      These will be saved to your device for future orders.
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                      {Object.keys(measurements).map((key) => (
+                        <div key={key}>
+                          <label className="block text-[10px] uppercase tracking-widest text-outline mb-2">{key}</label>
+                          <input
+                            type="number"
+                            name={key}
+                            value={measurements[key as keyof typeof measurements]}
+                            onChange={handleMeasurementChange}
+                            placeholder="in."
+                            className="w-full bg-transparent border-b border-surface-variant py-2 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Actions */}
             <div className="flex flex-col gap-4 mb-16">
               <button onClick={handleAddToCart} className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors">
                 Add To Cart
               </button>
-              <Link to={`/custom-tailoring?product=${product._id}&title=${encodeURIComponent(product.name)}`} className="w-full">
-                <button className="w-full bg-transparent border border-outline-variant text-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-container transition-colors">
-                  Request Custom Sizing
-                </button>
-              </Link>
             </div>
 
             {/* Accordions */}

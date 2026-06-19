@@ -18,20 +18,52 @@ export default function Checkout() {
   const allProducts = useQuery(api.products.getAll);
 
   const [shippingAddress, setShippingAddress] = useState({
-    street: "",
-    city: "",
-    region: "",
-    postalCode: "",
-    country: "Ghana",
+    street: "", city: "", region: "", postalCode: "", country: "Ghana"
   });
+
+  const [measurements, setMeasurements] = useState({
+    chest: "", waist: "", hips: "", shoulder: "", sleeve: "", inseam: "", length: ""
+  });
+  const [hasValidMeasurements, setHasValidMeasurements] = useState(false);
 
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ discountAmount: number, code: string } | null>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const convex = useConvex();
 
-  if (items.length === 0) {
-    navigate("/cart");
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  React.useEffect(() => {
+    if (items.length === 0 && !isSuccess) {
+      navigate("/cart");
+    }
+  }, [items.length, navigate, isSuccess]);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem("gabby_newluk_measurements");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setMeasurements(parsed);
+      const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
+      if (required.every(field => parsed[field])) {
+        setHasValidMeasurements(true);
+      }
+    }
+  }, []);
+
+  const handleMeasurementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMeasurements = { ...measurements, [e.target.name]: e.target.value };
+    setMeasurements(newMeasurements);
+    const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
+    if (required.every(field => newMeasurements[field as keyof typeof newMeasurements])) {
+      setHasValidMeasurements(true);
+      localStorage.setItem("gabby_newluk_measurements", JSON.stringify(newMeasurements));
+    } else {
+      setHasValidMeasurements(false);
+    }
+  };
+
+  if (items.length === 0 && !isSuccess) {
     return null;
   }
 
@@ -39,6 +71,8 @@ export default function Checkout() {
     const product = allProducts.find(p => p._id === item.productId);
     return { ...item, product };
   }).filter(i => i.product);
+
+  const hasCustomFit = items.some(item => item.variantSku === "custom" || item.variantSku === undefined);
 
   const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
   
@@ -99,6 +133,7 @@ export default function Checkout() {
         promoCode: appliedPromo?.code,
       });
 
+      setIsSuccess(true);
       clearCart();
       navigate("/success");
     } catch (error) {
@@ -114,6 +149,7 @@ export default function Checkout() {
   const componentProps = {
     email: user?.primaryEmailAddress?.emailAddress || "guest@gabby.com",
     amount: Math.round(totalAmount * 100),
+    currency: "GHS",
     metadata: {
       name: `${user?.firstName || 'Guest'} ${user?.lastName || ''}`,
       custom_fields: []
@@ -192,7 +228,33 @@ export default function Checkout() {
             </form>
           </div>
 
-          <div className="lg:col-span-4">
+          {hasCustomFit && (
+            <div>
+              <h2 className="font-serif text-3xl md:text-4xl text-primary mb-8 italic">Your Measurements</h2>
+              <div className="bg-surface border border-outline-variant p-6 md:p-8">
+                <p className="font-sans text-xs text-on-surface-variant mb-6 leading-relaxed">
+                  You have Custom Fit items in your cart. Please confirm your measurements (in inches) before checking out.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {Object.keys(measurements).map((key) => (
+                    <div key={key}>
+                      <label className="block text-[10px] uppercase tracking-widest text-outline mb-2">{key}</label>
+                      <input
+                        type="number"
+                        name={key}
+                        value={measurements[key as keyof typeof measurements]}
+                        onChange={handleMeasurementChange}
+                        placeholder="in."
+                        className="w-full bg-transparent border-b border-surface-variant py-2 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="lg:col-span-4 mt-12 lg:mt-0">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -244,9 +306,13 @@ export default function Checkout() {
 
               {!user ? (
                  <p className="text-sm text-brand-espresso mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
-              ) : !isFormValid ? (
+              ) : !(shippingAddress.street && shippingAddress.city && shippingAddress.region && shippingAddress.postalCode && shippingAddress.country) ? (
                  <button disabled className="w-full bg-surface-variant text-on-surface-variant py-5 font-label text-[11px] tracking-[0.2em] uppercase mb-8 cursor-not-allowed">
                    FILL SHIPPING ADDRESS
+                 </button>
+              ) : (hasCustomFit && !hasValidMeasurements) ? (
+                 <button disabled className="w-full bg-surface-variant text-on-surface-variant py-5 font-label text-[11px] tracking-[0.2em] uppercase mb-8 cursor-not-allowed">
+                   ENTER MEASUREMENTS
                  </button>
               ) : (
                 <PaystackButton 
