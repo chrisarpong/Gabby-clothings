@@ -1,8 +1,10 @@
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
+  const navigate = useNavigate();
   const contentBlock = useQuery(api.content.get, { key: "home_hero" });
   const data = contentBlock?.data || {};
 
@@ -43,7 +45,10 @@ export default function Hero() {
             {subHeading}
           </p>
         )}
-        <button className="bg-primary border border-secondary text-on-primary text-label px-8 py-4 hover:bg-secondary hover:text-on-secondary transition-colors duration-300">
+        <button 
+          onClick={() => navigate('/collections')}
+          className="bg-primary border border-secondary text-on-primary text-label px-8 py-4 hover:bg-secondary hover:text-on-secondary transition-colors duration-300"
+        >
           Discover the Collection
         </button>
       </div>
