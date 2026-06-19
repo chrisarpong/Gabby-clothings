@@ -126,5 +126,5 @@ export const getCurrentUser = query({
 });
 
 // NOTE: Admin provisioning is done directly via the Convex Dashboard.
-// Go to Data → users table → find your user → set role to "admin".
+// Go to Data → users table → find your user → set role to "admin" or "superadmin".
 // There is no callable mutation for this to prevent privilege escalation.

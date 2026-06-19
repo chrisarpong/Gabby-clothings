@@ -1,7 +1,8 @@
 export async function checkAdmin(ctx: any, identity: any) {
-  if (identity?.role === "admin") return;
+  const adminRoles = ["admin", "superadmin"];
+  if (adminRoles.includes(identity?.role)) return;
   const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
-  if (user?.role !== "admin") throw new Error("Unauthorized: Admin access required");
+  if (!user || !adminRoles.includes(user.role)) throw new Error("Unauthorized: Admin access required");
 }
 
 export async function checkRateLimit(ctx: any, endpoint: string, maxAttempts: number = 5, windowMs: number = 60000) {

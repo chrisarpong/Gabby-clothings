@@ -49,25 +49,29 @@ export default function Admin() {
   const { user, isLoaded } = useUser();
   const convexUser = useQuery(api.users.getCurrentUser);
 
+  // convexUser is undefined while loading, null if no matching record found
+  const isConvexLoading = convexUser === undefined;
 
-  // RBAC
-  const isAdmin = user?.publicMetadata?.role === 'admin' || convexUser?.role === 'admin';
+  // RBAC — support both "admin" and "superadmin" roles
+  const clerkRole = user?.publicMetadata?.role as string | undefined;
+  const isAdminRole = (role?: string) => role === 'admin' || role === 'superadmin';
+  const isAdmin = isAdminRole(clerkRole) || isAdminRole(convexUser?.role);
   const syncUser = useMutation(api.users.syncUser);
 
   useEffect(() => {
-    if (user && isAdmin) {
+    if (user && isAdmin && convexUser) {
       syncUser({
         clerkId: user.id,
         email: user.primaryEmailAddress?.emailAddress || "",
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
-        role: "admin"
+        role: convexUser.role, // preserve their existing role (admin or superadmin)
       }).catch(console.error);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, convexUser]);
 
 
-  if (!isLoaded) {
+  if (!isLoaded || (user && isConvexLoading)) {
     return <div className="min-h-screen bg-surface flex items-center justify-center font-sans tracking-widest text-primary text-sm uppercase">Loading...</div>;
   }
 
