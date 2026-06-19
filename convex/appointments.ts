@@ -1,5 +1,5 @@
 import { checkAdmin, checkRateLimit } from "./authHelper";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
@@ -169,6 +169,29 @@ export const updateStatus = mutation({
       time: appointment.time,
       status: args.status,
     });
+  },
+});
+
+export const cancelOwnAppointment = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const appointment = await ctx.db.get(args.appointmentId);
+    if (!appointment) throw new Error("Appointment not found");
+
+    if (appointment.userId !== identity.subject) {
+      throw new Error("Unauthorized: You do not own this appointment");
+    }
+
+    if (appointment.status === "cancelled" || appointment.status === "completed") {
+      throw new Error("Appointment cannot be cancelled in its current state");
+    }
+
+    await ctx.db.patch(args.appointmentId, { status: "cancelled" });
   },
 });
 
