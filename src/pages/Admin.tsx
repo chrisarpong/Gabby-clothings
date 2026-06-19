@@ -46,6 +46,7 @@ type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
   const { user, isLoaded } = useUser();
   const convexUser = useQuery(api.users.getCurrentUser);
 
@@ -138,19 +139,36 @@ export default function Admin() {
       </div>
 
       {/* Sidebar */}
-      <aside className={`fixed md:relative inset-y-0 left-0 z-40 w-64 border-r border-surface-variant bg-surface flex flex-col justify-between shrink-0 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 top-[65px] md:top-0' : '-translate-x-full'}`}>
-        <div className="overflow-y-auto">
-          <div className="h-24 hidden md:flex flex-col justify-center px-8 border-b border-surface-variant bg-surface-container/20">
-            <span className="font-serif text-xl text-primary tracking-wide">
-              GABBY NEWLUK
-            </span>
-            <span className="font-label text-[9px] tracking-widest uppercase text-on-surface-variant mt-1.5 flex items-center gap-2">
-               <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block animate-pulse"></span> Admin Panel
-            </span>
+      <aside 
+        onMouseEnter={() => setIsDesktopExpanded(true)}
+        onMouseLeave={() => setIsDesktopExpanded(false)}
+        onClick={() => setIsDesktopExpanded(true)}
+        className={`fixed md:relative inset-y-0 left-0 z-40 ${isDesktopExpanded ? 'md:w-64' : 'md:w-[80px]'} w-64 border-r border-surface-variant bg-surface flex flex-col justify-between shrink-0 transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 top-[65px] md:top-0' : '-translate-x-full'}`}
+      >
+        <div className="overflow-y-auto overflow-x-hidden">
+          <div className={`h-24 hidden md:flex flex-col justify-center border-b border-surface-variant bg-surface-container/20 transition-all duration-300 ${isDesktopExpanded ? 'px-8 items-start' : 'px-0 items-center'}`}>
+            {isDesktopExpanded ? (
+               <>
+                <span className="font-serif text-xl text-primary tracking-wide whitespace-nowrap">
+                  GABBY NEWLUK
+                </span>
+                <span className="font-label text-[9px] tracking-widest uppercase text-on-surface-variant mt-1.5 flex items-center gap-2 whitespace-nowrap">
+                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block animate-pulse shrink-0"></span> Admin Panel
+                </span>
+               </>
+            ) : (
+               <div className="w-10 h-10 bg-primary text-surface flex items-center justify-center font-serif text-xl font-bold rounded-sm">
+                 G
+               </div>
+            )}
           </div>
           <nav className="flex flex-col py-6">
-            <div className="px-6 mb-3">
-               <p className="font-label text-[9px] tracking-widest uppercase text-outline">Main Menu</p>
+            <div className={`mb-3 transition-all duration-300 ${isDesktopExpanded ? 'px-6' : 'px-0 text-center'}`}>
+               {isDesktopExpanded ? (
+                 <p className="font-label text-[9px] tracking-widest uppercase text-outline whitespace-nowrap">Main Menu</p>
+               ) : (
+                 <div className="w-8 mx-auto h-px bg-surface-variant"></div>
+               )}
             </div>
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
@@ -158,40 +176,62 @@ export default function Admin() {
               return (
                 <button
                   key={tab.key}
-                  onClick={() => { setActiveTab(tab.key); setIsMobileMenuOpen(false); }}
-                  className={`flex items-center gap-3 px-6 py-3 font-label text-[11px] tracking-[0.1em] uppercase text-left transition-all duration-200 ${
+                  title={tab.name}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setActiveTab(tab.key); 
+                    setIsMobileMenuOpen(false); 
+                  }}
+                  className={`flex items-center gap-4 py-3 font-label text-[11px] tracking-[0.1em] uppercase text-left transition-all duration-200 whitespace-nowrap overflow-hidden ${
+                    isDesktopExpanded ? 'px-6' : 'justify-center px-0'
+                  } ${
                     isActive
                       ? 'bg-primary text-surface border-r-2 border-primary shadow-[inset_4px_0_0_0_rgba(255,255,255,0.1)]'
                       : 'text-on-surface-variant hover:bg-surface-container/50 hover:text-primary'
                   }`}
                 >
-                  <Icon className="w-4 h-4" strokeWidth={isActive ? 2 : 1.5} />
-                  {tab.name}
+                  <Icon className="w-5 h-5 shrink-0" strokeWidth={isActive ? 2 : 1.5} />
+                  {isDesktopExpanded && <span>{tab.name}</span>}
                 </button>
               );
             })}
             
-            <div className="px-6 mt-6 mb-3">
-               <p className="font-label text-[9px] tracking-widest uppercase text-outline">System</p>
+            <div className={`mt-6 mb-3 transition-all duration-300 ${isDesktopExpanded ? 'px-6' : 'px-0 text-center'}`}>
+               {isDesktopExpanded ? (
+                 <p className="font-label text-[9px] tracking-widest uppercase text-outline whitespace-nowrap">System</p>
+               ) : (
+                 <div className="w-8 mx-auto h-px bg-surface-variant"></div>
+               )}
             </div>
             <button
-              onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-3 px-6 py-3 font-label text-[11px] tracking-[0.1em] uppercase text-left transition-all duration-200 ${
+              title="Settings"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setActiveTab('settings'); 
+                setIsMobileMenuOpen(false); 
+              }}
+              className={`flex items-center gap-4 py-3 font-label text-[11px] tracking-[0.1em] uppercase text-left transition-all duration-200 whitespace-nowrap overflow-hidden ${
+                isDesktopExpanded ? 'px-6' : 'justify-center px-0'
+              } ${
                 activeTab === 'settings'
                   ? 'bg-primary text-surface border-r-2 border-primary shadow-[inset_4px_0_0_0_rgba(255,255,255,0.1)]'
                   : 'text-on-surface-variant hover:bg-surface-container/50 hover:text-primary'
               }`}
             >
-              <Settings className="w-4 h-4" strokeWidth={activeTab === 'settings' ? 2 : 1.5} />
-              Settings
+              <Settings className="w-5 h-5 shrink-0" strokeWidth={activeTab === 'settings' ? 2 : 1.5} />
+              {isDesktopExpanded && <span>Settings</span>}
             </button>
           </nav>
         </div>
         
-        <div className="p-6 border-t border-surface-variant bg-surface-container/20">
+        <div className={`border-t border-surface-variant bg-surface-container/20 transition-all duration-300 ${isDesktopExpanded ? 'p-6' : 'p-4 flex justify-center'}`}>
           <SignOutButton>
-            <button className="w-full flex items-center justify-center gap-3 px-4 py-2 font-label text-[10px] tracking-[0.15em] uppercase text-red-700 border border-red-200 bg-red-50 hover:bg-red-700 hover:text-white transition-colors duration-300 rounded-none text-left">
-              <LogOut className="w-4 h-4" strokeWidth={1.5} /> Logout
+            <button 
+              title="Logout" 
+              className={`flex items-center justify-center gap-3 py-2.5 font-label text-[10px] tracking-[0.15em] uppercase text-red-700 border border-red-200 bg-red-50 hover:bg-red-700 hover:text-white transition-colors duration-300 rounded-none whitespace-nowrap overflow-hidden ${isDesktopExpanded ? 'w-full px-4 text-left' : 'w-10 h-10 px-0'}`}
+            >
+              <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} /> 
+              {isDesktopExpanded && <span>Logout</span>}
             </button>
           </SignOutButton>
         </div>
