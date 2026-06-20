@@ -24,7 +24,7 @@ export const sendAppointmentReminder = internalAction({
 
     try {
       await resend.emails.send({
-        from: "Gabby Atelier <appointments@gabbyatelier.com>",
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
         to: args.email,
         subject: "Reminder: Your Upcoming Fitting with Gabby Atelier",
         html: `
@@ -95,7 +95,7 @@ export const sendOrderStatusUpdate = internalAction({
 
     try {
       await resend.emails.send({
-        from: "Gabby Atelier <orders@gabbyatelier.com>",
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
         to: args.email,
         subject: subject,
         html: `
@@ -134,7 +134,7 @@ export const sendOrderConfirmation = internalAction({
 
     try {
       await resend.emails.send({
-        from: "Gabby Atelier <orders@gabbynewluk.com>",
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
         to: args.email,
         subject: "Thank you for your Order - Gabby Newluk",
         html: `
@@ -200,7 +200,7 @@ export const sendAppointmentUpdate = internalAction({
 
     try {
       await resend.emails.send({
-        from: "Gabby Atelier <appointments@gabbynewluk.com>",
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
         to: args.email,
         subject,
         html: `
@@ -256,7 +256,7 @@ export const sendPromoBroadcast = action({
     for (const user of users) {
       try {
         await resend.emails.send({
-          from: "Gabby Atelier <promotions@gabbynewluk.com>",
+          from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
           to: user.email,
           subject: "Exclusive Offer: Elevate Your Wardrobe with Gabby Newluk",
           html: `
