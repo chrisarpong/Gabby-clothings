@@ -193,7 +193,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
               )}
             </div>
           </section>
-
+ 
           {/* Payments & Deposits Tracker */}
           <section>
             <h3 className="text-xs tracking-widest uppercase text-brand-charcoal/70 mb-3 flex items-center gap-2">
@@ -274,7 +274,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
               <Edit2 className="w-4 h-4" /> Consultation Notes
             </h3>
             <textarea 
-              placeholder="Internal notes for the studio team..."
+              placeholder="Internal notes for the atelier team..."
               rows={4}
               value={adminNotes} 
               onChange={(e) => setAdminNotes(e.target.value)}
