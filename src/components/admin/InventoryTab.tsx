@@ -456,6 +456,16 @@ export default function InventoryTab() {
                                 }`}>
                                   {product.status}
                                 </span>
+                                {(() => {
+                                  const isSoldOut = product.variants && product.variants.length > 0
+                                    ? product.variants.every((v: any) => v.stock <= 0)
+                                    : product.stock !== undefined && product.stock <= 0;
+                                  return isSoldOut && (
+                                    <span className="ml-2 inline-block px-2 py-1 text-[10px] uppercase tracking-wider rounded-none bg-red-600 text-white font-bold">
+                                      Sold Out
+                                    </span>
+                                  );
+                                })()}
                               </td>
                               <td className="px-6 py-4 text-right text-brand-charcoal">GH₵{(product?.basePrice ?? 0).toFixed(2)}</td>
                             </tr>

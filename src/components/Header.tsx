@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { useCartStore } from "../store/cartStore";
+import logo from "../assets/logo_transparent.png";
 
 export default function Header() {
   const [isVisible, setIsVisible] = useState(true);
@@ -74,8 +75,11 @@ export default function Header() {
 
           {/* Center: Logo */}
           <div className="flex-1 md:flex-none flex justify-center w-1/3">
-            <Link to="/" className="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
-              Gabby Newluk
+            <Link to="/" className="flex items-center justify-center gap-1">
+              <img src={logo} alt="Gabby Newluk Logo" className="h-12 w-auto md:h-16 lg:h-20 object-contain" />
+              <span className="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
+                Gabby Newluk
+              </span>
             </Link>
           </div>
 

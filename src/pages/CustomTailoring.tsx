@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PaystackButton } from "react-paystack";
+import PhoneInputCustom from '../components/PhoneInputCustom';
 
 export default function CustomTailoring() {
   const [searchParams] = useSearchParams();
@@ -27,7 +28,6 @@ export default function CustomTailoring() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    countryCode: "+233",
     phone: "",
     garmentType: "",
     fittingDate: "",
@@ -90,7 +90,7 @@ export default function CustomTailoring() {
   const commercialsSetting = useQuery(api.settings.getByKey, { key: "commercials" });
   const bookingDepositAmount = commercialsSetting?.value?.bookingDepositAmount || 0;
 
-  const isFormValid = formData.fullName && formData.email && formData.phone && formData.fittingDate && formData.time && formData.garmentType && designInspoPreview && bodyPhotoPreview;
+  const isFormValid = formData.fullName && formData.email && formData.garmentType && designInspoPreview && bodyPhotoPreview;
 
   const uploadFile = async (file: File | null) => {
     if (!file) return null;
@@ -114,7 +114,7 @@ export default function CustomTailoring() {
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
-        phone: `${formData.countryCode} ${formData.phone}`,
+        phone: formData.phone || undefined,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
         time: formData.time,
@@ -132,7 +132,6 @@ export default function CustomTailoring() {
       setFormData({
         fullName: "",
         email: "",
-        countryCode: "+233",
         phone: "",
         garmentType: "",
         fittingDate: "",
@@ -184,7 +183,7 @@ export default function CustomTailoring() {
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
-        phone: `${formData.countryCode} ${formData.phone}`,
+        phone: formData.phone || undefined,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
         time: formData.time,
@@ -199,7 +198,6 @@ export default function CustomTailoring() {
       setFormData({
         fullName: "",
         email: "",
-        countryCode: "+233",
         phone: "",
         garmentType: "",
         fittingDate: "",
@@ -234,7 +232,7 @@ export default function CustomTailoring() {
     },
     {
       title: "Completion",
-      desc: "Your bespoke garment is ready, perfectly tailored to you and your lifestyle.",
+      desc: "Your custom garment is ready, perfectly tailored to you and your lifestyle.",
       image: "/assets/kaftan.jpeg",
     },
   ];
@@ -370,31 +368,12 @@ export default function CustomTailoring() {
                 </div>
                 <div className="flex flex-col gap-2 md:col-span-2">
                   <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Phone Number</label>
-                  <div className="flex gap-4">
-                    <select
-                      name="countryCode"
-                      value={formData.countryCode}
-                      onChange={handleFormChange}
-                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary w-24 appearance-none"
-                    >
-                      <option value="+233">🇬🇭 +233</option>
-                      <option value="+1">🇺🇸 +1</option>
-                      <option value="+44">🇬🇧 +44</option>
-                      <option value="+234">🇳🇬 +234</option>
-                      <option value="+27">🇿🇦 +27</option>
-                      <option value="+33">🇫🇷 +33</option>
-                      <option value="+49">🇩🇪 +49</option>
-                      <option value="+971">🇦🇪 +971</option>
-                    </select>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleFormChange}
-                      className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary flex-1"
-                      required
-                    />
-                  </div>
+                  <PhoneInputCustom
+                    value={formData.phone}
+                    onChange={(value) => setFormData(prev => ({ ...prev, phone: value || "" }))}
+                    className="mt-2"
+                    required
+                  />
                 </div>
               </div>
             </div>
@@ -551,7 +530,7 @@ export default function CustomTailoring() {
             <div className="flex flex-col items-center mt-12 pt-12 border-t border-surface-variant">
               {bookingDepositAmount > 0 && (
                 <p className="font-sans text-sm text-on-surface-variant mb-6 text-center max-w-md">
-                  To secure your bespoke fitting, a fully-refundable commitment deposit of <span className="text-primary font-medium">GH₵{bookingDepositAmount}</span> is required. This will be applied toward the final cost of your garment.
+                  To secure your custom fitting, a fully-refundable commitment deposit of <span className="text-primary font-medium">GH₵{bookingDepositAmount}</span> is required. This will be applied toward the final cost of your garment.
                 </p>
               )}
               

@@ -25,6 +25,13 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+const isSoldOut = (product: any) => {
+  if (product.variants && product.variants.length > 0) {
+    return product.variants.every((v: any) => v.stock <= 0);
+  }
+  return product.stockQuantity !== undefined && product.stockQuantity <= 0;
+};
+
 export default function Featured() {
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
@@ -65,12 +72,27 @@ export default function Featured() {
             <div key={product._id} className="group cursor-pointer" onClick={() => navigate(`/product/${product._id}`)}>
               <div className="relative aspect-[3/4] mb-6 bg-surface-container overflow-hidden">
                 <ProductImage src={product?.images?.[0] || "/assets/1.jpg"} alt={product?.name || "Product"} />
-                <button 
-                  onClick={(e) => handleQuickAdd(e, product)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-surface/80 hover:bg-secondary text-primary hover:text-on-secondary flex items-center justify-center rounded-full transition-colors border border-outline-variant z-10"
-                >
-                  <Plus className="w-5 h-5 pointer-events-none" />
-                </button>
+                {/* Sold Out Badge & Diagonal Text */}
+                {isSoldOut(product) && (
+                  <>
+                    <div className="absolute top-4 left-4 z-20 bg-black/90 text-white border border-white/20 font-label text-[10px] tracking-widest uppercase px-3 py-1 backdrop-blur-sm">
+                      Sold Out
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none bg-surface/10 backdrop-blur-[2px]">
+                      <span className="transform -rotate-45 font-sans font-black text-3xl md:text-4xl lg:text-5xl uppercase tracking-[0.2em] text-red-600/90 drop-shadow-lg whitespace-nowrap">
+                        Sold Out
+                      </span>
+                    </div>
+                  </>
+                )}
+                {!isSoldOut(product) && (
+                  <button 
+                    onClick={(e) => handleQuickAdd(e, product)}
+                    className="absolute top-4 right-4 w-10 h-10 bg-surface/80 hover:bg-secondary text-primary hover:text-on-secondary flex items-center justify-center rounded-full transition-colors border border-outline-variant z-10"
+                  >
+                    <Plus className="w-5 h-5 pointer-events-none" />
+                  </button>
+                )}
               </div>
               <div className="flex flex-col">
                 <h4 className="font-serif text-xl text-primary italic mb-2">

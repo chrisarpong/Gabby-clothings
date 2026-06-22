@@ -74,6 +74,17 @@ export default function Checkout() {
 
   const hasCustomFit = items.some(item => item.variantSku === "custom" || item.variantSku === undefined);
 
+  const getAvailableStock = (item: any) => {
+    if (item.variantSku === 'custom') return 99; // Custom fit doesn't have strict stock
+    if (item.product?.variants && item.product.variants.length > 0) {
+      const variant = item.product.variants.find((v: any) => v.sku === item.variantSku);
+      return variant ? variant.stock : 0;
+    }
+    return item.product?.stockQuantity ?? 0;
+  };
+
+  const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));
+
   const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
   
   let discountAmount = appliedPromo?.discountAmount || 0;
@@ -313,6 +324,10 @@ export default function Checkout() {
               ) : (hasCustomFit && !hasValidMeasurements) ? (
                  <button disabled className="w-full bg-surface-variant text-on-surface-variant py-5 font-label text-[11px] tracking-[0.2em] uppercase mb-8 cursor-not-allowed">
                    ENTER MEASUREMENTS
+                 </button>
+              ) : hasOutOfStockItems ? (
+                 <button disabled className="w-full bg-surface-variant text-error border border-error py-5 font-label text-[11px] tracking-[0.2em] uppercase mb-8 cursor-not-allowed">
+                   SOME ITEMS ARE OUT OF STOCK
                  </button>
               ) : (
                 <PaystackButton 

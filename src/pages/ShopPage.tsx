@@ -41,6 +41,13 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+const isSoldOut = (product: any) => {
+  if (product.variants && product.variants.length > 0) {
+    return product.variants.every((v: any) => v.stock <= 0);
+  }
+  return product.stockQuantity !== undefined && product.stockQuantity <= 0;
+};
+
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
@@ -186,23 +193,40 @@ export default function ShopPage() {
                 <div className="relative aspect-[3/4] mb-6 bg-surface-container overflow-hidden">
                   <ProductImage src={product?.images?.[0] || "/assets/1.jpg"} alt={product?.name || "Product"} />
                   {/* Wishlist Button */}
-                  <button 
-                    onClick={(e) => handleToggleWishlist(e, product._id)}
-                    className="absolute top-4 right-4 z-20 p-2 bg-surface/50 backdrop-blur-sm rounded-full hover:bg-surface transition-colors"
-                  >
-                    <Heart 
-                      className={`w-5 h-5 transition-colors ${wishlist?.some((p: any) => p._id === product._id) ? 'fill-red-500 text-red-500' : 'text-primary'}`} 
-                    />
-                  </button>
-                  {/* Quick Add Button */}
-                  <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
+                  {!isSoldOut(product) && (
                     <button 
-                      onClick={(e) => handleQuickAdd(e, product)}
-                      className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
+                      onClick={(e) => handleToggleWishlist(e, product._id)}
+                      className="absolute top-4 right-4 z-20 p-2 bg-surface/50 backdrop-blur-sm rounded-full hover:bg-surface transition-colors"
                     >
-                      Quick Add
+                      <Heart 
+                        className={`w-5 h-5 transition-colors ${wishlist?.some((p: any) => p._id === product._id) ? 'fill-red-500 text-red-500' : 'text-primary'}`} 
+                      />
                     </button>
-                  </div>
+                  )}
+                  {/* Sold Out Badge & Diagonal Text */}
+                  {isSoldOut(product) && (
+                    <>
+                      <div className="absolute top-4 left-4 z-20 bg-black/90 text-white border border-white/20 font-label text-[10px] tracking-widest uppercase px-3 py-1 backdrop-blur-sm">
+                        Sold Out
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none bg-surface/10 backdrop-blur-[2px]">
+                        <span className="transform -rotate-45 font-sans font-black text-3xl md:text-4xl lg:text-5xl uppercase tracking-[0.2em] text-red-600/90 drop-shadow-lg whitespace-nowrap">
+                          Sold Out
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {/* Quick Add Button */}
+                  {!isSoldOut(product) && (
+                    <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
+                      <button 
+                        onClick={(e) => handleQuickAdd(e, product)}
+                        className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
+                      >
+                        Quick Add
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex flex-col">

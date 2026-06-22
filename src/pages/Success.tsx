@@ -116,7 +116,7 @@ export default function Success() {
                     <div key={index} className="flex justify-between items-center py-2">
                       <div className="flex items-center gap-4">
                         <div className="flex flex-col">
-                          <span className="font-serif text-lg text-primary">{product?.name || "Bespoke Item"}</span>
+                          <span className="font-serif text-lg text-primary">{product?.name || "Custom Item"}</span>
                           <span className="font-sans text-xs text-on-surface-variant mt-1">Size: {item.variantSku || "Custom Fit"} &times; {item.quantity}</span>
                         </div>
                       </div>

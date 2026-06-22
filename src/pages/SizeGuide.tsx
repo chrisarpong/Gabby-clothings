@@ -66,7 +66,7 @@ export default function SizeGuide() {
           <div>
             <h2 className="font-serif text-3xl text-primary mb-6">Custom Fitting</h2>
             <p className="leading-relaxed">
-              We highly recommend our Bespoke Tailoring service for an absolute, perfect fit. You can provide your exact measurements on the Custom Tailoring page and they will be securely saved into your profile for all future orders.
+              We highly recommend our Custom Tailoring service for an absolute, perfect fit. You can provide your exact measurements on the Custom Tailoring page and they will be securely saved into your profile for all future orders.
             </p>
           </div>
         </div>

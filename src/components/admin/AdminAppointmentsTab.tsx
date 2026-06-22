@@ -139,7 +139,7 @@ export default function AdminAppointmentsTab() {
     <div className="p-8 font-sans text-brand-charcoal h-full flex flex-col">
       <div className="flex justify-between items-end mb-8 border-b border-brand-charcoal/10 pb-4">
         <div>
-          <h2 className="font-serif text-3xl text-brand-espresso mb-1">Atelier Appointments</h2>
+          <h2 className="font-serif text-3xl text-brand-espresso mb-1">Studio Appointments</h2>
           <p className="text-sm text-brand-charcoal/70">Manage tailoring schedules and consultation requests.</p>
         </div>
         <div className="flex gap-4">

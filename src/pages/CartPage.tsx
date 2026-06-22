@@ -30,6 +30,17 @@ export default function CartPage() {
   const shippingAmount = 150.00; // Flat fee for example
   const totalAmount = subtotal + shippingAmount;
 
+  const getAvailableStock = (item: any) => {
+    if (item.variantSku === 'custom') return 99; // Custom fit doesn't have strict stock
+    if (item.product?.variants && item.product.variants.length > 0) {
+      const variant = item.product.variants.find((v: any) => v.sku === item.variantSku);
+      return variant ? variant.stock : 0;
+    }
+    return item.product?.stockQuantity ?? 0;
+  };
+
+  const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));
+
   return (
     <main className="min-h-screen bg-surface text-on-surface flex flex-col pt-32 md:pt-40 pb-24">
       <div className="max-w-[1536px] mx-auto px-5 md:px-20 w-full flex-1">
@@ -100,20 +111,34 @@ export default function CartPage() {
 
                     <div className="flex items-center justify-between mt-4 sm:mt-6">
                       {/* Quantity Selector */}
-                      <div className="flex items-center border border-outline-variant">
-                        <button 
-                          onClick={() => updateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
-                          className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors"
-                        >
-                          <Minus className="w-3 h-3" strokeWidth={1.5} />
-                        </button>
-                        <span className="w-10 font-label text-sm text-center text-primary">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                          className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors"
-                        >
-                          <Plus className="w-3 h-3" strokeWidth={1.5} />
-                        </button>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center border border-outline-variant w-fit">
+                          <button 
+                            onClick={() => updateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
+                            className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors"
+                          >
+                            <Minus className="w-3 h-3" strokeWidth={1.5} />
+                          </button>
+                          <span className="w-10 font-label text-sm text-center text-primary">{item.quantity}</span>
+                          <button 
+                            onClick={() => {
+                              const stock = getAvailableStock(item);
+                              if (item.quantity >= stock) {
+                                toast.error("Maximum stock reached", { description: `Only ${stock} available.` });
+                              } else {
+                                updateQuantity(item.cartItemId, item.quantity + 1);
+                              }
+                            }}
+                            className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors"
+                          >
+                            <Plus className="w-3 h-3" strokeWidth={1.5} />
+                          </button>
+                        </div>
+                        {item.quantity > getAvailableStock(item) && (
+                          <span className="text-[10px] text-error font-label uppercase tracking-widest">
+                            Only {getAvailableStock(item)} available
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex flex-col items-end gap-4">
@@ -159,6 +184,8 @@ export default function CartPage() {
 
                 {!user ? (
                    <p className="text-sm text-brand-espresso mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
+                ) : hasOutOfStockItems ? (
+                  <p className="text-xs text-error font-label tracking-widest uppercase mb-8 border border-error p-4 text-center w-full block">Please adjust quantities before checkout</p>
                 ) : (
                 <button 
                   onClick={() => navigate('/checkout')}

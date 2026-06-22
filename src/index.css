@@ -48,3 +48,29 @@
 }
 
 .cl-internal-b3alhm { display: none !important; }
+
+/* Custom Phone Input Styles */
+.phone-input-custom .PhoneInputInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 1rem;
+}
+.phone-input-custom .PhoneInputCountry {
+  margin-right: 12px;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(150, 138, 121, 0.3);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 138, 121, 0.5);
+}

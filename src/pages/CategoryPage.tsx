@@ -6,12 +6,19 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
 
+const isSoldOut = (product: any) => {
+  if (product.variants && product.variants.length > 0) {
+    return product.variants.every((v: any) => v.stock <= 0);
+  }
+  return product.stockQuantity !== undefined && product.stockQuantity <= 0;
+};
+
 export default function CategoryPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
 
-  // Convert slug to a display format "bespoke-agbadas" -> "Bespoke Agbadas"
+  // Convert slug to a display format "custom-agbadas" -> "Custom Agbadas"
   const displayCategory = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Category";
   
   // Use category string as the argument (in reality might need slug in products schema, but we'll use name matching)
@@ -58,19 +65,33 @@ export default function CategoryPage() {
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
-                  <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
-                    <button 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        addItem({ productId: product._id, quantity: 1 });
-                        toast.success("Added to cart");
-                        navigate('/cart'); 
-                      }}
-                      className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
-                    >
-                      Quick Add
-                    </button>
-                  </div>
+                  {/* Sold Out Badge & Diagonal Text */}
+                  {isSoldOut(product) && (
+                    <>
+                      <div className="absolute top-4 left-4 z-20 bg-black/90 text-white border border-white/20 font-label text-[10px] tracking-widest uppercase px-3 py-1 backdrop-blur-sm">
+                        Sold Out
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none bg-surface/10 backdrop-blur-[2px]">
+                        <span className="transform -rotate-45 font-sans font-black text-3xl md:text-4xl lg:text-5xl uppercase tracking-[0.2em] text-red-600/90 drop-shadow-lg whitespace-nowrap">
+                          Sold Out
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {!isSoldOut(product) && (
+                    <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          addItem({ productId: product._id, quantity: 1 });
+                          toast.success("Added to cart");
+                        }}
+                        className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
+                      >
+                        Quick Add
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex flex-col">

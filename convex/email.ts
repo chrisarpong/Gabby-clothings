@@ -300,3 +300,42 @@ export const sendPromoBroadcast = action({
     return `Broadcast sent to ${sentCount} users.`;
   }
 });
+
+export const sendSubscriptionConfirmation = internalAction({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) return;
+
+    const resend = new Resend(resendApiKey);
+
+    try {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+        to: args.email,
+        subject: "Welcome to The Inner Circle - Gabby Newluk",
+        html: `
+<div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
+    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">The Inner Circle</p>
+  </div>
+  
+  <h2 style="font-size: 20px; font-weight: normal; text-align: center;">Welcome to the Studio</h2>
+  <p style="line-height: 1.6; color: #555;">Thank you for subscribing. You are now part of our exclusive Inner Circle.</p>
+  <p style="line-height: 1.6; color: #555;">You will be the first to receive updates on private capsule drops, custom events, and editorial insights from our master tailors.</p>
+  
+  <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>contact@gabbynewluk.com</p>
+  </div>
+</div>
+        `,
+      });
+    } catch (error) {
+      console.error("Failed to send subscription confirmation:", error);
+    }
+  },
+});

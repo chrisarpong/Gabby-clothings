@@ -1,7 +1,7 @@
 import Hero from '../components/Hero';
 import Collections from '../components/Collections';
 import Featured from '../components/Featured';
-import Atelier from '../components/Atelier';
+import Studio from '../components/Studio';
 import Testimonial from '../components/Testimonial';
 import FAQ from '../components/FAQ';
 import InstagramFeed from '../components/InstagramFeed';
@@ -13,7 +13,7 @@ export default function Home() {
       <Hero />
       <Collections />
       <Featured />
-      <Atelier />
+      <Studio />
       <Testimonial />
       <FAQ />
       <InstagramFeed />

@@ -22,7 +22,7 @@ export default function CollectionsPage() {
       img: "/assets/18.jpeg"
     },
     {
-      title: "Bespoke Agbadas",
+      title: "Custom Agbadas",
       desc: "Regal, commanding, and architecturally precise. Designed for grand entrances.",
       slug: "agbadas",
       img: "/assets/19.jpeg"

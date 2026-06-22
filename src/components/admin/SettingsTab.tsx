@@ -16,7 +16,7 @@ export default function SettingsTab() {
     bookingDepositAmount: 500,
     maintenanceMode: false,
     isBannerActive: true,
-    announcementBannerText: 'Complimentary shipping on all bespoke suiting orders.',
+    announcementBannerText: 'Complimentary shipping on all custom suiting orders.',
     availability: {
       workingDays: [1, 2, 3, 4, 5],
       startHour: '09:00',

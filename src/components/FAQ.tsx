@@ -10,12 +10,12 @@ const defaultFaqs = [
     answer: "Yes, we ship globally via express couriers. Delivery times range from 3-7 business days depending on your location. Customs duties may apply and are the responsibility of the customer."
   },
   {
-    question: "How does the custom bespoke fitting work remotely?",
+    question: "How does the custom custom fitting work remotely?",
     answer: "We offer virtual consultations where our master tailors will guide you step-by-step through the measurement process. Alternatively, you can submit measurements taken by a local professional via our Custom Tailoring portal."
   },
   {
-    question: "What is the turnaround time for a bespoke garment?",
-    answer: "Bespoke creations require meticulous attention to detail. Please allow 4-6 weeks from the confirmation of your measurements and fabric selection for the garment to be completed and shipped."
+    question: "What is the turnaround time for a custom garment?",
+    answer: "Custom creations require meticulous attention to detail. Please allow 4-6 weeks from the confirmation of your measurements and fabric selection for the garment to be completed and shipped."
   },
   {
     question: "Can I request modifications to ready-to-wear items?",
@@ -38,7 +38,7 @@ export default function FAQ() {
           <span className="text-label tracking-widest uppercase text-outline mb-4 block">Client Services</span>
           <h2 className="font-serif text-4xl md:text-5xl italic text-primary mb-6">Frequently Asked</h2>
           <p className="font-sans text-on-surface-variant leading-relaxed max-w-md">
-            Find answers to common inquiries regarding our bespoke process, shipping policies, and garment care.
+            Find answers to common inquiries regarding our custom process, shipping policies, and garment care.
           </p>
         </div>
         

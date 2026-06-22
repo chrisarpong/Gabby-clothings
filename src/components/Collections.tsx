@@ -46,9 +46,9 @@ export default function Collections() {
             extraClass="mt-0 md:mt-12"
           />
           <CollectionImage
-            alt="Men's Bespoke Fits collection."
+            alt="Men's Custom Fits collection."
             src="/assets/7.jpg"
-            title="Bespoke Fits"
+            title="Custom Fits"
           />
         </div>
       </div>

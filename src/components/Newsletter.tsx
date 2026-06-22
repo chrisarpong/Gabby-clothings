@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation } from '@/hooks/useConvex';
 import { api } from '../../convex/_generated/api';
+import { toast } from 'sonner';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
@@ -15,12 +16,18 @@ export default function Newsletter() {
       try {
         await subscribe({ email });
         setStatus('submitted');
+        toast.success("Welcome to the Inner Circle", {
+          description: "You have successfully subscribed to our newsletter."
+        });
         setTimeout(() => {
           setEmail('');
           setStatus('idle');
         }, 3000);
       } catch (err) {
         console.error(err);
+        toast.error("Subscription failed", {
+          description: "There was an error subscribing. Please try again."
+        });
       }
     }
   };
@@ -35,10 +42,10 @@ export default function Newsletter() {
           The Inner Circle
         </span>
         <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl italic mb-6">
-          Join the Atelier
+          Join the Studio
         </h2>
         <p className="font-sans text-surface/80 max-w-lg mx-auto mb-12 leading-relaxed">
-          Subscribe to receive exclusive access to private capsule drops, bespoke events, and editorial insights.
+          Subscribe to receive exclusive access to private capsule drops, custom events, and editorial insights.
         </p>
 
         <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col sm:flex-row gap-4">

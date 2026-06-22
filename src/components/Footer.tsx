@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import logo from "../assets/logo_transparent.png";
 
 export default function Footer() {
   return (
@@ -9,9 +10,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 mb-24 px-5">
           {/* Main Brand Column */}
           <div className="flex flex-col items-start col-span-1 sm:col-span-2 lg:col-span-1">
-            <span className="font-serif text-3xl italic text-primary mb-4 block">Gabby Newluk</span>
+            <div className="flex items-center gap-2 mb-4">
+              <img src={logo} alt="Gabby Newluk Logo" className="h-8 w-auto object-contain" />
+              <span className="font-serif text-3xl italic text-primary block">Gabby Newluk</span>
+            </div>
             <p className="font-sans text-sm text-on-surface-variant leading-relaxed mb-6 max-w-xs">
-              A modern translation of rich sartorial heritage. Crafted in Lagos, worn globally.
+              A modern translation of rich sartorial heritage. Crafted in Accra, worn globally.
             </p>
           </div>
 
@@ -52,7 +56,8 @@ export default function Footer() {
         <div className="h-px w-full bg-outline-variant/50 mb-16"></div>
 
         {/* Large Logo */}
-        <div className="flex justify-center mb-16 overflow-hidden">
+        <div className="flex justify-center items-center gap-4 mb-16 overflow-hidden">
+          <img src={logo} alt="Gabby Newluk Logo" className="h-[12vw] sm:h-[140px] w-auto object-contain" />
           <h2 className="font-serif text-[12vw] sm:text-[140px] leading-none text-primary italic tracking-tight opacity-90 overflow-hidden whitespace-nowrap text-center">
             Gabby Newluk
           </h2>

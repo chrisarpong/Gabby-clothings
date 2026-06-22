@@ -85,6 +85,10 @@ export default function ProductDetailPage() {
   if (product === undefined) return <div className="min-h-screen pt-40 px-20">Loading product details...</div>;
   if (product === null) return <div className="min-h-screen pt-40 px-20 text-brand-charcoal/50">Product not found.</div>;
 
+  const isSoldOut = product.variants && product.variants.length > 0
+    ? product.variants.every((v: any) => v.stock <= 0)
+    : product.stockQuantity !== undefined && product.stockQuantity <= 0;
+
   const sizes: string[] = product.variants && product.variants.length > 0 && product.variants[0].size
     ? [...Array.from(new Set(product.variants.map((v: any) => v.size as string))), "Custom Fit"]
     : ["M", "L", "XL", "Custom Fit"];
@@ -225,9 +229,15 @@ export default function ProductDetailPage() {
 
             {/* Actions */}
             <div className="flex flex-col gap-4 mb-16">
-              <button onClick={handleAddToCart} className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors">
-                Add To Cart
-              </button>
+              {isSoldOut ? (
+                <button disabled className="w-full bg-surface-variant text-on-surface-variant py-5 font-label text-[11px] tracking-[0.2em] uppercase cursor-not-allowed border border-outline-variant">
+                  Out of Stock
+                </button>
+              ) : (
+                <button onClick={handleAddToCart} className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors">
+                  Add To Cart
+                </button>
+              )}
             </div>
 
             {/* Accordions */}
@@ -308,21 +318,44 @@ export default function ProductDetailPage() {
                       alt={relProduct?.name || "Product"} 
                       className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
-                    <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
-                      <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                           addItem({
-                             productId: relProduct._id,
-                             quantity: 1
-                           });
-                           toast.success("Added to cart");
-                        }}
-                        className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
-                       >
-                        Quick Add
-                      </button>
-                    </div>
+                    {(() => {
+                      const isRelSoldOut = relProduct.variants && relProduct.variants.length > 0
+                        ? relProduct.variants.every((v: any) => v.stock <= 0)
+                        : relProduct.stockQuantity !== undefined && relProduct.stockQuantity <= 0;
+                      return (
+                        <>
+                          {isRelSoldOut && (
+                            <>
+                              <div className="absolute top-4 left-4 z-20 bg-black/90 text-white border border-white/20 font-label text-[10px] tracking-widest uppercase px-3 py-1 backdrop-blur-sm">
+                                Sold Out
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none bg-surface/10 backdrop-blur-[2px]">
+                                <span className="transform -rotate-45 font-sans font-black text-3xl md:text-4xl lg:text-5xl uppercase tracking-[0.2em] text-red-600/90 drop-shadow-lg whitespace-nowrap">
+                                  Sold Out
+                                </span>
+                              </div>
+                            </>
+                          )}
+                          {!isRelSoldOut && (
+                            <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
+                              <button 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  addItem({
+                                    productId: relProduct._id,
+                                    quantity: 1
+                                  });
+                                  toast.success("Added to cart");
+                                }}
+                                className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
+                               >
+                                Quick Add
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex flex-col">

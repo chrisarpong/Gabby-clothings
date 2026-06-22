@@ -274,7 +274,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
               <Edit2 className="w-4 h-4" /> Consultation Notes
             </h3>
             <textarea 
-              placeholder="Internal notes for the atelier team..."
+              placeholder="Internal notes for the studio team..."
               rows={4}
               value={adminNotes} 
               onChange={(e) => setAdminNotes(e.target.value)}

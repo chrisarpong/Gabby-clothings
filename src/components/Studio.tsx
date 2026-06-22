@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 
-export default function Atelier() {
+export default function Studio() {
   return (
     <section className="py-section px-5 md:px-20 bg-surface">
       <div className="max-w-[1536px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-gutter items-center">
         <div className="col-span-1 md:col-span-5 flex flex-col items-start md:pr-12 mb-16 md:mb-0">
           <span className="text-label text-secondary mb-6">
-            Bespoke Services
+            Custom Services
           </span>
           <h2 className="font-serif text-4xl md:text-5xl italic text-primary mb-8">
             Custom Tailoring
@@ -23,7 +23,7 @@ export default function Atelier() {
         </div>
         <div className="col-span-1 md:col-span-7 relative h-[400px] md:h-[800px]">
           <img
-            alt="Tailor working in atelier."
+            alt="Tailor working in studio."
             className="w-full h-full object-cover"
             src="/assets/3.jpg"
           />

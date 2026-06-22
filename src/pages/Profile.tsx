@@ -190,7 +190,7 @@ export default function Profile() {
                 >
                   <h2 className="font-serif text-3xl text-primary italic mb-6">Client Measurements</h2>
                   <p className="font-sans text-on-surface-variant text-sm mb-12 max-w-2xl leading-relaxed">
-                    Maintain your precise sizing profile for future bespoke commissions. Updates to these measurements will automatically apply to all forthcoming tailored orders.
+                    Maintain your precise sizing profile for future custom commissions. Updates to these measurements will automatically apply to all forthcoming tailored orders.
                   </p>
 
                   <div className="bg-surface-container/30 border border-surface-variant p-8 md:p-12 mb-8">
@@ -302,7 +302,7 @@ export default function Profile() {
                 >
                   <h2 className="font-serif text-3xl text-primary italic mb-6">Order History</h2>
                   <p className="font-sans text-on-surface-variant text-sm mb-12">
-                    Review your past commissions and check the status of ongoing bespoke creations.
+                    Review your past commissions and check the status of ongoing custom creations.
                   </p>
 
                   <div className="flex flex-col gap-6">

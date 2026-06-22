@@ -25,6 +25,7 @@
     "react-dom": "^19.0.1",
     "react-markdown": "^10.1.0",
     "react-paystack": "^6.0.0",
+    "react-phone-number-input": "^3.4.17",
     "react-router-dom": "^7.15.1",
     "recharts": "^3.8.1",
     "resend": "^6.12.4",

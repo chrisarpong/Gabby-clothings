@@ -129,7 +129,7 @@ After decades of honing the craft, the dedication remains the same: an absolute 
               </div>
               <h3 className="font-serif text-2xl mb-4 italic">Zero Waste Philosophy</h3>
               <p className="font-sans text-white/80 leading-relaxed">
-                Slow fashion demands respect for the material. Off-cuts from our bespoke creations are meticulously repurposed into limited-edition accessories or architectural patchworks.
+                Slow fashion demands respect for the material. Off-cuts from our custom creations are meticulously repurposed into limited-edition accessories or architectural patchworks.
               </p>
             </motion.div>
 

@@ -1,5 +1,6 @@
 import { checkAdmin } from "./authHelper";
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { checkRateLimit } from "./authHelper";
 import { v } from "convex/values";
 
@@ -23,9 +24,13 @@ export const subscribe = mutation({
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
     if (existing) return existing._id;
-    return await ctx.db.insert("subscribers", {
+    const subId = await ctx.db.insert("subscribers", {
       email: args.email,
       status: "active",
     });
+    
+    await ctx.scheduler.runAfter(0, internal.email.sendSubscriptionConfirmation, { email: args.email });
+    
+    return subId;
   },
 });

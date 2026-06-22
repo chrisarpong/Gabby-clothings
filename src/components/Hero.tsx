@@ -8,7 +8,7 @@ export default function Hero() {
   const contentBlock = useQuery(api.content.get, { key: "home_hero" });
   const data = contentBlock?.data || {};
 
-  const heading = data.heading || "Bespoke Elegance";
+  const heading = data.heading || "Custom Elegance";
   const subHeading = data.subHeading || "";
   
   const images = (data.images && data.images.length > 0) 
@@ -30,7 +30,7 @@ export default function Hero() {
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 w-full h-full">
         <img
-          alt="High fashion portrait of a model in elegant bespoke African attire."
+          alt="High fashion portrait of a model in elegant custom African attire."
           className="w-full h-full object-cover object-center transition-opacity duration-1000"
           src={images[currentImageIndex]}
         />

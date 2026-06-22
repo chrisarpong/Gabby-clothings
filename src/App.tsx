@@ -83,7 +83,7 @@ export default function App() {
           <Route path="/category/:slug" element={<CategoryPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/custom-tailoring" element={<CustomTailoring />} />
-          <Route path="/atelier" element={<CustomTailoring />} />
+          <Route path="/studio" element={<CustomTailoring />} />
           <Route path="/story" element={<StoryPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<Checkout />} />

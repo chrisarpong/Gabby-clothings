@@ -41,7 +41,7 @@ export default function ShippingReturns() {
               We accept returns on all Ready-to-Wear garments within 14 days of delivery, provided the item is unworn, in original condition, and has all tags attached. Delivery fees are non-refundable. For returns, please contact our support desk.
             </p>
             <p className="leading-relaxed font-bold">
-              Bespoke & Custom Orders: Because custom garments are tailored specifically to your measurements, they are strictly non-refundable. However, we offer two complimentary alterations within 30 days of receipt to ensure your garment fits perfectly.
+              Custom & Custom Orders: Because custom garments are tailored specifically to your measurements, they are strictly non-refundable. However, we offer two complimentary alterations within 30 days of receipt to ensure your garment fits perfectly.
             </p>
           </div>
         </div>
