@@ -87,7 +87,7 @@ export default function ProductDetailPage() {
 
   const isSoldOut = product.variants && product.variants.length > 0
     ? product.variants.every((v: any) => v.stock <= 0)
-    : product.stockQuantity !== undefined && product.stockQuantity <= 0;
+    : product.stock !== undefined && product.stock <= 0;
 
   const sizes: string[] = product.variants && product.variants.length > 0 && product.variants[0].size
     ? [...Array.from(new Set(product.variants.map((v: any) => v.size as string))), "Custom Fit"]
@@ -321,7 +321,7 @@ export default function ProductDetailPage() {
                     {(() => {
                       const isRelSoldOut = relProduct.variants && relProduct.variants.length > 0
                         ? relProduct.variants.every((v: any) => v.stock <= 0)
-                        : relProduct.stockQuantity !== undefined && relProduct.stockQuantity <= 0;
+                        : relProduct.stock !== undefined && relProduct.stock <= 0;
                       return (
                         <>
                           {isRelSoldOut && (

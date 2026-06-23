@@ -288,6 +288,10 @@ export const sendPromoBroadcast = action({
   
   <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #999; line-height: 1.5;">
     <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p style="margin-top: 10px;">
+      You are receiving this email because you subscribed to our newsletter or made a purchase.<br>
+      <a href="https://gabbynewluk.com/unsubscribe?email=${encodeURIComponent(user.email)}" style="color: #999; text-decoration: underline;">Unsubscribe</a> from marketing emails.
+    </p>
   </div>
 </div>
           `,
@@ -338,4 +342,100 @@ export const sendSubscriptionConfirmation = internalAction({
       console.error("Failed to send subscription confirmation:", error);
     }
   },
+});
+
+export const sendNewsletterBroadcast = action({
+  args: {
+    subject: v.string(),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated: You must be signed in.");
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) throw new Error("Resend API key not configured");
+
+    const subscribers = await ctx.runQuery(api.subscribers.getAll);
+    const activeSubscribers = subscribers.filter((s: any) => s.status === 'active');
+    const resend = new Resend(resendApiKey);
+
+    let sentCount = 0;
+    
+    for (const sub of activeSubscribers) {
+      try {
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+          to: sub.email,
+          subject: args.subject,
+          html: `
+<div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
+    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">The Studio</p>
+  </div>
+  
+  <p style="line-height: 1.6; color: #555; font-size: 15px; white-space: pre-wrap;">${args.message}</p>
+  
+  <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #999; line-height: 1.5;">
+    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p style="margin-top: 10px;">
+      You are receiving this email because you subscribed to our newsletter.<br>
+      To unsubscribe, reply to this email or contact us.
+    </p>
+  </div>
+</div>
+          `,
+        });
+        sentCount++;
+      } catch (err) {
+        console.error("Failed to send newsletter to", sub.email, err);
+      }
+    }
+    return `Newsletter sent to ${sentCount} subscribers.`;
+  }
+});
+
+export const replyToMessage = action({
+  args: {
+    email: v.string(),
+    subject: v.string(),
+    message: v.string(),
+    originalMessage: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) throw new Error("Resend API key not configured");
+
+    const resend = new Resend(resendApiKey);
+
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+      to: args.email,
+      subject: `Re: ${args.subject}`,
+      html: `
+<div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
+  <div style="margin-bottom: 30px;">
+    <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 24px; margin: 0;">Gabby Newluk</h1>
+  </div>
+  
+  <p style="line-height: 1.6; color: #333; font-size: 15px; white-space: pre-wrap;">${args.message}</p>
+  
+  <div style="margin-top: 40px; padding-left: 15px; border-left: 3px solid #ccc; color: #666; font-size: 13px;">
+    <p style="margin-bottom: 5px;"><strong>On ${new Date().toLocaleDateString()}, you wrote:</strong></p>
+    <p style="white-space: pre-wrap; font-style: italic;">${args.originalMessage}</p>
+  </div>
+  
+  <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; font-size: 11px; color: #999;">
+    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+  </div>
+</div>
+      `,
+    });
+    
+    return "Reply sent successfully.";
+  }
 });

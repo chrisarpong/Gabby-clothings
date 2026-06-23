@@ -1,15 +1,28 @@
 
-import React from 'react';
-import { useQuery, useMutation } from '@/hooks/useConvex';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
-import { Mail, Users, Eye, EyeOff } from 'lucide-react';
+import { Mail, Users, Eye, EyeOff, Send, MessageSquare, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MarketingTab() {
   const messages = useQuery(api.messages.getMessages);
   const subscribers = useQuery(api.subscribers.getAll);
   const markAsRead = useMutation(api.messages.markAsRead);
+  const sendNewsletterBroadcast = useAction(api.email.sendNewsletterBroadcast);
+  const replyToMessageAction = useAction(api.email.replyToMessage);
+
+  // Newsletter State
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
+  const [newsletterSubject, setNewsletterSubject] = useState("");
+  const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
+
+  // Reply State
+  const [replyingToMsg, setReplyingToMsg] = useState<Doc<"messages"> | null>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   if (messages === undefined || subscribers === undefined) {
     return (
@@ -41,6 +54,14 @@ export default function MarketingTab() {
         <div>
           <h2 className="font-serif text-3xl text-primary mb-1 tracking-tight">Messages & Subscribers</h2>
           <p className="text-sm text-on-surface-variant">Contact form messages and newsletter subscriber list.</p>
+        </div>
+        <div className="mt-4 md:mt-0">
+          <button
+            onClick={() => setIsNewsletterModalOpen(true)}
+            className="flex items-center gap-2 bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-3 px-6 hover:bg-surface-tint transition-colors"
+          >
+            <Send className="w-4 h-4" /> Compose Newsletter
+          </button>
         </div>
       </div>
 
@@ -88,8 +109,17 @@ export default function MarketingTab() {
                       <span className="font-sans text-sm font-medium text-primary">{msg.name}</span>
                       <span className="text-xs text-on-surface-variant ml-2">{msg.email}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <span className="text-[10px] text-on-surface-variant">{new Date(msg._creationTime).toLocaleDateString()}</span>
+                      
+                      <button 
+                        onClick={() => setReplyingToMsg(msg)} 
+                        className="text-primary hover:text-primary/70 transition-colors flex items-center gap-1" 
+                        title="Reply to message"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+
                       {msg.status === 'unread' && (
                         <button onClick={() => handleMarkRead(msg._id)} className="text-primary hover:text-primary/70 transition-colors" title="Mark as read">
                           <Eye className="w-4 h-4" />
@@ -140,6 +170,144 @@ export default function MarketingTab() {
           </div>
         </div>
       </div>
+
+      {/* Compose Newsletter Modal */}
+      {isNewsletterModalOpen && (
+        <div className="fixed inset-0 bg-brand-charcoal/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-2xl border border-outline-variant shadow-xl">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+              <h3 className="font-serif text-2xl text-primary">Compose Newsletter</h3>
+              <button onClick={() => setIsNewsletterModalOpen(false)} className="text-on-surface-variant hover:text-primary transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="bg-surface-variant/30 p-4 border border-outline-variant text-sm text-on-surface-variant italic">
+                This email will be sent to <strong>{activeSubscribers}</strong> active subscribers.
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label text-xs tracking-widest uppercase text-on-surface-variant">Subject</label>
+                <input 
+                  type="text" 
+                  value={newsletterSubject}
+                  onChange={(e) => setNewsletterSubject(e.target.value)}
+                  className="p-3 border border-outline-variant bg-surface focus:outline-none focus:border-primary font-sans text-primary"
+                  placeholder="e.g. New Collection Arrival"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label text-xs tracking-widest uppercase text-on-surface-variant">Message (HTML supported internally)</label>
+                <textarea 
+                  value={newsletterMessage}
+                  onChange={(e) => setNewsletterMessage(e.target.value)}
+                  rows={8}
+                  className="p-3 border border-outline-variant bg-surface focus:outline-none focus:border-primary font-sans text-primary resize-y"
+                  placeholder="Write your newsletter content here..."
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-outline-variant bg-surface-container flex justify-end gap-4">
+              <button 
+                onClick={() => setIsNewsletterModalOpen(false)}
+                className="px-6 py-3 font-label text-xs tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors"
+                disabled={isSendingNewsletter}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  if (!newsletterSubject || !newsletterMessage) return toast.error("Please fill in subject and message.");
+                  setIsSendingNewsletter(true);
+                  try {
+                    const result = await sendNewsletterBroadcast({ subject: newsletterSubject, message: newsletterMessage });
+                    toast.success(result);
+                    setIsNewsletterModalOpen(false);
+                    setNewsletterSubject("");
+                    setNewsletterMessage("");
+                  } catch (e: any) {
+                    toast.error(e.message || "Failed to send newsletter.");
+                  } finally {
+                    setIsSendingNewsletter(false);
+                  }
+                }}
+                disabled={isSendingNewsletter}
+                className="flex items-center gap-2 bg-primary text-on-primary font-label text-xs tracking-widest uppercase py-3 px-8 hover:bg-surface-tint transition-colors disabled:opacity-50"
+              >
+                {isSendingNewsletter ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isSendingNewsletter ? "Sending..." : "Broadcast"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {replyingToMsg && (
+        <div className="fixed inset-0 bg-brand-charcoal/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-2xl border border-outline-variant shadow-xl">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+              <h3 className="font-serif text-2xl text-primary">Reply to {replyingToMsg.name}</h3>
+              <button onClick={() => setReplyingToMsg(null)} className="text-on-surface-variant hover:text-primary transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="bg-surface-variant/30 p-4 border border-outline-variant text-sm">
+                <p className="text-on-surface-variant"><strong>To:</strong> {replyingToMsg.email}</p>
+                <p className="text-on-surface-variant"><strong>Regarding:</strong> {replyingToMsg.subject}</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label text-xs tracking-widest uppercase text-on-surface-variant">Your Reply</label>
+                <textarea 
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  rows={8}
+                  className="p-3 border border-outline-variant bg-surface focus:outline-none focus:border-primary font-sans text-primary resize-y"
+                  placeholder="Type your response here..."
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-outline-variant bg-surface-container flex justify-end gap-4">
+              <button 
+                onClick={() => setReplyingToMsg(null)}
+                className="px-6 py-3 font-label text-xs tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors"
+                disabled={isSendingReply}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  if (!replyMessage) return toast.error("Message cannot be empty.");
+                  setIsSendingReply(true);
+                  try {
+                    await replyToMessageAction({ 
+                      email: replyingToMsg.email, 
+                      subject: replyingToMsg.subject, 
+                      message: replyMessage, 
+                      originalMessage: replyingToMsg.message 
+                    });
+                    toast.success("Reply sent successfully.");
+                    if (replyingToMsg.status === 'unread') {
+                      await markAsRead({ messageId: replyingToMsg._id });
+                    }
+                    setReplyingToMsg(null);
+                    setReplyMessage("");
+                  } catch (e: any) {
+                    toast.error(e.message || "Failed to send reply.");
+                  } finally {
+                    setIsSendingReply(false);
+                  }
+                }}
+                disabled={isSendingReply}
+                className="flex items-center gap-2 bg-primary text-on-primary font-label text-xs tracking-widest uppercase py-3 px-8 hover:bg-surface-tint transition-colors disabled:opacity-50"
+              >
+                {isSendingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isSendingReply ? "Sending..." : "Send Reply"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

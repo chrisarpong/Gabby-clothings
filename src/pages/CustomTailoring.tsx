@@ -114,7 +114,7 @@ export default function CustomTailoring() {
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
-        phone: formData.phone || undefined,
+        phone: formData.phone,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
         time: formData.time,
@@ -183,7 +183,7 @@ export default function CustomTailoring() {
       await bookAppointment({
         name: formData.fullName,
         email: formData.email,
-        phone: formData.phone || undefined,
+        phone: formData.phone,
         date: formData.fittingDate || new Date().toISOString(),
         garmentType: formData.garmentType,
         time: formData.time,

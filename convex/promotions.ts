@@ -19,12 +19,14 @@ export const createPromoCode = mutation({
     discountValue: v.number(),
     validUntil: v.optional(v.number()),
     isActive: v.boolean(),
+    maxRedemptions: v.optional(v.number()),
+    minOrderAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
     await checkAdmin(ctx, identity);
-    return await ctx.db.insert("promotions", args);
+    return await ctx.db.insert("promotions", { ...args, redemptions: 0 });
   }
 });
 
@@ -43,6 +45,14 @@ export const applyPromoCode = mutation({
       return { valid: false, discountAmount: 0 };
     }
 
+    if (promo.minOrderAmount && args.subtotal < promo.minOrderAmount) {
+      return { valid: false, discountAmount: 0, error: `This code requires a minimum order of GH₵${promo.minOrderAmount}` };
+    }
+
+    if (promo.maxRedemptions && (promo.redemptions || 0) >= promo.maxRedemptions) {
+      return { valid: false, discountAmount: 0, error: "This promo code has reached its usage limit." };
+    }
+
     let discountAmount = 0;
     if (promo.discountType === "percentage") {
       discountAmount = args.subtotal * (promo.discountValue / 100);
@@ -53,3 +63,15 @@ export const applyPromoCode = mutation({
     return { valid: true, discountAmount };
   }
 });
+
+// Used by verifyAndCreate action to recalculate expected discount server-side
+export const getPromoByCode = query({
+  args: { code: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("promotions")
+      .withIndex("by_code", (q) => q.eq("code", args.code))
+      .first();
+  }
+});
+

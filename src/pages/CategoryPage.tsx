@@ -10,7 +10,7 @@ const isSoldOut = (product: any) => {
   if (product.variants && product.variants.length > 0) {
     return product.variants.every((v: any) => v.stock <= 0);
   }
-  return product.stockQuantity !== undefined && product.stockQuantity <= 0;
+  return product.stock !== undefined && product.stock <= 0;
 };
 
 export default function CategoryPage() {

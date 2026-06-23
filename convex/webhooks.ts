@@ -25,10 +25,10 @@ export const reconcilePaystackPayment = internalMutation({
   },
   handler: async (ctx, args) => {
     // ── 1. Check if an appointment already has this reference (idempotent) ──
-    const allAppointments = await ctx.db.query("appointments").collect();
-    const existingApt = allAppointments.find(
-      (a) => a.paystackReference === args.paystackReference
-    );
+    const existingApt = await ctx.db
+      .query("appointments")
+      .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
+      .first();
     if (existingApt) {
       // Already reconciled — ensure it's marked paid (idempotent)
       if (existingApt.paymentStatus !== "paid") {
@@ -41,10 +41,10 @@ export const reconcilePaystackPayment = internalMutation({
     }
 
     // ── 2. Check if an order already has this reference (idempotent) ──
-    const allOrders = await ctx.db.query("orders").collect();
-    const existingOrder = allOrders.find(
-      (o) => o.paystackReference === args.paystackReference
-    );
+    const existingOrder = await ctx.db
+      .query("orders")
+      .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
+      .first();
     if (existingOrder) {
       // Already reconciled — ensure it's marked paid
       if (existingOrder.paymentStatus !== "paid") {
@@ -59,13 +59,16 @@ export const reconcilePaystackPayment = internalMutation({
     // This covers the case where the appointment was created in step 1 of
     // the two-step booking flow (paymentStatus: "pending") but the browser
     // dropped before calling the verify action.
-    const pendingApt = allAppointments.find(
-      (a) =>
-        a.email === args.customerEmail &&
-        a.paymentStatus === "pending" &&
-        !a.paystackReference
-    );
-    if (pendingApt) {
+    const pendingApt = await ctx.db
+      .query("appointments")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("email"), args.customerEmail),
+          q.eq(q.field("paymentStatus"), "pending")
+        )
+      )
+      .first();
+    if (pendingApt && !pendingApt.paystackReference) {
       await ctx.db.patch(pendingApt._id, {
         paymentStatus: "paid",
         paystackReference: args.paystackReference,

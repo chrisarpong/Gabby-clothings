@@ -1,7 +1,8 @@
 import { checkAdmin } from "./authHelper";
-import { mutation, query, action, internalMutation } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 export const shippingAddressValidator = v.object({
   street: v.string(),
@@ -60,15 +61,11 @@ export const verifyAndCreate = action({
       },
     });
     const data = await resp.json();
-    console.log("Paystack Verification Response:", data);
     if (!data.status || data.data?.status !== "success") {
-      throw new Error(`Payment verification failed: ${data.message || JSON.stringify(data)}`);
+      throw new Error(`Payment verification failed: ${data.message || "Transaction not successful"}`);
     }
 
-    // 2. Verify paid amount covers at least the base cost
-    // Note: The exact discount is recalculated inside the create mutation
-    // using ctx.db (which actions don't have). Here we just sanity-check
-    // the payment isn't absurdly low (e.g. someone paying GH₵0).
+    // 2. Calculate the expected total server-side and verify against paid amount
     let expectedSubtotal = 0;
     for (const item of args.items) {
       const product = await ctx.runQuery(api.products.getById, { id: item.productId });
@@ -77,21 +74,46 @@ export const verifyAndCreate = action({
       expectedSubtotal += itemPrice * item.quantity;
     }
 
+    // Calculate promo discount server-side
+    let promoDiscount = 0;
+    if (args.promoCode) {
+      const promoResult = await ctx.runQuery(api.promotions.getPromoByCode, { code: args.promoCode });
+      if (
+        promoResult && 
+        promoResult.isActive && 
+        (!promoResult.validUntil || Date.now() <= promoResult.validUntil) &&
+        (!promoResult.minOrderAmount || expectedSubtotal >= promoResult.minOrderAmount) &&
+        (!promoResult.maxRedemptions || (promoResult.redemptions || 0) < promoResult.maxRedemptions)
+      ) {
+        if (promoResult.discountType === "percentage") {
+          promoDiscount = expectedSubtotal * (promoResult.discountValue / 100);
+        } else if (promoResult.discountType === "fixed") {
+          promoDiscount = promoResult.discountValue;
+        }
+      }
+    }
+
+    const expectedTotal = expectedSubtotal - promoDiscount + args.shippingAmount;
     const paidAmountInCurrency = data.data.amount / 100; // Paystack returns amount in pesewas
 
-    // Basic sanity check: paid amount should be > 0 and not wildly below subtotal
     if (paidAmountInCurrency <= 0) {
       throw new Error("Payment verification failed: zero or negative amount.");
     }
 
-    // Allow for promo discounts by checking paid >= shipping at minimum
-    if (paidAmountInCurrency < args.shippingAmount) {
+    // Strict verification: paid amount must be within 1% of expected total (tolerance for rounding)
+    if (paidAmountInCurrency < expectedTotal * 0.99) {
       throw new Error(
-        `Payment amount too low: paid GH₵${paidAmountInCurrency.toFixed(2)} but shipping alone is GH₵${args.shippingAmount.toFixed(2)}`
+        `Payment amount mismatch: paid GH₵${paidAmountInCurrency.toFixed(2)} but expected GH₵${expectedTotal.toFixed(2)}`
       );
     }
 
-    // 3. Call mutation to insert order
+    // Duplicate order prevention: query DB to check if an order with this paystackReference already exists
+    const existingOrder = await ctx.runQuery(internal.orders.getByPaystackReference, { paystackReference: args.paystackReference });
+    if (existingOrder) {
+      throw new Error("Payment already processed. Order already exists for this transaction.");
+    }
+
+    // 3. Call mutation to insert order (includes duplicate check)
     const orderId: any = await ctx.runMutation(internal.orders.create, {
       userId: args.userId,
       customerDetails: args.customerDetails,
@@ -129,6 +151,17 @@ export const create = internalMutation({
     promoCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Duplicate order prevention: check if an order with this reference already exists
+    if (args.paystackReference) {
+      const existingOrder = await ctx.db
+        .query("orders")
+        .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
+        .first();
+      if (existingOrder) {
+        return existingOrder._id; // Idempotent: return the existing order
+      }
+    }
+
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Please sign in to complete checkout.");
 
@@ -159,12 +192,19 @@ export const create = internalMutation({
         .query("promotions")
         .withIndex("by_code", (q) => q.eq("code", args.promoCode!))
         .first();
-      if (promo && promo.isActive && (!promo.validUntil || Date.now() <= promo.validUntil)) {
+      if (
+        promo && 
+        promo.isActive && 
+        (!promo.validUntil || Date.now() <= promo.validUntil) &&
+        (!promo.minOrderAmount || calculatedSubtotal >= promo.minOrderAmount) &&
+        (!promo.maxRedemptions || (promo.redemptions || 0) < promo.maxRedemptions)
+      ) {
         if (promo.discountType === "percentage") {
           discountAmount = calculatedSubtotal * (promo.discountValue / 100);
         } else if (promo.discountType === "fixed") {
           discountAmount = promo.discountValue;
         }
+        await ctx.db.patch(promo._id, { redemptions: (promo.redemptions || 0) + 1 });
       }
     }
 
@@ -201,6 +241,16 @@ export const create = internalMutation({
           await ctx.db.patch(item.productId, { variants: updatedVariants });
         }
       }
+    }
+
+    // Send order confirmation email
+    if (args.customerDetails?.email) {
+      await ctx.scheduler.runAfter(0, internal.email.sendOrderConfirmation, {
+        orderId,
+        email: args.customerDetails.email,
+        name: args.customerDetails.firstName,
+        amount: calculatedTotalAmount,
+      });
     }
 
     return orderId;
@@ -262,3 +312,12 @@ export const updateStatus = mutation({
   },
 });
 
+export const getByPaystackReference = internalQuery({
+  args: { paystackReference: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
+      .first();
+  },
+});

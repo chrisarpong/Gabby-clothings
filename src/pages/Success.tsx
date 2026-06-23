@@ -101,8 +101,8 @@ export default function Success() {
                 <div>
                   <p className="font-sans text-sm font-medium text-primary mb-1">Shipping Address</p>
                   <p className="font-sans text-sm text-on-surface-variant">{currentOrder.shippingAddress?.street}</p>
-                  <p className="font-sans text-sm text-on-surface-variant">{currentOrder.shippingAddress?.city}, {currentOrder.shippingAddress?.state}</p>
-                  <p className="font-sans text-sm text-on-surface-variant">{currentOrder.shippingAddress?.country} - {currentOrder.shippingAddress?.zip}</p>
+                  <p className="font-sans text-sm text-on-surface-variant">{currentOrder.shippingAddress?.city}, {currentOrder.shippingAddress?.region}</p>
+                  <p className="font-sans text-sm text-on-surface-variant">{currentOrder.shippingAddress?.country} - {currentOrder.shippingAddress?.postalCode}</p>
                 </div>
               </div>
             </div>
@@ -112,15 +112,16 @@ export default function Success() {
               <div className="flex flex-col gap-4">
                 {currentOrder.items.map((item: any, index: number) => {
                   const product = allProducts.find(p => p._id === item.productId);
+                  const displayPrice = item.priceAtPurchase ?? product?.basePrice ?? 0;
                   return (
                     <div key={index} className="flex justify-between items-center py-2">
                       <div className="flex items-center gap-4">
                         <div className="flex flex-col">
-                          <span className="font-serif text-lg text-primary">{product?.name || "Custom Item"}</span>
+                          <span className="font-serif text-lg text-primary">{item.productName || product?.name || "Custom Item"}</span>
                           <span className="font-sans text-xs text-on-surface-variant mt-1">Size: {item.variantSku || "Custom Fit"} &times; {item.quantity}</span>
                         </div>
                       </div>
-                      <span className="font-sans text-sm text-primary font-medium">GH₵{((product?.basePrice || 0) * item.quantity).toFixed(2)}</span>
+                      <span className="font-sans text-sm text-primary font-medium">GH₵{(displayPrice * item.quantity).toFixed(2)}</span>
                     </div>
                   );
                 })}
@@ -131,18 +132,24 @@ export default function Success() {
               <div className="flex justify-between items-center mb-2">
                 <span className="font-sans text-sm text-on-surface-variant">Subtotal</span>
                 <span className="font-sans text-sm text-primary">
-                  GH₵{currentOrder.items.reduce((sum: number, item: any) => sum + ((allProducts.find(p => p._id === item.productId)?.basePrice || 0) * item.quantity), 0).toFixed(2)}
+                  GH₵{(currentOrder.subtotal ?? currentOrder.totalAmount ?? 0).toFixed(2)}
                 </span>
               </div>
+              {(currentOrder.discountAmount ?? 0) > 0 && (
+                <div className="flex justify-between items-center mb-2 text-green-600">
+                  <span className="font-sans text-sm">Discount</span>
+                  <span className="font-sans text-sm">-GH₵{(currentOrder.discountAmount ?? 0).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center mb-6 border-b border-surface-variant pb-6">
                 <span className="font-sans text-sm text-on-surface-variant">Shipping</span>
-                <span className="font-sans text-sm text-primary">GH₵{((currentOrder as any).shippingAmount || 0).toFixed(2)}</span>
+                <span className="font-sans text-sm text-primary">GH₵{(currentOrder.shippingFee ?? 0).toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between items-end">
                 <span className="font-serif text-xl text-primary">Total Paid</span>
                 <span className="font-label text-xl tracking-widest text-primary">
-                  GH₵{(currentOrder.items.reduce((sum: number, item: any) => sum + ((allProducts.find(p => p._id === item.productId)?.basePrice || 0) * item.quantity), 0) + ((currentOrder as any).shippingAmount || 0)).toFixed(2)}
+                  GH₵{(currentOrder.totalAmount ?? 0).toFixed(2)}
                 </span>
               </div>
             </div>

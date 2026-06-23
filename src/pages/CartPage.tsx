@@ -36,7 +36,7 @@ export default function CartPage() {
       const variant = item.product.variants.find((v: any) => v.sku === item.variantSku);
       return variant ? variant.stock : 0;
     }
-    return item.product?.stockQuantity ?? 0;
+    return item.product?.stock ?? 0;
   };
 
   const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));

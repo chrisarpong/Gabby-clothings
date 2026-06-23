@@ -77,7 +77,7 @@ export default defineSchema({
     paystackReference: v.optional(v.string()),
     shippingAddress: v.optional(v.any()),
     trackingNumber: v.optional(v.string()),
-  }).index("by_user", ["userId"]).index("by_status", ["status"]),
+  }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]),
 
   settings: defineTable({
     key: v.string(),
@@ -111,7 +111,7 @@ export default defineSchema({
     targetEventDate: v.optional(v.string()), // Actual event date for triage
     ghanaPostGps: v.optional(v.string()),
     landmarks: v.optional(v.string()),
-  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]),
+  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]).index("by_paystackReference", ["paystackReference"]),
 
   reviews: defineTable({
     productId: v.id("products"),
@@ -142,6 +142,9 @@ export default defineSchema({
     discountValue: v.number(),
     validUntil: v.optional(v.number()), // timestamp
     isActive: v.boolean(),
+    maxRedemptions: v.optional(v.number()),
+    redemptions: v.optional(v.number()),
+    minOrderAmount: v.optional(v.number()),
   }).index("by_code", ["code"]),
 
   wishlists: defineTable({

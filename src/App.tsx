@@ -55,11 +55,14 @@ function UserSync() {
   return null;
 }
 
+import CookieBanner from './components/CookieBanner';
+
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
       <UserSync />
+      <CookieBanner />
       <Toaster position="top-center" toastOptions={{
         className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
       }} />
