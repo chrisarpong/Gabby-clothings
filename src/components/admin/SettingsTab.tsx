@@ -265,8 +265,8 @@ export default function SettingsTab() {
                 <input 
                   type="number" 
                   step="0.000001"
-                  value={formData.manualRateUSD || ''}
-                  onChange={(e) => setFormData({...formData, manualRateUSD: e.target.value ? parseFloat(e.target.value) : ''})}
+                  value={formData.manualRateUSD ? formData.manualRateUSD.toString() : ''}
+                  onChange={(e) => setFormData({...formData, manualRateUSD: e.target.value})}
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                   placeholder="e.g. 0.088"
                 />
@@ -276,8 +276,8 @@ export default function SettingsTab() {
                 <input 
                   type="number" 
                   step="0.000001"
-                  value={formData.manualRateGBP || ''}
-                  onChange={(e) => setFormData({...formData, manualRateGBP: e.target.value ? parseFloat(e.target.value) : ''})}
+                  value={formData.manualRateGBP ? formData.manualRateGBP.toString() : ''}
+                  onChange={(e) => setFormData({...formData, manualRateGBP: e.target.value})}
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                   placeholder="e.g. 0.065"
                 />
@@ -287,8 +287,8 @@ export default function SettingsTab() {
                 <input 
                   type="number" 
                   step="0.000001"
-                  value={formData.manualRateEUR || ''}
-                  onChange={(e) => setFormData({...formData, manualRateEUR: e.target.value ? parseFloat(e.target.value) : ''})}
+                  value={formData.manualRateEUR ? formData.manualRateEUR.toString() : ''}
+                  onChange={(e) => setFormData({...formData, manualRateEUR: e.target.value})}
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                   placeholder="e.g. 0.076"
                 />

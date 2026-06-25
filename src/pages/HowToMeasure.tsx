@@ -1,80 +1,158 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Focus } from "lucide-react";
+import '@google/model-viewer';
+
+const ModelViewer = 'model-viewer' as unknown as React.FC<any>;
 
 export default function HowToMeasure() {
+  const [activeMeasurement, setActiveMeasurement] = useState<string | null>(null);
+  const modelRef = React.useRef<any>(null);
+
   const steps = [
     {
+      id: "chest",
       title: "Chest",
-      description: "Measure around the fullest part of your chest, keeping the tape horizontal. Ensure the tape is snug but not tight.",
-      image: "https://images.unsplash.com/photo-1593030103066-0093718efce9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      description: "Wrap the measuring tape around the fullest part of your chest, under your armpits and over your shoulder blades. Keep the tape measure level and comfortably loose.",
+      tips: "Stand naturally and breathe out before reading the measurement.",
+      image: "/images/chest_measure.png",
+      orbit: "0deg 80deg 0.8m",
+      target: "0m 0.25m 0m"
     },
     {
+      id: "waist",
       title: "Waist",
-      description: "Measure around the narrowest part of your waist, typically just above your belly button. Leave a little room for comfort.",
-      image: "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      description: "Measure around your natural waistline, which is usually just above your belly button and below your rib cage. Keep the tape measure level.",
+      tips: "Don't suck in your stomach. Keep the tape comfortably loose.",
+      image: "/images/waist_measure.png",
+      orbit: "0deg 80deg 0.8m",
+      target: "0m 0.15m 0m"
     },
     {
-      title: "Hips",
-      description: "Stand with your feet together and measure around the fullest part of your hips and rear.",
-      image: "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      id: "sleeve",
+      title: "Sleeve",
+      description: "Place your hand on your hip so your arm is slightly bent. Measure from the center back of your neck, across your shoulder, and down to your wrist bone.",
+      tips: "It is often easier to have a friend help you with this measurement.",
+      image: "/images/sleeve_measure.png",
+      orbit: "45deg 80deg 0.8m",
+      target: "0m 0.22m 0m"
     },
     {
-      title: "Shoulders",
-      description: "Measure across your back from the edge of one shoulder to the edge of the other.",
-      image: "https://images.unsplash.com/photo-1588661621532-62cebb5e7ea8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-    {
+      id: "inseam",
       title: "Inseam",
-      description: "Measure from the uppermost inner part of your thigh down to the bottom of your ankle.",
-      image: "https://images.unsplash.com/photo-1594938298596-1eb6c0ec028e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      description: "Measure from the uppermost part of your inner thigh down to the bottom of your ankle.",
+      tips: "You can also take a pair of pants that fit you well and measure the inner seam from the crotch to the hem.",
+      image: "/images/inseam_measure.png",
+      orbit: "0deg 85deg 0.8m",
+      target: "0m 0.05m 0m"
     }
   ];
 
+  // Default camera settings
+  const activeStep = steps.find(s => s.id === activeMeasurement);
+  const currentOrbit = activeStep ? activeStep.orbit : "0deg 80deg 2.2m";
+  const currentTarget = activeStep ? activeStep.target : "0m 0.15m 0m";
+
+  const handleFocus = (id: string) => {
+    setActiveMeasurement(id);
+  };
+
   return (
     <main className="min-h-screen bg-surface text-on-surface pt-32 pb-32">
-      <div className="max-w-[1536px] mx-auto px-5 md:px-20 w-full">
+      <div className="max-w-[1536px] mx-auto px-5 md:px-10 w-full">
         
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-16 md:mb-24 text-center max-w-3xl mx-auto"
         >
-          <span className="font-label text-sm tracking-[0.2em] uppercase text-outline block mb-4">Measurement Guide</span>
+          <span className="font-label text-sm tracking-[0.2em] uppercase text-outline block mb-4">The Masterclass</span>
           <h1 className="font-serif text-4xl md:text-6xl text-primary italic mb-6">How to Measure</h1>
           <p className="font-sans text-on-surface-variant text-lg">
             A precise fit begins with accurate measurements. Follow our comprehensive visual guide below to ensure your custom garments drape flawlessly. We recommend having a friend or partner assist you for the best results.
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-24">
-          {steps.map((step, index) => (
-            <motion.div 
-              key={step.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-              className={`flex flex-col ${index % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12 md:gap-24`}
-            >
-              <div className="w-full md:w-1/2">
-                <div className="aspect-square md:aspect-[4/3] bg-surface-container overflow-hidden">
-                  <img 
-                    src={step.image} 
-                    alt={`How to measure ${step.title}`}
-                    className="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-700"
-                  />
-                </div>
-              </div>
+        <div className="flex flex-col lg:flex-row gap-12 items-start w-full">
+          
+          {/* Left Column: 3D Mannequin (Sticky) */}
+          <div className="w-full lg:w-[40%] flex flex-col items-center justify-center lg:sticky lg:top-32 h-[60vh] lg:h-[75vh]">
+            <div className="relative w-full h-full bg-surface-container overflow-hidden rounded-sm select-none border border-outline/10 shadow-inner">
+              <ModelViewer
+                ref={modelRef}
+                src="/assets/mannequin.glb?v=11"
+                camera-controls
+                auto-rotate={!activeMeasurement}
+                rotation-per-second="30deg"
+                disable-zoom
+                shadow-intensity="1"
+                camera-target={currentTarget}
+                camera-orbit={currentOrbit}
+                style={{ width: "100%", height: "100%", outline: "none" }}
+                onClick={() => setActiveMeasurement(null)}
+              >
+              </ModelViewer>
               
-              <div className="w-full md:w-1/2 flex flex-col justify-center">
-                <span className="font-label text-6xl text-brand-bone/30 block mb-4">0{index + 1}</span>
-                <h2 className="font-serif text-4xl text-primary mb-6 italic">{step.title}</h2>
-                <p className="font-sans text-on-surface-variant text-lg leading-relaxed max-w-lg">
-                  {step.description}
-                </p>
+              {/* 3D Controls overlay */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-surface/80 backdrop-blur-md px-6 py-3 rounded-full border border-outline/10 flex items-center gap-4 text-primary font-sans text-xs tracking-widest uppercase shadow-sm whitespace-nowrap z-20 pointer-events-none">
+                <span><span className="font-serif italic mr-1">1.</span> Drag to Rotate</span>
               </div>
-            </motion.div>
-          ))}
+            </div>
+          </div>
+
+          {/* Right Column: Masterclass Scroll */}
+          <div className="w-full lg:w-[60%] flex flex-col pt-4 lg:pt-0">
+            <div className="flex flex-col gap-12">
+              {steps.map((step, index) => (
+                <motion.div 
+                  key={step.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`flex flex-col md:flex-row gap-8 bg-surface-container p-6 rounded-sm border transition-all duration-500 ${activeMeasurement === step.id ? 'border-primary shadow-md' : 'border-outline/10 shadow-sm'}`}
+                >
+                  {/* Image Side */}
+                  <div className="w-full md:w-5/12 h-64 md:h-auto shrink-0 relative overflow-hidden rounded-sm bg-surface group">
+                    <img 
+                      src={step.image} 
+                      alt={`Measuring ${step.title}`} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale hover:grayscale-0"
+                    />
+                  </div>
+                  
+                  {/* Text Side */}
+                  <div className="w-full md:w-7/12 flex flex-col justify-center">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <span className="font-label text-4xl text-brand-bone/30 block">
+                          0{index + 1}
+                        </span>
+                        <h4 className="font-serif text-3xl text-primary italic">{step.title}</h4>
+                      </div>
+                      <button 
+                        onClick={() => handleFocus(step.id)}
+                        className={`p-2 rounded-full transition-colors ${activeMeasurement === step.id ? 'bg-primary text-on-primary' : 'bg-surface text-on-surface-variant hover:bg-surface-variant hover:text-primary'}`}
+                        title="Focus 3D View"
+                      >
+                        <Focus size={18} />
+                      </button>
+                    </div>
+                    
+                    <p className="font-sans text-on-surface-variant text-lg leading-relaxed mb-6">
+                      {step.description}
+                    </p>
+                    
+                    <div className="bg-surface p-4 rounded-sm border-l-2 border-primary mt-auto">
+                      <p className="font-sans text-sm text-on-surface-variant">
+                        <strong className="text-primary font-semibold tracking-wide uppercase text-xs mr-2">Tailor's Tip:</strong> {step.tips}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <motion.div 
