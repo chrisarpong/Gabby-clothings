@@ -241,7 +241,6 @@ export default function SettingsTab() {
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
                 />
               </div>
-              </div>
               <div>
                 <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Exchange Rate Safety Buffer (%)</label>
                 <input 
