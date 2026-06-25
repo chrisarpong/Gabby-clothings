@@ -11,6 +11,10 @@ export default defineSchema({
     inspoImageId: v.optional(v.string()),
     role: v.string(), // 'admin' | 'client'
     savedMeasurements: v.optional(v.any()),
+    dob: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    whatsapp: v.optional(v.string()),
+    country: v.optional(v.string()),
   }).index("by_clerkId", ["clerkId"]),
 
   products: defineTable({
@@ -71,7 +75,18 @@ export default defineSchema({
     shippingFee: v.optional(v.number()),
     discountAmount: v.optional(v.number()),
     promoCodeId: v.optional(v.id("promotions")),
-    totalAmount: v.number(),
+    
+    // Old field kept for compatibility
+    totalAmount: v.number(), 
+    
+    // New multi-currency billing fields
+    baseTotalAmount: v.optional(v.number()), 
+    chargedCurrency: v.optional(v.string()), 
+    chargedAmount: v.optional(v.number()), 
+    rateAtOrderTime: v.optional(v.number()), 
+    gatewayUsed: v.optional(v.string()), 
+    displayCurrency: v.optional(v.string()),
+
     status: v.string(), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled'
     paymentStatus: v.optional(v.string()), // 'pending', 'paid', 'failed'
     paystackReference: v.optional(v.string()),
@@ -84,6 +99,14 @@ export default defineSchema({
     value: v.any(),
     updatedBy: v.optional(v.string()), // clerkId of admin
   }).index("by_key", ["key"]),
+
+  exchangeRates: defineTable({
+    currency: v.string(), // e.g. 'USD'
+    liveRate: v.number(), // The live GHS -> Currency rate
+    manualRate: v.optional(v.number()), // Admin override
+    manualRateExpiry: v.optional(v.number()), // timestamp
+    lastUpdated: v.number(), // timestamp of last live fetch
+  }).index("by_currency", ["currency"]),
 
   appointments: defineTable({
     userId: v.optional(v.string()), // clerkId if logged in
@@ -186,4 +209,40 @@ export default defineSchema({
     count: v.number(),
     lastAttempt: v.number(),
   }).index("by_identifier_endpoint", ["identifier", "endpoint"]),
+
+  carts: defineTable({
+    userId: v.string(), // clerkId
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        variantSku: v.optional(v.string()),
+        quantity: v.number(),
+      })
+    ),
+  }).index("by_userId", ["userId"]),
+
+  posts: defineTable({
+    title: v.string(),
+    slug: v.string(),
+    content: v.string(), // Markdown/Rich text
+    excerpt: v.optional(v.string()),
+    coverImageId: v.optional(v.string()),
+    authorId: v.optional(v.string()), // clerkId
+    status: v.string(), // 'draft' | 'published'
+    publishedAt: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
+    category: v.optional(v.string()),
+  }).index("by_slug", ["slug"]).index("by_status", ["status"]).index("by_category", ["category"]),
+
+  activeCheckouts: defineTable({
+    userId: v.string(), // clerkId or session ID
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        variantSku: v.optional(v.string()),
+        quantity: v.number(),
+      })
+    ),
+    expiresAt: v.number(), // timestamp
+  }).index("by_userId", ["userId"]),
 });

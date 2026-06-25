@@ -439,3 +439,51 @@ export const replyToMessage = action({
     return "Reply sent successfully.";
   }
 });
+
+export const sendLowStockAlertEmail = internalAction({
+  args: {
+    email: v.string(),
+    name: v.string(),
+    productName: v.string(),
+    stock: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      console.log(`[Email Mock] Would send low stock alert to ${args.email} for ${args.productName}`);
+      return;
+    }
+
+    const resend = new Resend(resendApiKey);
+
+    try {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+        to: args.email,
+        subject: `Hurry! ${args.productName} is running low - Gabby Newluk`,
+        html: `
+<div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
+    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">Bespoke Tailoring</p>
+  </div>
+  
+  <h2 style="font-size: 20px; font-weight: normal;">Almost Gone!</h2>
+  <p style="line-height: 1.6; color: #555;">Hi ${args.name},</p>
+  <p style="line-height: 1.6; color: #555;">We noticed you left <strong>${args.productName}</strong> in your cart. We wanted to let you know that there are only <strong>${args.stock}</strong> left in stock.</p>
+  
+  <div style="text-align: center; margin-top: 40px;">
+    <a href="https://gabbynewluk.com/cart" style="display: inline-block; background-color: #4a3c31; color: #ffffff; text-decoration: none; padding: 15px 35px; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Complete Your Order</a>
+  </div>
+  
+  <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+  </div>
+</div>
+        `,
+      });
+    } catch (error) {
+      console.error("Failed to send low stock alert email:", error);
+    }
+  },
+});

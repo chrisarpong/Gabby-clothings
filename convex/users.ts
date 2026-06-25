@@ -125,6 +125,39 @@ export const getCurrentUser = query({
   },
 });
 
+export const updateProfile = mutation({
+  args: {
+    clerkId: v.string(),
+    dob: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    whatsapp: v.optional(v.string()),
+    country: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    if (identity.subject !== args.clerkId) {
+      await checkAdmin(ctx, identity);
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return await ctx.db.patch(user._id, {
+      dob: args.dob,
+      phone: args.phone,
+      whatsapp: args.whatsapp,
+      country: args.country,
+    });
+  },
+});
+
 // NOTE: Admin provisioning is done directly via the Convex Dashboard.
 // Go to Data → users table → find your user → set role to "admin" or "superadmin".
 // There is no callable mutation for this to prevent privilege escalation.

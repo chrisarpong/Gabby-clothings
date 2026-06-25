@@ -6,10 +6,13 @@ import { toast } from "sonner";
 import { Calendar, Clock, User, Mail, Phone, MessageSquare, MapPin, ChevronRight, ChevronLeft, CheckCircle2, Scissors } from "lucide-react";
 import { PaystackButton } from "react-paystack";
 import PhoneInputCustom from '../components/PhoneInputCustom';
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 export default function BookAppointment() {
   const bookAppointment = useMutation(api.appointments.book);
   const updateAppointment = useMutation(api.appointments.updateDetails);
+  const { activeCurrency, rates } = useCurrencyStore();
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -94,7 +97,7 @@ export default function BookAppointment() {
       custom_fields: []
     },
     publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
-    text: `PAY DEPOSIT (GH₵${bookingDepositAmount})`,
+    text: `PAY DEPOSIT (${formatPrice(bookingDepositAmount, activeCurrency, rates)})`,
     onSuccess: handlePaystackSuccessAction,
     onClose: handlePaystackCloseAction,
   };
@@ -314,7 +317,7 @@ export default function BookAppointment() {
                     </div>
                     {bookingDepositAmount > 0 && (
                       <p className="font-sans text-sm text-on-surface-variant mt-4">
-                        A fully-refundable commitment deposit of <strong className="text-primary">GH₵{bookingDepositAmount}</strong> is required to secure your slot.
+                        A fully-refundable commitment deposit of <strong className="text-primary">{formatPrice(bookingDepositAmount, activeCurrency, rates)}</strong> is required to secure your slot.
                       </p>
                     )}
                   </>

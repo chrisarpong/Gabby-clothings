@@ -29,6 +29,7 @@ const SizeGuide = lazy(() => import('./pages/SizeGuide'));
 const HowToMeasure = lazy(() => import('./pages/HowToMeasure'));
 const ShippingReturns = lazy(() => import('./pages/ShippingReturns'));
 const Legal = lazy(() => import('./pages/Legal'));
+const NewsArticlePage = lazy(() => import('./pages/NewsArticlePage'));
 
 const Admin = lazy(() => import('./pages/Admin'));
 
@@ -55,14 +56,47 @@ function UserSync() {
   return null;
 }
 
+import { useCartStore } from './store/cartStore';
+
+function CartSync() {
+  const { user, isLoaded } = useUser();
+  const cartItems = useCartStore(state => state.items);
+  const syncCart = useMutation(api.carts.syncCart);
+  const dbCartItems = useQuery(api.carts.getCart);
+  
+  const hasSyncedInitial = React.useRef(false);
+
+  // Initial load from DB -> Zustand
+  useEffect(() => {
+    if (isLoaded && user && dbCartItems !== undefined && !hasSyncedInitial.current) {
+      if (dbCartItems.length > 0) {
+        useCartStore.setState({ items: dbCartItems as any });
+      }
+      hasSyncedInitial.current = true;
+    }
+  }, [isLoaded, user, dbCartItems]);
+
+  // Sync Zustand -> DB when items change
+  useEffect(() => {
+    if (isLoaded && user && hasSyncedInitial.current) {
+      syncCart({ items: cartItems as any }).catch(() => {});
+    }
+  }, [cartItems, isLoaded, user]);
+
+  return null;
+}
+
 import CookieBanner from './components/CookieBanner';
+import NewsFlashModal from './components/NewsFlashModal';
 
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
       <UserSync />
+      <CartSync />
       <CookieBanner />
+      <NewsFlashModal />
       <Toaster position="top-center" toastOptions={{
         className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
       }} />
@@ -100,6 +134,7 @@ export default function App() {
           <Route path="/how-to-measure" element={<HowToMeasure />} />
           <Route path="/shipping" element={<ShippingReturns />} />
           <Route path="/legal" element={<Legal />} />
+          <Route path="/news/:slug" element={<NewsArticlePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

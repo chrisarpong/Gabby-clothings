@@ -9,4 +9,15 @@ crons.interval(
   internal.appointments.sendReminders
 );
 
+crons.interval(
+  "send-low-stock-alerts",
+  { hours: 24 }, // Check daily
+  internal.inventory.sendLowStockAlerts
+);
+crons.interval(
+  "fetch-live-rates",
+  { hours: 6 },
+  internal.currency.fetchLiveRates
+);
+
 export default crons;

@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice, CurrencyCode } from "../utils/currency";
 
 export default function Success() {
   const [searchParams] = useSearchParams();
@@ -12,8 +14,12 @@ export default function Success() {
   const { user } = useUser();
   const orders = useQuery(api.orders.getUserOrders, user ? { userId: user.id } : "skip");
   const allProducts = useQuery(api.products.getAll);
+  const { activeCurrency, rates } = useCurrencyStore();
   
   const currentOrder = orders?.find(o => o.paystackReference === reference) || (orders && orders.length > 0 ? orders[0] : null);
+
+  const displayCurrency = (currentOrder?.displayCurrency as CurrencyCode) || activeCurrency;
+  const displayRates = currentOrder?.rateAtOrderTime ? { [displayCurrency]: currentOrder.rateAtOrderTime } : rates;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -121,7 +127,7 @@ export default function Success() {
                           <span className="font-sans text-xs text-on-surface-variant mt-1">Size: {item.variantSku || "Custom Fit"} &times; {item.quantity}</span>
                         </div>
                       </div>
-                      <span className="font-sans text-sm text-primary font-medium">GH₵{(displayPrice * item.quantity).toFixed(2)}</span>
+                      <span className="font-sans text-sm text-primary font-medium">{formatPrice(displayPrice * item.quantity, displayCurrency, displayRates)}</span>
                     </div>
                   );
                 })}
@@ -132,24 +138,24 @@ export default function Success() {
               <div className="flex justify-between items-center mb-2">
                 <span className="font-sans text-sm text-on-surface-variant">Subtotal</span>
                 <span className="font-sans text-sm text-primary">
-                  GH₵{(currentOrder.subtotal ?? currentOrder.totalAmount ?? 0).toFixed(2)}
+                  {formatPrice(currentOrder.subtotal ?? currentOrder.totalAmount ?? 0, displayCurrency, displayRates)}
                 </span>
               </div>
               {(currentOrder.discountAmount ?? 0) > 0 && (
                 <div className="flex justify-between items-center mb-2 text-green-600">
                   <span className="font-sans text-sm">Discount</span>
-                  <span className="font-sans text-sm">-GH₵{(currentOrder.discountAmount ?? 0).toFixed(2)}</span>
+                  <span className="font-sans text-sm">-{formatPrice(currentOrder.discountAmount ?? 0, displayCurrency, displayRates)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center mb-6 border-b border-surface-variant pb-6">
                 <span className="font-sans text-sm text-on-surface-variant">Shipping</span>
-                <span className="font-sans text-sm text-primary">GH₵{(currentOrder.shippingFee ?? 0).toFixed(2)}</span>
+                <span className="font-sans text-sm text-primary">{formatPrice(currentOrder.shippingFee ?? 0, displayCurrency, displayRates)}</span>
               </div>
               
               <div className="flex justify-between items-end">
                 <span className="font-serif text-xl text-primary">Total Paid</span>
                 <span className="font-label text-xl tracking-widest text-primary">
-                  GH₵{(currentOrder.totalAmount ?? 0).toFixed(2)}
+                  {formatPrice(currentOrder.totalAmount ?? 0, displayCurrency, displayRates)}
                 </span>
               </div>
             </div>

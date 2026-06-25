@@ -35,6 +35,7 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
         alt={alt}
         className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 relative z-0 ${loaded ? "opacity-100" : "opacity-0"}`}
         src={src}
+        loading="lazy"
         onLoad={() => setLoaded(true)}
       />
     </>

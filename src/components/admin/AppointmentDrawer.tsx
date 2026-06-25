@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation } from '@/hooks/useConvex';
+import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
-import { X, Calendar, Video, Edit2, DollarSign, Tag, ClipboardList, CheckCircle, MessageCircle, MapPin, AlertCircle } from 'lucide-react';
+import { X, Calendar, Video, Edit2, DollarSign, Tag, ClipboardList, CheckCircle, MessageCircle, MapPin, AlertCircle, ShoppingBag } from 'lucide-react';
 
 interface AppointmentDrawerProps {
   appointment: any | null;
@@ -12,6 +12,8 @@ interface AppointmentDrawerProps {
 export default function AppointmentDrawer({ appointment, onClose }: AppointmentDrawerProps) {
   const updateStatus = useMutation(api.appointments.updateStatus);
   const updateDetails = useMutation(api.appointments.updateDetails);
+  const createAdminOrder = useMutation(api.orders.adminCreateOrder);
+  const products = useQuery(api.products.getAll);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
@@ -22,6 +24,10 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   const [measurementsCaptured, setMeasurementsCaptured] = useState(false);
   const [meetLink, setMeetLink] = useState('');
   
+  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [orderProductId, setOrderProductId] = useState('');
+  const [orderPrice, setOrderPrice] = useState<number | ''>('');
+
   useEffect(() => {
     if (appointment) {
       setAdminNotes(appointment.adminNotes || '');
@@ -63,6 +69,42 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
       toast.success("Details updated successfully");
     } catch (e) {
       toast.error("Failed to update details");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    if (!orderProductId || !orderPrice) {
+      toast.error("Please select a product and enter an agreed price.");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      const product = products?.find(p => p._id === orderProductId);
+      await createAdminOrder({
+        appointmentId: appointment._id,
+        customerDetails: {
+          email: appointment.email || appointment.clientEmail,
+          firstName: appointment.name?.split(' ')[0] || appointment.clientName?.split(' ')[0] || "Client",
+          lastName: appointment.name?.split(' ').slice(1).join(' ') || appointment.clientName?.split(' ').slice(1).join(' ') || "",
+          phone: appointment.phone || appointment.clientPhone,
+        },
+        items: [{
+          productId: orderProductId as any,
+          variantSku: "custom",
+          quantity: 1,
+          productName: product?.name || "Bespoke Garment",
+          price: Number(orderPrice),
+        }],
+        shippingFee: 0,
+        depositAmount: depositAmount ? Number(depositAmount) : 0,
+      });
+      toast.success("Order created successfully!");
+      setShowOrderForm(false);
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create order");
     } finally {
       setIsSubmitting(false);
     }
@@ -303,6 +345,62 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
               </a>
             </section>
           )}
+
+          {/* Admin Create Order */}
+          <section className="mt-8 border-t border-brand-espresso/10 pt-8">
+             {!showOrderForm ? (
+               <button 
+                 onClick={() => setShowOrderForm(true)}
+                 className="flex items-center gap-2 text-xs uppercase tracking-widest px-4 py-3 bg-brand-charcoal text-white hover:bg-black transition-colors"
+               >
+                 <ShoppingBag className="w-4 h-4" /> Create Order from Appointment
+               </button>
+             ) : (
+               <div className="bg-brand-bone/30 p-6 border border-brand-espresso/20">
+                 <h3 className="font-serif text-xl text-brand-espresso mb-4">Create Commission Order</h3>
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-[10px] uppercase tracking-widest text-brand-charcoal/50 mb-1">Select Base Product/Template</label>
+                     <select 
+                       value={orderProductId} 
+                       onChange={(e) => setOrderProductId(e.target.value)}
+                       className="w-full bg-white border border-brand-espresso/10 text-sm p-2 focus:outline-none focus:border-brand-espresso"
+                     >
+                       <option value="">-- Select Product --</option>
+                       {products?.map(p => (
+                         <option key={p._id} value={p._id}>{p.name}</option>
+                       ))}
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-[10px] uppercase tracking-widest text-brand-charcoal/50 mb-1">Agreed Final Price (GH₵)</label>
+                     <input 
+                       type="number" 
+                       value={orderPrice} 
+                       onChange={(e) => setOrderPrice(e.target.value ? Number(e.target.value) : '')}
+                       className="w-full bg-white border border-brand-espresso/10 text-sm p-2 focus:outline-none focus:border-brand-espresso"
+                       placeholder="e.g. 1500"
+                     />
+                   </div>
+                   <div className="flex gap-4 pt-4">
+                     <button 
+                       onClick={handleCreateOrder} 
+                       disabled={isSubmitting || !orderProductId || !orderPrice}
+                       className="text-xs uppercase tracking-widest px-4 py-2 bg-brand-espresso text-brand-bone hover:bg-brand-charcoal transition-colors disabled:opacity-50"
+                     >
+                       {isSubmitting ? 'Processing...' : 'Confirm Order'}
+                     </button>
+                     <button 
+                       onClick={() => setShowOrderForm(false)} 
+                       className="text-xs uppercase tracking-widest px-4 py-2 border border-brand-charcoal/20 text-brand-charcoal hover:bg-brand-bone transition-colors"
+                     >
+                       Cancel
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             )}
+          </section>
 
         </div>
 

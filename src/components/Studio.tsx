@@ -26,12 +26,14 @@ export default function Studio() {
             alt="Tailor working in studio."
             className="w-full h-full object-cover"
             src="/assets/3.jpg"
+            loading="lazy"
           />
           <div className="absolute -bottom-10 -left-10 w-[65%] md:w-1/2 md:h-1/2 border-[6px] border-surface shadow-2xl">
             <img
               alt="Detail of fabric texture."
               className="w-full h-full object-cover"
               src="/assets/Royalty .jpeg"
+              loading="lazy"
             />
           </div>
         </div>

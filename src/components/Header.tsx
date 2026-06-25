@@ -5,6 +5,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { useCartStore } from "../store/cartStore";
 import logo from "../assets/logo_transparent.png";
+import { useCurrencyStore } from "../store/currencyStore";
+import { CurrencyCode } from "../utils/currency";
+
+const CurrencySwitcher = () => {
+  const { activeCurrency, setCurrency } = useCurrencyStore();
+  const currencies: CurrencyCode[] = ["GHS", "USD", "GBP", "EUR"];
+
+  return (
+    <select
+      value={activeCurrency}
+      onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+      className="hidden sm:block bg-transparent text-primary font-label text-[10px] tracking-widest uppercase focus:outline-none cursor-pointer border-none"
+    >
+      {currencies.map(c => (
+        <option key={c} value={c} className="bg-surface text-primary">{c}</option>
+      ))}
+    </select>
+  );
+};
 
 export default function Header() {
   const [isVisible, setIsVisible] = useState(true);
@@ -85,6 +104,8 @@ export default function Header() {
 
           {/* Right: User, Wishlist, Cart */}
           <div className="flex items-center justify-end gap-5 md:gap-6 w-1/3 text-primary">
+            <CurrencySwitcher />
+            
             <Link to="/book" className="hidden lg:block font-label text-[10px] tracking-widest uppercase border border-primary px-4 py-2 hover:bg-primary hover:text-on-primary transition-colors">
               Book Appointment
             </Link>

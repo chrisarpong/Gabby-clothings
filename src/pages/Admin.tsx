@@ -32,6 +32,7 @@ import ReviewsTab from '../components/admin/ReviewsTab';
 import FinancialsTab from '../components/admin/FinancialsTab';
 import MarketingTab from '../components/admin/MarketingTab';
 import ContentTab from '../components/admin/ContentTab';
+import NewsTab from '../components/admin/NewsTab';
 
 // Dummy components for uncompleted sections
 const DummyTab = ({ title }: { title: string }) => (
@@ -41,7 +42,7 @@ const DummyTab = ({ title }: { title: string }) => (
   </div>
 );
 
-type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content';
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -101,6 +102,7 @@ export default function Admin() {
     { key: 'inventory', name: 'Inventory', icon: Package },
     { key: 'clients', name: 'Clients', icon: Users },
     { key: 'appointments', name: 'Appointments', icon: HeartHandshake },
+    { key: 'news', name: 'News & Blog', icon: Volume2 },
     { key: 'reviews', name: 'Reviews', icon: Star },
     { key: 'financials', name: 'Financials', icon: LineChart },
     { key: 'marketing', name: 'Marketing', icon: Volume2 },
@@ -117,6 +119,7 @@ export default function Admin() {
       case 'promotions': return <PromotionsTab />;
       case 'clients': return <ClientsTab />;
       case 'appointments': return <AdminAppointmentsTab />;
+      case 'news': return <NewsTab />;
       case 'reviews': return <ReviewsTab />;
       case 'financials': return <FinancialsTab />;
       case 'marketing': return <MarketingTab />;

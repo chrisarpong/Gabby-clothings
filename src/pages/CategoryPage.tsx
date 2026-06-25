@@ -5,6 +5,8 @@ import { Doc } from '../../convex/_generated/dataModel';
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 const isSoldOut = (product: any) => {
   if (product.variants && product.variants.length > 0) {
@@ -17,6 +19,7 @@ export default function CategoryPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
+  const { activeCurrency, rates } = useCurrencyStore();
 
   // Convert slug to a display format "custom-agbadas" -> "Custom Agbadas"
   const displayCategory = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Category";
@@ -101,7 +104,7 @@ export default function CategoryPage() {
                     </span>
                   </div>
                   <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">
-                    GH₵{(product?.basePrice ?? 0).toFixed(2)}
+                    {formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}
                   </span>
                 </div>
               </motion.div>

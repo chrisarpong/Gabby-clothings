@@ -7,6 +7,8 @@ import { api } from "../../convex/_generated/api";
 import { Doc } from '../../convex/_generated/dataModel';
 import { useCartStore } from "../store/cartStore";
 import { toast } from "sonner";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 function ProductImage({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
@@ -20,6 +22,7 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
         className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 relative z-0 ${loaded ? "opacity-100" : "opacity-0"}`}
         src={src}
         onLoad={() => setLoaded(true)}
+        loading="lazy"
       />
     </>
   );
@@ -35,6 +38,7 @@ const isSoldOut = (product: any) => {
 export default function Featured() {
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
+  const { activeCurrency, rates } = useCurrencyStore();
 
   const allProducts = useQuery(api.products.getAll);
   const featuredProducts = allProducts ? allProducts.slice(0, 4) : [];
@@ -99,7 +103,7 @@ export default function Featured() {
                   {product.name}
                 </h4>
                 <span className="text-label text-on-surface-variant">
-                  GH₵{(product?.basePrice ?? 0).toFixed(2)}
+                  {formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}
                 </span>
               </div>
             </div>

@@ -4,18 +4,22 @@ import { Lock, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../store/cartStore";
 import { useQuery, useAction } from "@/hooks/useConvex";
-import { useConvex } from "convex/react";
+import { useConvex, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import { PaystackButton } from "react-paystack";
 import { toast } from "sonner";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { items, clearCart } = useCartStore();
+  const { activeCurrency, rates } = useCurrencyStore();
   
   const allProducts = useQuery(api.products.getAll);
+  const standardShippingRateObj = useQuery(api.settings.getByKey, { key: "standardShippingRate" });
 
   const [shippingAddress, setShippingAddress] = useState({
     street: "", city: "", region: "", postalCode: "", country: "Ghana"
@@ -33,11 +37,31 @@ export default function Checkout() {
 
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const softReserveItems = useMutation(api.inventory.softReserveItems);
+
   React.useEffect(() => {
     if (items.length === 0 && !isSuccess) {
       navigate("/cart");
+    } else if (items.length > 0 && !isSuccess) {
+      // Trigger soft reserve
+      const sessionId = localStorage.getItem("gabby_guest_session") || crypto.randomUUID();
+      if (!localStorage.getItem("gabby_guest_session")) {
+        localStorage.setItem("gabby_guest_session", sessionId);
+      }
+      const userId = user?.id || sessionId;
+
+      softReserveItems({
+        userId,
+        items: items.map(i => ({
+          productId: i.productId as any,
+          variantSku: i.variantSku,
+          quantity: i.quantity
+        }))
+      }).catch((e) => {
+        toast.error(e.message || "Some items in your cart may no longer be available.");
+      });
     }
-  }, [items.length, navigate, isSuccess]);
+  }, [items, navigate, isSuccess, user, softReserveItems]);
 
   React.useEffect(() => {
     const saved = localStorage.getItem("gabby_newluk_measurements");
@@ -89,7 +113,7 @@ export default function Checkout() {
   
   let discountAmount = appliedPromo?.discountAmount || 0;
 
-  const shippingAmount = 150.00;
+  const shippingAmount = standardShippingRateObj?.value ?? 50.00;
   const totalAmount = subtotal - discountAmount + shippingAmount;
 
   const handleApplyPromo = async () => {
@@ -142,6 +166,11 @@ export default function Checkout() {
         paystackReference: reference.reference,
         shippingAddress,
         promoCode: appliedPromo?.code,
+        baseTotalAmount: totalAmount,
+        chargedCurrency: "GHS",
+        chargedAmount: totalAmount,
+        rateAtOrderTime: activeCurrency !== "GHS" && rates ? rates[activeCurrency] : undefined,
+        displayCurrency: activeCurrency,
       });
 
       setIsSuccess(true);
@@ -276,17 +305,17 @@ export default function Checkout() {
               <div className="flex flex-col gap-4 font-sans text-sm text-on-surface-variant mb-8 border-b border-outline-variant/30 pb-8">
                 <div className="flex justify-between items-center">
                   <span>Subtotal</span>
-                  <span className="text-primary tracking-widest font-label">GH₵{subtotal.toFixed(2)}</span>
+                  <span className="text-primary tracking-widest font-label">{formatPrice(subtotal, activeCurrency, rates)}</span>
                 </div>
                 {appliedPromo && (
                   <div className="flex justify-between items-center text-green-600">
                     <span>Discount ({appliedPromo.code})</span>
-                    <span className="font-label tracking-widest">-GH₵{discountAmount.toFixed(2)}</span>
+                    <span className="font-label tracking-widest">-{formatPrice(discountAmount, activeCurrency, rates)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
                   <span>Shipping</span>
-                  <span>GH₵{shippingAmount.toFixed(2)}</span>
+                  <span>{formatPrice(shippingAmount, activeCurrency, rates)}</span>
                 </div>
               </div>
 
@@ -312,7 +341,7 @@ export default function Checkout() {
 
               <div className="flex justify-between items-end mb-10">
                 <span className="font-serif text-lg text-primary">Estimated Total</span>
-                <span className="font-label text-lg tracking-widest text-primary">GH₵{totalAmount.toFixed(2)}</span>
+                <span className="font-label text-lg tracking-widest text-primary">{formatPrice(totalAmount, activeCurrency, rates)}</span>
               </div>
 
               {!user ? (
@@ -330,10 +359,18 @@ export default function Checkout() {
                    SOME ITEMS ARE OUT OF STOCK
                  </button>
               ) : (
-                <PaystackButton 
-                  {...componentProps} 
-                  className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors mb-8" 
-                />
+                <div className="flex flex-col w-full gap-2 mb-8">
+                  {activeCurrency !== 'GHS' && (
+                    <div className="text-[10px] text-on-surface-variant bg-surface-variant p-3 font-sans leading-relaxed border border-outline-variant">
+                      <span className="font-bold text-primary block mb-1">Billing Disclaimer</span>
+                      Transactions are securely processed in GHS. You will be billed the equivalent of <span className="font-bold">{formatPrice(totalAmount, activeCurrency, rates)}</span> by your bank.
+                    </div>
+                  )}
+                  <PaystackButton 
+                    {...componentProps} 
+                    className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-colors" 
+                  />
+                </div>
               )}
 
               {/* Trust Badges */}

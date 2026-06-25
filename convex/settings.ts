@@ -10,6 +10,7 @@ const PUBLIC_SETTING_KEYS = [
   "commercials",
   "availability",
   "currency",
+  "standardShippingRate",
 ];
 
 export const getByKey = query({

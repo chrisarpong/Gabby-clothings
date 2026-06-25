@@ -288,6 +288,35 @@ export default function InventoryTab() {
       </div>
 
       <div className="p-8 overflow-y-auto flex-1">
+        {(() => {
+          if (!products) return null;
+          const lowStockItems: string[] = [];
+          for (const p of products) {
+            if (p.variants && p.variants.length > 0) {
+              for (const v of p.variants) {
+                if (v.stock <= 5) {
+                  lowStockItems.push(`${p.name} (${v.size}) - Only ${v.stock} left`);
+                }
+              }
+            } else if (p.type === 'ready_to_wear' && p.stock !== undefined && p.stock <= 5) {
+               lowStockItems.push(`${p.name} - Only ${p.stock} left`);
+            }
+          }
+          if (lowStockItems.length === 0) return null;
+          return (
+           <div className="mb-8 p-4 bg-red-50 border border-red-200">
+             <h2 className="text-red-800 font-serif text-lg mb-2 flex items-center gap-2">
+               <PackageOpen className="w-5 h-5" /> Low Stock Alerts
+             </h2>
+             <ul className="list-disc pl-5 text-sm text-red-700">
+               {lowStockItems.map((item, idx) => (
+                 <li key={idx}>{item}</li>
+               ))}
+             </ul>
+           </div>
+          );
+        })()}
+
         {activeSubTab === 'products' ? (
           products === undefined ? (
             <div className="flex justify-center items-center py-20 text-brand-charcoal/50">Loading products...</div>

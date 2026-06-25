@@ -7,6 +7,8 @@ import { api } from "../../convex/_generated/api";
 import { useCartStore } from "../store/cartStore";
 import { toast } from "sonner";
 import { Id } from "../../convex/_generated/dataModel";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 import ReviewSection from "../components/ReviewSection";
 
@@ -14,6 +16,7 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
+  const { activeCurrency, rates } = useCurrencyStore();
   
   const product = useQuery(api.products.getById, { id: id as Id<"products"> });
   const allProducts = useQuery(api.products.getAll);
@@ -112,6 +115,7 @@ export default function ProductDetailPage() {
                 src={product?.images?.[0] || "/assets/1.jpg"} 
                 alt={product?.name || "Product"} 
                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                fetchPriority="high"
               />
             </div>
             {/* Thumbnails */}
@@ -123,6 +127,7 @@ export default function ProductDetailPage() {
                       src={img} 
                       alt={`Thumbnail ${idx + 1}`} 
                       className="w-full h-full object-cover grayscale-[20%]"
+                      loading="lazy"
                     />
                   </div>
                 ))}
@@ -151,7 +156,7 @@ export default function ProductDetailPage() {
             </h1>
             <div className="flex items-center gap-4 mb-8">
               <span className="font-label text-xl tracking-wide text-primary block">
-                GH₵{(product?.basePrice ?? 0).toFixed(2)}
+                {formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}
               </span>
               {reviews && reviews.length > 0 && (
                 <div className="flex items-center gap-2 border-l border-outline-variant pl-4">
@@ -317,6 +322,7 @@ export default function ProductDetailPage() {
                       src={relProduct?.images?.[0] || "/assets/1.jpg"} 
                       alt={relProduct?.name || "Product"} 
                       className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
                     />
                     {(() => {
                       const isRelSoldOut = relProduct.variants && relProduct.variants.length > 0
@@ -362,7 +368,7 @@ export default function ProductDetailPage() {
                       <h3 className="font-serif text-[18px] text-primary">{relProduct.name}</h3>
                       <span className="font-label text-[11px] tracking-widest text-outline uppercase mt-1">{relProduct.category}</span>
                     </div>
-                    <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">GH₵{(relProduct?.basePrice ?? 0).toFixed(2)}</span>
+                    <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">{formatPrice(relProduct?.basePrice ?? 0, activeCurrency, rates)}</span>
                   </div>
               </motion.div>
             ))}

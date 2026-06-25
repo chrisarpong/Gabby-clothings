@@ -7,11 +7,14 @@ import { api } from "../../convex/_generated/api";
 import { Doc } from '../../convex/_generated/dataModel';
 import { useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 export default function CartPage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { items, removeItem, updateQuantity } = useCartStore();
+  const { activeCurrency, rates } = useCurrencyStore();
   
   const allProducts = useQuery(api.products.getAll);
 
@@ -106,7 +109,7 @@ export default function CartPage() {
                           </select>
                         </div>
                       </div>
-                      <span className="font-label text-sm tracking-widest text-primary hidden sm:block">GH₵{(item.product?.basePrice ?? 0).toFixed(2)}</span>
+                      <span className="font-label text-sm tracking-widest text-primary hidden sm:block">{formatPrice(item.product?.basePrice ?? 0, activeCurrency, rates)}</span>
                     </div>
 
                     <div className="flex items-center justify-between mt-4 sm:mt-6">
@@ -134,15 +137,19 @@ export default function CartPage() {
                             <Plus className="w-3 h-3" strokeWidth={1.5} />
                           </button>
                         </div>
-                        {item.quantity > getAvailableStock(item) && (
+                        {item.quantity > getAvailableStock(item) ? (
                           <span className="text-[10px] text-error font-label uppercase tracking-widest">
                             Only {getAvailableStock(item)} available
                           </span>
-                        )}
+                        ) : getAvailableStock(item) <= 5 && getAvailableStock(item) > 0 ? (
+                          <span className="text-[10px] text-error font-label uppercase tracking-widest flex items-center gap-1">
+                            Low Stock! Only {getAvailableStock(item)} left
+                          </span>
+                        ) : null}
                       </div>
 
                       <div className="flex flex-col items-end gap-4">
-                        <span className="font-label text-sm tracking-widest text-primary sm:hidden mb-2">GH₵{(item.product?.basePrice ?? 0).toFixed(2)}</span>
+                        <span className="font-label text-sm tracking-widest text-primary sm:hidden mb-2">{formatPrice(item.product?.basePrice ?? 0, activeCurrency, rates)}</span>
                         <button 
                           onClick={() => removeItem(item.cartItemId)}
                           className="font-label text-[10px] tracking-widest uppercase text-outline hover:text-primary transition-colors flex items-center gap-1 border-b border-transparent hover:border-primary pb-px"
@@ -169,17 +176,17 @@ export default function CartPage() {
                 <div className="flex flex-col gap-4 font-sans text-sm text-on-surface-variant mb-8 border-b border-outline-variant/30 pb-8">
                   <div className="flex justify-between items-center">
                     <span>Subtotal</span>
-                    <span className="text-primary tracking-widest font-label">GH₵{subtotal.toFixed(2)}</span>
+                    <span className="text-primary tracking-widest font-label">{formatPrice(subtotal, activeCurrency, rates)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Shipping</span>
-                    <span>GH₵{shippingAmount.toFixed(2)}</span>
+                    <span>{formatPrice(shippingAmount, activeCurrency, rates)}</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-end mb-10">
                   <span className="font-serif text-lg text-primary">Estimated Total</span>
-                  <span className="font-label text-lg tracking-widest text-primary">GH₵{totalAmount.toFixed(2)}</span>
+                  <span className="font-label text-lg tracking-widest text-primary">{formatPrice(totalAmount, activeCurrency, rates)}</span>
                 </div>
 
                 {!user ? (

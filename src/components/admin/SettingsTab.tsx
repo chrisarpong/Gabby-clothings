@@ -14,6 +14,10 @@ export default function SettingsTab() {
     contactEmail: 'contact@gabbynewluk.com',
     standardShippingRate: 50,
     bookingDepositAmount: 500,
+    safetyBufferPercentage: 5,
+    manualRateUSD: '',
+    manualRateGBP: '',
+    manualRateEUR: '',
     maintenanceMode: false,
     isBannerActive: true,
     announcementBannerText: 'Complimentary shipping on all custom suiting orders.',
@@ -235,6 +239,59 @@ export default function SettingsTab() {
                   value={formData.bookingDepositAmount}
                   onChange={(e) => setFormData({...formData, bookingDepositAmount: parseFloat(e.target.value)})}
                   className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                />
+              </div>
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">Exchange Rate Safety Buffer (%)</label>
+                <input 
+                  type="number" 
+                  value={formData.safetyBufferPercentage}
+                  onChange={(e) => setFormData({...formData, safetyBufferPercentage: parseFloat(e.target.value)})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                />
+              </div>
+             </div>
+          </section>
+
+          {/* Exchange Rates */}
+          <section>
+             <h2 className="font-serif text-xl border-b border-brand-espresso/10 pb-4 mb-6 text-brand-espresso">Exchange Rates (Manual Override)</h2>
+             <p className="text-xs text-brand-charcoal/70 mb-6 leading-relaxed">
+               Set manual fixed rates for currencies. If left blank, the system will use live fetched rates plus your safety buffer. Values represent 1 GHS to [Currency]. For example, 1 GHS = 0.088 USD.
+             </p>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">USD Rate (Blank for Live)</label>
+                <input 
+                  type="number" 
+                  step="0.000001"
+                  value={formData.manualRateUSD || ''}
+                  onChange={(e) => setFormData({...formData, manualRateUSD: e.target.value ? parseFloat(e.target.value) : ''})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                  placeholder="e.g. 0.088"
+                />
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">GBP Rate (Blank for Live)</label>
+                <input 
+                  type="number" 
+                  step="0.000001"
+                  value={formData.manualRateGBP || ''}
+                  onChange={(e) => setFormData({...formData, manualRateGBP: e.target.value ? parseFloat(e.target.value) : ''})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                  placeholder="e.g. 0.065"
+                />
+              </div>
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-brand-charcoal/70 mb-2">EUR Rate (Blank for Live)</label>
+                <input 
+                  type="number" 
+                  step="0.000001"
+                  value={formData.manualRateEUR || ''}
+                  onChange={(e) => setFormData({...formData, manualRateEUR: e.target.value ? parseFloat(e.target.value) : ''})}
+                  className="w-full bg-brand-bone border border-brand-espresso/20 p-4 font-sans text-sm focus:outline-none focus:border-brand-espresso rounded-none text-brand-espresso transition-colors"
+                  placeholder="e.g. 0.076"
                 />
               </div>
              </div>

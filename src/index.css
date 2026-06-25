@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #220b09;
+  --color-primary: #352421;
   --color-on-primary: #ffffff;
   --color-secondary: #735c00;
   --color-on-secondary: #ffffff;
-  --color-surface: #f9f9f7;
-  --color-on-surface: #1a1c1b;
+  --color-surface: #fdfdfb;
+  --color-on-surface: #2d2f2e;
   --color-surface-variant: #e2e3e1;
   --color-on-surface-variant: #504443;
   --color-surface-container: #eeeeec;
@@ -15,8 +15,8 @@
   --color-outline: #827472;
   --color-outline-variant: #d4c3c1;
   
-  --color-brand-charcoal: #1f1f1f;
-  --color-brand-espresso: #2e1c18;
+  --color-brand-charcoal: #2d2d2d;
+  --color-brand-espresso: #3a2520;
   --color-brand-bone: #f4ebd9;
   --color-brand-gold: #c5a059;
 
@@ -44,6 +44,27 @@
   }
   .group:hover .reveal-overlay {
     opacity: 1;
+  }
+  .watermark-bg {
+    position: relative;
+  }
+  .watermark-bg::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60vw;
+    height: 60vw;
+    max-width: 600px;
+    max-height: 600px;
+    background-image: url('./assets/logo_transparent.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
   }
 }
 

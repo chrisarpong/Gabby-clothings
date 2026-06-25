@@ -13,6 +13,7 @@ function CollectionImage({ src, alt, title, extraClass = "" }: { src: string; al
         className={`w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 relative z-0 ${loaded ? "opacity-100" : "opacity-0"}`}
         src={src}
         onLoad={() => setLoaded(true)}
+        loading="lazy"
       />
       <div className="absolute inset-0 bg-primary/40 reveal-overlay flex items-center justify-center z-10 transition-opacity">
         <h3 className="font-serif text-3xl md:text-4xl text-on-primary italic">

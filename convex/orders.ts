@@ -31,6 +31,11 @@ export const verifyAndCreate = action({
     paystackReference: v.string(),
     shippingAddress: shippingAddressValidator,
     promoCode: v.optional(v.string()),
+    baseTotalAmount: v.optional(v.number()),
+    chargedCurrency: v.optional(v.string()),
+    chargedAmount: v.optional(v.number()),
+    rateAtOrderTime: v.optional(v.number()),
+    displayCurrency: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -123,6 +128,11 @@ export const verifyAndCreate = action({
       paystackReference: args.paystackReference,
       shippingAddress: args.shippingAddress,
       promoCode: args.promoCode,
+      baseTotalAmount: args.baseTotalAmount,
+      chargedCurrency: args.chargedCurrency,
+      chargedAmount: args.chargedAmount,
+      rateAtOrderTime: args.rateAtOrderTime,
+      displayCurrency: args.displayCurrency,
     });
 
     return orderId;
@@ -149,6 +159,11 @@ export const create = internalMutation({
     paystackReference: v.optional(v.string()),
     shippingAddress: v.optional(shippingAddressValidator),
     promoCode: v.optional(v.string()),
+    baseTotalAmount: v.optional(v.number()),
+    chargedCurrency: v.optional(v.string()),
+    chargedAmount: v.optional(v.number()),
+    rateAtOrderTime: v.optional(v.number()),
+    displayCurrency: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Duplicate order prevention: check if an order with this reference already exists
@@ -224,23 +239,39 @@ export const create = internalMutation({
       paymentStatus: args.paymentStatus,
       paystackReference: args.paystackReference,
       shippingAddress: args.shippingAddress,
+      baseTotalAmount: args.baseTotalAmount,
+      chargedCurrency: args.chargedCurrency,
+      chargedAmount: args.chargedAmount,
+      rateAtOrderTime: args.rateAtOrderTime,
+      displayCurrency: args.displayCurrency,
     });
 
-    // Decrement stock for each purchased variant
+    // Decrement stock for each purchased variant and clear active reserve
     for (const item of args.items) {
-      if (item.variantSku) {
-        const product = await ctx.db.get(item.productId);
-        if (product?.variants) {
+      if (item.variantSku === "custom") continue;
+      const product = await ctx.db.get(item.productId);
+      if (product) {
+        if (product.variants && product.variants.length > 0) {
           const updatedVariants = product.variants.map((v) => {
             if (v.sku === item.variantSku) {
-              const newStock = Math.max(0, v.stock - item.quantity);
-              return { ...v, stock: newStock };
+              return { ...v, stock: Math.max(0, v.stock - item.quantity) };
             }
             return v;
           });
           await ctx.db.patch(item.productId, { variants: updatedVariants });
+        } else if (product.stock !== undefined) {
+          await ctx.db.patch(item.productId, { stock: Math.max(0, product.stock - item.quantity) });
         }
       }
+    }
+
+    // Clear active checkouts for this user
+    const reserves = await ctx.db
+      .query("activeCheckouts")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const res of reserves) {
+      await ctx.db.delete(res._id);
     }
 
     // Send order confirmation email
@@ -320,4 +351,62 @@ export const getByPaystackReference = internalQuery({
       .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
       .first();
   },
+});
+
+export const adminCreateOrder = mutation({
+  args: {
+    appointmentId: v.optional(v.id("appointments")),
+    customerDetails: v.object({
+      email: v.string(),
+      firstName: v.string(),
+      lastName: v.string(),
+      phone: v.optional(v.string()),
+    }),
+    items: v.array(v.object({
+      productId: v.id("products"),
+      variantSku: v.optional(v.string()),
+      quantity: v.number(),
+      productName: v.string(),
+      price: v.number(),
+    })),
+    shippingFee: v.number(),
+    depositAmount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    let subtotal = 0;
+    for (const item of args.items) {
+      subtotal += item.price * item.quantity;
+    }
+
+    const totalAmount = subtotal + args.shippingFee;
+
+    const orderId = await ctx.db.insert("orders", {
+      userId: "admin_created", // Or tie to user if they have an account
+      customerDetails: args.customerDetails,
+      items: args.items.map(item => ({
+         productId: item.productId,
+         variantSku: item.variantSku,
+         quantity: item.quantity,
+         priceAtPurchase: item.price,
+         productName: item.productName,
+      })),
+      subtotal: subtotal,
+      shippingFee: args.shippingFee,
+      discountAmount: 0,
+      totalAmount: totalAmount,
+      status: "processing",
+      paymentStatus: args.depositAmount > 0 ? "partial" : "pending",
+      paystackReference: `manual_${Date.now()}`,
+    });
+
+    if (args.appointmentId) {
+      await ctx.db.patch(args.appointmentId, { status: "completed" });
+    }
+
+    return orderId;
+  }
 });

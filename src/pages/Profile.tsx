@@ -4,12 +4,15 @@ import { SignOutButton, UserProfile, SignedIn, SignedOut, SignInButton, useUser 
 import { Link } from "react-router-dom";
 import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
-
+import { parsePhoneNumberFromString, CountryCode } from 'libphonenumber-js';
 import { toast } from "sonner";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice, CurrencyCode } from "../utils/currency";
 
 export default function Profile() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState("profile");
+  const { activeCurrency, rates } = useCurrencyStore();
 
   const [measurements, setMeasurements] = useState({
     top: { neck: "", chest: "", shoulder: "", sleeveLength: "", armhole: "", stomach: "", topLength: "" },
@@ -22,6 +25,20 @@ export default function Profile() {
   const convexOrders = useQuery(api.orders.getUserOrders, user ? { userId: user.id } : "skip");
   const convexMeasurements = useQuery(api.users.getMeasurements);
   const updateMeasurements = useMutation(api.users.updateMeasurements);
+  
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const updateProfile = useMutation(api.users.updateProfile);
+  
+  const [profileData, setProfileData] = useState({
+    dob: "",
+    phone: "",
+    whatsapp: "",
+    country: "GH",
+  });
+  const [sameAsPhone, setSameAsPhone] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
   const wishlistItems = useQuery(api.wishlists.getUserWishlist);
   const toggleWishlist = useMutation(api.wishlists.toggleItem);
 
@@ -67,6 +84,69 @@ export default function Profile() {
       });
     }
   }, [convexMeasurements]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setProfileData({
+        dob: currentUser.dob || "",
+        phone: currentUser.phone || "",
+        whatsapp: currentUser.whatsapp || "",
+        country: currentUser.country || "GH",
+      });
+      if (currentUser.phone && currentUser.phone === currentUser.whatsapp) {
+        setSameAsPhone(true);
+      }
+    }
+  }, [currentUser]);
+
+  const handleProfileChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+    setIsProfileSaved(false);
+    if (field === 'phone') {
+       setPhoneError("");
+       if (sameAsPhone) {
+         setProfileData(prev => ({ ...prev, whatsapp: value }));
+       }
+    }
+  };
+
+  const handleSameAsPhoneToggle = (checked: boolean) => {
+    setSameAsPhone(checked);
+    if (checked) {
+      setProfileData(prev => ({ ...prev, whatsapp: prev.phone }));
+    }
+  };
+
+  const saveProfileData = async () => {
+    if (!user) return;
+    
+    // Validate phone
+    if (profileData.phone) {
+      const phoneNumber = parsePhoneNumberFromString(profileData.phone, profileData.country as CountryCode);
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        setPhoneError("Invalid phone number for the selected country");
+        return;
+      }
+    }
+
+    try {
+      setIsProfileSaving(true);
+      await updateProfile({
+        clerkId: user.id,
+        dob: profileData.dob,
+        phone: profileData.phone,
+        whatsapp: profileData.whatsapp,
+        country: profileData.country,
+      });
+      setIsProfileSaved(true);
+      toast.success("Profile details saved!");
+      setTimeout(() => setIsProfileSaved(false), 3000);
+    } catch (e) {
+      toast.error("Failed to save profile details");
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
 
   const handleMeasurementChange = (category: 'top' | 'bottom' | 'outerwear', field: string, value: string) => {
     setMeasurements((prev) => ({
@@ -323,7 +403,7 @@ export default function Profile() {
                               <span className="font-sans text-sm italic text-primary mt-1">{order.items.length} item(s)</span>
                             </div>
                             <div className="flex flex-col md:items-end gap-3 flex-1 md:flex-none">
-                              <span className="font-label text-sm tracking-widest text-primary">GH₵{order.totalAmount.toFixed(2)}</span>
+                              <span className="font-label text-sm tracking-widest text-primary">{formatPrice(order.totalAmount, (order.displayCurrency as CurrencyCode) || 'GHS', order.rateAtOrderTime ? { [order.displayCurrency || 'GHS']: order.rateAtOrderTime } : rates)}</span>
                               <div className="flex items-center gap-2 text-xs font-label uppercase tracking-widest text-outline group-open:text-primary transition-colors">
                                 View Details 
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
@@ -386,6 +466,82 @@ export default function Profile() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
                 >
+                  <h2 className="font-serif text-3xl text-primary italic mb-6">Personal Details</h2>
+                  <div className="bg-surface-container/30 border border-surface-variant p-8 md:p-12 mb-12">
+                    <form className="flex flex-col gap-8" onSubmit={e => { e.preventDefault(); saveProfileData(); }}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Date of Birth</label>
+                          <input 
+                            type="date"
+                            value={profileData.dob}
+                            onChange={(e) => handleProfileChange("dob", e.target.value)}
+                            className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                          />
+                          <span className="text-xs text-on-surface-variant italic">For birthday exclusive offers</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Country</label>
+                          <select 
+                            value={profileData.country}
+                            onChange={(e) => handleProfileChange("country", e.target.value)}
+                            className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                          >
+                            <option value="GH">Ghana (GH)</option>
+                            <option value="US">United States (US)</option>
+                            <option value="GB">United Kingdom (GB)</option>
+                            <option value="NG">Nigeria (NG)</option>
+                            <option value="CA">Canada (CA)</option>
+                            <option value="AE">United Arab Emirates (AE)</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-2 relative">
+                          <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Phone Number</label>
+                          <input 
+                            type="tel"
+                            value={profileData.phone}
+                            onChange={(e) => handleProfileChange("phone", e.target.value)}
+                            placeholder="e.g. +233 24 123 4567"
+                            className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                          />
+                          {phoneError && <span className="text-xs text-red-500 absolute -bottom-5">{phoneError}</span>}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">WhatsApp Number</label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={sameAsPhone}
+                                onChange={(e) => handleSameAsPhoneToggle(e.target.checked)}
+                                className="w-3 h-3 text-primary border-outline-variant focus:ring-primary"
+                              />
+                              <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">Same as Phone</span>
+                            </label>
+                          </div>
+                          <input 
+                            type="tel"
+                            value={profileData.whatsapp}
+                            onChange={(e) => handleProfileChange("whatsapp", e.target.value)}
+                            placeholder="e.g. +233 24 123 4567"
+                            disabled={sameAsPhone}
+                            className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary disabled:opacity-50"
+                          />
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-surface-variant">
+                        <button 
+                          type="submit"
+                          disabled={isProfileSaving}
+                          className="bg-transparent border border-primary text-primary px-8 py-3 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-50"
+                        >
+                          {isProfileSaving ? "Saving..." : isProfileSaved ? "Saved Successfully!" : "Save Details"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <h2 className="font-serif text-3xl text-primary italic mb-6">Account Settings</h2>
                   <UserProfile routing="hash" appearance={{
                     elements: {
                       card: "shadow-none border border-surface-variant rounded-none bg-surface",
@@ -432,7 +588,7 @@ export default function Profile() {
                             </span>
                           </div>
                           <span className="font-label text-sm tracking-wide text-primary">
-                            GH₵{(product?.basePrice ?? 0).toFixed(2)}
+                            {formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}
                           </span>
                         </div>
                         <button 
