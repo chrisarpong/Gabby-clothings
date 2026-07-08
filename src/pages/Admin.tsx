@@ -113,7 +113,7 @@ export default function Admin() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab />;
+      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} />;
       case 'inventory': return <InventoryTab />;
       case 'settings': return <SettingsTab />;
       case 'orders': return <OrdersTab />;
@@ -229,13 +229,13 @@ export default function Admin() {
         </div>
         
         <div className={`border-t border-surface-variant bg-surface-container/20 transition-all duration-300 ${isDesktopExpanded ? 'p-6 space-y-4' : 'p-4 flex flex-col gap-4 items-center'}`}>
-          <div className={isDesktopExpanded ? 'flex justify-center' : ''}>
-            <ThemeToggle />
+          <div className={isDesktopExpanded ? 'flex justify-center' : 'flex justify-center w-full'}>
+            <ThemeToggle isCompact={!isDesktopExpanded} />
           </div>
           <SignOutButton>
             <button 
               title="Logout" 
-              className={`flex items-center justify-center gap-3 py-2.5 font-label text-[10px] tracking-[0.15em] uppercase text-red-700 border border-red-200 bg-red-50 hover:bg-red-700 hover:text-white transition-colors duration-300 rounded-none whitespace-nowrap overflow-hidden ${isDesktopExpanded ? 'w-full px-4 text-left' : 'w-10 h-10 px-0'}`}
+              className={`flex items-center justify-center gap-3 py-2.5 font-label text-[10px] tracking-[0.15em] uppercase text-red-500 border border-red-900/30 bg-red-950/20 hover:bg-red-600 hover:text-white transition-colors duration-300 rounded-none whitespace-nowrap overflow-hidden ${isDesktopExpanded ? 'w-full px-4 text-left' : 'w-10 h-10 px-0'}`}
             >
               <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} /> 
               {isDesktopExpanded && <span>Logout</span>}

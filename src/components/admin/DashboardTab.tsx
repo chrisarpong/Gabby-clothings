@@ -39,7 +39,9 @@ class DashboardErrorBoundary extends React.Component<
   }
 }
 
-function DashboardContent() {
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content';
+
+function DashboardContent({ setActiveTab }: { setActiveTab?: (tab: TabKey) => void }) {
   const stats = useQuery(api.analytics.getDashboardStats);
   const [chartMode, setChartMode] = useState<'revenue' | 'orders'>('revenue');
   const [greeting, setGreeting] = useState('Good day');
@@ -88,7 +90,7 @@ function DashboardContent() {
   ];
 
   return (
-    <div className="p-6 md:p-10 font-sans text-brand-charcoal h-full bg-surface-container-lowest overflow-y-auto">
+    <div className="p-6 md:p-10 font-sans text-on-surface h-full bg-surface-container-lowest overflow-y-auto">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 pb-6 border-b border-outline-variant/30">
         <div>
@@ -107,7 +109,7 @@ function DashboardContent() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {kpis.map((kpi, idx) => (
-          <div key={idx} className="bg-white/60 backdrop-blur-md border border-white p-6 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
+          <div key={idx} className="bg-surface-container backdrop-blur-md border border-outline-variant/30 p-6 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
             
             <div className="flex justify-between items-start mb-6 relative z-10">
@@ -132,7 +134,7 @@ function DashboardContent() {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         
-        <div className="lg:col-span-2 bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 md:p-8 flex flex-col">
+        <div className="lg:col-span-2 bg-surface-container backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 md:p-8 flex flex-col">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
              <div>
                <h3 className="font-serif text-2xl tracking-tight text-primary mb-1">Performance Trends</h3>
@@ -142,13 +144,13 @@ function DashboardContent() {
              <div className="flex bg-surface-variant/20 p-1 rounded-lg">
                 <button 
                   onClick={() => setChartMode('revenue')}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${chartMode === 'revenue' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${chartMode === 'revenue' ? 'bg-surface-container shadow-sm text-primary' : 'text-on-surface-variant hover:text-primary'}`}
                 >
                   Revenue
                 </button>
                 <button 
                   onClick={() => setChartMode('orders')}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${chartMode === 'orders' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${chartMode === 'orders' ? 'bg-surface-container shadow-sm text-primary' : 'text-on-surface-variant hover:text-primary'}`}
                 >
                   Orders
                 </button>
@@ -192,29 +194,41 @@ function DashboardContent() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 md:p-8 flex flex-col">
+          <div className="bg-surface-container backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 md:p-8 flex flex-col">
             <h3 className="font-serif text-xl tracking-tight text-primary mb-6">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group">
+              <button 
+                onClick={() => setActiveTab && setActiveTab('inventory')}
+                className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group"
+              >
                 <Plus className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-bold tracking-wider uppercase">Add Product</span>
               </button>
-              <button className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group">
+              <button 
+                onClick={() => setActiveTab && setActiveTab('promotions')}
+                className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group"
+              >
                 <Tag className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-bold tracking-wider uppercase">Promotion</span>
               </button>
-              <button className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group">
+              <button 
+                onClick={() => setActiveTab && setActiveTab('clients')}
+                className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group"
+              >
                 <UserPlus className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-bold tracking-wider uppercase">New Client</span>
               </button>
-              <button className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group">
+              <button 
+                onClick={() => setActiveTab && setActiveTab('settings')}
+                className="flex flex-col items-center justify-center p-4 bg-surface-variant/20 hover:bg-primary hover:text-white text-primary rounded-xl transition-colors group"
+              >
                 <Settings className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-bold tracking-wider uppercase">Settings</span>
               </button>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 md:p-8 flex-1 flex flex-col">
+          <div className="bg-surface-container backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 md:p-8 flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-6">
                <h3 className="font-serif text-xl tracking-tight text-primary">Recent Activity</h3>
                <Activity className="w-4 h-4 text-outline" />
@@ -247,7 +261,10 @@ function DashboardContent() {
                 </div>
               )}
             </div>
-            <button className="w-full mt-4 py-3 text-xs uppercase tracking-widest text-primary font-bold hover:bg-surface-variant/20 rounded-xl transition-colors flex items-center justify-center gap-2">
+            <button 
+              onClick={() => setActiveTab && setActiveTab('orders')}
+              className="w-full mt-4 py-3 text-xs uppercase tracking-widest text-primary font-bold hover:bg-surface-variant/20 rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
               View All <ChevronRight className="w-3 h-3" />
             </button>
           </div>
@@ -257,10 +274,10 @@ function DashboardContent() {
   );
 }
 
-export default function DashboardTab() {
+export default function DashboardTab({ setActiveTab }: { setActiveTab?: (tab: TabKey) => void }) {
   return (
     <DashboardErrorBoundary>
-      <DashboardContent />
+      <DashboardContent setActiveTab={setActiveTab} />
     </DashboardErrorBoundary>
   );
 }

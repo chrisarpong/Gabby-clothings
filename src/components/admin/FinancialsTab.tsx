@@ -46,7 +46,7 @@ export default function FinancialsTab() {
     .slice(0, 10);
 
   return (
-    <div className="p-8 font-sans text-brand-charcoal h-full bg-surface overflow-y-auto">
+    <div className="p-8 font-sans text-on-surface h-full bg-surface overflow-y-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-outline-variant/30 pb-4">
         <div>
           <h2 className="font-serif text-3xl text-primary mb-1 tracking-tight">Financial Overview</h2>
@@ -77,7 +77,7 @@ export default function FinancialsTab() {
       </div>
 
       {/* Revenue by Day Chart */}
-      <div className="bg-white border border-outline-variant/30 p-6 shadow-sm mb-8">
+      <div className="bg-surface-container border border-outline-variant/30 p-6 shadow-sm mb-8">
         <h3 className="font-serif text-xl tracking-tight text-primary mb-6">Revenue by Day</h3>
         <div className="h-[300px] w-full">
           {totalRevenue > 0 ? (
@@ -97,7 +97,7 @@ export default function FinancialsTab() {
       </div>
 
       {/* Recent Transactions Table */}
-      <div className="bg-white border border-outline-variant/30 shadow-sm">
+      <div className="bg-surface-container border border-outline-variant/30 shadow-sm">
         <div className="p-6 border-b border-outline-variant/30">
           <h3 className="font-serif text-xl tracking-tight text-primary">Recent Transactions</h3>
         </div>

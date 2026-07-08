@@ -49,7 +49,7 @@ export default function MarketingTab() {
   };
 
   return (
-    <div className="p-8 font-sans text-brand-charcoal h-full bg-surface overflow-y-auto">
+    <div className="p-8 font-sans text-on-surface h-full bg-surface overflow-y-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-outline-variant/30 pb-4">
         <div>
           <h2 className="font-serif text-3xl text-primary mb-1 tracking-tight">Messages & Subscribers</h2>
@@ -91,7 +91,7 @@ export default function MarketingTab() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Messages Inbox */}
-        <div className="bg-white border border-outline-variant/30 shadow-sm flex flex-col">
+        <div className="bg-surface-container border border-outline-variant/30 shadow-sm flex flex-col">
           <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center">
             <h3 className="font-serif text-xl tracking-tight text-primary">Contact Messages</h3>
             {unreadCount > 0 && (
@@ -136,7 +136,7 @@ export default function MarketingTab() {
         </div>
 
         {/* Subscribers List */}
-        <div className="bg-white border border-outline-variant/30 shadow-sm flex flex-col">
+        <div className="bg-surface-container border border-outline-variant/30 shadow-sm flex flex-col">
           <div className="p-6 border-b border-outline-variant/30">
             <h3 className="font-serif text-xl tracking-tight text-primary">Newsletter Subscribers</h3>
           </div>
@@ -158,7 +158,7 @@ export default function MarketingTab() {
                       <td className="p-4 text-sm text-primary">{sub.email}</td>
                       <td className="p-4">
                         <span className={`text-[10px] uppercase font-label tracking-wide px-2 py-1 ${
-                          sub.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                          sub.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-red-950/20 text-red-500'
                         }`}>{sub.status}</span>
                       </td>
                       <td className="p-4 text-xs text-on-surface-variant">{new Date(sub._creationTime).toLocaleDateString()}</td>
@@ -173,7 +173,7 @@ export default function MarketingTab() {
 
       {/* Compose Newsletter Modal */}
       {isNewsletterModalOpen && (
-        <div className="fixed inset-0 bg-brand-charcoal/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-primary/50 z-50 flex items-center justify-center p-4">
           <div className="bg-surface w-full max-w-2xl border border-outline-variant shadow-xl">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
               <h3 className="font-serif text-2xl text-primary">Compose Newsletter</h3>
@@ -243,7 +243,7 @@ export default function MarketingTab() {
 
       {/* Reply Modal */}
       {replyingToMsg && (
-        <div className="fixed inset-0 bg-brand-charcoal/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-primary/50 z-50 flex items-center justify-center p-4">
           <div className="bg-surface w-full max-w-2xl border border-outline-variant shadow-xl">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
               <h3 className="font-serif text-2xl text-primary">Reply to {replyingToMsg.name}</h3>

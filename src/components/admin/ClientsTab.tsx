@@ -30,7 +30,7 @@ export default function ClientsTab() {
   );
 
   return (
-    <div className="p-6 md:p-10 font-sans text-brand-charcoal h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">
+    <div className="p-6 md:p-10 font-sans text-on-surface h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
@@ -46,13 +46,13 @@ export default function ClientsTab() {
               placeholder="Search by name or email..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2.5 bg-white border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full transition-all shadow-sm"
+              className="pl-9 pr-4 py-2.5 bg-surface-container border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full transition-all shadow-sm"
             />
           </div>
         </div>
       </div>
       
-      <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1 flex flex-col relative z-10">
+      <div className="bg-surface-container backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1 flex flex-col relative z-10">
         <div className="overflow-x-auto flex-1 custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>

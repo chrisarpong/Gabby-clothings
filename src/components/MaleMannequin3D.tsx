@@ -331,8 +331,8 @@ export default function MaleMannequin3D({ activeMeasurement, onHotspotClick }: M
           }}
           className={`absolute z-10 px-3 py-1 text-xs font-bold font-sans uppercase tracking-widest rounded-sm transition-all duration-300 transform -translate-x-1/2 -translate-y-1/2 ${
             activeMeasurement === hs.id
-              ? "bg-brand-gold text-brand-espresso scale-110"
-              : "bg-brand-espresso text-brand-bone hover:bg-brand-gold hover:text-brand-espresso"
+              ? "bg-brand-gold text-primary scale-110"
+              : "bg-primary text-brand-bone hover:bg-brand-gold hover:text-primary"
           }`}
           style={{ top: hs.top, left: hs.left }}
         >

@@ -652,7 +652,7 @@ export default function Profile() {
                               {apt.time && <span><strong className="text-primary font-medium">Time:</strong> {apt.time}</span>}
                             </div>
                             <span className={`text-[10px] tracking-widest uppercase inline-block px-3 py-1 mt-2 w-max ${
-                              apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
                               apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                               'bg-surface-variant text-primary'
                             }`}>
@@ -709,7 +709,7 @@ export default function Profile() {
                                     {apt.time && <span><strong className="text-primary font-medium">Time:</strong> {apt.time}</span>}
                                   </div>
                                   <span className={`text-[10px] tracking-widest uppercase inline-block px-3 py-1 mt-2 w-max ${
-                                    apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                    apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
                                     apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                                     'bg-surface-variant text-primary'
                                   }`}>

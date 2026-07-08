@@ -3,8 +3,26 @@ import { Moon, Sun, Laptop } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { motion } from 'framer-motion';
 
-export function ThemeToggle() {
+export function ThemeToggle({ isCompact = false }: { isCompact?: boolean }) {
   const { theme, setTheme } = useTheme();
+
+  if (isCompact) {
+    const cycleTheme = () => {
+      if (theme === 'light') setTheme('system');
+      else if (theme === 'system') setTheme('dark');
+      else setTheme('light');
+    };
+
+    return (
+      <button
+        onClick={cycleTheme}
+        className="p-2.5 rounded-xl bg-surface-variant/50 border border-outline-variant/30 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center"
+        title="Toggle Theme"
+      >
+        {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'system' ? <Laptop className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      </button>
+    );
+  }
 
   return (
     <div className="relative inline-flex items-center p-0.5 rounded-full bg-surface-variant/50 border border-outline-variant/30">

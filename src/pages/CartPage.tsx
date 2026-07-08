@@ -29,8 +29,9 @@ export default function CartPage() {
     };
   }).filter((i: any) => i.product);
 
+  const standardShippingRateObj = useQuery(api.settings.getByKey, { key: "standardShippingRate" });
   const subtotal = cartItemsWithDetails.reduce((sum: number, item: any) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
-  const shippingAmount = 150.00; // Flat fee for example
+  const shippingAmount = Number(standardShippingRateObj?.value ?? 50.00);
   const totalAmount = subtotal + shippingAmount;
 
   const getAvailableStock = (item: any) => {
@@ -190,7 +191,7 @@ export default function CartPage() {
                 </div>
 
                 {!user ? (
-                   <p className="text-sm text-brand-espresso mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
+                   <p className="text-sm text-primary mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
                 ) : hasOutOfStockItems ? (
                   <p className="text-xs text-error font-label tracking-widest uppercase mb-8 border border-error p-4 text-center w-full block">Please adjust quantities before checkout</p>
                 ) : (

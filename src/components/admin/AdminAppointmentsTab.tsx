@@ -111,20 +111,20 @@ export default function AdminAppointmentsTab() {
     const goToCurrent = () => toolbar.onNavigate('TODAY');
 
     return (
-      <div className="flex justify-between items-center mb-6 bg-brand-bone/30 p-2 border border-brand-espresso/10 rounded">
+      <div className="flex justify-between items-center mb-6 bg-brand-bone/30 p-2 border border-outline-variant/30 rounded">
         <div className="flex gap-1">
-          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-brand-charcoal/20 text-brand-charcoal hover:border-brand-espresso hover:text-brand-espresso transition-colors bg-white shadow-sm" onClick={goToBack}>Prev</button>
-          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-brand-charcoal/20 text-brand-charcoal hover:border-brand-espresso hover:text-brand-espresso transition-colors bg-white shadow-sm" onClick={goToCurrent}>Today</button>
-          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-brand-charcoal/20 text-brand-charcoal hover:border-brand-espresso hover:text-brand-espresso transition-colors bg-white shadow-sm" onClick={goToNext}>Next</button>
+          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-outline-variant/30 text-on-surface hover:border-primary hover:text-primary transition-colors bg-surface-container shadow-sm" onClick={goToBack}>Prev</button>
+          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-outline-variant/30 text-on-surface hover:border-primary hover:text-primary transition-colors bg-surface-container shadow-sm" onClick={goToCurrent}>Today</button>
+          <button className="px-4 py-2 text-[10px] tracking-widest uppercase border border-outline-variant/30 text-on-surface hover:border-primary hover:text-primary transition-colors bg-surface-container shadow-sm" onClick={goToNext}>Next</button>
         </div>
-        <div className="text-xl font-serif text-brand-espresso capitalize">
+        <div className="text-xl font-serif text-primary capitalize">
           {toolbar.label}
         </div>
-        <div className="flex gap-1 bg-white p-1 border border-brand-charcoal/10 rounded shadow-sm">
+        <div className="flex gap-1 bg-surface-container p-1 border border-outline-variant/30 rounded shadow-sm">
           {['month', 'week', 'day'].map(v => (
             <button 
               key={v}
-              className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-colors rounded ${toolbar.view === v ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+              className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-colors rounded ${toolbar.view === v ? 'bg-primary text-white' : 'text-on-surface hover:bg-primary/5'}`}
               onClick={() => toolbar.onView(v)}
             >
               {v}
@@ -136,35 +136,35 @@ export default function AdminAppointmentsTab() {
   };
 
   return (
-    <div className="p-8 font-sans text-brand-charcoal h-full flex flex-col">
-      <div className="flex justify-between items-end mb-8 border-b border-brand-charcoal/10 pb-4">
+    <div className="p-8 font-sans text-on-surface h-full flex flex-col">
+      <div className="flex justify-between items-end mb-8 border-b border-outline-variant/30 pb-4">
         <div>
-          <h2 className="font-serif text-3xl text-brand-espresso mb-1">Studio Appointments</h2>
-          <p className="text-sm text-brand-charcoal/70">Manage tailoring schedules and consultation requests.</p>
+          <h2 className="font-serif text-3xl text-primary mb-1">Studio Appointments</h2>
+          <p className="text-sm text-on-surface/70">Manage tailoring schedules and consultation requests.</p>
         </div>
         <div className="flex gap-4">
           <button 
             onClick={handlePrintSchedule}
-            className="px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-widest border border-brand-espresso text-brand-espresso hover:bg-brand-espresso hover:text-white transition-colors print:hidden"
+            className="px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-widest border border-primary text-primary hover:bg-primary hover:text-white transition-colors print:hidden"
           >
             <Printer className="w-4 h-4" /> Print Daily Schedule
           </button>
           <button 
             onClick={exportToCSV}
-            className="px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-widest border border-brand-espresso text-brand-espresso hover:bg-brand-espresso hover:text-white transition-colors print:hidden"
+            className="px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-widest border border-primary text-primary hover:bg-primary hover:text-white transition-colors print:hidden"
           >
             <Download className="w-4 h-4" /> Export CSV
           </button>
-          <div className="flex bg-brand-bone rounded overflow-hidden border border-brand-espresso/10">
+          <div className="flex bg-brand-bone rounded overflow-hidden border border-outline-variant/30">
             <button 
               onClick={() => setViewMode('calendar')}
-              className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'calendar' ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+              className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'calendar' ? 'bg-primary text-white' : 'text-on-surface hover:bg-primary/5'}`}
             >
               <CalendarIcon className="w-4 h-4" /> Calendar
             </button>
             <button 
               onClick={() => setViewMode('list')}
-              className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'list' ? 'bg-brand-espresso text-white' : 'text-brand-charcoal hover:bg-brand-charcoal/5'}`}
+              className={`p-2 px-4 flex items-center gap-2 text-xs uppercase tracking-widest ${viewMode === 'list' ? 'bg-primary text-white' : 'text-on-surface hover:bg-primary/5'}`}
             >
               <List className="w-4 h-4" /> List
             </button>
@@ -172,7 +172,7 @@ export default function AdminAppointmentsTab() {
         </div>
       </div>
       
-      <div className="bg-white border border-brand-espresso/10 overflow-hidden flex-1 flex flex-col relative">
+      <div className="bg-surface-container border border-outline-variant/30 overflow-hidden flex-1 flex flex-col relative">
         {viewMode === 'calendar' ? (
           <div className="p-4 h-full min-h-[600px]">
             <style>
@@ -212,44 +212,44 @@ export default function AdminAppointmentsTab() {
           <div className="overflow-auto h-full">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-brand-bone border-b border-brand-espresso/10 sticky top-0 z-10">
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Client</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Date & Time</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Type</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium w-48">Notes</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Ref. Images</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Assigned Tailor</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Status & Payment</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Meet Link</th>
-                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium text-right">Actions</th>
+                <tr className="bg-brand-bone border-b border-outline-variant/30 sticky top-0 z-10">
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Client</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Date & Time</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Type</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium w-48">Notes</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Ref. Images</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Assigned Tailor</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Status & Payment</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium">Meet Link</th>
+                  <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-on-surface/70 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {appointments.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No upcoming appointments.</td>
+                    <td colSpan={7} className="p-8 text-center text-on-surface-variant italic text-sm">No upcoming appointments.</td>
                   </tr>
                 )}
                 {appointments.map((apt: any) => (
                   <tr 
                     key={apt._id} 
-                    className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors cursor-pointer"
+                    className="border-b border-primary/5 hover:bg-brand-bone/50 transition-colors cursor-pointer"
                     onClick={() => setSelectedApt(apt)}
                   >
                     <td className="p-4">
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-brand-espresso">{apt.name || apt.clientName}</span>
-                        <span className="text-[10px] text-brand-charcoal/70">{apt.email || apt.clientEmail} • {apt.phone || apt.clientPhone}</span>
+                        <span className="text-sm font-medium text-primary">{apt.name || apt.clientName}</span>
+                        <span className="text-[10px] text-on-surface/70">{apt.email || apt.clientEmail} • {apt.phone || apt.clientPhone}</span>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col">
-                        <span className="text-sm text-brand-charcoal">{apt.date ? new Date(apt.date).toLocaleDateString() : (apt.requestedDate ? new Date(apt.requestedDate).toLocaleDateString() : '')}</span>
-                        {apt.time && <span className="text-[10px] text-brand-charcoal/70">{apt.time}</span>}
+                        <span className="text-sm text-on-surface">{apt.date ? new Date(apt.date).toLocaleDateString() : (apt.requestedDate ? new Date(apt.requestedDate).toLocaleDateString() : '')}</span>
+                        {apt.time && <span className="text-[10px] text-on-surface/70">{apt.time}</span>}
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-brand-charcoal capitalize">{apt.garmentType}</td>
-                    <td className="p-4 text-xs text-brand-charcoal/80 max-w-xs truncate" title={apt.notes}>{apt.notes || '-'}</td>
+                    <td className="p-4 text-sm text-on-surface capitalize">{apt.garmentType}</td>
+                    <td className="p-4 text-xs text-on-surface/80 max-w-xs truncate" title={apt.notes}>{apt.notes || '-'}</td>
                     <td className="p-4">
                       {apt.referenceImages && apt.referenceImages.length > 0 ? (
                         <div className="flex gap-1">
@@ -266,7 +266,7 @@ export default function AdminAppointmentsTab() {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-brand-charcoal/30 text-xs">-</span>
+                        <span className="text-on-surface/30 text-xs">-</span>
                       )}
                     </td>
                     <td className="p-4">
@@ -276,12 +276,12 @@ export default function AdminAppointmentsTab() {
                         defaultValue={apt.assignedTo || ""}
                         onClick={(e) => e.stopPropagation()}
                         onBlur={(e) => handleAssignTailor(apt._id, e.target.value)}
-                        className="bg-transparent border-b border-brand-charcoal/20 text-xs py-1 focus:outline-none focus:border-brand-espresso transition-colors print:border-none"
+                        className="bg-transparent border-b border-outline-variant/30 text-xs py-1 focus:outline-none focus:border-primary transition-colors print:border-none"
                       />
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-2 items-start">
-                        <span className={`text-[10px] uppercase tracking-widest px-2 py-1 ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : apt.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'text-brand-charcoal/50 bg-brand-bone'}`}>
+                        <span className={`text-[10px] uppercase tracking-widest px-2 py-1 ${apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' : apt.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'text-on-surface-variant bg-brand-bone'}`}>
                           {apt.status}
                         </span>
                         {apt.paymentStatus === 'paid' && (
@@ -298,7 +298,7 @@ export default function AdminAppointmentsTab() {
                           Join Meet
                         </a>
                       ) : (
-                        <span className="text-brand-charcoal/30 text-xs">-</span>
+                        <span className="text-on-surface/30 text-xs">-</span>
                       )}
                     </td>
                     <td className="p-4 flex justify-end gap-2">
@@ -312,7 +312,7 @@ export default function AdminAppointmentsTab() {
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleStatusUpdate(apt._id, 'cancelled'); }}
-                            className="text-[10px] tracking-widest uppercase py-1 px-3 border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                            className="text-[10px] tracking-widest uppercase py-1 px-3 border border-red-900/30 text-red-500 hover:bg-red-950/20 transition-colors"
                           >
                             Decline
                           </button>
@@ -321,7 +321,7 @@ export default function AdminAppointmentsTab() {
                       {apt.status === 'confirmed' && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleStatusUpdate(apt._id, 'completed'); }}
-                          className="text-[10px] tracking-widest uppercase py-1 px-3 border border-brand-espresso text-brand-espresso hover:bg-brand-espresso hover:text-white transition-colors"
+                          className="text-[10px] tracking-widest uppercase py-1 px-3 border border-primary text-primary hover:bg-primary hover:text-white transition-colors"
                         >
                           Mark Done
                         </button>

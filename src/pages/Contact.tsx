@@ -112,7 +112,7 @@ export default function Contact() {
     <main className="min-h-screen bg-surface text-on-surface flex flex-col pt-24">
       
       {/* Hero Section */}
-      <section className="bg-brand-charcoal text-brand-bone py-32 px-5 md:px-20 text-center relative overflow-hidden">
+      <section className="bg-primary text-brand-bone py-32 px-5 md:px-20 text-center relative overflow-hidden">
         {/* Subtle background texture/image can go here */}
         <div className="absolute inset-0 bg-[url('/assets/hero2.jpg')] bg-cover bg-center opacity-20 mix-blend-luminosity"></div>
         <div className="relative z-10 max-w-3xl mx-auto">
@@ -145,7 +145,7 @@ export default function Contact() {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          className="w-full lg:w-5/12 bg-brand-espresso text-brand-bone px-8 md:px-16 py-20 flex flex-col justify-center"
+          className="w-full lg:w-5/12 bg-primary text-brand-bone px-8 md:px-16 py-20 flex flex-col justify-center"
         >
           <h2 className="font-serif text-3xl md:text-4xl italic mb-12 text-brand-gold">Contact Details</h2>
 

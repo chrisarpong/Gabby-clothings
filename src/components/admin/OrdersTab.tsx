@@ -65,7 +65,7 @@ export default function OrdersTab() {
   );
 
   return (
-    <div className="p-6 md:p-10 font-sans text-brand-charcoal h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">
+    <div className="p-6 md:p-10 font-sans text-on-surface h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
@@ -81,7 +81,7 @@ export default function OrdersTab() {
               placeholder="Search ID, email, name..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2.5 bg-white border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-all shadow-sm"
+              className="pl-9 pr-4 py-2.5 bg-surface-container border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-all shadow-sm"
             />
           </div>
           <div className="relative">
@@ -89,7 +89,7 @@ export default function OrdersTab() {
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-9 pr-8 py-2.5 bg-white border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none w-full sm:w-48 shadow-sm cursor-pointer"
+              className="pl-9 pr-8 py-2.5 bg-surface-container border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none w-full sm:w-48 shadow-sm cursor-pointer"
             >
               <option value="All">All Statuses</option>
               <option value="pending">Pending</option>
@@ -103,7 +103,7 @@ export default function OrdersTab() {
         </div>
       </div>
       
-      <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1 flex flex-col relative z-10">
+      <div className="bg-surface-container backdrop-blur-md border border-outline-variant/30 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1 flex flex-col relative z-10">
         <div className="overflow-x-auto flex-1 custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
@@ -166,7 +166,7 @@ export default function OrdersTab() {
                         <select 
                           value={order.status}
                           onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                          className={`appearance-none pl-3 pr-8 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase cursor-pointer border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${statusColor.bg} ${statusColor.text} border-transparent hover:border-black/10`}
+                          className={`appearance-none pl-3 pr-8 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase cursor-pointer border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${statusColor.bg} ${statusColor.text} border-transparent hover:border-primary/10`}
                         >
                           <option value="pending">Pending</option>
                           <option value="fabric_sourced">Fabric Sourced</option>

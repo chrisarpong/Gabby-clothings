@@ -54,7 +54,7 @@ export default function ReviewsTab() {
   };
 
   return (
-    <div className="p-8 font-sans text-brand-charcoal h-full bg-surface overflow-y-auto">
+    <div className="p-8 font-sans text-on-surface h-full bg-surface overflow-y-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-outline-variant/30 pb-4">
         <div>
           <h2 className="font-serif text-3xl text-primary mb-1 tracking-tight">Customer Reviews</h2>
@@ -83,7 +83,7 @@ export default function ReviewsTab() {
       ) : (
         <div className="space-y-6">
           {reviews.map((review: Doc<"reviews">) => (
-            <div key={review._id} className="bg-white border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-6 shadow-sm">
+            <div key={review._id} className="bg-surface-container border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-6 shadow-sm">
               <div className="md:w-64 shrink-0 flex flex-col gap-2">
                 <span className="font-sans font-medium text-primary">{review.userId?.slice(0, 12) || "Anonymous"}</span>
                 <div className="flex text-primary">
@@ -98,7 +98,7 @@ export default function ReviewsTab() {
                 <span className={`text-[10px] uppercase font-label tracking-wide px-2 py-1 mt-1 inline-block w-fit ${
                   review.status === 'approved' ? 'bg-green-50 text-green-700' :
                   review.status === 'pending' ? 'bg-amber-50 text-amber-700' :
-                  'bg-red-50 text-red-700'
+                  'bg-red-950/20 text-red-500'
                 }`}>
                   {review.status}
                 </span>
@@ -126,7 +126,7 @@ export default function ReviewsTab() {
                   )}
                   <button 
                     onClick={() => handleDelete(review._id)}
-                    className="text-xs font-label uppercase tracking-widest px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 transition-colors flex items-center gap-2 ml-auto"
+                    className="text-xs font-label uppercase tracking-widest px-4 py-2 text-red-600 border border-red-900/30 hover:bg-red-950/20 transition-colors flex items-center gap-2 ml-auto"
                   >
                     <Trash2 className="w-3 h-3" /> Delete
                   </button>

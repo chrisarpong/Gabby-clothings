@@ -135,7 +135,7 @@ export default function BookAppointment() {
   return (
     <main className="min-h-screen bg-surface flex mt-24">
       {/* Left Column: Image/Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex w-1/2 bg-brand-espresso relative overflow-hidden flex-col justify-end p-16 text-brand-bone">
+      <div className="hidden lg:flex w-1/2 bg-primary relative overflow-hidden flex-col justify-end p-16 text-brand-bone">
         {/* We can use a solid color with a nice pattern or an actual image. */}
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
         <div className="relative z-10">

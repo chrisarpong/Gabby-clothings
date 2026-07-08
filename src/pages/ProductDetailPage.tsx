@@ -119,7 +119,7 @@ export default function ProductDetailPage() {
   };
 
   if (product === undefined) return <div className="min-h-screen pt-40 px-20">Loading product details...</div>;
-  if (product === null) return <div className="min-h-screen pt-40 px-20 text-brand-charcoal/50">Product not found.</div>;
+  if (product === null) return <div className="min-h-screen pt-40 px-20 text-on-surface-variant">Product not found.</div>;
 
   const isSoldOut = product.variants && product.variants.length > 0
     ? product.variants.every((v: any) => v.stock <= 0)
@@ -241,7 +241,7 @@ export default function ProductDetailPage() {
                 >
                   <div className="bg-surface-container p-6 lg:p-8 border border-outline-variant/30">
                     {hasValidMeasurements && !isEditingMeasurements ? (
-                      <div className="bg-green-50 border border-green-200 p-6 text-green-800 font-sans">
+                      <div className="bg-green-50 border border-green-200 p-6 text-green-500 font-sans">
                         <div className="flex items-start gap-4">
                           <CheckCircle2 className="w-6 h-6 shrink-0 mt-0.5" />
                           <div>
