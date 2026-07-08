@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Heart } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useMutation } from "@/hooks/useConvex";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 const RevealDiv: React.FC<{ children: React.ReactNode, className?: string, delay?: string }> = ({ children, className = "", delay = "" }) => {
   const { elementRef, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -53,6 +55,7 @@ export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [visibleCount, setVisibleCount] = useState(8);
+  const { activeCurrency, rates } = useCurrencyStore();
   const allProducts = useQuery(api.products.getActive);
   const catalogs = useQuery(api.catalogs.getAll, {}) || [];
   const navigate = useNavigate();
@@ -234,7 +237,7 @@ export default function ShopPage() {
                     <h3 className="font-serif text-[18px] text-primary">{product.name}</h3>
                     <span className="font-label text-[11px] tracking-widest text-outline uppercase mt-1">{product.category}</span>
                   </div>
-                  <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">${(product?.basePrice ?? 0).toFixed(2)}</span>
+                  <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">{formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}</span>
                 </div>
               </div>
             </RevealDiv>

@@ -29,7 +29,17 @@ export function formatPrice(
   }
 
   // Base rate logic (GHS -> GHS is always 1)
-  const rate = currency === 'GHS' ? 1 : (rates[currency] ?? 1);
+  let rate = currency === 'GHS' ? 1 : (rates[currency] ?? 1);
+  
+  // Smart math based on user clue: "if the rate of that currency is high you know the maths to do"
+  // If a user enters '15' for USD (meaning 1 USD = 15 GHS), they expect the system to divide.
+  // We apply this logic to currencies that are historically stronger than GHS (where 1 GHS < 1 Foreign is normal).
+  const isStrongCurrency = ['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'AED', 'ZAR'].includes(currency);
+  if (isStrongCurrency && rate > 1) {
+    // Inverse the rate (e.g., 15 becomes 1/15 = 0.0666)
+    rate = 1 / rate;
+  }
+
   const converted = amountInGHS * rate;
 
   return new Intl.NumberFormat(localeMap[currency], {

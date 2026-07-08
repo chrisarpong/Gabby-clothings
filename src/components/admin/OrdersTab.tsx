@@ -5,6 +5,7 @@ import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Search, Filter, ChevronRight, X, Package, CreditCard, MapPin, Ruler, CheckCircle2, Clock, XCircle, ChevronDown, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import OrderInvoiceModal from './OrderInvoiceModal';
 
 const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   pending: { bg: 'bg-surface-variant/30', text: 'text-primary' },
@@ -29,6 +30,7 @@ export default function OrdersTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<Doc<"orders"> | null>(null);
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order: Doc<"orders">) => {
@@ -343,7 +345,10 @@ export default function OrdersTab() {
               
               {/* Footer Actions */}
               <div className="p-6 border-t border-outline-variant/30 bg-surface-container-lowest sticky bottom-0 z-10 flex gap-3">
-                 <button className="flex-1 py-3 bg-surface-variant/20 hover:bg-surface-variant/40 text-primary rounded-xl text-xs font-bold tracking-widest uppercase transition-colors flex items-center justify-center gap-2">
+                 <button 
+                   onClick={() => setIsInvoiceOpen(true)}
+                   className="flex-1 py-3 bg-surface-variant/20 hover:bg-surface-variant/40 text-primary rounded-xl text-xs font-bold tracking-widest uppercase transition-colors flex items-center justify-center gap-2"
+                 >
                    <Download className="w-4 h-4" /> Invoice
                  </button>
               </div>
@@ -351,6 +356,14 @@ export default function OrdersTab() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Invoice Modal */}
+      {isInvoiceOpen && selectedOrder && (
+        <OrderInvoiceModal 
+          order={selectedOrder} 
+          onClose={() => setIsInvoiceOpen(false)} 
+        />
+      )}
     </div>
   );
 }

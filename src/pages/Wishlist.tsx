@@ -4,10 +4,13 @@ import { useQuery, useMutation  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 export default function Wishlist() {
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
+  const { activeCurrency, rates } = useCurrencyStore();
   
   const wishlistItems = useQuery(api.wishlists.getUserWishlist);
   const toggleWishlist = useMutation(api.wishlists.toggleItem);
@@ -73,17 +76,15 @@ export default function Wishlist() {
                   </Link>
                 </div>
 
-                <div className="flex justify-between items-start gap-4 mb-4">
-                  <div className="flex flex-col">
-                    <h3 className="font-serif text-[18px] text-primary"><Link to={`/product/${product._id}`}>{product.name}</Link></h3>
-                    <span className="font-label text-[11px] tracking-widest text-outline uppercase mt-1">
-                      {product.category}
+                  <div className="flex justify-between items-start gap-4 mb-4">
+                    <div className="flex flex-col">
+                      <h3 className="font-serif text-[18px] text-primary"><Link to={`/product/${product._id}`}>{product.name}</Link></h3>
+                      <span className="font-label text-[11px] tracking-widest text-outline uppercase mt-1">{product.category}</span>
+                    </div>
+                    <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">
+                      {formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}
                     </span>
                   </div>
-                  <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">
-                    ${(product?.basePrice ?? 0).toFixed(2)}
-                  </span>
-                </div>
                 
                 {/* Remove Button */}
                 <button 

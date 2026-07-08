@@ -96,7 +96,7 @@ export default function Header() {
           <div className="flex-1 flex justify-center">
             <Link to="/" className="flex items-center justify-center gap-1 md:gap-2">
               <img src={logo} alt="Gabby Newluk Logo" className="h-8 sm:h-10 md:h-16 lg:h-20 w-auto object-contain" />
-              <span className="font-serif text-[22px] sm:text-3xl md:text-4xl lg:text-5xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
+              <span className="font-serif text-[22px] sm:text-3xl md:text-4xl lg:text-5xl leading-none text-[#352421] italic tracking-tight whitespace-nowrap pt-1">
                 Gabby Newluk
               </span>
             </Link>
@@ -213,12 +213,7 @@ export default function Header() {
                     Saved Items
                   </Link>
                   
-                  <div className="flex items-center gap-4 mt-2">
-                     <span className="text-outline">Currency:</span>
-                     <div className="sm:hidden block">
-                        <CurrencySwitcher />
-                     </div>
-                  </div>
+
                   
                   <div className="flex gap-8 mt-6 pt-6 border-t border-surface-variant">
                     <a href="#" className="hover:text-primary transition-colors">Instagram</a>

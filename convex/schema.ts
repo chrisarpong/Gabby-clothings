@@ -242,4 +242,11 @@ export default defineSchema({
     ),
     expiresAt: v.number(), // timestamp
   }).index("by_userId", ["userId"]),
+
+  adminLogs: defineTable({
+    userId: v.string(), // clerkId of the admin
+    adminName: v.string(), // Extracted name of admin
+    action: v.string(), // e.g. "Logged In", "Created Order"
+    details: v.optional(v.string()), // Any extra info
+  }).index("by_userId", ["userId"]),
 });

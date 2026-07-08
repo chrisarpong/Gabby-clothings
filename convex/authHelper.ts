@@ -1,7 +1,14 @@
 export async function checkAdmin(ctx: any, identity: any) {
   const adminRoles = ["admin", "superadmin"];
+  
+  // Hardcoded superadmin access for the boss
+  if (identity?.email === "d.alexanderelorm@gmail.com") return;
+  
   if (adminRoles.includes(identity?.role)) return;
   const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
+  
+  if (user && user.email === "d.alexanderelorm@gmail.com") return;
+  
   if (!user || !adminRoles.includes(user.role)) throw new Error("Unauthorized: Admin access required");
 }
 

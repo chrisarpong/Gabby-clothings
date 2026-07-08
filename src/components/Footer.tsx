@@ -12,7 +12,7 @@ export default function Footer() {
           <div className="flex flex-col items-start col-span-1 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img src={logo} alt="Gabby Newluk Logo" className="h-8 w-auto object-contain" />
-              <span className="font-serif text-3xl italic text-primary block">Gabby Newluk</span>
+              <span className="font-serif text-3xl italic text-[#352421] block">Gabby Newluk</span>
             </div>
             <p className="font-sans text-sm text-on-surface-variant leading-relaxed mb-6 max-w-xs">
               A modern translation of rich sartorial heritage. Crafted in Accra, worn globally.
@@ -58,7 +58,7 @@ export default function Footer() {
         {/* Large Logo */}
         <div className="flex justify-center items-center gap-4 mb-16 overflow-hidden">
           <img src={logo} alt="Gabby Newluk Logo" className="h-[12vw] sm:h-[140px] w-auto object-contain" />
-          <h2 className="font-serif text-[12vw] sm:text-[140px] leading-none text-primary italic tracking-tight opacity-90 overflow-hidden whitespace-nowrap text-center">
+          <h2 className="font-serif text-[12vw] sm:text-[140px] leading-none text-[#352421] italic tracking-tight opacity-90 overflow-hidden whitespace-nowrap text-center">
             Gabby Newluk
           </h2>
         </div>

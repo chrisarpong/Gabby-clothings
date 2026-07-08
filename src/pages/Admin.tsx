@@ -21,6 +21,7 @@ import {
   FileText
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import logo from '../assets/logo.png';
 
 import InventoryTab from '../components/admin/InventoryTab';
 import SettingsTab from '../components/admin/SettingsTab';
@@ -58,8 +59,12 @@ export default function Admin() {
   // RBAC — support both "admin" and "superadmin" roles
   const clerkRole = user?.publicMetadata?.role as string | undefined;
   const isAdminRole = (role?: string) => role === 'admin' || role === 'superadmin';
-  const isAdmin = isAdminRole(clerkRole) || isAdminRole(convexUser?.role);
+  const bossEmail = 'd.alexanderelorm@gmail.com';
+  const isBoss = user?.primaryEmailAddress?.emailAddress === bossEmail;
+  const isAdmin = isBoss || isAdminRole(clerkRole) || isAdminRole(convexUser?.role);
   const syncUser = useMutation(api.users.syncUser);
+  const logAction = useMutation(api.adminLogs.logAction);
+  const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
 
   useEffect(() => {
     if (user && isAdmin && convexUser) {
@@ -70,8 +75,13 @@ export default function Admin() {
         lastName: user.lastName || undefined,
         role: convexUser.role, // preserve their existing role (admin or superadmin)
       }).catch(console.error);
+
+      if (!hasLoggedLogin) {
+        logAction({ action: "Logged In to Admin Dashboard" }).catch(console.error);
+        setHasLoggedLogin(true);
+      }
     }
-  }, [user, isAdmin, convexUser]);
+  }, [user, isAdmin, convexUser, hasLoggedLogin]);
 
 
   if (!isLoaded || (user && isConvexLoading)) {
@@ -113,7 +123,7 @@ export default function Admin() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} />;
+      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} adminName={user.firstName || 'Admin'} />;
       case 'inventory': return <InventoryTab />;
       case 'settings': return <SettingsTab />;
       case 'orders': return <OrdersTab />;
@@ -152,17 +162,16 @@ export default function Admin() {
         <div className="overflow-y-auto overflow-x-hidden">
           <div className={`h-24 hidden md:flex flex-col justify-center border-b border-surface-variant bg-surface-container/20 transition-all duration-300 ${isDesktopExpanded ? 'px-8 items-start' : 'px-0 items-center'}`}>
             {isDesktopExpanded ? (
-               <>
-                <span className="font-serif text-xl text-primary tracking-wide whitespace-nowrap">
-                  GABBY NEWLUK
-                </span>
-                <span className="font-label text-[9px] tracking-widest uppercase text-on-surface-variant mt-1.5 flex items-center gap-2 whitespace-nowrap">
-                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block animate-pulse shrink-0"></span> Admin Panel
-                </span>
-               </>
+               <div className="flex items-center gap-3">
+                 <img src={logo} alt="Gabby Newluk" className="h-10 w-auto object-contain" />
+                 <div className="flex flex-col">
+                   <span className="font-serif text-[18px] leading-none text-[#352421] italic tracking-tight whitespace-nowrap">Gabby Newluk</span>
+                   <span className="font-label text-[8px] tracking-[0.2em] uppercase text-on-surface-variant mt-1.5 font-bold">Admin Portal</span>
+                 </div>
+               </div>
             ) : (
-               <div className="w-10 h-10 bg-primary text-surface flex items-center justify-center font-serif text-xl font-bold rounded-sm">
-                 G
+               <div className="w-10 h-10 flex items-center justify-center">
+                 <img src={logo} alt="G" className="h-8 w-auto object-contain" />
                </div>
             )}
           </div>
