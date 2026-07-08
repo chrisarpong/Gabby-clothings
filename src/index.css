@@ -1,24 +1,70 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #352421;
-  --color-on-primary: #ffffff;
-  --color-secondary: #735c00;
-  --color-on-secondary: #ffffff;
-  --color-surface: #fdfdfb;
-  --color-on-surface: #2d2f2e;
-  --color-surface-variant: #e2e3e1;
-  --color-on-surface-variant: #504443;
-  --color-surface-container: #eeeeec;
-  --color-surface-container-lowest: #ffffff;
-  --color-tertiary: #12120e;
-  --color-outline: #827472;
-  --color-outline-variant: #d4c3c1;
+:root {
+  --primary: #352421;
+  --on-primary: #ffffff;
+  --secondary: #735c00;
+  --on-secondary: #ffffff;
+  --surface: #fdfdfb;
+  --on-surface: #2d2f2e;
+  --surface-variant: #e2e3e1;
+  --on-surface-variant: #504443;
+  --surface-container: #eeeeec;
+  --surface-container-lowest: #ffffff;
+  --tertiary: #12120e;
+  --outline: #827472;
+  --outline-variant: #d4c3c1;
   
-  --color-brand-charcoal: #2d2d2d;
-  --color-brand-espresso: #3a2520;
-  --color-brand-bone: #f4ebd9;
-  --color-brand-gold: #c5a059;
+  --brand-charcoal: #2d2d2d;
+  --brand-espresso: #3a2520;
+  --brand-bone: #f4ebd9;
+  --brand-gold: #c5a059;
+}
+
+.dark {
+  /* Rich, warm premium dark mode */
+  --primary: #eaddd7; /* Soft, warm taupe/bone for text and primary elements */
+  --on-primary: #251815; /* Very deep brown for text on primary buttons */
+  --secondary: #c5a059; /* Keep the gold for accents */
+  --on-secondary: #120d0c;
+  
+  --surface: #1a1412; /* Deep, rich warm espresso-black */
+  --on-surface: #eaddd7; /* Soft taupe text */
+  --surface-variant: #2d2220; /* Slightly lighter warm brown for cards/sections */
+  --on-surface-variant: #bcaea9; /* Muted taupe for secondary text */
+  
+  --surface-container: #251c1a;
+  --surface-container-lowest: #120e0d; /* The absolute darkest background */
+  
+  --tertiary: #bcaea9;
+  --outline: #5c4c49;
+  --outline-variant: #3a2d2a;
+  
+  --brand-charcoal: #eaddd7;
+  --brand-espresso: #eaddd7;
+  --brand-bone: #1a1412;
+  --brand-gold: #c5a059;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-surface: var(--surface);
+  --color-on-surface: var(--on-surface);
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-tertiary: var(--tertiary);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  
+  --color-brand-charcoal: var(--brand-charcoal);
+  --color-brand-espresso: var(--brand-espresso);
+  --color-brand-bone: var(--brand-bone);
+  --color-brand-gold: var(--brand-gold);
 
   --font-serif: "Playfair Display", serif;
   --font-sans: "DM Sans", sans-serif;

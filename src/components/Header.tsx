@@ -6,17 +6,17 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-reac
 import { useCartStore } from "../store/cartStore";
 import logo from "../assets/logo_transparent.png";
 import { useCurrencyStore } from "../store/currencyStore";
-import { CurrencyCode } from "../utils/currency";
+import { CurrencyCode, SUPPORTED_CURRENCIES } from "../utils/currency";
 
-const CurrencySwitcher = () => {
+const CurrencySwitcher = ({ className }: { className?: string }) => {
   const { activeCurrency, setCurrency } = useCurrencyStore();
-  const currencies: CurrencyCode[] = ["GHS", "USD", "GBP", "EUR"];
+  const currencies: CurrencyCode[] = [...SUPPORTED_CURRENCIES];
 
   return (
     <select
       value={activeCurrency}
       onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-      className="hidden sm:block bg-transparent text-primary font-label text-[10px] tracking-widest uppercase focus:outline-none cursor-pointer border-none"
+      className={`bg-transparent text-primary font-label text-[10px] tracking-widest uppercase focus:outline-none cursor-pointer border-none ${className || ''}`}
     >
       {currencies.map(c => (
         <option key={c} value={c} className="bg-surface text-primary">{c}</option>
@@ -81,7 +81,7 @@ export default function Header() {
         <div className="max-w-[1536px] mx-auto px-5 md:px-10 lg:px-20 h-20 md:h-24 flex items-center justify-between">
           
           {/* Left: Menu & Search */}
-          <div className="flex items-center gap-6 w-1/3 text-primary">
+          <div className="flex items-center gap-4 md:gap-6 w-1/4 lg:w-1/3 text-primary">
             <button 
               onClick={() => setIsMenuOpen(true)}
               className="flex items-center gap-2 hover:text-surface-tint transition-colors group"
@@ -93,18 +93,18 @@ export default function Header() {
           </div>
 
           {/* Center: Logo */}
-          <div className="flex-1 md:flex-none flex justify-center w-1/3">
-            <Link to="/" className="flex items-center justify-center gap-1">
-              <img src={logo} alt="Gabby Newluk Logo" className="h-12 w-auto md:h-16 lg:h-20 object-contain" />
-              <span className="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
+          <div className="flex-1 flex justify-center">
+            <Link to="/" className="flex items-center justify-center gap-1 md:gap-2">
+              <img src={logo} alt="Gabby Newluk Logo" className="h-8 sm:h-10 md:h-16 lg:h-20 w-auto object-contain" />
+              <span className="font-serif text-[22px] sm:text-3xl md:text-4xl lg:text-5xl leading-none text-primary italic tracking-tight whitespace-nowrap pt-1">
                 Gabby Newluk
               </span>
             </Link>
           </div>
 
           {/* Right: User, Wishlist, Cart */}
-          <div className="flex items-center justify-end gap-5 md:gap-6 w-1/3 text-primary">
-            <CurrencySwitcher />
+          <div className="flex items-center justify-end gap-4 md:gap-6 w-1/4 lg:w-1/3 text-primary">
+            <CurrencySwitcher className="hidden sm:block" />
             
             <Link to="/book" className="hidden lg:block font-label text-[10px] tracking-widest uppercase border border-primary px-4 py-2 hover:bg-primary hover:text-on-primary transition-colors">
               Book Appointment
@@ -212,6 +212,13 @@ export default function Header() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                     Saved Items
                   </Link>
+                  
+                  <div className="flex items-center gap-4 mt-2">
+                     <span className="text-outline">Currency:</span>
+                     <div className="sm:hidden block">
+                        <CurrencySwitcher />
+                     </div>
+                  </div>
                   
                   <div className="flex gap-8 mt-6 pt-6 border-t border-surface-variant">
                     <a href="#" className="hover:text-primary transition-colors">Instagram</a>

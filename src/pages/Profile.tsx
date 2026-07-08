@@ -8,6 +8,7 @@ import { parsePhoneNumberFromString, CountryCode } from 'libphonenumber-js';
 import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice, CurrencyCode } from "../utils/currency";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export default function Profile() {
   const { user } = useUser();
@@ -396,10 +397,10 @@ export default function Profile() {
                       
                       return (
                         <details key={order._id} className="group border border-surface-variant flex flex-col hover:border-primary transition-colors duration-300">
-                          <summary className="cursor-pointer list-none flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 bg-surface">
+                          <summary className="cursor-pointer p-6 sm:p-8 flex items-center justify-between gap-4">
                             <div className="flex flex-col gap-2">
-                              <span className="font-label text-xs tracking-widest text-primary">{order._id.substring(0, 12)}</span>
-                              <span className="font-sans text-sm text-on-surface-variant">{new Date(order._creationTime).toLocaleDateString()}</span>
+                              <span className="font-label text-xs tracking-widest text-primary">{order.orderId || order._id.substring(0, 12)}</span>
+                              <span className="font-sans text-sm text-on-surface-variant">Placed {new Date(order._creationTime).toLocaleDateString()}</span>
                               <span className="font-sans text-sm italic text-primary mt-1">{order.items.length} item(s)</span>
                             </div>
                             <div className="flex flex-col md:items-end gap-3 flex-1 md:flex-none">
@@ -541,7 +542,10 @@ export default function Profile() {
                     </form>
                   </div>
 
-                  <h2 className="font-serif text-3xl text-primary italic mb-6">Account Settings</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="font-serif text-3xl text-primary italic">Account Settings</h2>
+                    <ThemeToggle />
+                  </div>
                   <UserProfile routing="hash" appearance={{
                     elements: {
                       card: "shadow-none border border-surface-variant rounded-none bg-surface",

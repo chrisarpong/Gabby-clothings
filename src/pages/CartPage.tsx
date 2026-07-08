@@ -34,12 +34,12 @@ export default function CartPage() {
   const totalAmount = subtotal + shippingAmount;
 
   const getAvailableStock = (item: any) => {
-    if (item.variantSku === 'custom') return 99; // Custom fit doesn't have strict stock
+    if (!item.variantSku || item.variantSku === 'custom') return 99; // Custom fit doesn't have strict stock
     if (item.product?.variants && item.product.variants.length > 0) {
       const variant = item.product.variants.find((v: any) => v.sku === item.variantSku);
       return variant ? variant.stock : 0;
     }
-    return item.product?.stock ?? 0;
+    return 0; // Removed item.product?.stock ?? 0 because we deleted stock from schema
   };
 
   const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));

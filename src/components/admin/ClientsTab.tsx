@@ -1,128 +1,231 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
-import { X } from 'lucide-react';
+import { Search, ChevronRight, X, User, Ruler, Mail, Calendar } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ClientsTab() {
-  const clients = useQuery(api.users.getAll);
+  const clients = useQuery(api.users.getAll) || [];
+  
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Doc<"users"> | null>(null);
 
-  if (clients === undefined) return <div className="p-8 font-sans">Loading clients...</div>;
+  const filteredClients = useMemo(() => {
+    return clients.filter((client: Doc<"users">) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        (client.firstName || '').toLowerCase().includes(searchLower) ||
+        (client.lastName || '').toLowerCase().includes(searchLower) ||
+        (client.email || '').toLowerCase().includes(searchLower)
+      );
+    });
+  }, [clients, searchQuery]);
+
+  if (!clients.length && clients !== undefined) return (
+    <div className="p-8 h-full bg-surface-container-lowest animate-pulse">
+      <div className="h-10 bg-surface-variant/30 rounded w-1/4 mb-8" />
+      <div className="h-[500px] bg-surface-variant/30 rounded-xl" />
+    </div>
+  );
 
   return (
-    <div className="p-8 font-sans text-brand-charcoal h-full flex flex-col relative overflow-hidden">
-      <div className="flex justify-between items-end mb-8 border-b border-brand-charcoal/10 pb-4">
+    <div className="p-6 md:p-10 font-sans text-brand-charcoal h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">
+      
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <h2 className="font-serif text-3xl text-brand-espresso mb-1">Clients</h2>
-          <p className="text-sm text-brand-charcoal/70">Manage user profiles and saved measurements.</p>
+          <h2 className="font-serif text-3xl md:text-4xl text-primary mb-2 tracking-tight">Client Directory</h2>
+          <p className="text-sm text-on-surface-variant font-medium">Manage user profiles and saved bespoke measurements.</p>
+        </div>
+        
+        <div className="flex w-full md:w-auto">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <input 
+              type="text" 
+              placeholder="Search by name or email..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2.5 bg-white border border-outline-variant/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full transition-all shadow-sm"
+            />
+          </div>
         </div>
       </div>
       
-      <div className="bg-white border border-brand-espresso/10 overflow-hidden flex-1">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-brand-bone border-b border-brand-espresso/10">
-              <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Name</th>
-              <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Email</th>
-              <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Joined</th>
-              <th className="p-4 font-sans text-[10px] tracking-widest uppercase text-brand-charcoal/70 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.length === 0 && (
-               <tr>
-                <td colSpan={4} className="p-8 text-center text-brand-charcoal/50 italic text-sm">No clients found.</td>
+      <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1 flex flex-col relative z-10">
+        <div className="overflow-x-auto flex-1 custom-scrollbar">
+          <table className="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+              <tr className="bg-surface-variant/20 border-b border-outline-variant/30">
+                <th className="px-6 py-4 font-sans text-[10px] tracking-widest uppercase text-on-surface-variant font-bold">Client Name</th>
+                <th className="px-6 py-4 font-sans text-[10px] tracking-widest uppercase text-on-surface-variant font-bold">Contact Email</th>
+                <th className="px-6 py-4 font-sans text-[10px] tracking-widest uppercase text-on-surface-variant font-bold">Member Since</th>
+                <th className="px-6 py-4 font-sans text-[10px] tracking-widest uppercase text-on-surface-variant font-bold text-right">Action</th>
               </tr>
-            )}
-            {clients.map((client: Doc<"users">) => (
-              <tr key={client._id} className="border-b border-brand-espresso/5 hover:bg-brand-bone/50 transition-colors">
-                <td className="p-4 text-sm text-brand-espresso font-medium">{client.firstName || "N/A"} {client.lastName || ""}</td>
-                <td className="p-4 text-sm text-brand-charcoal">{client.email}</td>
-                <td className="p-4 text-sm text-brand-charcoal">{new Date(client._creationTime).toLocaleDateString()}</td>
-                <td className="p-4">
-                  <button 
+            </thead>
+            <tbody className="divide-y divide-outline-variant/20">
+              {filteredClients.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-12 text-center text-on-surface-variant text-sm italic">
+                    <User className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    No clients match your search.
+                  </td>
+                </tr>
+              ) : (
+                filteredClients.map((client: Doc<"users">) => (
+                  <tr 
+                    key={client._id} 
                     onClick={() => setSelectedClient(client)}
-                    className="text-xs font-sans tracking-widest uppercase border-b border-brand-espresso text-brand-espresso hover:text-brand-charcoal pb-1"
+                    className="hover:bg-surface-variant/10 transition-colors cursor-pointer group"
                   >
-                    View Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-surface-variant/50 flex items-center justify-center text-primary font-bold text-xs">
+                          {(client.firstName?.[0] || '')}{(client.lastName?.[0] || '')}
+                        </div>
+                        <span className="text-sm text-primary font-semibold tracking-wide">
+                          {client.firstName || "Unknown"} {client.lastName || ""}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-on-surface-variant font-medium">{client.email}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-on-surface-variant font-medium">
+                      {new Date(client._creationTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-primary hover:bg-surface-variant/30 p-2 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Slide-out Panel */}
-      <div className={`fixed inset-y-0 right-0 w-full max-w-md bg-white border-l border-brand-espresso/10 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${selectedClient ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Side Drawer for Client Details */}
+      <AnimatePresence>
         {selectedClient && (
-          <div className="h-full flex flex-col">
-            <div className="p-6 border-b border-brand-espresso/10 flex justify-between items-center bg-brand-bone">
-              <h3 className="font-serif text-2xl text-brand-espresso">Client Profile</h3>
-              <button onClick={() => setSelectedClient(null)} className="text-brand-charcoal/50 hover:text-brand-espresso">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedClient(null)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+            />
             
-            <div className="p-6 flex-1 overflow-y-auto">
-              <div className="mb-8">
-                <p className="text-[10px] uppercase tracking-widest text-brand-charcoal/50 mb-1">Contact Info</p>
-                <p className="text-lg text-brand-espresso mb-1">{selectedClient.firstName || "Unknown"} {selectedClient.lastName || ""}</p>
-                <p className="text-sm text-brand-charcoal mb-4">{selectedClient.email}</p>
+            {/* Drawer */}
+            <motion.div 
+              initial={{ x: '100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-full max-w-md bg-surface border-l border-outline-variant/30 shadow-2xl z-50 overflow-y-auto custom-scrollbar flex flex-col"
+            >
+              <div className="p-6 border-b border-outline-variant/30 bg-surface-container-lowest sticky top-0 z-10 flex justify-between items-center">
+                <div>
+                  <h3 className="font-serif text-2xl text-primary tracking-tight mb-1">Client Profile</h3>
+                </div>
+                <button 
+                  onClick={() => setSelectedClient(null)}
+                  className="p-2 hover:bg-surface-variant/50 rounded-full transition-colors text-on-surface-variant"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
 
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-brand-charcoal/50 mb-4 border-b border-brand-espresso/10 pb-2">Saved Measurements</p>
-                {selectedClient.savedMeasurements ? (
-                  <div className="flex flex-col gap-6">
-                    {['top', 'bottom', 'outerwear'].map(category => (
-                      selectedClient.savedMeasurements[category] && Object.keys(selectedClient.savedMeasurements[category]).length > 0 && (
-                        <div key={category}>
-                          <h4 className="text-[10px] tracking-widest uppercase text-brand-espresso mb-3 border-b border-brand-espresso/10 pb-1">{category}</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            {(Object.entries(selectedClient.savedMeasurements[category]) as [string, string][]).map(([key, val]) => (
-                              val && (
-                                <div key={key} className="bg-brand-bone shadow-sm border border-brand-espresso/5 p-3">
-                                  <span className="text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                  <span className="text-sm text-brand-espresso font-medium">{String(val)}"{' '}</span>
+              <div className="p-6 flex-1 space-y-8">
+                
+                {/* Contact Information */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+                    <User className="w-4 h-4" /> Personal Details
+                  </h4>
+                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 space-y-4 shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-surface-variant/50 flex items-center justify-center text-primary font-bold text-lg">
+                        {(selectedClient.firstName?.[0] || '')}{(selectedClient.lastName?.[0] || '')}
+                      </div>
+                      <div>
+                        <p className="text-lg font-serif text-primary tracking-tight">{selectedClient.firstName || "Unknown"} {selectedClient.lastName || ""}</p>
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-outline-variant/20 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-4 h-4 text-on-surface-variant" />
+                        <span className="text-sm text-primary font-medium">{selectedClient.email}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-on-surface-variant" />
+                        <span className="text-sm text-on-surface-variant">Joined {new Date(selectedClient._creationTime).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Saved Measurements */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+                    <Ruler className="w-4 h-4" /> Saved Measurements
+                  </h4>
+                  
+                  {selectedClient.savedMeasurements ? (
+                    <div className="space-y-4">
+                      {['top', 'bottom', 'outerwear'].map(category => (
+                        selectedClient.savedMeasurements![category] && Object.keys(selectedClient.savedMeasurements![category]).length > 0 && (
+                          <div key={category} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
+                            <div className="bg-surface-variant/20 border-b border-outline-variant/20 p-3">
+                               <h5 className="text-[10px] font-bold uppercase tracking-widest text-primary">{category}</h5>
+                            </div>
+                            <div className="p-4 grid grid-cols-2 gap-x-6 gap-y-3">
+                              {(Object.entries(selectedClient.savedMeasurements![category]) as [string, string][]).map(([key, val]) => (
+                                val && (
+                                  <div key={key} className="flex justify-between items-end border-b border-outline-variant/10 pb-1">
+                                    <span className="text-[10px] uppercase text-on-surface-variant font-medium">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                    <span className="text-xs font-bold text-primary">{String(val)}<span className="text-[10px] text-on-surface-variant font-normal ml-0.5">in</span></span>
+                                  </div>
+                                )
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      ))}
+                      
+                      {/* Fallback for legacy flat measurements */}
+                      {!selectedClient.savedMeasurements.top && !selectedClient.savedMeasurements.bottom && (
+                        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
+                           <div className="p-4 grid grid-cols-2 gap-x-6 gap-y-3">
+                            {Object.entries(selectedClient.savedMeasurements).map(([key, val]) => (
+                              typeof val !== 'object' && val && (
+                                <div key={key} className="flex justify-between items-end border-b border-outline-variant/10 pb-1">
+                                  <span className="text-[10px] uppercase text-on-surface-variant font-medium">{key}</span>
+                                  <span className="text-xs font-bold text-primary">{String(val)}<span className="text-[10px] text-on-surface-variant font-normal ml-0.5">in</span></span>
                                 </div>
                               )
                             ))}
                           </div>
                         </div>
-                      )
-                    ))}
-                    {/* Fallback for legacy flat measurements */}
-                    {!selectedClient.savedMeasurements.top && !selectedClient.savedMeasurements.bottom && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(selectedClient.savedMeasurements).map(([key, val]) => (
-                          typeof val !== 'object' && val && (
-                            <div key={key} className="bg-brand-bone shadow-sm border border-brand-espresso/5 p-3">
-                              <span className="text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">{key}</span>
-                              <span className="text-sm text-brand-espresso font-medium">{String(val)}"{' '}</span>
-                            </div>
-                          )
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-brand-charcoal/50 italic">No measurements saved for this client.</p>
-                )}
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-surface-variant/10 border border-dashed border-outline-variant/50 rounded-xl p-8 text-center flex flex-col items-center">
+                      <Ruler className="w-8 h-8 text-on-surface-variant opacity-20 mb-3" />
+                      <p className="text-sm text-on-surface-variant italic">No bespoke measurements saved for this client yet.</p>
+                    </div>
+                  )}
+                </section>
+                
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </>
         )}
-      </div>
-      
-      {/* Overlay for panel */}
-      {selectedClient && (
-        <div 
-          className="fixed inset-0 bg-brand-espresso/20 backdrop-blur-sm z-40"
-          onClick={() => setSelectedClient(null)}
-        />
-      )}
+      </AnimatePresence>
     </div>
   );
 }

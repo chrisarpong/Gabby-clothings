@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUser, SignOutButton, SignInButton } from '@clerk/clerk-react';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../convex/_generated/api';
 import { 
@@ -227,7 +228,10 @@ export default function Admin() {
           </nav>
         </div>
         
-        <div className={`border-t border-surface-variant bg-surface-container/20 transition-all duration-300 ${isDesktopExpanded ? 'p-6' : 'p-4 flex justify-center'}`}>
+        <div className={`border-t border-surface-variant bg-surface-container/20 transition-all duration-300 ${isDesktopExpanded ? 'p-6 space-y-4' : 'p-4 flex flex-col gap-4 items-center'}`}>
+          <div className={isDesktopExpanded ? 'flex justify-center' : ''}>
+            <ThemeToggle />
+          </div>
           <SignOutButton>
             <button 
               title="Logout" 

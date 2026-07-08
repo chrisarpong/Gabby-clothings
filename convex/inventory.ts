@@ -1,5 +1,5 @@
 import { mutation, action, query, internalQuery, internalAction } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { api, internal } from "./_generated/api";
 
 
@@ -82,7 +82,7 @@ export const softReserveItems = mutation({
       }
 
       if (availableStock - reservedCount < item.quantity) {
-        throw new Error(`Not enough stock for ${product.name}`);
+        throw new ConvexError(`Not enough stock for ${product.name}`);
       }
     }
 

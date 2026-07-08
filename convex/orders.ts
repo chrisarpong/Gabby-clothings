@@ -225,8 +225,21 @@ export const create = internalMutation({
 
     const calculatedTotalAmount = calculatedSubtotal - discountAmount + args.shippingFee;
 
+    // Atomic sequential order ID generation
+    let orderCounter = 1;
+    const counterSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "orderCounter")).first();
+    if (counterSetting) {
+      orderCounter = (counterSetting.value as number) + 1;
+      await ctx.db.patch(counterSetting._id, { value: orderCounter });
+    } else {
+      await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
+    }
+    const orderId = `GB-${orderCounter}`;
+    await ctx.db.patch(counterSetting._id, { value: orderCounter.toString() });
+
     // Insert using exact schema field names
-    const orderId = await ctx.db.insert("orders", {
+    const newOrderId = await ctx.db.insert("orders", {
+      orderId,
       userId: args.userId,
       customerDetails: args.customerDetails,
       items: finalItems,
@@ -384,7 +397,19 @@ export const adminCreateOrder = mutation({
 
     const totalAmount = subtotal + args.shippingFee;
 
+    // Atomic sequential order ID generation
+    let orderCounter = 1;
+    const counterSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "orderCounter")).first();
+    if (counterSetting) {
+      orderCounter = (counterSetting.value as number) + 1;
+      await ctx.db.patch(counterSetting._id, { value: orderCounter });
+    } else {
+      await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
+    }
+    const orderNumber = `GB-${orderCounter}`;
+
     const orderId = await ctx.db.insert("orders", {
+      orderNumber,
       userId: "admin_created", // Or tie to user if they have an account
       customerDetails: args.customerDetails,
       items: args.items.map(item => ({

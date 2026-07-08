@@ -2,7 +2,7 @@ import { internalAction, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
-const TARGET_CURRENCIES = ["USD", "GBP", "EUR"];
+const TARGET_CURRENCIES = ["USD", "GBP", "EUR", "ZAR", "NGN", "CAD", "AUD", "JPY", "AED"];
 
 export const fetchLiveRates = internalAction({
   args: {},
@@ -74,11 +74,23 @@ export const getRates = query({
     const manualUSD = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateUSD")).first();
     const manualGBP = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateGBP")).first();
     const manualEUR = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateEUR")).first();
+    const manualZAR = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateZAR")).first();
+    const manualNGN = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateNGN")).first();
+    const manualCAD = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateCAD")).first();
+    const manualAUD = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateAUD")).first();
+    const manualJPY = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateJPY")).first();
+    const manualAED = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "manualRateAED")).first();
     
     const manualRates: Record<string, number | undefined> = {
       USD: manualUSD && manualUSD.value ? parseFloat(manualUSD.value) : undefined,
       GBP: manualGBP && manualGBP.value ? parseFloat(manualGBP.value) : undefined,
       EUR: manualEUR && manualEUR.value ? parseFloat(manualEUR.value) : undefined,
+      ZAR: manualZAR && manualZAR.value ? parseFloat(manualZAR.value) : undefined,
+      NGN: manualNGN && manualNGN.value ? parseFloat(manualNGN.value) : undefined,
+      CAD: manualCAD && manualCAD.value ? parseFloat(manualCAD.value) : undefined,
+      AUD: manualAUD && manualAUD.value ? parseFloat(manualAUD.value) : undefined,
+      JPY: manualJPY && manualJPY.value ? parseFloat(manualJPY.value) : undefined,
+      AED: manualAED && manualAED.value ? parseFloat(manualAED.value) : undefined,
     };
     
     const now = Date.now();

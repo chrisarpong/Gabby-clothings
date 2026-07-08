@@ -1,4 +1,4 @@
-export const SUPPORTED_CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR'] as const;
+export const SUPPORTED_CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'ZAR', 'NGN', 'CAD', 'AUD', 'JPY', 'AED'] as const;
 export type CurrencyCode = typeof SUPPORTED_CURRENCIES[number];
 
 const localeMap: Record<CurrencyCode, string> = {
@@ -6,6 +6,12 @@ const localeMap: Record<CurrencyCode, string> = {
   USD: 'en-US',
   GBP: 'en-GB',
   EUR: 'de-DE', // General EUR locale formatting
+  ZAR: 'en-ZA',
+  NGN: 'en-NG',
+  CAD: 'en-CA',
+  AUD: 'en-AU',
+  JPY: 'ja-JP',
+  AED: 'ar-AE',
 };
 
 export function isValidCurrency(currency: string): currency is CurrencyCode {

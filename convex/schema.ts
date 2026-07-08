@@ -22,16 +22,12 @@ export default defineSchema({
     basePrice: v.number(),
     description: v.string(),
     images: v.array(v.string()),
-    category: v.string(), 
-    type: v.string(), // 'bespoke' | 'ready_to_wear' | 'showcase_template'
-    status: v.optional(v.string()), // 'active' | 'draft' | 'archived'
-    fabricRequirement: v.optional(v.string()), // e.g. "4.5 yards"
-    inStock: v.optional(v.boolean()),
-    productInfo: v.optional(v.string()),
-    returnPolicy: v.optional(v.string()),
-    shippingInfo: v.optional(v.string()),
-    slug: v.optional(v.string()),
+    category: v.string(),
+    type: v.string(), // 'ready_to_wear' or 'showcase_template'
+    status: v.string(), // 'active', 'archived', 'draft'
     stock: v.optional(v.number()),
+    fabricRequirement: v.optional(v.string()), // for showcase templates"
+    slug: v.optional(v.string()),
     catalogIds: v.optional(v.array(v.id("catalogs"))),
     seo: v.optional(v.object({
       metaTitle: v.optional(v.string()),
@@ -53,6 +49,7 @@ export default defineSchema({
     .index("by_category_status", ["category", "status"]),
 
   orders: defineTable({
+    orderId: v.optional(v.string()), // e.g. "GB-1"
     userId: v.optional(v.string()), // clerkId
     customerDetails: v.optional(v.object({
       email: v.string(),

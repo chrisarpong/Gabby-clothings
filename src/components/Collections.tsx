@@ -4,7 +4,7 @@ function CollectionImage({ src, alt, title, extraClass = "" }: { src: string; al
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className={`relative h-[600px] md:h-[819px] group cursor-pointer overflow-hidden ${extraClass}`}>
+    <div className={`relative h-[400px] sm:h-[500px] md:h-[819px] group cursor-pointer overflow-hidden ${extraClass}`}>
       {!loaded && (
         <div className="absolute inset-0 bg-surface-variant animate-pulse z-0" />
       )}

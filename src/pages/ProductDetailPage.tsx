@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Star } from "lucide-react";
+import { ChevronDown, ChevronUp, Star, CheckCircle2 } from "lucide-react";
 import { useQuery  } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { useCartStore } from "../store/cartStore";
@@ -21,6 +21,7 @@ export default function ProductDetailPage() {
   const product = useQuery(api.products.getById, { id: id as Id<"products"> });
   const allProducts = useQuery(api.products.getAll);
   const reviews = useQuery(api.reviews.getByProduct, id ? { productId: id as Id<"products"> } : "skip");
+  const convexMeasurements = useQuery(api.users.getMeasurements);
   
   const avgRating = reviews?.length 
     ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length 
@@ -32,14 +33,46 @@ export default function ProductDetailPage() {
   const [measurements, setMeasurements] = useState({
     chest: "", waist: "", hips: "", shoulder: "", sleeve: "", inseam: "", length: ""
   });
+  const [hasValidMeasurements, setHasValidMeasurements] = useState(false);
+  const [isEditingMeasurements, setIsEditingMeasurements] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("gabby_newluk_measurements");
-    if (saved) setMeasurements(JSON.parse(saved));
-  }, []);
+    if (convexMeasurements) {
+      setMeasurements(convexMeasurements as any);
+      const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
+      if (required.every(field => (convexMeasurements as any)[field])) {
+        setHasValidMeasurements(true);
+        setIsEditingMeasurements(false);
+      } else {
+        setIsEditingMeasurements(true);
+      }
+    } else {
+      const saved = localStorage.getItem("gabby_newluk_measurements");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setMeasurements(parsed);
+        const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
+        if (required.every(field => parsed[field])) {
+          setHasValidMeasurements(true);
+          setIsEditingMeasurements(false);
+        } else {
+          setIsEditingMeasurements(true);
+        }
+      } else {
+        setIsEditingMeasurements(true);
+      }
+    }
+  }, [convexMeasurements]);
 
   const handleMeasurementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMeasurements(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const newMeasurements = { ...measurements, [e.target.name]: e.target.value };
+    setMeasurements(newMeasurements);
+    const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
+    if (required.every(field => newMeasurements[field as keyof typeof newMeasurements])) {
+      setHasValidMeasurements(true);
+    } else {
+      setHasValidMeasurements(false);
+    }
   };
 
   const toggleAccordion = (section: string) => {
@@ -120,7 +153,7 @@ export default function ProductDetailPage() {
             </div>
             {/* Thumbnails */}
             {product?.images && product.images.length > 1 && (
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-3 gap-4 sm:gap-6">
                 {product.images.map((img, idx) => (
                   <div key={idx} className="aspect-[3/4] bg-surface-container overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
                     <img 
@@ -180,7 +213,7 @@ export default function ProductDetailPage() {
                 <span className="font-label text-xs tracking-[0.2em] uppercase text-primary">Select Size</span>
                 <Link to="/size-guide" className="text-on-surface-variant text-xs underline hover:text-primary transition-colors">Size Guide</Link>
               </div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {sizes.map((size) => (
                   <button 
                     key={size}
@@ -207,26 +240,58 @@ export default function ProductDetailPage() {
                   className="overflow-hidden mb-8"
                 >
                   <div className="bg-surface-container p-6 lg:p-8 border border-outline-variant/30">
-                    <h3 className="font-serif text-xl text-primary mb-3 italic">Your Measurements</h3>
-                    <p className="font-sans text-xs text-on-surface-variant mb-8 leading-relaxed">
-                      Please provide your exact measurements in inches for a perfect fit. 
-                      These will be saved to your device for future orders.
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                      {Object.keys(measurements).map((key) => (
-                        <div key={key}>
-                          <label className="block text-[10px] uppercase tracking-widest text-outline mb-2">{key}</label>
-                          <input
-                            type="number"
-                            name={key}
-                            value={measurements[key as keyof typeof measurements]}
-                            onChange={handleMeasurementChange}
-                            placeholder="in."
-                            className="w-full bg-transparent border-b border-surface-variant py-2 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                          />
+                    {hasValidMeasurements && !isEditingMeasurements ? (
+                      <div className="bg-green-50 border border-green-200 p-6 text-green-800 font-sans">
+                        <div className="flex items-start gap-4">
+                          <CheckCircle2 className="w-6 h-6 shrink-0 mt-0.5" />
+                          <div>
+                            <h3 className="font-serif text-xl mb-2">Measurements Linked</h3>
+                            <p className="text-sm leading-relaxed mb-4">
+                              We found your bespoke measurements saved in your profile. These will automatically be used to craft your perfect fit.
+                            </p>
+                            <button 
+                              onClick={() => setIsEditingMeasurements(true)}
+                              className="text-xs uppercase tracking-widest font-label underline hover:text-green-950 transition-colors"
+                            >
+                              Review or Edit Measurements
+                            </button>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className="font-serif text-xl text-primary italic">Your Measurements</h3>
+                          {hasValidMeasurements && (
+                            <button 
+                              onClick={() => setIsEditingMeasurements(false)}
+                              className="text-xs uppercase tracking-widest font-label text-outline hover:text-primary transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                        <p className="font-sans text-xs text-on-surface-variant mb-8 leading-relaxed">
+                          Please provide your exact measurements in inches for a perfect fit. 
+                          These will be saved to your device for future orders.
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                          {Object.keys(measurements).map((key) => (
+                            <div key={key}>
+                              <label className="block text-[10px] uppercase tracking-widest text-outline mb-2">{key}</label>
+                              <input
+                                type="number"
+                                name={key}
+                                value={measurements[key as keyof typeof measurements]}
+                                onChange={handleMeasurementChange}
+                                placeholder="in."
+                                className="w-full bg-transparent border-b border-surface-variant py-2 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}

@@ -6,6 +6,7 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PaystackButton } from "react-paystack";
 import PhoneInputCustom from '../components/PhoneInputCustom';
+import { parseConvexError } from "../utils/errorParser";
 
 export default function CustomTailoring() {
   const [searchParams] = useSearchParams();

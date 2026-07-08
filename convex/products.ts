@@ -66,6 +66,7 @@ export const create = mutation({
     category: v.string(),
     type: v.string(),
     status: v.string(),
+    stock: v.optional(v.number()),
     fabricRequirement: v.optional(v.string()),
     catalogIds: v.optional(v.array(v.id("catalogs"))),
     seo: v.optional(v.object({
@@ -102,6 +103,7 @@ export const update = mutation({
     category: v.optional(v.string()),
     type: v.optional(v.string()),
     status: v.optional(v.string()),
+    stock: v.optional(v.number()),
     fabricRequirement: v.optional(v.string()),
     catalogIds: v.optional(v.array(v.id("catalogs"))),
     seo: v.optional(v.object({

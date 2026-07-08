@@ -4,7 +4,7 @@ import logo from "../assets/logo_transparent.png";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#f4f4f2] pt-20 pb-10 px-5 md:px-20 border-t border-surface-variant">
+    <footer className="bg-surface-container pt-20 pb-10 px-5 md:px-20 border-t border-surface-variant">
       <div className="max-w-[1536px] mx-auto">
         {/* Top Section: Links Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 mb-24 px-5">
