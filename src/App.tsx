@@ -86,6 +86,23 @@ function CartSync() {
   return null;
 }
 
+import { useCurrencyStore } from './store/currencyStore';
+
+function CurrencySync() {
+  const dbRates = useQuery(api.currency.getRates);
+  const setRates = useCurrencyStore(state => state.setRates);
+  const hasSynced = React.useRef(false);
+
+  useEffect(() => {
+    if (dbRates && Object.keys(dbRates).length > 0 && !hasSynced.current) {
+      setRates(dbRates as Record<string, number>);
+      hasSynced.current = true;
+    }
+  }, [dbRates, setRates]);
+
+  return null;
+}
+
 import CookieBanner from './components/CookieBanner';
 import NewsFlashModal from './components/NewsFlashModal';
 
@@ -95,6 +112,7 @@ export default function App() {
       <ScrollToTop />
       <UserSync />
       <CartSync />
+      <CurrencySync />
       <CookieBanner />
       <NewsFlashModal />
       <Toaster position="top-center" toastOptions={{

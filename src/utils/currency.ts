@@ -24,7 +24,7 @@ export function formatPrice(
 
   // Base rate logic (GHS -> GHS is always 1)
   const rate = currency === 'GHS' ? 1 : (rates[currency] ?? 1);
-  const converted = amountInGHS / rate;
+  const converted = amountInGHS * rate;
 
   return new Intl.NumberFormat(localeMap[currency], {
     style: 'currency',
