@@ -88,7 +88,9 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
               {/* Invoice Badge */}
               <div className="text-right">
                 <div className="inline-block border-2 border-[#352421] px-5 py-2">
-                  <span className="text-[10px] tracking-[0.35em] uppercase font-bold">Invoice</span>
+                  <span className="text-[10px] tracking-[0.35em] uppercase font-bold">
+                    {order.paymentStatus === 'paid' ? 'RECEIPT' : (order.amountPaid ? 'DEPOSIT RECEIPT' : 'INVOICE')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -180,12 +182,12 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
                           <p className="text-[10px] text-[#352421]/50 font-mono">{item.variantSku}</p>
                         )}
                         
-                        {/* Bespoke Measurements */}
+                        {/* custom-fit Measurements */}
                         {item.measurements && Object.keys(item.measurements).length > 0 && (
                           <div className="mt-3 relative">
                             <div className="absolute left-0 top-0 bottom-0 w-px bg-[#daa520]/60" />
                             <div className="pl-4">
-                              <p className="text-[8px] tracking-[0.25em] uppercase font-bold text-[#daa520]/80 mb-2">Bespoke Tailoring</p>
+                              <p className="text-[8px] tracking-[0.25em] uppercase font-bold text-[#daa520]/80 mb-2">custom-fit Tailoring</p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-0.5">
                                 {Object.entries(item.measurements).map(([key, val]) => (
                                   <div key={key} className="flex items-baseline gap-1 text-[10px]">
@@ -235,11 +237,28 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
                 {/* Grand Total */}
                 <div className="border-t-2 border-[#352421] pt-3 mt-3">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-[#352421]/60">Total Due</span>
+                    <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-[#352421]/60">Total Amount</span>
                     <span className="font-serif text-2xl font-bold text-[#352421] tracking-tight">
                       {formatPrice(order.baseTotalAmount || order.totalAmount, displayCurrency, displayRates)}
                     </span>
                   </div>
+                  
+                  {order.amountPaid !== undefined && order.amountPaid > 0 && (
+                     <>
+                        <div className="flex justify-between items-baseline mt-2">
+                           <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-emerald-700/80">Amount Paid</span>
+                           <span className="font-serif text-xl font-bold text-emerald-700 tracking-tight">
+                             {formatPrice(order.amountPaid, displayCurrency, displayRates)}
+                           </span>
+                        </div>
+                        <div className="flex justify-between items-baseline mt-2 pt-2 border-t border-dashed border-[#352421]/20">
+                           <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-amber-700/80">Balance Due</span>
+                           <span className="font-serif text-xl font-bold text-amber-700 tracking-tight">
+                             {formatPrice(order.amountDue || ((order.baseTotalAmount || order.totalAmount) - order.amountPaid), displayCurrency, displayRates)}
+                           </span>
+                        </div>
+                     </>
+                  )}
                 </div>
               </div>
             </div>

@@ -236,7 +236,7 @@ export default function Checkout() {
       <div className="max-w-[1400px] mx-auto">
         <div className="mb-12">
           <h1 className="font-serif text-4xl md:text-5xl text-primary tracking-wide">Secure Checkout</h1>
-          <p className="font-sans text-sm text-on-surface-variant mt-2">Complete your bespoke order.</p>
+          <p className="font-sans text-sm text-on-surface-variant mt-2">Complete your custom-fit order.</p>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-20">
@@ -382,12 +382,12 @@ export default function Checkout() {
                             <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
                             <div>
                               <p className="font-bold mb-1">Measurements Extracted from Profile</p>
-                              <p>We found your bespoke measurements saved in your profile. You can review them below or proceed directly to payment.</p>
+                              <p>We found your custom-fit measurements saved in your profile. You can review them below or proceed directly to payment.</p>
                             </div>
                           </div>
                         )}
                         <p className="font-sans text-sm text-on-surface-variant mb-8 leading-relaxed">
-                          Please provide your measurements (in inches). Our master tailors will use these to craft your bespoke garments.
+                          Please provide your measurements (in inches). Our master tailors will use these to craft your custom-fit garments.
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-8">
                           {Object.keys(measurements).map((key) => (

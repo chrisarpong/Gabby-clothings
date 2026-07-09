@@ -11,8 +11,8 @@ if os.path.exists(old_file):
 replacements = [
     (r'\bAtelier\b', 'Studio'),
     (r'\batelier\b', 'studio'),
-    (r'\bBespoke\b', 'Custom'),
-    (r'\bbespoke\b', 'custom')
+    (r'\bcustom-fit\b', 'Custom'),
+    (r'\bcustom-fit\b', 'custom')
 ]
 
 count = 0

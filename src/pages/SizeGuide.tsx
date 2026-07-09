@@ -40,7 +40,7 @@ export default function SizeGuide() {
             transition={{ delay: 0.2 }}
             className="font-sans text-on-surface-variant text-lg"
           >
-            Our garments are crafted to exacting standards. Find your ideal size below, or opt for our bespoke custom tailoring service for a truly personalized silhouette.
+            Our garments are crafted to exacting standards. Find your ideal size below, or opt for our custom-fit custom tailoring service for a truly personalized silhouette.
           </motion.p>
         </div>
 
@@ -91,7 +91,7 @@ export default function SizeGuide() {
               <Link to="/custom-tailoring" className="group flex flex-col gap-4 p-6 bg-primary text-on-primary hover:bg-surface-tint transition-colors">
                 <Scissors size={24} />
                 <div>
-                  <h3 className="font-serif text-xl mb-2 italic">Bespoke Fit</h3>
+                  <h3 className="font-serif text-xl mb-2 italic">custom-fit Fit</h3>
                   <p className="font-sans text-sm text-on-primary/80 mb-4">
                     Input your exact measurements for a custom-tailored garment that fits flawlessly.
                   </p>

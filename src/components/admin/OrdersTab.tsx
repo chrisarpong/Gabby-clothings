@@ -3,9 +3,10 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Search, Filter, ChevronRight, X, Package, CreditCard, MapPin, Ruler, CheckCircle2, Clock, XCircle, ChevronDown, Download } from 'lucide-react';
+import { Search, Filter, ChevronRight, X, Package, CreditCard, MapPin, Ruler, CheckCircle2, Clock, XCircle, ChevronDown, Download, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderInvoiceModal from './OrderInvoiceModal';
+import AdminCreateOrderDrawer from './AdminCreateOrderDrawer';
 
 const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   pending: { bg: 'bg-surface-variant/30', text: 'text-primary' },
@@ -31,6 +32,7 @@ export default function OrdersTab() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<Doc<"orders"> | null>(null);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order: Doc<"orders">) => {
@@ -72,10 +74,18 @@ export default function OrdersTab() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <h2 className="font-serif text-3xl md:text-4xl text-primary mb-2 tracking-tight">Order Management</h2>
-          <p className="text-sm text-on-surface-variant font-medium">Process commissions, update statuses, and view bespoke details.</p>
+          <p className="text-sm text-on-surface-variant font-medium">Process commissions, update statuses, and view custom-fit details.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <button 
+            onClick={() => setIsCreateDrawerOpen(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Tailor's Office
+          </button>
+          
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
             <input 
@@ -324,7 +334,7 @@ export default function OrdersTab() {
                         {item.measurements && Object.keys(item.measurements).length > 0 && (
                           <div className="bg-surface-variant/10 border-t border-outline-variant/20 p-4">
                             <h5 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-primary mb-3">
-                              <Ruler className="w-3.5 h-3.5" /> Bespoke Measurements
+                              <Ruler className="w-3.5 h-3.5" /> custom-fit Measurements
                             </h5>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                               {Object.entries(item.measurements).map(([key, val]) => (
@@ -364,6 +374,12 @@ export default function OrdersTab() {
           onClose={() => setIsInvoiceOpen(false)} 
         />
       )}
+
+      {/* POS / Create Manual Order Drawer */}
+      <AdminCreateOrderDrawer
+        isOpen={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+      />
     </div>
   );
 }

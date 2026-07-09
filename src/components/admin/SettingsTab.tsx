@@ -146,7 +146,7 @@ export default function SettingsTab() {
     announcementBannerText: 'Complimentary shipping on all custom suiting orders.',
     bannerStyle: 'default' as 'default' | 'promo' | 'urgent',
     seoTitle: 'Gabby Newluk — Premium African Fashion',
-    seoDescription: 'Handcrafted kaftans, agbadas, and bespoke suiting. Crafted in Accra, worn globally.',
+    seoDescription: 'Handcrafted kaftans, agbadas, and custom-fit suiting. Crafted in Accra, worn globally.',
   });
 
   const [notifications, setNotifications] = useState({

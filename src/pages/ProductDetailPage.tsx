@@ -247,7 +247,7 @@ export default function ProductDetailPage() {
                           <div>
                             <h3 className="font-serif text-xl mb-2">Measurements Linked</h3>
                             <p className="text-sm leading-relaxed mb-4">
-                              We found your bespoke measurements saved in your profile. These will automatically be used to craft your perfect fit.
+                              We found your custom-fit measurements saved in your profile. These will automatically be used to craft your perfect fit.
                             </p>
                             <button 
                               onClick={() => setIsEditingMeasurements(true)}

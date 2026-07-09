@@ -12,7 +12,7 @@ interface AppointmentDrawerProps {
 export default function AppointmentDrawer({ appointment, onClose }: AppointmentDrawerProps) {
   const updateStatus = useMutation(api.appointments.updateStatus);
   const updateDetails = useMutation(api.appointments.updateDetails);
-  const createAdminOrder = useMutation(api.orders.adminCreateOrder);
+  const createAdminOrder = useMutation(api.orders.createPOSOrder);
   const products = useQuery(api.products.getAll);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,8 +82,10 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
     try {
       setIsSubmitting(true);
       const product = products?.find(p => p._id === orderProductId);
+      const price = Number(orderPrice);
+      const paid = depositAmount ? Number(depositAmount) : 0;
+      
       await createAdminOrder({
-        appointmentId: appointment._id,
         customerDetails: {
           email: appointment.email || appointment.clientEmail,
           firstName: appointment.name?.split(' ')[0] || appointment.clientName?.split(' ')[0] || "Client",
@@ -94,12 +96,18 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
           productId: orderProductId as any,
           variantSku: "custom",
           quantity: 1,
-          productName: product?.name || "Bespoke Garment",
-          price: Number(orderPrice),
+          productName: product?.name || "custom-fit Garment",
+          price: price,
         }],
         shippingFee: 0,
-        depositAmount: depositAmount ? Number(depositAmount) : 0,
+        amountPaid: paid,
+        amountDue: price - paid,
+        isDeposit: paid > 0 && paid < price,
+        paymentMethod: 'cash',
       });
+      
+      // Update appointment status to completed
+      await updateStatus({ id: appointment._id, status: 'completed' });
       toast.success("Order created successfully!");
       setShowOrderForm(false);
       onClose();

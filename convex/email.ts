@@ -81,7 +81,7 @@ export const sendOrderStatusUpdate = internalAction({
         break;
       case "delivered":
         subject = "Your Order Has Been Delivered - Gabby Atelier";
-        message = "Your order has been marked as delivered. We hope you enjoy your bespoke garments.";
+        message = "Your order has been marked as delivered. We hope you enjoy your custom-fit garments.";
         break;
       case "cancelled":
         subject = "Order Cancelled - Gabby Atelier";
@@ -141,7 +141,7 @@ export const sendOrderConfirmation = internalAction({
 <div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
   <div style="text-align: center; margin-bottom: 40px;">
     <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
-    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">Bespoke Tailoring</p>
+    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">custom-fit Tailoring</p>
   </div>
   
   <h2 style="font-size: 20px; font-weight: normal;">Thank you for your order, ${args.name}!</h2>
@@ -155,7 +155,7 @@ export const sendOrderConfirmation = internalAction({
   <p style="line-height: 1.6; color: #555;">We will send you another email as soon as your garments have shipped. If you requested custom measurements, we may reach out to you to confirm details.</p>
   
   <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
-    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p>contact@gabbynewluk.com</p>
   </div>
 </div>
@@ -189,13 +189,13 @@ export const sendAppointmentUpdate = internalAction({
 
     if (args.status === 'confirmed') {
       subject = "Appointment Confirmed - Gabby Newluk";
-      message = `Hello ${args.name}, your bespoke tailoring appointment has been successfully booked and confirmed.`;
+      message = `Hello ${args.name}, your custom-fit tailoring appointment has been successfully booked and confirmed.`;
     } else if (args.status === 'rescheduled') {
       subject = "Appointment Rescheduled - Gabby Newluk";
-      message = `Hello ${args.name}, your bespoke tailoring appointment has been rescheduled.`;
+      message = `Hello ${args.name}, your custom-fit tailoring appointment has been rescheduled.`;
     } else if (args.status === 'cancelled') {
       subject = "Appointment Cancelled - Gabby Newluk";
-      message = `Hello ${args.name}, your bespoke tailoring appointment has been cancelled. If this was a mistake, please reach out to us.`;
+      message = `Hello ${args.name}, your custom-fit tailoring appointment has been cancelled. If this was a mistake, please reach out to us.`;
     }
 
     try {
@@ -263,12 +263,12 @@ export const sendPromoBroadcast = action({
 <div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
   <div style="text-align: center; margin-bottom: 40px;">
     <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
-    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">Bespoke Tailoring</p>
+    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">custom-fit Tailoring</p>
   </div>
   
   <div style="text-align: center; background-color: #4a3c31; color: #ffffff; padding: 40px 20px; margin-bottom: 30px;">
     <h2 style="font-size: 24px; font-weight: normal; margin: 0 0 10px 0; font-family: Georgia, serif; font-style: italic;">The Private Sale</h2>
-    <p style="margin: 0; font-size: 16px; letter-spacing: 1px;">Enjoy ${args.discountValue}% off all bespoke collections.</p>
+    <p style="margin: 0; font-size: 16px; letter-spacing: 1px;">Enjoy ${args.discountValue}% off all custom-fit collections.</p>
   </div>
 
   <p style="line-height: 1.6; color: #555; text-align: center; font-size: 15px;">
@@ -287,7 +287,7 @@ export const sendPromoBroadcast = action({
   </div>
   
   <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #999; line-height: 1.5;">
-    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p style="margin-top: 10px;">
       You are receiving this email because you subscribed to our newsletter or made a purchase.<br>
       <a href="https://gabbynewluk.com/unsubscribe?email=${encodeURIComponent(user.email)}" style="color: #999; text-decoration: underline;">Unsubscribe</a> from marketing emails.
@@ -332,7 +332,7 @@ export const sendSubscriptionConfirmation = internalAction({
   <p style="line-height: 1.6; color: #555;">You will be the first to receive updates on private capsule drops, custom events, and editorial insights from our master tailors.</p>
   
   <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
-    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p>contact@gabbynewluk.com</p>
   </div>
 </div>
@@ -378,7 +378,7 @@ export const sendNewsletterBroadcast = action({
   <p style="line-height: 1.6; color: #555; font-size: 15px; white-space: pre-wrap;">${args.message}</p>
   
   <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #999; line-height: 1.5;">
-    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p style="margin-top: 10px;">
       You are receiving this email because you subscribed to our newsletter.<br>
       To unsubscribe, reply to this email or contact us.
@@ -430,7 +430,7 @@ export const replyToMessage = action({
   </div>
   
   <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; font-size: 11px; color: #999;">
-    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>Gabby Newluk | Premium custom-fit Fashion</p>
   </div>
 </div>
       `,
@@ -465,7 +465,7 @@ export const sendLowStockAlertEmail = internalAction({
 <div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
   <div style="text-align: center; margin-bottom: 40px;">
     <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 28px; margin: 0;">Gabby Newluk</h1>
-    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">Bespoke Tailoring</p>
+    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 10px; color: #888; margin-top: 5px;">custom-fit Tailoring</p>
   </div>
   
   <h2 style="font-size: 20px; font-weight: normal;">Almost Gone!</h2>
@@ -477,7 +477,7 @@ export const sendLowStockAlertEmail = internalAction({
   </div>
   
   <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
-    <p>Gabby Newluk | Premium Bespoke Fashion</p>
+    <p>Gabby Newluk | Premium custom-fit Fashion</p>
   </div>
 </div>
         `,

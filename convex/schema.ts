@@ -55,17 +55,18 @@ export default defineSchema({
       email: v.string(),
       firstName: v.string(),
       lastName: v.string(),
+      phone: v.optional(v.string()),
     })),
     items: v.array(
       v.object({
-        productId: v.id("products"),
+        productId: v.optional(v.id("products")),
         variantSku: v.optional(v.string()), // to identify size/color
         quantity: v.number(),
         priceAtPurchase: v.optional(v.number()),
         priceAtTime: v.optional(v.number()),
         productName: v.optional(v.string()),
         name: v.optional(v.string()), // legacy field
-        measurements: v.optional(v.any()), // Custom measurements for bespoke at time of order
+        measurements: v.optional(v.any()), // Custom measurements for custom-fit at time of order
       })
     ),
     subtotal: v.optional(v.number()),
@@ -85,10 +86,16 @@ export default defineSchema({
     displayCurrency: v.optional(v.string()),
 
     status: v.string(), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled'
-    paymentStatus: v.optional(v.string()), // 'pending', 'paid', 'failed'
+    paymentStatus: v.optional(v.string()), // 'pending', 'paid', 'failed', 'partial'
     paystackReference: v.optional(v.string()),
     shippingAddress: v.optional(v.any()),
     trackingNumber: v.optional(v.string()),
+
+    // POS & Manual Order fields
+    amountPaid: v.optional(v.number()),
+    amountDue: v.optional(v.number()),
+    isDeposit: v.optional(v.boolean()),
+    paymentMethod: v.optional(v.string()), // 'paystack', 'cash', 'transfer', 'momo'
   }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]),
 
   settings: defineTable({

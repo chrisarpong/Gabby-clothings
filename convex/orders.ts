@@ -235,7 +235,6 @@ export const create = internalMutation({
       await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
     }
     const orderId = `GB-${orderCounter}`;
-    await ctx.db.patch(counterSetting._id, { value: orderCounter.toString() });
 
     // Insert using exact schema field names
     const newOrderId = await ctx.db.insert("orders", {
@@ -290,7 +289,7 @@ export const create = internalMutation({
     // Send order confirmation email
     if (args.customerDetails?.email) {
       await ctx.scheduler.runAfter(0, internal.email.sendOrderConfirmation, {
-        orderId,
+        orderId: newOrderId,
         email: args.customerDetails.email,
         name: args.customerDetails.firstName,
         amount: calculatedTotalAmount,
@@ -366,9 +365,9 @@ export const getByPaystackReference = internalQuery({
   },
 });
 
-export const adminCreateOrder = mutation({
+export const createPOSOrder = mutation({
   args: {
-    appointmentId: v.optional(v.id("appointments")),
+    userId: v.optional(v.string()), // Optional clerkId if they have an account
     customerDetails: v.object({
       email: v.string(),
       firstName: v.string(),
@@ -376,19 +375,48 @@ export const adminCreateOrder = mutation({
       phone: v.optional(v.string()),
     }),
     items: v.array(v.object({
-      productId: v.id("products"),
+      productId: v.optional(v.id("products")),
       variantSku: v.optional(v.string()),
       quantity: v.number(),
       productName: v.string(),
-      price: v.number(),
+      price: v.number(), // The overridden or base price
+      measurements: v.optional(v.any()), // custom-fit measurements taken in shop
     })),
     shippingFee: v.number(),
-    depositAmount: v.number(),
+    amountPaid: v.number(),
+    amountDue: v.number(),
+    isDeposit: v.boolean(),
+    paymentMethod: v.string(), // 'cash', 'momo', 'transfer', 'paystack'
+    paystackReference: v.optional(v.string()), // Required if paymentMethod is 'paystack'
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
     await checkAdmin(ctx, identity);
+
+    // If it's a paystack MoMo/Card payment, verify it first
+    if (args.paymentMethod === 'paystack' && args.paystackReference) {
+      // Duplicate order prevention
+      const existingOrder = await ctx.db
+        .query("orders")
+        .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference!))
+        .first();
+      if (existingOrder) {
+        return existingOrder._id;
+      }
+
+      const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+      if (!paystackSecret) throw new Error("Payment verification failed: Server configuration error.");
+
+      const resp = await fetch(`https://api.paystack.co/transaction/verify/${args.paystackReference}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${paystackSecret}` },
+      });
+      const data = await resp.json();
+      if (!data.status || data.data?.status !== "success") {
+        throw new Error(`Payment verification failed: ${data.message || "Transaction not successful"}`);
+      }
+    }
 
     let subtotal = 0;
     for (const item of args.items) {
@@ -406,11 +434,19 @@ export const adminCreateOrder = mutation({
     } else {
       await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
     }
-    const orderNumber = `GB-${orderCounter}`;
+    const orderIdValue = `GB-${orderCounter}`;
+    if (counterSetting) {
+        await ctx.db.patch(counterSetting._id, { value: orderCounter.toString() });
+    }
+
+    let paymentStatus = "pending";
+    if (args.amountPaid > 0) {
+      paymentStatus = args.isDeposit ? "partial" : "paid";
+    }
 
     const orderId = await ctx.db.insert("orders", {
-      orderNumber,
-      userId: "admin_created", // Or tie to user if they have an account
+      orderId: orderIdValue,
+      userId: args.userId || "guest",
       customerDetails: args.customerDetails,
       items: args.items.map(item => ({
          productId: item.productId,
@@ -418,19 +454,20 @@ export const adminCreateOrder = mutation({
          quantity: item.quantity,
          priceAtPurchase: item.price,
          productName: item.productName,
+         measurements: item.measurements,
       })),
       subtotal: subtotal,
       shippingFee: args.shippingFee,
       discountAmount: 0,
       totalAmount: totalAmount,
-      status: "processing",
-      paymentStatus: args.depositAmount > 0 ? "partial" : "pending",
-      paystackReference: `manual_${Date.now()}`,
+      status: "processing", // In POS, usually instantly in process
+      paymentStatus: paymentStatus,
+      paystackReference: args.paystackReference || `manual_${Date.now()}`,
+      amountPaid: args.amountPaid,
+      amountDue: args.amountDue,
+      isDeposit: args.isDeposit,
+      paymentMethod: args.paymentMethod,
     });
-
-    if (args.appointmentId) {
-      await ctx.db.patch(args.appointmentId, { status: "completed" });
-    }
 
     return orderId;
   }
