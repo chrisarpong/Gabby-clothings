@@ -88,8 +88,8 @@ export default function CustomTailoring() {
   };
 
   const availableSlots = useQuery(api.appointments.getAvailableSlots, formData.fittingDate ? { date: formData.fittingDate } : "skip");
-  const commercialsSetting = useQuery(api.settings.getByKey, { key: "commercials" });
-  const bookingDepositAmount = commercialsSetting?.value?.bookingDepositAmount || 0;
+  const depositSetting = useQuery(api.settings.getByKey, { key: "bookingDepositAmount" });
+  const bookingDepositAmount = Number(depositSetting?.value ?? 0);
 
   const isFormValid = formData.fullName && formData.email && formData.garmentType && designInspoPreview && bodyPhotoPreview;
 

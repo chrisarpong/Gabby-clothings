@@ -10,8 +10,20 @@ interface OrderInvoiceModalProps {
   onClose: () => void;
 }
 
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+
 export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalProps) {
   const { activeCurrency, rates } = useCurrencyStore();
+  const storeInfoSetting = useQuery(api.settings.getByKey, { key: "storeInfo" });
+  const storeInfo = storeInfoSetting?.value;
+  
+  const storeName = storeInfo?.storeName || 'Gabby Newluk';
+  const addressLine = storeInfo ? [storeInfo.street, storeInfo.city].filter(Boolean).join(", ") : 'East Legon, Accra';
+  const countryLine = storeInfo?.country || 'Ghana';
+  const emailLine = storeInfo?.contactEmail || 'hello@gabbynewluk.com';
+  const phoneLine = storeInfo?.phone || '+233 (0) 55 123 4567';
+
   
   const displayCurrency = (order.displayCurrency as CurrencyCode) || activeCurrency;
   const displayRates = order.rateAtOrderTime ? { [displayCurrency]: order.rateAtOrderTime } : rates;
@@ -65,10 +77,10 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
               <div className="flex items-center gap-4">
                 <img src={logo} alt="Gabby Newluk" className="h-14 sm:h-16 w-auto object-contain" />
                 <div>
-                  <h1 className="font-serif text-2xl sm:text-3xl italic text-[#352421] tracking-tight leading-none">Gabby Newluk</h1>
+                  <h1 className="font-serif text-2xl sm:text-3xl italic text-[#352421] tracking-tight leading-none">{storeName}</h1>
                   <div className="flex items-center gap-2 mt-1.5">
                     <div className="w-5 h-px bg-[#daa520]" />
-                    <span className="text-[8px] tracking-[0.3em] uppercase text-[#352421]/50 font-semibold">Accra, Ghana</span>
+                    <span className="text-[8px] tracking-[0.3em] uppercase text-[#352421]/50 font-semibold">{storeInfo?.city || 'Accra'}, {countryLine}</span>
                   </div>
                 </div>
               </div>
@@ -251,8 +263,8 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
             
             <div className="flex justify-between items-end text-[9px] text-[#352421]/30 border-t border-[#352421]/10 pt-4">
               <div className="leading-relaxed">
-                <p>Gabby Newluk Clothing · East Legon, Accra · Ghana</p>
-                <p>hello@gabbynewluk.com · +233 (0) 55 123 4567</p>
+                <p>{storeName} Clothing · {addressLine} · {countryLine}</p>
+                <p>{emailLine} · {phoneLine}</p>
               </div>
               <div className="text-right">
                 <p>www.gabbynewluk.com</p>

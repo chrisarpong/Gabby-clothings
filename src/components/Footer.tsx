@@ -1,8 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo_transparent.png";
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 export default function Footer() {
+  const storeInfoSetting = useQuery(api.settings.getByKey, { key: "storeInfo" });
+  const storeInfo = storeInfoSetting?.value;
+  
+  const instagramUrl = storeInfo?.instagram || "https://www.instagram.com/gabbynewlukclothing/";
+  const addressString = storeInfo ? [storeInfo.street, storeInfo.city, storeInfo.country].filter(Boolean).join(", ") : "Crafted in Accra, worn globally.";
+
   return (
     <footer className="bg-surface-container pt-20 pb-10 px-5 md:px-20 border-t border-surface-variant">
       <div className="max-w-[1536px] mx-auto">
@@ -15,7 +23,7 @@ export default function Footer() {
               <span className="font-serif text-3xl italic text-[#352421] block">Gabby Newluk</span>
             </div>
             <p className="font-sans text-sm text-on-surface-variant leading-relaxed mb-6 max-w-xs">
-              A modern translation of rich sartorial heritage. Crafted in Accra, worn globally.
+              {addressString}
             </p>
           </div>
 
@@ -70,7 +78,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-6">
             {['INSTAGRAM'].map((social) => (
-              <a key={social} href={social === 'INSTAGRAM' ? "https://www.instagram.com/gabbynewlukclothing/" : "#"} target={social === 'INSTAGRAM' ? "_blank" : undefined} rel={social === 'INSTAGRAM' ? "noopener noreferrer" : undefined} className="text-label text-on-surface-variant hover:text-primary transition-colors">
+              <a key={social} href={social === 'INSTAGRAM' ? instagramUrl : "#"} target={social === 'INSTAGRAM' ? "_blank" : undefined} rel={social === 'INSTAGRAM' ? "noopener noreferrer" : undefined} className="text-label text-on-surface-variant hover:text-primary transition-colors">
                 {social}
               </a>
             ))}

@@ -43,8 +43,8 @@ export default function BookAppointment() {
   };
 
   const availableSlots = useQuery(api.appointments.getAvailableSlots, formData.date ? { date: formData.date } : "skip");
-  const commercialsSetting = useQuery(api.settings.getByKey, { key: "commercials" });
-  const bookingDepositAmount = commercialsSetting?.value?.bookingDepositAmount || 0;
+  const depositSetting = useQuery(api.settings.getByKey, { key: "bookingDepositAmount" });
+  const bookingDepositAmount = Number(depositSetting?.value ?? 0);
 
   const validateStep = (currentStep: number) => {
     if (currentStep === 1) return formData.garmentType.length > 0;

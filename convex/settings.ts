@@ -7,10 +7,18 @@ const PUBLIC_SETTING_KEYS = [
   "maintenanceMode",
   "isBannerActive",
   "announcementBannerText",
+  "bannerStyle",
   "commercials",
   "availability",
   "currency",
   "standardShippingRate",
+  "bookingDepositAmount",
+  "freeShippingThreshold",
+  "taxRate",
+  "returnWindowDays",
+  "storeInfo",
+  "seoDefaults",
+  "lowStockThreshold",
 ];
 
 export const getByKey = query({

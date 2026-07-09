@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
-import { Plus, X, Edit2, Archive, PackageOpen, FolderOpen, Image as ImageIcon, Search, Filter, CheckSquare } from 'lucide-react';
+import { Plus, X, Edit2, Archive, PackageOpen, FolderOpen, Image as ImageIcon, Search, Filter, CheckSquare, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function InventoryTab() {
@@ -12,6 +12,7 @@ export default function InventoryTab() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [bulkCatalogId, setBulkCatalogId] = useState('');
+  const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
   
   const products = useQuery(api.products.getAll);
   const catalogs = useQuery(api.catalogs.getAll, { includeArchived: true });
@@ -304,16 +305,50 @@ export default function InventoryTab() {
           }
           if (lowStockItems.length === 0) return null;
           return (
-           <div className="mb-8 p-4 bg-red-950/20 border border-red-900/30">
-             <h2 className="text-red-800 font-serif text-lg mb-2 flex items-center gap-2">
-               <PackageOpen className="w-5 h-5" /> Low Stock Alerts
-             </h2>
-             <ul className="list-disc pl-5 text-sm text-red-500">
-               {lowStockItems.map((item, idx) => (
-                 <li key={idx}>{item}</li>
-               ))}
-             </ul>
-           </div>
+            <div className="fixed bottom-6 right-6 z-50 shadow-2xl rounded-xl border border-red-900/20 bg-white/95 dark:bg-[#1a1412]/95 backdrop-blur-md overflow-hidden transition-all duration-300">
+              <div 
+                className="flex items-center justify-between p-3 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors group"
+                onClick={() => setIsAlertsExpanded(!isAlertsExpanded)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    {lowStockItems.length > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white ring-2 ring-white dark:ring-[#1a1412]">
+                        {lowStockItems.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className={`transition-all duration-300 ${isAlertsExpanded ? 'w-48 opacity-100' : 'w-0 opacity-0'} overflow-hidden whitespace-nowrap`}>
+                    <h2 className="text-red-900 dark:text-red-100 font-semibold text-sm">Low Stock Alerts</h2>
+                    <p className="text-[10px] text-red-700 dark:text-red-300 uppercase tracking-wider">
+                      Needs attention
+                    </p>
+                  </div>
+                </div>
+                <button className={`text-red-700 dark:text-red-300 p-1 focus:outline-none transition-all duration-300 ${isAlertsExpanded ? 'rotate-180 opacity-100 ml-2' : 'rotate-0 opacity-0 w-0'}`}>
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className={`transition-all duration-300 ease-in-out ${isAlertsExpanded ? 'max-h-[400px] w-64 md:w-80 opacity-100 border-t border-red-900/10 dark:border-red-900/30' : 'max-h-0 w-0 opacity-0 overflow-hidden'}`}>
+                <div className="p-0 overflow-y-auto max-h-[300px] custom-scrollbar">
+                  <ul className="divide-y divide-red-900/5 dark:divide-red-900/20">
+                    {lowStockItems.map((item, idx) => {
+                      const [name, qty] = item.split(' - ');
+                      return (
+                        <li key={idx} className="flex justify-between items-center text-sm py-3 px-4 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors">
+                          <span className="text-red-900 dark:text-red-100 font-medium truncate pr-2">{name}</span>
+                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0">{qty}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            </div>
           );
         })()}
 
