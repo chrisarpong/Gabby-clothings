@@ -173,16 +173,16 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
         </div>
         
         {/* Dynamic Clock Widget */}
-        <div className="mt-4 md:mt-0 flex items-center bg-surface-container border border-outline-variant/30 rounded-xl px-5 py-3 shadow-sm">
-           <div className="flex flex-col mr-6 border-r border-outline-variant/30 pr-6">
+        <div className="mt-4 md:mt-0 flex items-center justify-between w-full md:w-auto bg-surface-container border border-outline-variant/30 rounded-xl px-4 md:px-5 py-3 shadow-sm">
+           <div className="flex flex-col mr-4 md:mr-6 border-r border-outline-variant/30 pr-4 md:pr-6">
              <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Local Time</span>
-             <span className="font-mono text-sm text-primary font-medium tracking-tight">
+             <span className="font-mono text-xs md:text-sm text-primary font-medium tracking-tight">
                {currentTime.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' })}
              </span>
            </div>
-           <div className="flex items-center gap-2">
-             <ShieldCheck className="w-5 h-5 text-green-600" />
-             <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Secure Session</span>
+           <div className="flex items-center gap-1.5 md:gap-2">
+             <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
+             <span className="text-[9px] md:text-[10px] uppercase tracking-widest text-primary font-bold">Secure Session</span>
            </div>
         </div>
       </div>
@@ -429,8 +429,9 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
                ) : adminLogs.length === 0 ? (
                  <div className="text-center py-10 text-on-surface-variant italic">No administrative logs found.</div>
                ) : (
-                 <table className="w-full text-left border-collapse">
-                   <thead>
+                 <div className="overflow-x-auto w-full">
+                   <table className="w-full text-left border-collapse min-w-[500px]">
+                     <thead>
                      <tr className="bg-surface-container/50">
                        <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Timestamp</th>
                        <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Admin Name</th>
@@ -452,6 +453,7 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
                      ))}
                    </tbody>
                  </table>
+                 </div>
                )}
             </div>
           </div>

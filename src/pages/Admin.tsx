@@ -140,7 +140,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-surface-container-lowest font-sans">
+    <div className="h-[100dvh] w-full flex flex-col md:flex-row overflow-hidden bg-surface-container-lowest font-sans">
       
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-surface-variant bg-surface z-50">
