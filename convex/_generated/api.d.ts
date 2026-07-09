@@ -29,6 +29,7 @@ import type * as promotions from "../promotions.js";
 import type * as reviews from "../reviews.js";
 import type * as settings from "../settings.js";
 import type * as subscribers from "../subscribers.js";
+import type * as testquery from "../testquery.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
 import type * as wishlists from "../wishlists.js";
@@ -61,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   reviews: typeof reviews;
   settings: typeof settings;
   subscribers: typeof subscribers;
+  testquery: typeof testquery;
   users: typeof users;
   webhooks: typeof webhooks;
   wishlists: typeof wishlists;
