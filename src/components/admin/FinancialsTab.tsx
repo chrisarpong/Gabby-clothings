@@ -25,7 +25,7 @@ export default function FinancialsTab() {
   }
 
   const validOrders = orders.filter((o: Doc<"orders">) => o.status !== "cancelled");
-  const totalRevenue = validOrders.reduce((sum: number, o: Doc<"orders">) => sum + (o.totalAmount || 0), 0);
+  const totalRevenue = validOrders.reduce((sum: number, o: Doc<"orders">) => sum + (o.baseTotalAmount || o.totalAmount || 0), 0);
   const totalOrders = orders.length;
   const avgOrderValue = totalOrders > 0 ? totalRevenue / validOrders.length : 0;
   const paidOrders = orders.filter((o: Doc<"orders">) => o.paymentStatus === "paid").length;
@@ -37,7 +37,7 @@ export default function FinancialsTab() {
   
   for (const o of validOrders) {
     const day = dayNames[new Date(o._creationTime).getDay()];
-    revenueByDay[day] += o.totalAmount || 0;
+    revenueByDay[day] += (o.baseTotalAmount || o.totalAmount || 0);
   }
 
   const chartData = dayNames.map(name => ({ name, revenue: revenueByDay[name] }));
@@ -46,7 +46,7 @@ export default function FinancialsTab() {
   const revenueByPaymentStatus: Record<string, number> = {};
   for (const o of validOrders) {
     const status = o.paymentStatus || 'pending';
-    revenueByPaymentStatus[status] = (revenueByPaymentStatus[status] || 0) + (o.totalAmount || 0);
+    revenueByPaymentStatus[status] = (revenueByPaymentStatus[status] || 0) + (o.baseTotalAmount || o.totalAmount || 0);
   }
   
   const paymentPieData = Object.keys(revenueByPaymentStatus).map(status => ({
@@ -181,7 +181,7 @@ export default function FinancialsTab() {
                   <tr key={order._id} className="border-b border-outline-variant/10 hover:bg-surface-container/20 transition-colors">
                     <td className="p-4 text-xs font-mono text-primary whitespace-nowrap">{order.orderId || order._id.substring(0, 10)}</td>
                     <td className="p-4 text-sm text-primary whitespace-nowrap">{order.customerDetails?.firstName || "Guest"} {order.customerDetails?.lastName || ""}</td>
-                    <td className="p-4 text-sm font-medium text-primary whitespace-nowrap">GH₵{(order.totalAmount || 0).toLocaleString()}</td>
+                    <td className="p-4 text-sm font-medium text-primary whitespace-nowrap">{order.chargedCurrency || 'GH₵'}{(order.totalAmount || 0).toLocaleString()}</td>
                     <td className="p-4 whitespace-nowrap">
                       <span className={`text-[10px] uppercase font-label tracking-wide px-2 py-1 ${
                         order.paymentStatus === 'paid' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'

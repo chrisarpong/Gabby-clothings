@@ -27,12 +27,45 @@ const formatStatus = (status: string) => {
 export default function OrdersTab() {
   const orders = useQuery(api.orders.getAll) || [];
   const updateStatus = useMutation(api.orders.updateStatus);
+  const recordCashPayment = useMutation(api.payments.recordCashPayment);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<Doc<"orders"> | null>(null);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  
+  // Payment State
+  const [paymentAmount, setPaymentAmount] = useState<number | ''>('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+
+  const handleRecordPayment = async () => {
+    if (!selectedOrder || !paymentAmount) return;
+    setIsRecordingPayment(true);
+    try {
+      await recordCashPayment({
+        orderId: selectedOrder._id,
+        amount: Number(paymentAmount),
+        paymentMethod,
+        notes: paymentNotes
+      });
+      toast.success("Payment recorded successfully!");
+      setPaymentAmount('');
+      setPaymentNotes('');
+      // Optimistically update local selectedOrder to hide the payment form
+      setSelectedOrder({
+        ...selectedOrder,
+        amountPaid: (selectedOrder.amountPaid || 0) + Number(paymentAmount),
+        paymentStatus: ((selectedOrder.amountPaid || 0) + Number(paymentAmount)) >= (selectedOrder.totalAmount || 0) ? 'paid' : 'partial'
+      });
+    } catch (e: any) {
+      toast.error(e.message || "Failed to record payment");
+    } finally {
+      setIsRecordingPayment(false);
+    }
+  };
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order: Doc<"orders">) => {
@@ -310,6 +343,55 @@ export default function OrdersTab() {
                       </div>
                     )}
                   </div>
+
+                  {selectedOrder.paymentStatus !== 'paid' && selectedOrder.status !== 'cancelled' && (
+                    <div className="mt-4 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm">
+                      <h5 className="text-xs font-bold uppercase tracking-widest text-primary mb-3">Record Manual Payment</h5>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Amount</label>
+                            <input
+                              type="number"
+                              value={paymentAmount}
+                              onChange={(e) => setPaymentAmount(e.target.value ? Number(e.target.value) : '')}
+                              placeholder="E.g. 500"
+                              className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Method</label>
+                            <select
+                              value={paymentMethod}
+                              onChange={(e) => setPaymentMethod(e.target.value)}
+                              className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
+                            >
+                              <option value="cash">Cash</option>
+                              <option value="momo_manual">MoMo (Manual)</option>
+                              <option value="bank_transfer">Bank Transfer</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Notes (Optional)</label>
+                          <input
+                            type="text"
+                            value={paymentNotes}
+                            onChange={(e) => setPaymentNotes(e.target.value)}
+                            placeholder="Transaction ID or notes"
+                            className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
+                          />
+                        </div>
+                        <button
+                          onClick={handleRecordPayment}
+                          disabled={!paymentAmount || isRecordingPayment}
+                          className="w-full mt-2 text-[10px] uppercase tracking-widest px-3 py-2 bg-primary text-surface hover:bg-tertiary transition-colors disabled:opacity-50"
+                        >
+                          {isRecordingPayment ? 'Recording...' : 'Record Payment'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </section>
 
                 {/* Items & Measurements */}

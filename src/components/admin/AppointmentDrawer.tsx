@@ -3,6 +3,29 @@ import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { X, Calendar, Video, Edit2, DollarSign, Tag, ClipboardList, CheckCircle, MessageCircle, MapPin, AlertCircle, ShoppingBag } from 'lucide-react';
+import { usePaystackPayment } from 'react-paystack';
+
+const PaystackDepositButton = ({ appointment, amount, onSuccess }: { appointment: any, amount: number, onSuccess: (ref: any) => void }) => {
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: appointment.email || 'guest@gabbynewluk.com',
+    amount: amount * 100, // Paystack amount is in pesewas
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder', // Ensure this is set in .env
+    currency: 'GHS',
+  };
+  
+  const initializePayment = usePaystackPayment(config);
+  
+  return (
+    <button 
+      onClick={() => initializePayment({ onSuccess, onClose: () => {} })}
+      className="text-[10px] uppercase tracking-widest px-3 py-2 bg-primary text-surface hover:bg-tertiary transition-colors flex items-center gap-2"
+    >
+      <DollarSign className="w-3 h-3" />
+      Pay Deposit (Paystack)
+    </button>
+  );
+};
 
 interface AppointmentDrawerProps {
   appointment: any | null;
@@ -12,6 +35,10 @@ interface AppointmentDrawerProps {
 export default function AppointmentDrawer({ appointment, onClose }: AppointmentDrawerProps) {
   const updateStatus = useMutation(api.appointments.updateStatus);
   const updateDetails = useMutation(api.appointments.updateDetails);
+  const recordAptDeposit = useMutation(api.appointments.recordDeposit);
+  const recordOrderDeposit = useMutation(api.orders.recordDeposit);
+  const createClientFromAppointment = useMutation(api.users.createClientFromAppointment);
+  const linkToUser = useMutation(api.appointments.linkToUser);
   const createAdminOrder = useMutation(api.orders.createPOSOrder);
   const products = useQuery(api.products.getAll);
   
@@ -25,6 +52,9 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   const [meetLink, setMeetLink] = useState('');
   
   const [showOrderForm, setShowOrderForm] = useState(false);
+  const [isConvertingToClient, setIsConvertingToClient] = useState(false);
+
+  // Default POS order values
   const [orderProductId, setOrderProductId] = useState('');
   const [orderPrice, setOrderPrice] = useState<number | ''>('');
 
@@ -118,6 +148,26 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
     }
   };
 
+  const handleConvertToClient = async () => {
+    try {
+      setIsConvertingToClient(true);
+      const newUserId = await createClientFromAppointment({
+        name: appointment.name || appointment.clientName || 'Unknown',
+        email: appointment.email,
+        phone: appointment.phone
+      });
+      await linkToUser({
+        appointmentId: appointment._id,
+        userId: newUserId
+      });
+      toast.success("Client created and linked successfully!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to convert to client");
+    } finally {
+      setIsConvertingToClient(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-primary/30 backdrop-blur-sm transition-opacity">
       <div className="bg-surface-container w-full max-w-2xl h-full shadow-2xl overflow-y-auto flex flex-col animate-slide-in-right">
@@ -190,6 +240,16 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                   </div>
                 )}
               </div>
+              {!appointment.userId && (
+                <button
+                  onClick={handleConvertToClient}
+                  disabled={isConvertingToClient}
+                  className="mt-4 w-full text-[10px] uppercase tracking-widest px-3 py-2 border border-primary text-primary hover:bg-primary hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="w-3 h-3" />
+                  {isConvertingToClient ? 'Converting...' : 'Convert to Client'}
+                </button>
+              )}
             </div>
           </section>
 
@@ -276,15 +336,39 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                   ✓ Payment Verified
                 </div>
               ) : (
-                <button 
-                  onClick={() => {
-                    setPaymentReference('MANUAL_MOMO_OVERRIDE');
-                    setDepositAmount(depositAmount || 500);
-                  }}
-                  className="text-[10px] uppercase tracking-widest px-3 py-2 border border-outline-variant/30 text-primary hover:bg-primary hover:text-white transition-colors"
-                >
-                  Mark Paid via Manual MoMo
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      setPaymentReference('MANUAL_MOMO_OVERRIDE');
+                      setDepositAmount(depositAmount || 500);
+                    }}
+                    className="text-[10px] uppercase tracking-widest px-3 py-2 border border-outline-variant/30 text-primary hover:bg-primary hover:text-white transition-colors"
+                  >
+                    Mark Paid via Manual MoMo
+                  </button>
+                  {appointment.status === 'confirmed' && (
+                    <PaystackDepositButton 
+                      appointment={appointment} 
+                      amount={depositAmount || 500}
+                      onSuccess={async (reference: any) => {
+                        setPaymentReference(reference.reference);
+                        await recordAptDeposit({
+                          appointmentId: appointment._id,
+                          amountPaid: Number(depositAmount || 500),
+                          paystackReference: reference.reference
+                        });
+                        if (appointment.linkedOrderId) {
+                          await recordOrderDeposit({
+                            orderId: appointment.linkedOrderId,
+                            amountPaid: Number(depositAmount || 500),
+                            paystackReference: reference.reference
+                          });
+                        }
+                        toast.success("Deposit processed successfully!");
+                      }}
+                    />
+                  )}
+                </div>
               )}
             </div>
           </section>

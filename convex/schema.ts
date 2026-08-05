@@ -28,6 +28,9 @@ export default defineSchema({
     stock: v.optional(v.number()),
     fabricRequirement: v.optional(v.string()), // for showcase templates"
     slug: v.optional(v.string()),
+    productInfo: v.optional(v.string()),
+    shippingInfo: v.optional(v.string()),
+    returnPolicy: v.optional(v.string()),
     catalogIds: v.optional(v.array(v.id("catalogs"))),
     seo: v.optional(v.object({
       metaTitle: v.optional(v.string()),
@@ -256,4 +259,20 @@ export default defineSchema({
     action: v.string(), // e.g. "Logged In", "Created Order"
     details: v.optional(v.string()), // Any extra info
   }).index("by_userId", ["userId"]),
+
+  tailors: defineTable({
+    name: v.string(),
+    phone: v.optional(v.string()),
+    specialty: v.optional(v.string()),
+    status: v.string(), // 'active', 'inactive'
+  }).index("by_status", ["status"]),
+
+  payments: defineTable({
+    orderId: v.id("orders"),
+    amount: v.number(),
+    paymentMethod: v.string(),
+    recordedBy: v.string(), // clerkId of admin
+    notes: v.optional(v.string()),
+    date: v.string(),
+  }).index("by_orderId", ["orderId"]),
 });

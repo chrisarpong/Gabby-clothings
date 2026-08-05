@@ -153,14 +153,7 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
     { label: "Pending Appointments", value: String(stats.upcomingAppointments ?? 0), icon: Calendar, trend: null },
   ];
 
-  // Dummy data for Pie Chart if we don't have real order statuses in analytics stats
-  // In a real scenario, we'd query orders and group by status. We'll simulate based on recent orders.
-  const pieData = [
-    { name: 'Pending', value: 45 },
-    { name: 'Processing', value: 30 },
-    { name: 'Shipped', value: 20 },
-    { name: 'Delivered', value: 5 },
-  ];
+  const pieData = stats.orderStatusDistribution || [];
 
   return (
     <div className="p-6 md:p-10 font-sans text-on-surface h-full bg-surface-container-lowest overflow-y-auto">

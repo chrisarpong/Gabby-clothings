@@ -234,7 +234,7 @@ export const create = internalMutation({
     } else {
       await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
     }
-    const orderId = `GB-${orderCounter}`;
+    const orderId = `GB-${String(orderCounter).padStart(3, '0')}`;
 
     // Insert using exact schema field names
     const newOrderId = await ctx.db.insert("orders", {
@@ -434,7 +434,7 @@ export const createPOSOrder = mutation({
     } else {
       await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
     }
-    const orderIdValue = `GB-${orderCounter}`;
+    const orderIdValue = `GB-${String(orderCounter).padStart(3, '0')}`;
     if (counterSetting) {
         await ctx.db.patch(counterSetting._id, { value: orderCounter.toString() });
     }
@@ -469,6 +469,57 @@ export const createPOSOrder = mutation({
       paymentMethod: args.paymentMethod,
     });
 
+    if (args.amountPaid > 0) {
+      await ctx.db.insert("payments", {
+        orderId,
+        amount: args.amountPaid,
+        paymentMethod: args.paymentMethod,
+        recordedBy: identity.subject,
+        notes: `Initial POS order payment`,
+        date: new Date().toISOString(),
+      });
+    }
+
     return orderId;
+  }
+});
+
+export const recordDeposit = mutation({
+  args: {
+    orderId: v.id("orders"),
+    amountPaid: v.number(),
+    paystackReference: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+
+    const newAmountPaid = (order.amountPaid || 0) + args.amountPaid;
+    const amountDue = (order.totalAmount || 0) - newAmountPaid;
+    
+    let paymentStatus = "pending";
+    if (newAmountPaid > 0 && amountDue > 0) paymentStatus = "partial";
+    if (amountDue <= 0) paymentStatus = "paid";
+
+    await ctx.db.patch(args.orderId, {
+      amountPaid: newAmountPaid,
+      amountDue: Math.max(0, amountDue),
+      paymentStatus: paymentStatus,
+      paystackReference: args.paystackReference,
+      isDeposit: true, // Mark that a deposit was made
+    });
+
+    await ctx.db.insert("payments", {
+      orderId: args.orderId,
+      amount: args.amountPaid,
+      paymentMethod: "paystack",
+      recordedBy: identity.subject,
+      notes: `Deposit payment via Paystack (${args.paystackReference})`,
+      date: new Date().toISOString(),
+    });
   }
 });

@@ -23,6 +23,7 @@ const localizer = dateFnsLocalizer({
 
 export default function AdminAppointmentsTab() {
   const appointments = useQuery(api.appointments.getUpcoming);
+  const tailors = useQuery(api.tailors.getAll);
   const updateStatus = useMutation(api.appointments.updateStatus);
   const assignTailor = useMutation(api.appointments.assignTailor);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
@@ -270,14 +271,19 @@ export default function AdminAppointmentsTab() {
                       )}
                     </td>
                     <td className="p-4">
-                      <input 
-                        type="text" 
-                        placeholder="Assign Tailor..." 
-                        defaultValue={apt.assignedTo || ""}
+                      <select
+                        value={apt.assignedTo || ""}
                         onClick={(e) => e.stopPropagation()}
-                        onBlur={(e) => handleAssignTailor(apt._id, e.target.value)}
+                        onChange={(e) => handleAssignTailor(apt._id, e.target.value)}
                         className="bg-transparent border-b border-outline-variant/30 text-xs py-1 focus:outline-none focus:border-primary transition-colors print:border-none"
-                      />
+                      >
+                        <option value="">Assign Tailor...</option>
+                        {tailors?.map((tailor) => (
+                          <option key={tailor._id} value={tailor._id}>
+                            {tailor.name} {tailor.specialty ? `(${tailor.specialty})` : ''}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-2 items-start">

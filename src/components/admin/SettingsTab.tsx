@@ -6,16 +6,18 @@ import {
   Save, Store, DollarSign, Clock, Monitor, Bell, 
   ChevronRight, Check, AlertTriangle, Globe, Truck,
   Receipt, Shield, Megaphone, Search, Mail, Phone,
-  MapPin, Instagram, MessageCircle
+  MapPin, Instagram, MessageCircle, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SUPPORTED_CURRENCIES } from '../../utils/currency';
+import TailorsSection from './TailorsSection';
 
 // ─── Sub-navigation tabs ───
-type SettingsSection = 'general' | 'commerce' | 'currency' | 'appointments' | 'storefront' | 'notifications';
+type SettingsSection = 'general' | 'team' | 'commerce' | 'currency' | 'appointments' | 'storefront' | 'notifications';
 
 const SECTIONS: { key: SettingsSection; label: string; icon: React.ElementType; description: string }[] = [
   { key: 'general', label: 'General', icon: Store, description: 'Store identity & contact info' },
+  { key: 'team', label: 'Team', icon: Users, description: 'Tailors & staff management' },
   { key: 'commerce', label: 'Commerce', icon: DollarSign, description: 'Shipping, deposits & pricing' },
   { key: 'currency', label: 'Currency', icon: Globe, description: 'Exchange rates & overrides' },
   { key: 'appointments', label: 'Appointments', icon: Clock, description: 'Availability & scheduling' },
@@ -394,7 +396,7 @@ export default function SettingsTab() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Manual Rate Overrides" description="Override live rates with fixed values. Leave blank to use live rates. Values represent GHS → Currency rate.">
+        <SectionCard title="Manual Rate Overrides" description="If a manual rate is set, it will be used for all conversions. Otherwise, the live rate plus the safety buffer % will be used. Values represent GHS → Currency rate.">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
             {currencies.map(curr => {
               const liveRate = dbRates?.[curr];
@@ -415,12 +417,16 @@ export default function SettingsTab() {
                     placeholder={liveRate ? `Live: ${liveRate.toFixed(6)}` : 'Not fetched'}
                   />
                   {liveRate !== undefined && (
-                    <p className="text-[10px] text-on-surface-variant mt-1">
-                      Live rate: <span className="font-mono font-medium text-on-surface-variant">{liveRate.toFixed(6)}</span>
-                      {currencySettings.manualRates[curr] && (
-                        <span className="ml-2 text-amber-600 font-bold">• Override active</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-[10px] text-on-surface-variant m-0 p-0">
+                        Live rate: <span className="font-mono font-medium text-on-surface-variant">{liveRate.toFixed(6)}</span>
+                      </p>
+                      {currencySettings.manualRates[curr] ? (
+                        <span className="text-[9px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded tracking-widest uppercase">Override Active</span>
+                      ) : (
+                        <span className="text-[9px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded tracking-widest uppercase">Using Live Rate</span>
                       )}
-                    </p>
+                    </div>
                   )}
                 </div>
               );
@@ -639,6 +645,7 @@ export default function SettingsTab() {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'general': return renderGeneral();
+      case 'team': return <TailorsSection />;
       case 'commerce': return renderCommerce();
       case 'currency': return renderCurrency();
       case 'appointments': return renderAppointments();

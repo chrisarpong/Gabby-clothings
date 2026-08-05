@@ -462,3 +462,41 @@ export const updateDetails = mutation({
     await ctx.db.patch(appointmentId, updates);
   }
 });
+
+export const recordDeposit = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    amountPaid: v.number(),
+    paystackReference: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const apt = await ctx.db.get(args.appointmentId);
+    if (!apt) throw new Error("Appointment not found");
+
+    await ctx.db.patch(args.appointmentId, {
+      amountPaid: (apt.amountPaid || 0) + args.amountPaid,
+      paymentStatus: "paid", // For appointments, the deposit usually means paid
+      paystackReference: args.paystackReference,
+    });
+  }
+});
+
+export const linkToUser = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    userId: v.string(), // This is the clerkId / user ID
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    await ctx.db.patch(args.appointmentId, {
+      userId: args.userId,
+    });
+  }
+});

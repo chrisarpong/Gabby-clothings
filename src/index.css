@@ -68,8 +68,8 @@
   --color-brand-gold: var(--brand-gold);
 
   --font-serif: "Playfair Display", serif;
-  --font-sans: "DM Sans", sans-serif;
-  --font-label: "Metropolis", sans-serif;
+  --font-sans: "Lato", sans-serif;
+  --font-label: "Lato", sans-serif;
   
   --spacing-gutter: 1.5rem;
   --spacing-section: 7.5rem;

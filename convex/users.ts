@@ -161,3 +161,30 @@ export const updateProfile = mutation({
 // NOTE: Admin provisioning is done directly via the Convex Dashboard.
 // Go to Data → users table → find your user → set role to "admin" or "superadmin".
 // There is no callable mutation for this to prevent privilege escalation.
+
+export const createClientFromAppointment = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const [firstName, ...lastNameParts] = args.name.split(' ');
+    const lastName = lastNameParts.join(' ');
+
+    const userId = await ctx.db.insert("users", {
+      clerkId: `manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      email: args.email,
+      firstName: firstName,
+      lastName: lastName,
+      phone: args.phone,
+      role: "client",
+    });
+
+    return userId;
+  }
+});

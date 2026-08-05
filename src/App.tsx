@@ -115,7 +115,7 @@ export default function App() {
       <CurrencySync />
       <CookieBanner />
       <NewsFlashModal />
-      <Toaster position="top-center" toastOptions={{
+      <Toaster position="top-right" toastOptions={{
         className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
       }} />
       <Routes>

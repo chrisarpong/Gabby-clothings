@@ -19,6 +19,8 @@ export const getDashboardStats = query({
     
     let totalRevenue = 0;
     let activeOrders = 0;
+    
+    const statusCounts: Record<string, number> = {};
 
     for (const o of orders) {
       if (o.status !== "cancelled") {
@@ -27,7 +29,13 @@ export const getDashboardStats = query({
       if (o.status === "pending" || o.status === "processing") {
         activeOrders++;
       }
+      statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
     }
+    
+    const orderStatusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value
+    }));
 
     const pendingAppointments = appointments.filter(a => a.status === "pending" || a.status === "confirmed");
 
@@ -72,6 +80,7 @@ export const getDashboardStats = query({
       upcomingAppointments: pendingAppointments.length,
       monthlyRevenue,
       recentActivity,
+      orderStatusDistribution,
     };
   }
 });
