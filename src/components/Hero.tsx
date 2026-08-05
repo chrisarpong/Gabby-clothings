@@ -13,7 +13,7 @@ export default function Hero() {
   
   const images = (data.images && data.images.length > 0) 
     ? data.images.map((id: string) => `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${id}`)
-    : ["/assets/4.jpg"];
+    : ["/assets/1.jpg"];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
