@@ -3,11 +3,13 @@ import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 export default function PromotionsTab() {
   const promos = useQuery(api.promotions.getPromoCodes) || [];
   const createPromo = useMutation(api.promotions.createPromoCode);
   const sendBroadcast = useAction(api.email.sendPromoBroadcast);
+  const logAction = useMutation(api.adminLogs.logAction);
   
   const [formData, setFormData] = useState({
     code: '',
@@ -27,6 +29,12 @@ export default function PromotionsTab() {
         discountValue: Number(formData.discountPercentage),
         isActive: formData.isActive
       });
+      getDeviceInfo().then(info => logAction({
+        action: `Created promo code: ${formData.code.toUpperCase()}`,
+        category: "promotions",
+        targetType: "promotion",
+        ...info
+      }).catch(console.error));
       toast.success("Promo code created successfully");
       setFormData({ code: '', discountPercentage: 10, isActive: true });
     } catch (e) {
@@ -42,6 +50,12 @@ export default function PromotionsTab() {
     toast.info(`Sending broadcast for ${promoCode}...`);
     try {
       const result = await sendBroadcast({ promoCode, discountValue });
+      getDeviceInfo().then(info => logAction({
+        action: `Broadcasted promo code: ${promoCode}`,
+        category: "promotions",
+        targetType: "promotion",
+        ...info
+      }).catch(console.error));
       toast.success(result);
     } catch (error) {
       toast.error("Failed to send broadcast");

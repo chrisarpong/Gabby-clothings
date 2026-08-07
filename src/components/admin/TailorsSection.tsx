@@ -3,11 +3,13 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Plus, Trash2, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 export default function TailorsSection() {
   const tailors = useQuery(api.tailors.getAll);
   const addTailor = useMutation(api.tailors.addTailor);
   const removeTailor = useMutation(api.tailors.removeTailor);
+  const logAction = useMutation(api.adminLogs.logAction);
 
   const [newTailor, setNewTailor] = useState({ name: '', phone: '', specialty: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,11 +22,18 @@ export default function TailorsSection() {
     
     setIsSubmitting(true);
     try {
-      await addTailor({
+      const id = await addTailor({
         name: newTailor.name,
         phone: newTailor.phone || undefined,
         specialty: newTailor.specialty || undefined,
       });
+      getDeviceInfo().then(info => logAction({
+        action: `Added tailor: ${newTailor.name}`,
+        category: "team",
+        targetId: id,
+        targetType: "tailor",
+        ...info
+      }).catch(console.error));
       toast.success("Tailor added successfully");
       setNewTailor({ name: '', phone: '', specialty: '' });
     } catch (error: any) {
@@ -38,6 +47,13 @@ export default function TailorsSection() {
     if (confirm("Are you sure you want to remove this tailor?")) {
       try {
         await removeTailor({ id });
+        getDeviceInfo().then(info => logAction({
+          action: `Removed tailor`,
+          category: "team",
+          targetId: id,
+          targetType: "tailor",
+          ...info
+        }).catch(console.error));
         toast.success("Tailor removed");
       } catch (error: any) {
         toast.error("Failed to remove tailor");

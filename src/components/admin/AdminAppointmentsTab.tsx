@@ -8,6 +8,7 @@ import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Calendar as CalendarIcon, List, Download, Printer } from 'lucide-react';
 import AppointmentDrawer from './AppointmentDrawer';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 const locales = {
   'en-US': enUS,
@@ -26,6 +27,7 @@ export default function AdminAppointmentsTab() {
   const tailors = useQuery(api.tailors.getAll);
   const updateStatus = useMutation(api.appointments.updateStatus);
   const assignTailor = useMutation(api.appointments.assignTailor);
+  const logAction = useMutation(api.adminLogs.logAction);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedApt, setSelectedApt] = useState<any | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -62,6 +64,13 @@ export default function AdminAppointmentsTab() {
   const handleStatusUpdate = async (id: any, newStatus: string) => {
     try {
       await updateStatus({ id, status: newStatus });
+      getDeviceInfo().then(info => logAction({
+        action: `Updated appointment status to ${newStatus}`,
+        category: "appointments",
+        targetId: id,
+        targetType: "appointment",
+        ...info
+      }).catch(console.error));
       toast.success(`Appointment marked as ${newStatus}`);
     } catch (e) {
        toast.error("Failed to update appointment");
@@ -71,6 +80,13 @@ export default function AdminAppointmentsTab() {
   const handleAssignTailor = async (id: any, tailorName: string) => {
     try {
       await assignTailor({ appointmentId: id, tailorName });
+      getDeviceInfo().then(info => logAction({
+        action: `Assigned tailor ${tailorName} to appointment`,
+        category: "appointments",
+        targetId: id,
+        targetType: "appointment",
+        ...info
+      }).catch(console.error));
       toast.success("Tailor assigned successfully");
     } catch (e) {
       toast.error("Failed to assign tailor");

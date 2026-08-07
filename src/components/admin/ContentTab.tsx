@@ -5,6 +5,7 @@ import { Save, Image as ImageIcon, Plus, Trash2, Globe, FileText, CheckCircle2, 
 import { toast } from 'sonner';
 import { CMSImagePreview } from './CMSImagePreview';
 import ReactMarkdown from 'react-markdown';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 type PageKey = 'home_hero' | 'story_page' | 'faq_items' | 'custom_tailoring' | 'legal_page';
 type EditorTab = 'content' | 'seo';
@@ -40,6 +41,7 @@ export default function ContentTab() {
   }, [activePage, currentBlock]);
 
   const setContent = useMutation(api.content.set);
+  const logAction = useMutation(api.adminLogs.logAction);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -50,6 +52,12 @@ export default function ContentTab() {
         status,
         seo: seoData
       });
+      getDeviceInfo().then(info => logAction({
+        action: `Updated CMS page: ${activePage.replace('_', ' ')}`,
+        category: "content",
+        targetType: "content",
+        ...info
+      }).catch(console.error));
       toast.success(`${activePage.replace('_', ' ')} saved successfully.`);
     } catch (e: any) {
       toast.error(`Failed to save: ${e.message}`);

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { getDeviceInfo } from '../utils/deviceInfo';
 
 import InventoryTab from '../components/admin/InventoryTab';
 import SettingsTab from '../components/admin/SettingsTab';
@@ -77,8 +78,14 @@ export default function Admin() {
       }).catch(console.error);
 
       if (!hasLoggedLogin) {
-        logAction({ action: "Logged In to Admin Dashboard" }).catch(console.error);
         setHasLoggedLogin(true);
+        getDeviceInfo().then(deviceInfo => {
+          logAction({ 
+            action: "Logged In to Admin Dashboard",
+            category: "auth",
+            ...deviceInfo
+          }).catch(console.error);
+        });
       }
     }
   }, [user, isAdmin, convexUser, hasLoggedLogin]);

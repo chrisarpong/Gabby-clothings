@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
-import { TrendingUp, Users, ShoppingBag, Calendar, Activity, AlertTriangle, Plus, Tag, Settings, ChevronRight, UserPlus, CheckCircle, XCircle, Clock, ShieldCheck, Printer, X } from 'lucide-react';
+import { TrendingUp, Users, ShoppingBag, Calendar, Activity, AlertTriangle, Plus, Tag, Settings, ChevronRight, UserPlus, CheckCircle, XCircle, Clock, ShieldCheck, Printer, X, Search, Monitor, Smartphone, Globe } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 class DashboardErrorBoundary extends React.Component<
@@ -46,7 +46,16 @@ const COLORS = ['#352421', '#827472', '#d4c3c1', '#735c00'];
 
 function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: TabKey) => void, adminName?: string }) {
   const stats = useQuery(api.analytics.getDashboardStats);
-  const adminLogs = useQuery(api.adminLogs.getRecentLogs, { limit: 100 });
+  const [logCategoryFilter, setLogCategoryFilter] = useState<string>('All');
+  const [logSearchQuery, setLogSearchQuery] = useState('');
+  
+  const adminLogs = useQuery(api.adminLogs.getRecentLogs, { 
+    limit: 100, 
+    category: logCategoryFilter !== 'All' ? logCategoryFilter.toLowerCase() : undefined 
+  });
+  
+  const activeSessions = useQuery(api.adminLogs.getActiveSessions);
+
   const [chartMode, setChartMode] = useState<'revenue' | 'orders'>('revenue');
   const [greeting, setGreeting] = useState('Good day');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -61,6 +70,17 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Filter logs by search query client-side
+  const filteredLogs = (adminLogs || []).filter((log: any) => {
+    if (!logSearchQuery) return true;
+    const q = logSearchQuery.toLowerCase();
+    return (
+      (log.adminName || '').toLowerCase().includes(q) ||
+      (log.action || '').toLowerCase().includes(q) ||
+      (log.ipAddress || '').toLowerCase().includes(q)
+    );
+  });
 
   const handlePrintLogs = () => {
     const printWindow = window.open('', '_blank');
@@ -397,8 +417,8 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
       {/* Admin Activity Logs Modal */}
       {isLogsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-surface rounded-2xl w-full max-w-3xl max-h-[80vh] flex flex-col shadow-2xl border border-outline-variant/30">
-            <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container/50 rounded-t-2xl">
+          <div className="bg-surface rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-outline-variant/30">
+            <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container/50 rounded-t-2xl shrink-0">
                <div>
                  <h2 className="font-serif text-2xl text-primary tracking-tight mb-1">Admin Activity Log</h2>
                  <p className="text-xs text-on-surface-variant tracking-wider uppercase font-medium">Audit Trail & Access Records</p>
@@ -416,38 +436,129 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
                </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 bg-surface">
-               {adminLogs === undefined ? (
-                 <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>
-               ) : adminLogs.length === 0 ? (
-                 <div className="text-center py-10 text-on-surface-variant italic">No administrative logs found.</div>
-               ) : (
-                 <div className="overflow-x-auto w-full">
-                   <table className="w-full text-left border-collapse min-w-[500px]">
-                     <thead>
-                     <tr className="bg-surface-container/50">
-                       <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Timestamp</th>
-                       <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Admin Name</th>
-                       <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Action</th>
-                     </tr>
-                   </thead>
-                   <tbody>
-                     {adminLogs.map((log: any) => (
-                       <tr key={log._id} className="border-b border-outline-variant/10 hover:bg-surface-variant/10 transition-colors">
-                         <td className="p-3 text-xs text-on-surface-variant font-mono">
-                           {new Date(log._creationTime).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'medium' })}
-                         </td>
-                         <td className="p-3 text-sm text-primary font-medium">{log.adminName}</td>
-                         <td className="p-3 text-sm text-primary">
-                           {log.action}
-                           {log.details && <span className="block text-xs text-on-surface-variant mt-1">{log.details}</span>}
-                         </td>
-                       </tr>
+            <div className="flex-1 overflow-y-auto bg-surface flex flex-col">
+               {/* Active Sessions Panel */}
+               {activeSessions && activeSessions.length > 0 && (
+                 <div className="p-6 border-b border-outline-variant/20 bg-surface-container-lowest shrink-0">
+                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4 flex items-center gap-2">
+                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                     Active Admin Sessions
+                   </h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     {activeSessions.map((session: any) => (
+                       <div key={session._id} className="p-4 bg-surface-container border border-outline-variant/30 rounded-xl flex items-start gap-4">
+                         <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                           {(session.adminName || 'A').substring(0, 2).toUpperCase()}
+                         </div>
+                         <div className="overflow-hidden">
+                           <p className="text-sm font-semibold text-primary truncate">{session.adminName}</p>
+                           <p className="text-xs text-on-surface-variant mt-0.5 truncate flex items-center gap-1">
+                             {session.deviceName?.includes('Mobile') ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                             {session.deviceName || 'Unknown Device'}
+                           </p>
+                           <p className="text-[10px] font-mono text-outline mt-1">{session.ipAddress || 'Unknown IP'}</p>
+                         </div>
+                       </div>
                      ))}
-                   </tbody>
-                 </table>
+                   </div>
                  </div>
                )}
+
+               {/* Filters & Search */}
+               <div className="p-6 border-b border-outline-variant/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
+                 <div className="flex flex-wrap gap-2">
+                   {['All', 'Auth', 'Orders', 'Inventory', 'Team', 'Settings', 'Content', 'Promotions'].map(cat => (
+                     <button
+                       key={cat}
+                       onClick={() => setLogCategoryFilter(cat)}
+                       className={`px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold rounded-md transition-colors ${
+                         logCategoryFilter === cat 
+                           ? 'bg-primary text-white' 
+                           : 'bg-surface-variant/20 text-on-surface-variant hover:bg-surface-variant/40'
+                       }`}
+                     >
+                       {cat}
+                     </button>
+                   ))}
+                 </div>
+                 <div className="relative w-full sm:w-64 shrink-0">
+                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                   <input
+                     type="text"
+                     placeholder="Search logs..."
+                     value={logSearchQuery}
+                     onChange={e => setLogSearchQuery(e.target.value)}
+                     className="w-full bg-surface-container border border-outline-variant/50 pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-primary transition-colors"
+                   />
+                 </div>
+               </div>
+
+               {/* Table */}
+               <div className="p-6 flex-1">
+                 {adminLogs === undefined ? (
+                   <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>
+                 ) : filteredLogs.length === 0 ? (
+                   <div className="text-center py-10 text-on-surface-variant italic">No activity logs found.</div>
+                 ) : (
+                   <div className="overflow-x-auto w-full">
+                     <table className="w-full text-left border-collapse min-w-[800px]">
+                       <thead>
+                       <tr className="bg-surface-container/50">
+                         <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Timestamp</th>
+                         <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Admin Name</th>
+                         <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Action</th>
+                         <th className="p-3 text-[10px] uppercase tracking-widest text-on-surface-variant font-medium border-b border-outline-variant/30">Device / IP</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {filteredLogs.map((log: any) => {
+                         const getCategoryColor = (cat: string) => {
+                           switch(cat?.toLowerCase()) {
+                             case 'auth': return 'bg-purple-100 text-purple-800 border-purple-200';
+                             case 'orders': return 'bg-blue-100 text-blue-800 border-blue-200';
+                             case 'inventory': return 'bg-orange-100 text-orange-800 border-orange-200';
+                             case 'settings': return 'bg-slate-100 text-slate-800 border-slate-200';
+                             case 'team': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                             default: return 'bg-surface-variant/30 text-primary border-outline-variant/30';
+                           }
+                         };
+                         
+                         return (
+                         <tr key={log._id} className="border-b border-outline-variant/10 hover:bg-surface-variant/10 transition-colors">
+                           <td className="p-3 text-xs text-on-surface-variant font-mono whitespace-nowrap">
+                             {new Date(log._creationTime).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}
+                           </td>
+                           <td className="p-3">
+                             <div className="flex items-center gap-2">
+                               <span className="text-sm text-primary font-medium">{log.adminName}</span>
+                               {log.category && (
+                                 <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border font-bold ${getCategoryColor(log.category)}`}>
+                                   {log.category}
+                                 </span>
+                               )}
+                             </div>
+                           </td>
+                           <td className="p-3">
+                             <div className="text-sm text-primary font-medium">{log.action}</div>
+                             {log.details && <div className="text-xs text-on-surface-variant mt-0.5">{log.details}</div>}
+                           </td>
+                           <td className="p-3 whitespace-nowrap">
+                             <div className="flex items-center gap-1 text-xs text-primary mb-1">
+                               {log.deviceName?.includes('Mobile') ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                               <span className="truncate max-w-[150px]">{log.deviceName || 'Unknown'}</span>
+                             </div>
+                             <div className="flex items-center gap-1 text-[10px] text-on-surface-variant font-mono">
+                               <Globe className="w-3 h-3" />
+                               {log.ipAddress || 'Unknown IP'}
+                             </div>
+                           </td>
+                         </tr>
+                       )})}
+                     </tbody>
+                   </table>
+                   </div>
+                 )}
+               </div>
             </div>
           </div>
         </div>

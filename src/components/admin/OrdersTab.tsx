@@ -7,6 +7,7 @@ import { Search, Filter, ChevronRight, X, Package, CreditCard, MapPin, Ruler, Ch
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderInvoiceModal from './OrderInvoiceModal';
 import AdminCreateOrderDrawer from './AdminCreateOrderDrawer';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   pending: { bg: 'bg-surface-variant/30', text: 'text-primary' },
@@ -28,6 +29,7 @@ export default function OrdersTab() {
   const orders = useQuery(api.orders.getAll) || [];
   const updateStatus = useMutation(api.orders.updateStatus);
   const recordCashPayment = useMutation(api.payments.recordCashPayment);
+  const logAction = useMutation(api.adminLogs.logAction);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -51,6 +53,13 @@ export default function OrdersTab() {
         paymentMethod,
         notes: paymentNotes
       });
+      getDeviceInfo().then(info => logAction({
+        action: `Recorded ${paymentMethod} payment of ${paymentAmount} for order ${selectedOrder.orderId}`,
+        category: "orders",
+        targetId: selectedOrder._id,
+        targetType: "order",
+        ...info
+      }).catch(console.error));
       toast.success("Payment recorded successfully!");
       setPaymentAmount('');
       setPaymentNotes('');
@@ -84,6 +93,13 @@ export default function OrdersTab() {
   const handleStatusChange = async (orderId: Id<"orders">, newStatus: string) => {
     try {
       await updateStatus({ orderId, status: newStatus });
+      getDeviceInfo().then(info => logAction({
+        action: `Updated order status to ${formatStatus(newStatus)}`,
+        category: "orders",
+        targetId: orderId,
+        targetType: "order",
+        ...info
+      }).catch(console.error));
       toast.success(`Order status updated to ${formatStatus(newStatus)}`);
       // Update local state for immediate feedback if drawer is open
       if (selectedOrder && selectedOrder._id === orderId) {

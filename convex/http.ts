@@ -117,4 +117,37 @@ http.route({
   }),
 });
 
+http.route({
+  path: "/client-info",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    // Convex automatically forwards real IPs in standard headers from its load balancers
+    const ip = request.headers.get("x-forwarded-for") || 
+               request.headers.get("x-real-ip") || 
+               "Unknown IP";
+               
+    // Allow CORS so the frontend can call it directly without issues
+    return new Response(JSON.stringify({ ipAddress: ip }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }),
+});
+http.route({
+  path: "/client-info",
+  method: "OPTIONS",
+  handler: httpAction(async (ctx, request) => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }),
+});
 export default http;

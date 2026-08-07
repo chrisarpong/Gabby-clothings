@@ -2,12 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
-import { 
-  Save, Store, DollarSign, Clock, Monitor, Bell, 
-  ChevronRight, Check, AlertTriangle, Globe, Truck,
-  Receipt, Shield, Megaphone, Search, Mail, Phone,
-  MapPin, Instagram, MessageCircle, Users
-} from 'lucide-react';
+import { Shield, CreditCard, Clock, Globe, Bell, Mail, Store, Save, RefreshCw, Smartphone, ChevronRight, Check, AlertTriangle, Truck, Receipt, Megaphone, Search, Phone, MapPin, Instagram, MessageCircle, Users, Monitor, DollarSign } from 'lucide-react';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 import { toast } from 'sonner';
 import { SUPPORTED_CURRENCIES } from '../../utils/currency';
 import TailorsSection from './TailorsSection';
@@ -102,6 +98,7 @@ export default function SettingsTab() {
   const settingsRecords = useQuery(api.settings.getAll);
   const dbRates = useQuery(api.currency.getRates);
   const setSetting = useMutation(api.settings.setSetting);
+  const logAction = useMutation(api.adminLogs.logAction);
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [isSaving, setIsSaving] = useState(false);
@@ -272,6 +269,12 @@ export default function SettingsTab() {
       }
 
       await Promise.all(updates.map(u => setSetting(u)));
+      getDeviceInfo().then(info => logAction({
+        action: `Updated ${section} settings`,
+        category: "settings",
+        targetType: "setting",
+        ...info
+      }).catch(console.error));
       toast.success(`${SECTIONS.find(s => s.key === section)?.label} settings saved.`);
       setHasUnsavedChanges(false);
     } catch (error) {

@@ -4,6 +4,7 @@ import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Plus, X, Edit2, Archive, PackageOpen, FolderOpen, Image as ImageIcon, Search, Filter, CheckSquare, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 export default function InventoryTab() {
   const [activeSubTab, setActiveSubTab] = useState<'products' | 'catalogs'>('products');
@@ -22,6 +23,7 @@ export default function InventoryTab() {
   const createCatalog = useMutation(api.catalogs.create);
   const updateCatalog = useMutation(api.catalogs.update);
   const generateUploadUrl = useMutation(api.products.generateUploadUrl);
+  const logAction = useMutation(api.adminLogs.logAction);
 
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [isCatalogFormOpen, setIsCatalogFormOpen] = useState(false);
@@ -105,6 +107,13 @@ export default function InventoryTab() {
           }
         }
       }
+      getDeviceInfo().then(info => logAction({
+        action: `Assigned ${selectedProductIds.length} products to catalog`,
+        category: "inventory",
+        targetId: bulkCatalogId,
+        targetType: "catalog",
+        ...info
+      }).catch(console.error));
       toast.success('Products assigned to catalog');
       setSelectedProductIds([]);
       setBulkCatalogId('');
@@ -119,6 +128,13 @@ export default function InventoryTab() {
     try {
       const newIds = currentCatalogIds.filter(id => id !== catalogToRemove);
       await updateProduct({ id: productId, catalogIds: newIds });
+      getDeviceInfo().then(info => logAction({
+        action: `Removed product from catalog`,
+        category: "inventory",
+        targetId: productId,
+        targetType: "product",
+        ...info
+      }).catch(console.error));
       toast.success('Removed from catalog');
     } catch (e) {
       toast.error('Failed to remove');
@@ -161,9 +177,23 @@ export default function InventoryTab() {
 
       if (editingProductId) {
         await updateProduct({ id: editingProductId, ...productData });
+        getDeviceInfo().then(info => logAction({
+          action: `Updated product: ${productData.name}`,
+          category: "inventory",
+          targetId: editingProductId,
+          targetType: "product",
+          ...info
+        }).catch(console.error));
         toast.success('Product updated successfully');
       } else {
-        await createProduct(productData);
+        const newId = await createProduct(productData);
+        getDeviceInfo().then(info => logAction({
+          action: `Created new product: ${productData.name}`,
+          category: "inventory",
+          targetId: newId,
+          targetType: "product",
+          ...info
+        }).catch(console.error));
         toast.success('Product created successfully');
       }
       resetProductForm();
@@ -196,9 +226,23 @@ export default function InventoryTab() {
 
       if (editingCatalogId) {
         await updateCatalog({ id: editingCatalogId, ...catalogData });
+        getDeviceInfo().then(info => logAction({
+          action: `Updated catalog: ${catalogData.name}`,
+          category: "inventory",
+          targetId: editingCatalogId,
+          targetType: "catalog",
+          ...info
+        }).catch(console.error));
         toast.success('Catalog updated successfully');
       } else {
-        await createCatalog(catalogData);
+        const newId = await createCatalog(catalogData);
+        getDeviceInfo().then(info => logAction({
+          action: `Created new catalog: ${catalogData.name}`,
+          category: "inventory",
+          targetId: newId,
+          targetType: "catalog",
+          ...info
+        }).catch(console.error));
         toast.success('Catalog created successfully');
       }
       resetCatalogForm();

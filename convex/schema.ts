@@ -257,8 +257,14 @@ export default defineSchema({
     userId: v.string(), // clerkId of the admin
     adminName: v.string(), // Extracted name of admin
     action: v.string(), // e.g. "Logged In", "Created Order"
+    category: v.optional(v.string()), // e.g. "auth", "orders", "inventory", "settings", "content"
     details: v.optional(v.string()), // Any extra info
-  }).index("by_userId", ["userId"]),
+    targetId: v.optional(v.string()),    // ID of the affected record (orderId, productId, etc.)
+    targetType: v.optional(v.string()),  // "order", "product", "setting", "appointment", etc.
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),   // raw UA string
+    deviceName: v.optional(v.string()),  // parsed: "Chrome on macOS", "Safari on iPhone"
+  }).index("by_userId", ["userId"]).index("by_category", ["category"]),
 
   tailors: defineTable({
     name: v.string(),
