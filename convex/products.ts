@@ -285,10 +285,14 @@ export const generateUploadUrl = mutation(async (ctx) => {
   return await ctx.storage.generateUploadUrl();
 });
 
-export const fixMissingImages = mutation({
+export const fixMissingImages = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Temporary public mutation for one-time migration
+    // Only allow admins to run this
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
     const products = await ctx.db.query("products").collect();
     let fixedCount = 0;
     
@@ -309,6 +313,16 @@ export const fixMissingImages = mutation({
         const randomImage = placeholders[Math.floor(Math.random() * placeholders.length)];
         await ctx.db.patch(product._id, { images: [randomImage] });
         fixedCount++;
+      } else {
+        // Check if current image exists in our placeholders
+        const hasValidImage = product.images.some(img => 
+          placeholders.includes(img) || img.includes('convex.site')
+        );
+        if (!hasValidImage) {
+           const randomImage = placeholders[Math.floor(Math.random() * placeholders.length)];
+           await ctx.db.patch(product._id, { images: [randomImage] });
+           fixedCount++;
+        }
       }
     }
     
