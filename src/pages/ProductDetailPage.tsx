@@ -217,7 +217,7 @@ export default function ProductDetailPage() {
                 {sizes.map((size) => (
                   <button 
                     key={size}
-                    onClick={() => setActiveSize(size)}
+                    onClick={() => setActiveSize(activeSize === size ? "" : size)}
                     className={`py-4 font-label text-[11px] tracking-widest uppercase transition-colors border ${
                       activeSize === size 
                         ? 'bg-primary text-on-primary border-primary' 
