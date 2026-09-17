@@ -130,25 +130,11 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
                   className="w-full pl-10 pr-4 py-2 border border-outline-variant bg-surface-container text-sm focus:outline-none focus:border-primary"
                 />
               </div>
-              <div className="flex bg-surface-container rounded-sm border border-outline-variant p-1">
-                <button 
-                  onClick={() => setActiveTab('pos')}
-                  className={`px-4 py-1 text-xs uppercase tracking-widest ${activeTab === 'pos' ? 'bg-primary text-surface' : 'text-primary'}`}
-                >
-                  POS
-                </button>
-                <button 
-                  onClick={() => setActiveTab('history')}
-                  className={`px-4 py-1 text-xs uppercase tracking-widest ${activeTab === 'history' ? 'bg-primary text-surface' : 'text-primary'}`}
-                >
-                  History
-                </button>
               </div>
             </div>
             
             {/* Category Filter Tabs */}
-            {activeTab === 'pos' && (
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {categories.map(cat => (
                   <button
                     key={cat}
@@ -163,12 +149,11 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
                   </button>
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 relative">
-            {activeTab === 'pos' && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {filteredProducts.map(product => (
                   <div key={product._id} className="border border-outline-variant/30 bg-surface p-3 flex flex-col group cursor-pointer hover:border-primary transition-colors" onClick={() => openProductModal(product)}>
                     <div className="aspect-square bg-surface-container mb-3 overflow-hidden">
@@ -183,12 +168,7 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
                   </div>
                 ))}
               </div>
-            )}
-            {activeTab === 'history' && (
-              <div className="text-center py-20 text-on-surface-variant">
-                <p>History view is under construction.</p>
-              </div>
-            )}
+            </div>
 
             {/* Product Detail Modal Overlay */}
             {selectedProduct && (

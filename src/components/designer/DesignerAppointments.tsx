@@ -5,7 +5,12 @@ import { api } from '../../../convex/_generated/api';
 
 export default function DesignerAppointments() {
   const convexUser = useQuery(api.users.getCurrentUser);
-  const appointments = useQuery(api.appointments.getUserAppointments) || [];
+  const allAppointments = useQuery(api.appointments.getUpcoming) || [];
+  
+  // Filter appointments assigned to this tailor
+  const appointments = allAppointments.filter((apt: any) => 
+    apt.assignedTo === convexUser?.firstName || apt.assignedTo === `${convexUser?.firstName} ${convexUser?.lastName}`
+  );
 
   return (
     <div className="flex-1 flex flex-col bg-surface-container-lowest h-full overflow-y-auto p-8">
