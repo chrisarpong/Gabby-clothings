@@ -285,14 +285,9 @@ export const generateUploadUrl = mutation(async (ctx) => {
   return await ctx.storage.generateUploadUrl();
 });
 
-export const fixMissingImages = mutation({
+export const fixMissingImages = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Only allow admins to run this
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
     const products = await ctx.db.query("products").collect();
     let fixedCount = 0;
     
