@@ -130,25 +130,23 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
                   className="w-full pl-10 pr-4 py-2 border border-outline-variant bg-surface-container text-sm focus:outline-none focus:border-primary"
                 />
               </div>
-              </div>
             </div>
             
             {/* Category Filter Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest whitespace-nowrap border transition-colors ${
-                      activeCategory === cat 
-                        ? 'border-primary bg-primary text-surface' 
-                        : 'border-outline-variant bg-surface text-primary hover:border-primary'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest whitespace-nowrap border transition-colors ${
+                    activeCategory === cat 
+                      ? 'border-primary bg-primary text-surface' 
+                      : 'border-outline-variant bg-surface text-primary hover:border-primary'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -168,7 +166,6 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
                   </div>
                 ))}
               </div>
-            </div>
 
             {/* Product Detail Modal Overlay */}
             {selectedProduct && (
