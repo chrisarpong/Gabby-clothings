@@ -32,6 +32,7 @@ export const logAction = mutation({
       ipAddress: args.ipAddress,
       userAgent: args.userAgent,
       deviceName: args.deviceName,
+      timestamp: Date.now(),
     });
   },
 });

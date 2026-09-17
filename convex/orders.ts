@@ -572,7 +572,8 @@ export const assignDesigner = mutation({
       targetId: args.orderId,
       targetType: "order",
       timestamp: Date.now(),
-      adminId: identity.subject,
+      userId: identity.subject,
+      adminName: user.firstName || "Admin",
     });
   }
 });
@@ -609,13 +610,14 @@ export const updateProductionStatus = mutation({
       targetId: args.orderId,
       targetType: "order",
       timestamp: Date.now(),
-      adminId: identity.subject,
+      userId: identity.subject,
+      adminName: user.firstName || "Admin",
     });
 
     if (args.status === 'completed' || args.status === 'ready_for_pickup') {
       const order = await ctx.db.get(args.orderId);
       if (order && order.userId) {
-        const customer = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", order.userId)).first();
+        const customer = order.userId ? await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", order.userId!)).first() : null;
         if (customer) {
           await ctx.db.insert("notifications", {
             userId: customer._id,
@@ -652,7 +654,7 @@ export const notifyClient = mutation({
     const order = await ctx.db.get(args.orderId);
     if (!order || !order.userId) throw new Error("Order or customer not found");
 
-    const customer = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", order.userId)).first();
+    const customer = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", order.userId!)).first();
     if (!customer) throw new Error("Customer not found");
 
     await ctx.db.insert("notifications", {

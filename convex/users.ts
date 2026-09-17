@@ -228,7 +228,8 @@ export const createStaffUser = mutation({
       targetId: userId,
       targetType: "user",
       timestamp: Date.now(),
-      adminId: identity.subject,
+      userId: identity.subject,
+      adminName: "Admin",
     });
 
     return userId;
@@ -256,7 +257,8 @@ export const updateUserRole = mutation({
       targetId: args.userId,
       targetType: "user",
       timestamp: Date.now(),
-      adminId: identity.subject,
+      userId: identity.subject,
+      adminName: "Admin",
     });
   }
 });
