@@ -222,7 +222,7 @@ export default function Profile() {
           className="mb-16 md:mb-24 border-b border-surface-variant pb-8"
         >
           <span className="font-label text-sm tracking-[0.2em] uppercase text-outline block mb-4">Member Portal</span>
-          <h1 className="font-serif text-4xl md:text-6xl text-primary italic">Welcome, Patron.</h1>
+          <h1 className="font-serif text-4xl md:text-6xl text-primary italic">Welcome, {user?.firstName || 'Patron'}.</h1>
         </motion.div>
 
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
