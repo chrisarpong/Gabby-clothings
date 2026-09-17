@@ -35,6 +35,12 @@ export default function Profile() {
     phone: "",
     whatsapp: "",
     country: "GH",
+    address: {
+      residentialAddress: "",
+      landmark: "",
+      city: "",
+      region: "",
+    }
   });
   const [sameAsPhone, setSameAsPhone] = useState(false);
   const [phoneError, setPhoneError] = useState("");
@@ -93,6 +99,12 @@ export default function Profile() {
         phone: currentUser.phone || "",
         whatsapp: currentUser.whatsapp || "",
         country: currentUser.country || "GH",
+        address: {
+          residentialAddress: currentUser.address?.residentialAddress || "",
+          landmark: currentUser.address?.landmark || "",
+          city: currentUser.address?.city || "",
+          region: currentUser.address?.region || "",
+        }
       });
       if (currentUser.phone && currentUser.phone === currentUser.whatsapp) {
         setSameAsPhone(true);
@@ -109,6 +121,11 @@ export default function Profile() {
          setProfileData(prev => ({ ...prev, whatsapp: value }));
        }
     }
+  };
+
+  const handleAddressChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, address: { ...prev.address, [field]: value } }));
+    setIsProfileSaved(false);
   };
 
   const handleSameAsPhoneToggle = (checked: boolean) => {
@@ -138,6 +155,7 @@ export default function Profile() {
         phone: profileData.phone,
         whatsapp: profileData.whatsapp,
         country: profileData.country,
+        address: profileData.address,
       });
       setIsProfileSaved(true);
       toast.success("Profile details saved!");
@@ -530,6 +548,52 @@ export default function Profile() {
                           />
                         </div>
                       </div>
+                      
+                      {/* Address Section */}
+                      <div className="pt-8 border-t border-surface-variant">
+                        <h3 className="font-label text-sm tracking-widest uppercase text-primary mb-6">Delivery Address</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="flex flex-col gap-2 md:col-span-2">
+                            <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Residential Address</label>
+                            <input 
+                              type="text"
+                              value={profileData.address?.residentialAddress || ''}
+                              onChange={(e) => handleAddressChange("residentialAddress", e.target.value)}
+                              placeholder="House number and street name"
+                              className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2 md:col-span-2">
+                            <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Landmark (Optional)</label>
+                            <input 
+                              type="text"
+                              value={profileData.address?.landmark || ''}
+                              onChange={(e) => handleAddressChange("landmark", e.target.value)}
+                              placeholder="Near a known location"
+                              className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">City</label>
+                            <input 
+                              type="text"
+                              value={profileData.address?.city || ''}
+                              onChange={(e) => handleAddressChange("city", e.target.value)}
+                              className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Region / State</label>
+                            <input 
+                              type="text"
+                              value={profileData.address?.region || ''}
+                              onChange={(e) => handleAddressChange("region", e.target.value)}
+                              className="bg-transparent border-b border-outline-variant pb-2 focus:outline-none focus:border-primary transition-colors text-primary"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="pt-4 border-t border-surface-variant">
                         <button 
                           type="submit"

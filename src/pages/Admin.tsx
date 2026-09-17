@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   Menu,
   X,
+  Shield,
   FileText
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
@@ -36,6 +37,8 @@ import FinancialsTab from '../components/admin/FinancialsTab';
 import MarketingTab from '../components/admin/MarketingTab';
 import ContentTab from '../components/admin/ContentTab';
 import NewsTab from '../components/admin/NewsTab';
+import TeamManagementTab from '../components/admin/TeamManagementTab';
+import NotificationBell from '../components/admin/NotificationBell';
 
 // Dummy components for uncompleted sections
 const DummyTab = ({ title }: { title: string }) => (
@@ -45,7 +48,7 @@ const DummyTab = ({ title }: { title: string }) => (
   </div>
 );
 
-type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content';
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -62,7 +65,7 @@ export default function Admin() {
   const isAdminRole = (role?: string) => role === 'admin' || role === 'superadmin';
   const bossEmail = 'd.alexanderelorm@gmail.com';
   const isBoss = user?.primaryEmailAddress?.emailAddress === bossEmail;
-  const isAdmin = isBoss || isAdminRole(clerkRole) || isAdminRole(convexUser?.role);
+  const isAdmin = isBoss || isAdminRole(clerkRole) || isAdminRole(convexUser?.role) || !!convexUser?.roleId;
   const syncUser = useMutation(api.users.syncUser);
   const logAction = useMutation(api.adminLogs.logAction);
   const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
@@ -126,6 +129,7 @@ export default function Admin() {
     { key: 'marketing', name: 'Marketing', icon: Volume2 },
     { key: 'promotions', name: 'Promotions', icon: Tag },
     { key: 'content', name: 'Pages & Content', icon: FileText },
+    { key: 'team', name: 'Team & Roles', icon: Shield },
   ];
 
   const renderContent = () => {
@@ -142,6 +146,7 @@ export default function Admin() {
       case 'financials': return <FinancialsTab />;
       case 'marketing': return <MarketingTab />;
       case 'content': return <ContentTab />;
+      case 'team': return <TeamManagementTab />;
       default: return <DummyTab title={tabs.find(t => t.key === activeTab)?.name || 'Settings'} />;
     }
   };
@@ -262,6 +267,9 @@ export default function Admin() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-surface-container-lowest relative ring-1 ring-surface-variant/50">
+        <div className="absolute top-4 right-4 z-[100]">
+          <NotificationBell />
+        </div>
         {renderContent()}
       </main>
     </div>

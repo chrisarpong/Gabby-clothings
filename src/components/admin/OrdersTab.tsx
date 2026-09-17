@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Search, Filter, ChevronRight, X, Package, CreditCard, MapPin, Ruler, CheckCircle2, Clock, XCircle, ChevronDown, Download, ShoppingBag } from 'lucide-react';
+import { Search, Filter, ChevronRight, X, Package, CreditCard, MapPin, Ruler, CheckCircle2, Clock, XCircle, ChevronDown, Download, ShoppingBag, Scissors, MessageSquare, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderInvoiceModal from './OrderInvoiceModal';
 import AdminCreateOrderDrawer from './AdminCreateOrderDrawer';
@@ -37,11 +37,22 @@ export default function OrdersTab() {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   
-  // Payment State
   const [paymentAmount, setPaymentAmount] = useState<number | ''>('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+
+  // Assignment & Production State
+  const staff = useQuery(api.users.listStaffUsers) || [];
+  const orderActivity = useQuery(api.orderActivity.getByOrder, selectedOrder ? { orderId: selectedOrder._id } : "skip") || [];
+  const assignDesigner = useMutation(api.orders.assignDesigner);
+  const updateProductionStatus = useMutation(api.orders.updateProductionStatus);
+  const addNote = useMutation(api.orderActivity.addNote);
+  const notifyClient = useMutation(api.orders.notifyClient);
+  const [newNote, setNewNote] = useState('');
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [clientMessage, setClientMessage] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const handleRecordPayment = async () => {
     if (!selectedOrder || !paymentAmount) return;
@@ -362,7 +373,14 @@ export default function OrdersTab() {
 
                   {selectedOrder.paymentStatus !== 'paid' && selectedOrder.status !== 'cancelled' && (
                     <div className="mt-4 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm">
-                      <h5 className="text-xs font-bold uppercase tracking-widest text-primary mb-3">Record Manual Payment</h5>
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="text-xs font-bold uppercase tracking-widest text-primary">Record Manual Payment</h5>
+                        {selectedOrder.depositRequired && (
+                          <span className="text-[10px] font-bold tracking-widest uppercase bg-amber-100 text-amber-700 px-2 py-1 rounded">
+                            Deposit Required
+                          </span>
+                        )}
+                      </div>
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div>
@@ -398,16 +416,173 @@ export default function OrdersTab() {
                             className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
                           />
                         </div>
-                        <button
-                          onClick={handleRecordPayment}
-                          disabled={!paymentAmount || isRecordingPayment}
-                          className="w-full mt-2 text-[10px] uppercase tracking-widest px-3 py-2 bg-primary text-surface hover:bg-tertiary transition-colors disabled:opacity-50"
-                        >
-                          {isRecordingPayment ? 'Recording...' : 'Record Payment'}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleRecordPayment}
+                            disabled={!paymentAmount || isRecordingPayment}
+                            className="flex-1 mt-2 text-[10px] uppercase tracking-widest px-3 py-2 bg-primary text-surface hover:bg-tertiary transition-colors disabled:opacity-50"
+                          >
+                            {isRecordingPayment ? 'Recording...' : 'Record Payment'}
+                          </button>
+                          {selectedOrder.depositRequired && (
+                            <button
+                              onClick={() => {
+                                // For now, just pre-fill the deposit amount if known, or total amount
+                                setPaymentAmount(selectedOrder.amountDue || selectedOrder.totalAmount);
+                                setPaymentNotes("Collected Deposit");
+                              }}
+                              className="flex-1 mt-2 text-[10px] uppercase tracking-widest px-3 py-2 bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                            >
+                              Collect Deposit
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
+                </section>
+
+                {/* Production Stages & Assignment */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+                    <Scissors className="w-4 h-4" /> Production & Assignment
+                  </h4>
+                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Assigned Designer</label>
+                      <select 
+                        value={selectedOrder.assignedDesignerId || ''}
+                        onChange={async (e) => {
+                          try {
+                            await assignDesigner({ orderId: selectedOrder._id, designerId: e.target.value as any });
+                            toast.success("Designer assigned");
+                            setSelectedOrder({...selectedOrder, assignedDesignerId: e.target.value as any});
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to assign designer");
+                          }
+                        }}
+                        className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
+                      >
+                        <option value="">Unassigned</option>
+                        {staff.map(user => (
+                          <option key={user._id} value={user._id}>{user.firstName} {user.lastName} ({user.role || 'Staff'})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-3 border-t border-outline-variant/20">
+                      <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Production Status</label>
+                      <select 
+                        value={selectedOrder.productionStatus || 'pending'}
+                        onChange={async (e) => {
+                          try {
+                            await updateProductionStatus({ orderId: selectedOrder._id, status: e.target.value });
+                            toast.success("Production status updated");
+                            setSelectedOrder({...selectedOrder, productionStatus: e.target.value});
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to update production status");
+                          }
+                        }}
+                        className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
+                      >
+                        <option value="pending">Not Started</option>
+                        <option value="cutting">Cutting</option>
+                        <option value="stitching">Stitching</option>
+                        <option value="fitting">Fitting</option>
+                        <option value="finishing">Finishing</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Activity Timeline */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+                    <MessageSquare className="w-4 h-4" /> Activity Timeline
+                  </h4>
+                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm space-y-4">
+                    <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                      {orderActivity.length === 0 ? (
+                        <p className="text-sm italic text-on-surface-variant text-center py-4">No activity logged yet.</p>
+                      ) : (
+                        orderActivity.map((log: any) => (
+                          <div key={log._id} className="flex gap-3 text-sm">
+                            <div className="mt-1 w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                            <div>
+                              <p className="text-on-surface-variant text-xs">
+                                <span className="font-bold text-primary">{log.performedByName}</span> - {new Date(log.timestamp).toLocaleString()}
+                              </p>
+                              <p className="text-primary mt-1">{log.note}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    <div className="pt-4 border-t border-outline-variant/20 flex gap-2">
+                      <input 
+                        type="text" 
+                        value={newNote}
+                        onChange={e => setNewNote(e.target.value)}
+                        placeholder="Add a note..."
+                        className="flex-1 bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
+                      />
+                      <button 
+                        disabled={!newNote.trim() || isAddingNote}
+                        onClick={async () => {
+                          if (!newNote.trim()) return;
+                          setIsAddingNote(true);
+                          try {
+                            await addNote({ orderId: selectedOrder._id, note: newNote });
+                            setNewNote('');
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to add note");
+                          } finally {
+                            setIsAddingNote(false);
+                          }
+                        }}
+                        className="bg-primary text-surface px-4 text-xs font-bold uppercase tracking-widest hover:bg-tertiary transition-colors disabled:opacity-50"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Notify Client */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+                    <Send className="w-4 h-4" /> Notify Client
+                  </h4>
+                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm space-y-4">
+                    <p className="text-xs text-on-surface-variant mb-2">Send an SMS and in-app notification directly to the client.</p>
+                    <textarea 
+                      value={clientMessage}
+                      onChange={e => setClientMessage(e.target.value)}
+                      placeholder="Type message to client..."
+                      className="w-full h-24 bg-surface-container border border-outline-variant/30 text-sm p-3 focus:outline-none focus:border-primary resize-none custom-scrollbar"
+                    />
+                    <button 
+                      disabled={!clientMessage.trim() || isSendingMessage}
+                      onClick={async () => {
+                        if (!clientMessage.trim()) return;
+                        setIsSendingMessage(true);
+                        try {
+                          await notifyClient({ orderId: selectedOrder._id, message: clientMessage });
+                          setClientMessage('');
+                          toast.success("Client notified successfully!");
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to notify client");
+                        } finally {
+                          setIsSendingMessage(false);
+                        }
+                      }}
+                      className="w-full bg-primary text-surface px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-tertiary transition-colors disabled:opacity-50"
+                    >
+                      {isSendingMessage ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </div>
                 </section>
 
                 {/* Items & Measurements */}

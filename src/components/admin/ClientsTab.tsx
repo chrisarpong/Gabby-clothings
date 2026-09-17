@@ -1,17 +1,55 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@/hooks/useConvex';
+import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
-import { Search, ChevronRight, X, User, Ruler, Mail, Calendar, Phone, MessageCircle, Globe, ShoppingBag, CreditCard, ArrowUpRight } from 'lucide-react';
+import { Search, ChevronRight, X, User, Ruler, Mail, Calendar, Phone, MessageCircle, Globe, ShoppingBag, CreditCard, ArrowUpRight, Edit2, Check, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ClientsTab() {
   const clients = useQuery(api.users.getAll) || [];
   const allOrders = useQuery(api.orders.getAll) || [];
   
+  const updateProfile = useMutation(api.users.updateProfile);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Doc<"users"> | null>(null);
   const [drawerTab, setDrawerTab] = useState<'overview' | 'measurements' | 'orders'>('overview');
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<any>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleEditChange = (field: string, value: string) => {
+    setEditData((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddressChange = (field: string, value: string) => {
+    setEditData((prev: any) => ({
+      ...prev,
+      address: { ...(prev.address || {}), [field]: value }
+    }));
+  };
+
+  const saveClientDetails = async () => {
+    if (!selectedClient) return;
+    setIsSaving(true);
+    try {
+      await updateProfile({
+        clerkId: selectedClient.clerkId,
+        phone: editData.phone,
+        whatsapp: editData.whatsapp,
+        country: editData.country,
+        address: editData.address,
+      });
+      toast.success("Client details updated successfully");
+      setIsEditing(false);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update client details");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filteredClients = useMemo(() => {
     return clients.filter((client: Doc<"users">) => {
@@ -90,6 +128,13 @@ export default function ClientsTab() {
                       key={client._id} 
                       onClick={() => {
                         setSelectedClient(client);
+                        setEditData({
+                          phone: client.phone || '',
+                          whatsapp: client.whatsapp || '',
+                          country: client.country || 'GH',
+                          address: client.address || { residentialAddress: '', city: '', region: '', landmark: '' },
+                        });
+                        setIsEditing(false);
                         setDrawerTab('overview');
                       }}
                       className="hover:bg-surface-variant/10 transition-colors cursor-pointer group"
@@ -214,47 +259,164 @@ export default function ClientsTab() {
                     </div>
 
                     {/* Contact Info */}
-                    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 space-y-4 shadow-sm">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4 border-b border-outline-variant/20 pb-2">Contact Details</h4>
-                      
-                      <div className="flex items-center justify-between group">
-                        <div className="flex items-center gap-3">
-                          <Mail className="w-4 h-4 text-primary/70" />
-                          <span className="text-sm text-primary font-medium">{selectedClient.email}</span>
-                        </div>
-                        <a href={`mailto:${selectedClient.email}`} className="p-2 rounded-full bg-surface-variant/20 text-primary opacity-0 group-hover:opacity-100 transition-all hover:bg-surface-variant/50">
-                          <ArrowUpRight className="w-4 h-4" />
-                        </a>
+                    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm">
+                      <div className="flex justify-between items-center mb-4 border-b border-outline-variant/20 pb-2">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Contact Details</h4>
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => setIsEditing(false)}
+                              className="text-[10px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              onClick={saveClientDetails}
+                              disabled={isSaving}
+                              className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-primary hover:text-tertiary transition-colors disabled:opacity-50"
+                            >
+                              <Check className="w-3 h-3" /> Save
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => setIsEditing(true)}
+                            className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
+                          >
+                            <Edit2 className="w-3 h-3" /> Edit
+                          </button>
+                        )}
                       </div>
                       
-                      {selectedClient.phone && (
-                        <div className="flex items-center justify-between group">
-                          <div className="flex items-center gap-3">
-                            <Phone className="w-4 h-4 text-primary/70" />
-                            <span className="text-sm text-primary font-medium">{selectedClient.phone}</span>
+                      {isEditing ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">Phone Number</label>
+                              <input 
+                                type="tel"
+                                value={editData.phone}
+                                onChange={(e) => handleEditChange('phone', e.target.value)}
+                                className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">WhatsApp Number</label>
+                              <input 
+                                type="tel"
+                                value={editData.whatsapp}
+                                onChange={(e) => handleEditChange('whatsapp', e.target.value)}
+                                className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">Country</label>
+                              <input 
+                                type="text"
+                                value={editData.country}
+                                onChange={(e) => handleEditChange('country', e.target.value)}
+                                className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                              />
+                            </div>
                           </div>
-                          <a href={`tel:${selectedClient.phone}`} className="p-2 rounded-full bg-surface-variant/20 text-primary opacity-0 group-hover:opacity-100 transition-all hover:bg-surface-variant/50">
-                            <ArrowUpRight className="w-4 h-4" />
-                          </a>
-                        </div>
-                      )}
-                      
-                      {selectedClient.whatsapp && (
-                        <div className="flex items-center justify-between group">
-                          <div className="flex items-center gap-3">
-                            <MessageCircle className="w-4 h-4 text-green-600/70 dark:text-green-400/70" />
-                            <span className="text-sm text-primary font-medium">{selectedClient.whatsapp}</span>
+                          
+                          <div className="pt-2 border-t border-outline-variant/10">
+                            <h5 className="text-[10px] uppercase tracking-widest text-on-surface-variant mb-3">Delivery Address</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1.5 md:col-span-2">
+                                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">Residential Address</label>
+                                <input 
+                                  type="text"
+                                  value={editData.address?.residentialAddress || ''}
+                                  onChange={(e) => handleAddressChange('residentialAddress', e.target.value)}
+                                  className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1.5 md:col-span-2">
+                                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">Landmark (Optional)</label>
+                                <input 
+                                  type="text"
+                                  value={editData.address?.landmark || ''}
+                                  onChange={(e) => handleAddressChange('landmark', e.target.value)}
+                                  className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">City</label>
+                                <input 
+                                  type="text"
+                                  value={editData.address?.city || ''}
+                                  onChange={(e) => handleAddressChange('city', e.target.value)}
+                                  className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant">Region / State</label>
+                                <input 
+                                  type="text"
+                                  value={editData.address?.region || ''}
+                                  onChange={(e) => handleAddressChange('region', e.target.value)}
+                                  className="bg-surface-container border border-outline-variant/30 text-sm px-3 py-1.5 focus:outline-none focus:border-primary w-full"
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <a href={`https://wa.me/${selectedClient.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-surface-variant/20 text-primary opacity-0 group-hover:opacity-100 transition-all hover:bg-surface-variant/50">
-                            <ArrowUpRight className="w-4 h-4" />
-                          </a>
                         </div>
-                      )}
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <Mail className="w-4 h-4 text-primary/70" />
+                              <span className="text-sm text-primary font-medium">{selectedClient.email}</span>
+                            </div>
+                            <a href={`mailto:${selectedClient.email}`} className="p-2 rounded-full bg-surface-variant/20 text-primary opacity-0 group-hover:opacity-100 transition-all hover:bg-surface-variant/50">
+                              <ArrowUpRight className="w-4 h-4" />
+                            </a>
+                          </div>
+                          
+                          {selectedClient.phone && (
+                            <div className="flex items-center justify-between group">
+                              <div className="flex items-center gap-3">
+                                <Phone className="w-4 h-4 text-primary/70" />
+                                <span className="text-sm text-primary font-medium">{selectedClient.phone}</span>
+                              </div>
+                              <a href={`tel:${selectedClient.phone}`} className="p-2 rounded-full bg-surface-variant/20 text-primary opacity-0 group-hover:opacity-100 transition-all hover:bg-surface-variant/50">
+                                <ArrowUpRight className="w-4 h-4" />
+                              </a>
+                            </div>
+                          )}
+                          
+                          {selectedClient.whatsapp && (
+                            <div className="flex items-center justify-between group">
+                              <div className="flex items-center gap-3">
+                                <MessageCircle className="w-4 h-4 text-green-600/70 dark:text-green-400/70" />
+                                <span className="text-sm text-primary font-medium">{selectedClient.whatsapp}</span>
+                              </div>
+                              <a href={`https://wa.me/${selectedClient.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-surface-variant/20 text-primary opacity-0 group-hover:opacity-100 transition-all hover:bg-surface-variant/50">
+                                <ArrowUpRight className="w-4 h-4" />
+                              </a>
+                            </div>
+                          )}
 
-                      {selectedClient.country && (
-                        <div className="flex items-center gap-3">
-                          <Globe className="w-4 h-4 text-primary/70" />
-                          <span className="text-sm text-primary font-medium">{selectedClient.country}</span>
+                          {selectedClient.country && (
+                            <div className="flex items-center gap-3">
+                              <Globe className="w-4 h-4 text-primary/70" />
+                              <span className="text-sm text-primary font-medium">{selectedClient.country}</span>
+                            </div>
+                          )}
+
+                          {selectedClient.address?.residentialAddress && (
+                            <div className="flex items-start gap-3 mt-4 pt-4 border-t border-outline-variant/10">
+                              <MapPin className="w-4 h-4 text-primary/70 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span className="text-sm text-primary font-medium">{selectedClient.address.residentialAddress}</span>
+                                {selectedClient.address.landmark && (
+                                  <span className="text-xs text-on-surface-variant">Near {selectedClient.address.landmark}</span>
+                                )}
+                                <span className="text-xs text-on-surface-variant">{selectedClient.address.city}, {selectedClient.address.region}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

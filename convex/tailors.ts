@@ -13,6 +13,20 @@ export const getAll = query({
   },
 });
 
+export const listActiveTailors = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    return await ctx.db
+      .query("tailors")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+  },
+});
+
 export const addTailor = mutation({
   args: {
     name: v.string(),

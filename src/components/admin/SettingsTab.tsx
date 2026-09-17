@@ -122,6 +122,11 @@ export default function SettingsTab() {
     freeShippingThreshold: 0,
     taxRate: 0,
     returnWindowDays: 14,
+    depositPercentages: {
+      suiting: 70,
+      kaftans: 100,
+      readyToWear: 100,
+    },
   });
 
   const [currencySettings, setCurrencySettings] = useState({
@@ -180,6 +185,7 @@ export default function SettingsTab() {
       freeShippingThreshold: db.freeShippingThreshold ?? prev.freeShippingThreshold,
       taxRate: db.taxRate ?? prev.taxRate,
       returnWindowDays: db.returnWindowDays ?? prev.returnWindowDays,
+      depositPercentages: db.depositPercentages ?? prev.depositPercentages,
     }));
 
     // Currency
@@ -243,6 +249,7 @@ export default function SettingsTab() {
           updates.push({ key: 'freeShippingThreshold', value: commerce.freeShippingThreshold });
           updates.push({ key: 'taxRate', value: commerce.taxRate });
           updates.push({ key: 'returnWindowDays', value: commerce.returnWindowDays });
+          updates.push({ key: 'depositPercentages', value: commerce.depositPercentages });
           break;
         case 'currency':
           updates.push({ key: 'safetyBufferPercentage', value: currencySettings.safetyBufferPercentage });
@@ -366,7 +373,7 @@ export default function SettingsTab() {
       </SectionCard>
 
       <SectionCard title="Pricing & Deposits" description="Booking deposits and tax configuration.">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <FieldLabel><Receipt className="w-3 h-3 inline mr-1" />Booking Deposit (GH₵)</FieldLabel>
             <FieldInput type="number" value={commerce.bookingDepositAmount} onChange={v => { setCommerce(p => ({...p, bookingDepositAmount: parseFloat(v) || 0})); markChanged(); }} />
@@ -381,6 +388,23 @@ export default function SettingsTab() {
             <FieldLabel><Shield className="w-3 h-3 inline mr-1" />Return Window (Days)</FieldLabel>
             <FieldInput type="number" value={commerce.returnWindowDays} onChange={v => { setCommerce(p => ({...p, returnWindowDays: parseInt(v) || 0})); markChanged(); }} />
             <p className="text-[10px] text-on-surface-variant mt-1.5">Displayed on product pages and policies.</p>
+          </div>
+        </div>
+        <div className="pt-6 border-t border-outline-variant/20">
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-4">Required Deposit Percentages (%)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <FieldLabel>Suiting</FieldLabel>
+              <FieldInput type="number" value={commerce.depositPercentages?.suiting || 70} onChange={v => { setCommerce(p => ({...p, depositPercentages: { ...p.depositPercentages, suiting: parseFloat(v) || 0 }})); markChanged(); }} />
+            </div>
+            <div>
+              <FieldLabel>Kaftans</FieldLabel>
+              <FieldInput type="number" value={commerce.depositPercentages?.kaftans || 100} onChange={v => { setCommerce(p => ({...p, depositPercentages: { ...p.depositPercentages, kaftans: parseFloat(v) || 0 }})); markChanged(); }} />
+            </div>
+            <div>
+              <FieldLabel>Ready to Wear</FieldLabel>
+              <FieldInput type="number" value={commerce.depositPercentages?.readyToWear || 100} onChange={v => { setCommerce(p => ({...p, depositPercentages: { ...p.depositPercentages, readyToWear: parseFloat(v) || 0 }})); markChanged(); }} />
+            </div>
           </div>
         </div>
       </SectionCard>

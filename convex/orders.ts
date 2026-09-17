@@ -164,6 +164,7 @@ export const create = internalMutation({
     chargedAmount: v.optional(v.number()),
     rateAtOrderTime: v.optional(v.number()),
     displayCurrency: v.optional(v.string()),
+    amountPaid: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Duplicate order prevention: check if an order with this reference already exists
@@ -181,7 +182,11 @@ export const create = internalMutation({
     if (!identity) throw new Error("Please sign in to complete checkout.");
 
     let calculatedSubtotal = 0;
+    let calculatedDepositAmount = 0;
     const finalItems: any[] = [];
+
+    const depositPercentagesSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "depositPercentages")).first();
+    const depositPercentages = depositPercentagesSetting?.value || { suiting: 70, kaftans: 100, readyToWear: 100 };
 
     for (const item of args.items) {
       const product = await ctx.db.get(item.productId);
@@ -190,6 +195,14 @@ export const create = internalMutation({
       const itemPrice = product.basePrice ?? (product as any).price ?? 0;
       
       calculatedSubtotal += itemPrice * item.quantity;
+      
+      let itemDepositPercent = 100;
+      const cat = (product.category || "").toLowerCase();
+      if (cat.includes("suit")) itemDepositPercent = depositPercentages.suiting ?? 70;
+      else if (cat.includes("kaftan")) itemDepositPercent = depositPercentages.kaftans ?? 100;
+      else itemDepositPercent = depositPercentages.readyToWear ?? 100;
+      
+      calculatedDepositAmount += (itemPrice * item.quantity) * (itemDepositPercent / 100);
 
       finalItems.push({
         productId: item.productId,
@@ -256,6 +269,9 @@ export const create = internalMutation({
       chargedAmount: args.chargedAmount,
       rateAtOrderTime: args.rateAtOrderTime,
       displayCurrency: args.displayCurrency,
+      amountDue: Math.max(0, calculatedTotalAmount - (args.amountPaid || 0)),
+      amountPaid: args.amountPaid || 0,
+      depositRequired: calculatedDepositAmount > 0 && calculatedDepositAmount < calculatedTotalAmount,
     });
 
     // Decrement stock for each purchased variant and clear active reserve
@@ -520,6 +536,150 @@ export const recordDeposit = mutation({
       recordedBy: identity.subject,
       notes: `Deposit payment via Paystack (${args.paystackReference})`,
       date: new Date().toISOString(),
+    });
+  }
+});
+
+export const assignDesigner = mutation({
+  args: {
+    orderId: v.id("orders"),
+    designerId: v.id("users"),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
+    if (!user) throw new Error("User not found");
+
+    await ctx.db.patch(args.orderId, {
+      assignedDesignerId: args.designerId,
+    });
+
+    await ctx.db.insert("orderActivityLog", {
+      orderId: args.orderId,
+      stage: "assigned",
+      performedBy: user._id,
+      note: args.note || "Assigned to designer",
+      timestamp: Date.now(),
+    });
+
+    await ctx.db.insert("adminLogs", {
+      action: `Assigned designer to order`,
+      category: "orders",
+      targetId: args.orderId,
+      targetType: "order",
+      timestamp: Date.now(),
+      adminId: identity.subject,
+    });
+  }
+});
+
+export const updateProductionStatus = mutation({
+  args: {
+    orderId: v.id("orders"),
+    status: v.string(), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
+    if (!user) throw new Error("User not found");
+
+    await ctx.db.patch(args.orderId, {
+      productionStatus: args.status,
+    });
+
+    await ctx.db.insert("orderActivityLog", {
+      orderId: args.orderId,
+      stage: args.status,
+      performedBy: user._id,
+      note: args.note || `Production status updated to ${args.status}`,
+      timestamp: Date.now(),
+    });
+
+    await ctx.db.insert("adminLogs", {
+      action: `Updated production status to ${args.status}`,
+      category: "orders",
+      targetId: args.orderId,
+      targetType: "order",
+      timestamp: Date.now(),
+      adminId: identity.subject,
+    });
+
+    if (args.status === 'completed' || args.status === 'ready_for_pickup') {
+      const order = await ctx.db.get(args.orderId);
+      if (order && order.userId) {
+        const customer = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", order.userId)).first();
+        if (customer) {
+          await ctx.db.insert("notifications", {
+            userId: customer._id,
+            type: "order_update",
+            title: `Order ${args.status === 'completed' ? 'Completed' : 'Ready'}`,
+            body: `Your order ${order.orderId || order._id.substring(0, 8)} is now ${args.status.replace('_', ' ')}.`,
+            orderId: order._id,
+            read: false,
+            createdAt: Date.now(),
+          });
+          
+          if (customer.phone) {
+            await ctx.scheduler.runAfter(0, internal.sms.sendSms, {
+              phoneNumber: customer.phone,
+              message: `Hi ${customer.firstName}, your Gabby Clothings order ${order.orderId || order._id.substring(0, 8)} is now ${args.status.replace('_', ' ')}. Thank you!`,
+            });
+          }
+        }
+      }
+    }
+  }
+});
+
+export const notifyClient = mutation({
+  args: {
+    orderId: v.id("orders"),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order || !order.userId) throw new Error("Order or customer not found");
+
+    const customer = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", order.userId)).first();
+    if (!customer) throw new Error("Customer not found");
+
+    await ctx.db.insert("notifications", {
+      userId: customer._id,
+      type: "admin_message",
+      title: "Update from Gabby Clothings",
+      body: args.message,
+      orderId: order._id,
+      read: false,
+      createdAt: Date.now(),
+    });
+
+    if (customer.phone) {
+      await ctx.scheduler.runAfter(0, internal.sms.sendSms, {
+        phoneNumber: customer.phone,
+        message: args.message,
+      });
+    }
+
+    const adminUser = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", identity.subject)).first();
+    
+    await ctx.db.insert("orderActivityLog", {
+      orderId: args.orderId,
+      stage: order.productionStatus || "pending",
+      performedBy: adminUser?._id || ("unknown" as any),
+      note: `Sent manual notification to client: ${args.message}`,
+      timestamp: Date.now(),
     });
   }
 });

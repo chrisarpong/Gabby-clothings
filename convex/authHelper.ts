@@ -1,15 +1,39 @@
 export async function checkAdmin(ctx: any, identity: any) {
-  const adminRoles = ["admin", "superadmin"];
-  
   // Hardcoded superadmin access for the boss
   if (identity?.email === "d.alexanderelorm@gmail.com") return;
   
-  if (adminRoles.includes(identity?.role)) return;
   const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
-  
   if (user && user.email === "d.alexanderelorm@gmail.com") return;
   
-  if (!user || !adminRoles.includes(user.role)) throw new Error("Unauthorized: Admin access required");
+  // Backward compatibility + basic "is staff" check
+  const legacyAdminRoles = ["admin", "superadmin", "staff"];
+  if (legacyAdminRoles.includes(identity?.role)) return;
+  if (user && legacyAdminRoles.includes(user.role)) return;
+  if (user && user.roleId) return; // Any user with a roleId is staff
+  
+  throw new Error("Unauthorized: Staff access required");
+}
+
+export async function checkPermission(ctx: any, identity: any, requiredPermission: string) {
+  // Hardcoded superadmin access for the boss bypasses permission checks
+  if (identity?.email === "d.alexanderelorm@gmail.com") return;
+  
+  const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
+  if (user && user.email === "d.alexanderelorm@gmail.com") return;
+  
+  if (!user) throw new Error("Unauthorized: User not found");
+  
+  // Legacy superadmins get all permissions
+  if (user.role === "superadmin") return;
+
+  if (!user.roleId) {
+    throw new Error(`Unauthorized: Missing required permission '${requiredPermission}'`);
+  }
+
+  const role = await ctx.db.get(user.roleId);
+  if (!role || (!role.permissions.includes(requiredPermission) && !role.permissions.includes("all"))) {
+    throw new Error(`Unauthorized: Missing required permission '${requiredPermission}'`);
+  }
 }
 
 export async function checkRateLimit(ctx: any, endpoint: string, maxAttempts: number = 5, windowMs: number = 60000) {

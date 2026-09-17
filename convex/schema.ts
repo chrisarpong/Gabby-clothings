@@ -10,12 +10,27 @@ export default defineSchema({
     fullBodyImageId: v.optional(v.string()),
     inspoImageId: v.optional(v.string()),
     role: v.string(), // 'admin' | 'client'
+    roleId: v.optional(v.id("roles")),
     savedMeasurements: v.optional(v.any()),
     dob: v.optional(v.string()),
     phone: v.optional(v.string()),
     whatsapp: v.optional(v.string()),
     country: v.optional(v.string()),
+    address: v.optional(v.object({
+      residentialAddress: v.string(),
+      landmark: v.optional(v.string()),
+      gps: v.optional(v.object({ lat: v.number(), lng: v.number() })),
+      city: v.optional(v.string()),
+      region: v.optional(v.string()),
+    })),
   }).index("by_clerkId", ["clerkId"]),
+
+  roles: defineTable({
+    name: v.string(),
+    label: v.string(),
+    permissions: v.array(v.string()),
+    isSystemRole: v.boolean(),
+  }),
 
   products: defineTable({
     name: v.string(),
@@ -98,8 +113,22 @@ export default defineSchema({
     amountPaid: v.optional(v.number()),
     amountDue: v.optional(v.number()),
     isDeposit: v.optional(v.boolean()),
+    depositRequired: v.optional(v.boolean()),
+    depositPaid: v.optional(v.boolean()),
     paymentMethod: v.optional(v.string()), // 'paystack', 'cash', 'transfer', 'momo'
+    
+    // Assignment & Production
+    assignedDesignerId: v.optional(v.id("users")),
+    productionStatus: v.optional(v.string()), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
   }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]),
+
+  orderActivityLog: defineTable({
+    orderId: v.id("orders"),
+    stage: v.string(), // 'assigned', 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
+    performedBy: v.id("users"),
+    note: v.optional(v.string()),
+    timestamp: v.number(),
+  }).index("by_order", ["orderId"]),
 
   settings: defineTable({
     key: v.string(),
@@ -216,6 +245,16 @@ export default defineSchema({
     count: v.number(),
     lastAttempt: v.number(),
   }).index("by_identifier_endpoint", ["identifier", "endpoint"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.string(),
+    title: v.string(),
+    body: v.string(),
+    orderId: v.optional(v.id("orders")),
+    read: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   carts: defineTable({
     userId: v.string(), // clerkId

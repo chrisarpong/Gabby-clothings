@@ -19,6 +19,7 @@ const PUBLIC_SETTING_KEYS = [
   "storeInfo",
   "seoDefaults",
   "lowStockThreshold",
+  "depositPercentages",
 ];
 
 export const getByKey = query({

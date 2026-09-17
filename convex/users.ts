@@ -132,6 +132,13 @@ export const updateProfile = mutation({
     phone: v.optional(v.string()),
     whatsapp: v.optional(v.string()),
     country: v.optional(v.string()),
+    address: v.optional(v.object({
+      residentialAddress: v.string(),
+      landmark: v.optional(v.string()),
+      gps: v.optional(v.object({ lat: v.number(), lng: v.number() })),
+      city: v.optional(v.string()),
+      region: v.optional(v.string()),
+    })),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -150,10 +157,11 @@ export const updateProfile = mutation({
     }
 
     return await ctx.db.patch(user._id, {
-      dob: args.dob,
-      phone: args.phone,
-      whatsapp: args.whatsapp,
-      country: args.country,
+      dob: args.dob ?? user.dob,
+      phone: args.phone ?? user.phone,
+      whatsapp: args.whatsapp ?? user.whatsapp,
+      country: args.country ?? user.country,
+      address: args.address ?? user.address,
     });
   },
 });
@@ -186,5 +194,83 @@ export const createClientFromAppointment = mutation({
     });
 
     return userId;
+  }
+});
+
+export const createStaffUser = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    roleId: v.id("roles"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const [firstName, ...lastNameParts] = args.name.split(' ');
+    const lastName = lastNameParts.join(' ');
+
+    const userId = await ctx.db.insert("users", {
+      clerkId: `manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      email: args.email,
+      firstName: firstName,
+      lastName: lastName,
+      phone: args.phone,
+      role: "staff", 
+      roleId: args.roleId,
+    });
+
+    await ctx.db.insert("adminLogs", {
+      action: `Created staff user: ${args.name}`,
+      category: "team",
+      targetId: userId,
+      targetType: "user",
+      timestamp: Date.now(),
+      adminId: identity.subject,
+    });
+
+    return userId;
+  }
+});
+
+export const updateUserRole = mutation({
+  args: {
+    userId: v.id("users"),
+    roleId: v.id("roles"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    await ctx.db.patch(args.userId, {
+      roleId: args.roleId,
+      role: "staff",
+    });
+
+    await ctx.db.insert("adminLogs", {
+      action: `Updated role for user`,
+      category: "team",
+      targetId: args.userId,
+      targetType: "user",
+      timestamp: Date.now(),
+      adminId: identity.subject,
+    });
+  }
+});
+
+export const listStaffUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const users = await ctx.db.query("users").collect();
+    
+    // In memory filter for staff members (anyone with a roleId or role that isn't 'client')
+    return users.filter(u => u.roleId !== undefined || (u.role && u.role !== 'client'));
   }
 });

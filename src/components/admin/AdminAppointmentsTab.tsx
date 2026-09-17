@@ -24,7 +24,7 @@ const localizer = dateFnsLocalizer({
 
 export default function AdminAppointmentsTab() {
   const appointments = useQuery(api.appointments.getUpcoming);
-  const tailors = useQuery(api.tailors.getAll);
+  const tailors = useQuery(api.tailors.listActiveTailors);
   const updateStatus = useMutation(api.appointments.updateStatus);
   const assignTailor = useMutation(api.appointments.assignTailor);
   const logAction = useMutation(api.adminLogs.logAction);
