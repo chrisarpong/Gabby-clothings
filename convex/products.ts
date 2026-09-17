@@ -285,9 +285,10 @@ export const generateUploadUrl = mutation(async (ctx) => {
   return await ctx.storage.generateUploadUrl();
 });
 
-export const fixMissingImages = internalMutation({
+export const fixMissingImages = mutation({
   args: {},
   handler: async (ctx) => {
+    // Temporary public mutation for one-time migration
     const products = await ctx.db.query("products").collect();
     let fixedCount = 0;
     
