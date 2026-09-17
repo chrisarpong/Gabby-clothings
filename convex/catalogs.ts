@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { checkAdmin } from "./authHelper";
 
 
@@ -84,4 +84,40 @@ export const update = mutation({
     const { id, oldImageIdToDelete, ...updates } = args;
     await ctx.db.patch(id, updates);
   },
+});
+
+export const seed = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const catalogsToInsert = [
+      {
+        name: "Summer 2026 Ready-To-Wear",
+        description: "Light, breezy, and effortlessly elegant pieces designed for the warmest days. Discover our signature linens and silks.",
+        status: "active",
+        slug: "summer-2026",
+      },
+      {
+        name: "The Bespoke Bridal Collection",
+        description: "Exquisite custom tailoring for weddings. Book a consultation to have our master tailors craft your perfect suit or dress.",
+        status: "active",
+        slug: "bespoke-bridal",
+      },
+      {
+        name: "Corporate Executive Wear",
+        description: "Command the room with our sharply tailored corporate suits and premium cotton shirts.",
+        status: "active",
+        slug: "corporate-executive",
+      }
+    ];
+
+    for (const cat of catalogsToInsert) {
+      const existing = await ctx.db
+        .query("catalogs")
+        .withIndex("by_slug", (q) => q.eq("slug", cat.slug))
+        .first();
+      if (!existing) {
+        await ctx.db.insert("catalogs", cat);
+      }
+    }
+  }
 });
