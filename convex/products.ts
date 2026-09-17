@@ -285,3 +285,37 @@ export const generateUploadUrl = mutation(async (ctx) => {
   return await ctx.storage.generateUploadUrl();
 });
 
+export const fixMissingImages = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Only allow admins to run this
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await checkAdmin(ctx, identity);
+
+    const products = await ctx.db.query("products").collect();
+    let fixedCount = 0;
+    
+    // Available placeholder images in public/assets/
+    const placeholders = [
+      "/assets/1.jpg", 
+      "/assets/2.webp", 
+      "/assets/3.jpg", 
+      "/assets/4.jpg", 
+      "/assets/5.jpg", 
+      "/assets/6.jpg", 
+      "/assets/7.jpg"
+    ];
+
+    for (const product of products) {
+      if (!product.images || product.images.length === 0) {
+        // Assign a random placeholder
+        const randomImage = placeholders[Math.floor(Math.random() * placeholders.length)];
+        await ctx.db.patch(product._id, { images: [randomImage] });
+        fixedCount++;
+      }
+    }
+    
+    return `Fixed ${fixedCount} products missing images.`;
+  }
+});
