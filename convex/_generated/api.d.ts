@@ -35,6 +35,7 @@ import type * as settings from "../settings.js";
 import type * as sms from "../sms.js";
 import type * as subscribers from "../subscribers.js";
 import type * as tailors from "../tailors.js";
+import type * as testing from "../testing.js";
 import type * as testquery from "../testquery.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   sms: typeof sms;
   subscribers: typeof subscribers;
   tailors: typeof tailors;
+  testing: typeof testing;
   testquery: typeof testquery;
   users: typeof users;
   webhooks: typeof webhooks;
