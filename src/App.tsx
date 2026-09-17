@@ -33,6 +33,7 @@ const NewsArticlePage = lazy(() => import('./pages/NewsArticlePage'));
 
 const Admin = lazy(() => import('./pages/Admin'));
 const DesignerPortal = lazy(() => import('./pages/DesignerPortal'));
+const SalesPortal = lazy(() => import('./pages/SalesPortal'));
 
 import ScrollToTop from './components/ScrollToTop';
 import { useUser } from '@clerk/clerk-react';
@@ -139,6 +140,17 @@ export default function App() {
             </div>
           }>
             <DesignerPortal />
+          </Suspense>
+        } />
+
+        {/* Sales Route */}
+        <Route path="/sales/*" element={
+          <Suspense fallback={
+            <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            </div>
+          }>
+            <SalesPortal />
           </Suspense>
         } />
 

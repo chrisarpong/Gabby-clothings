@@ -1,9 +1,10 @@
 export async function checkAdmin(ctx: any, identity: any) {
   // Hardcoded superadmin access for the boss
-  if (identity?.email === "d.alexanderelorm@gmail.com") return;
+  const bossEmails = ["d.alexanderelorm@gmail.com", "kynovasystems.africa@gmail.com"];
+  if (bossEmails.includes(identity?.email)) return;
   
   const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
-  if (user && user.email === "d.alexanderelorm@gmail.com") return;
+  if (user && bossEmails.includes(user.email)) return;
   
   // Backward compatibility + basic "is staff" check
   const legacyAdminRoles = ["admin", "superadmin", "staff"];
@@ -16,10 +17,11 @@ export async function checkAdmin(ctx: any, identity: any) {
 
 export async function checkPermission(ctx: any, identity: any, requiredPermission: string) {
   // Hardcoded superadmin access for the boss bypasses permission checks
-  if (identity?.email === "d.alexanderelorm@gmail.com") return;
+  const bossEmails = ["d.alexanderelorm@gmail.com", "kynovasystems.africa@gmail.com"];
+  if (bossEmails.includes(identity?.email)) return;
   
   const user = await ctx.db.query("users").withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject)).first();
-  if (user && user.email === "d.alexanderelorm@gmail.com") return;
+  if (user && bossEmails.includes(user.email)) return;
   
   if (!user) throw new Error("Unauthorized: User not found");
   
