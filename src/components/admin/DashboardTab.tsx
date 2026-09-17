@@ -6,14 +6,21 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 
 class DashboardErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; error: string }
+  { hasError: boolean; error: string; retryCount: number }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: '' };
+    this.state = { hasError: false, error: '', retryCount: 0 };
   }
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error: error.message || 'An unexpected error occurred' };
+  }
+  componentDidUpdate(_: any, prevState: any) {
+    if (this.state.hasError && this.state.retryCount < 3) {
+      setTimeout(() => {
+        this.setState(s => ({ hasError: false, error: '', retryCount: s.retryCount + 1 }));
+      }, 2000);
+    }
   }
   render() {
     if (this.state.hasError) {

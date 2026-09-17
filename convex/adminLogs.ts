@@ -43,8 +43,12 @@ export const getRecentLogs = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+    if (!identity) return [];
+    try {
+      await checkAdmin(ctx, identity);
+    } catch {
+      return [];
+    }
 
     const limit = args.limit || 50;
 
@@ -62,8 +66,12 @@ export const getActiveSessions = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+    if (!identity) return [];
+    try {
+      await checkAdmin(ctx, identity);
+    } catch {
+      return [];
+    }
 
     // Get all auth logs in the last 24 hours to find recent active sessions
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
