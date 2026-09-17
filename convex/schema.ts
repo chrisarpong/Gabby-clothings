@@ -303,7 +303,7 @@ export default defineSchema({
     ipAddress: v.optional(v.string()),
     userAgent: v.optional(v.string()),   // raw UA string
     deviceName: v.optional(v.string()),  // parsed: "Chrome on macOS", "Safari on iPhone"
-    timestamp: v.number(), // Adding timestamp field
+    timestamp: v.optional(v.number()), // Made optional for backwards compatibility with existing prod data
   }).index("by_userId", ["userId"]).index("by_category", ["category"]),
 
   tailors: defineTable({
