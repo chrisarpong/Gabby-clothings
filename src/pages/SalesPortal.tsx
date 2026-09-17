@@ -339,19 +339,19 @@ export default function SalesPortal() {
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Customer Name *</label>
-                <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full bg-surface border border-outline-variant text-sm p-2" placeholder="John Doe" />
+                <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors" />
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Customer Email *</label>
-                <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} className="w-full bg-surface border border-outline-variant text-sm p-2" placeholder="john@example.com" />
+                <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors" />
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Customer Phone</label>
-                <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full bg-surface border border-outline-variant text-sm p-2" placeholder="050 000 0000" />
+                <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors" />
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Payment Method</label>
-                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full bg-surface border border-outline-variant text-sm p-2">
+                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors">
                   <option value="cash">Cash</option>
                   <option value="momo">MoMo / Transfer (Manual)</option>
                 </select>
