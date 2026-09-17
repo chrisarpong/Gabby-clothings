@@ -84,8 +84,8 @@ export default function Admin() {
             action: "Logged In to Admin Dashboard",
             category: "auth",
             ...deviceInfo
-          }).catch(console.error);
-        });
+          }).catch(() => {}); // Silently swallow — login logging is non-critical
+        }).catch(() => {}); // getDeviceInfo failure is non-critical
       }
     }
   }, [user, isAdmin, convexUser, hasLoggedLogin]);

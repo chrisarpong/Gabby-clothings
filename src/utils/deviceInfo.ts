@@ -31,7 +31,7 @@ export async function getDeviceInfo() {
       }
     }
   } catch (error) {
-    console.error("Failed to get IP address", error);
+    // Silently fall back — CSP or network issues shouldn't block the dashboard
   }
 
   return { ipAddress, userAgent: ua, deviceName };
