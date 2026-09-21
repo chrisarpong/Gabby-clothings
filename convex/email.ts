@@ -3,6 +3,11 @@ import { v } from "convex/values";
 import { Resend } from "resend";
 import { api } from "./_generated/api";
 
+function getResendClient() {
+  const key = process.env.RESEND_API_KEY;
+  return key ? new Resend(key) : null;
+}
+
 export const sendAppointmentReminder = internalAction({
   args: {
     appointmentId: v.id("appointments"),
@@ -13,14 +18,12 @@ export const sendAppointmentReminder = internalAction({
     garmentType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const resend = getResendClient();
 
-    if (!resendApiKey) {
+    if (!resend) {
       console.log(`[Email Mock] Would send reminder to ${args.email} for appointment on ${args.date} at ${args.time || 'TBD'}`);
       return;
     }
-
-    const resend = new Resend(resendApiKey);
 
     try {
       await resend.emails.send({
@@ -58,14 +61,12 @@ export const sendOrderStatusUpdate = internalAction({
     trackingNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const resend = getResendClient();
 
-    if (!resendApiKey) {
+    if (!resend) {
       console.log(`[Email Mock] Would send order ${args.status} update to ${args.email} for order ${args.orderId}`);
       return;
     }
-
-    const resend = new Resend(resendApiKey);
     
     let message = "";
     let subject = "";
@@ -127,10 +128,8 @@ export const sendOrderConfirmation = internalAction({
     amount: v.number(),
   },
   handler: async (ctx, args) => {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) return;
-
-    const resend = new Resend(resendApiKey);
+    const resend = getResendClient();
+    if (!resend) return;
 
     try {
       await resend.emails.send({
@@ -176,13 +175,11 @@ export const sendAppointmentUpdate = internalAction({
     status: v.string(), // 'confirmed', 'rescheduled', 'cancelled'
   },
   handler: async (ctx, args) => {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
+    const resend = getResendClient();
+    if (!resend) {
       console.log(`[Email Mock] Would send appointment ${args.status} update to ${args.email}`);
       return;
     }
-
-    const resend = new Resend(resendApiKey);
 
     let subject = "Appointment Update - Gabby Newluk";
     let message = "";
@@ -242,18 +239,17 @@ export const sendPromoBroadcast = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated: You must be signed in.");
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) throw new Error("Resend API key not configured");
+    const resend = getResendClient();
+    if (!resend) throw new Error("Resend API key not configured");
 
     // This call will throw "Unauthorized: Admin access required" if the
     // caller is not an admin, because getAllEmails enforces checkAdmin.
-    const users = await ctx.runQuery(api.users.getAllEmails);
-    const resend = new Resend(resendApiKey);
+    const emailsList = await ctx.runQuery(api.users.getAllEmails);
 
     let sentCount = 0;
     
     // Using Resend's batch send or loop. Looping to avoid batch limits for now.
-    for (const user of users) {
+    for (const user of emailsList) {
       try {
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -310,10 +306,8 @@ export const sendSubscriptionConfirmation = internalAction({
     email: v.string(),
   },
   handler: async (ctx, args) => {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) return;
-
-    const resend = new Resend(resendApiKey);
+    const resend = getResendClient();
+    if (!resend) return;
 
     try {
       await resend.emails.send({
@@ -353,12 +347,11 @@ export const sendNewsletterBroadcast = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated: You must be signed in.");
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) throw new Error("Resend API key not configured");
+    const resend = getResendClient();
+    if (!resend) throw new Error("Resend API key not configured");
 
     const subscribers = await ctx.runQuery(api.subscribers.getAll);
     const activeSubscribers = subscribers.filter((s: any) => s.status === 'active');
-    const resend = new Resend(resendApiKey);
 
     let sentCount = 0;
     
@@ -407,10 +400,8 @@ export const replyToMessage = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) throw new Error("Resend API key not configured");
-
-    const resend = new Resend(resendApiKey);
+    const resend = getResendClient();
+    if (!resend) throw new Error("Resend API key not configured");
 
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -448,13 +439,11 @@ export const sendLowStockAlertEmail = internalAction({
     stock: v.number(),
   },
   handler: async (ctx, args) => {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
+    const resend = getResendClient();
+    if (!resend) {
       console.log(`[Email Mock] Would send low stock alert to ${args.email} for ${args.productName}`);
       return;
     }
-
-    const resend = new Resend(resendApiKey);
 
     try {
       await resend.emails.send({

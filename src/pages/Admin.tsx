@@ -40,13 +40,7 @@ import NewsTab from '../components/admin/NewsTab';
 import TeamManagementTab from '../components/admin/TeamManagementTab';
 import NotificationBell from '../components/admin/NotificationBell';
 
-// Dummy components for uncompleted sections
-const DummyTab = ({ title }: { title: string }) => (
-  <div className="p-8">
-    <h2 className="font-serif text-3xl text-primary mb-4">{title}</h2>
-    <p className="font-sans text-on-surface-variant">This module is under construction.</p>
-  </div>
-);
+
 
 type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team';
 
@@ -147,7 +141,7 @@ export default function Admin() {
       case 'marketing': return <MarketingTab />;
       case 'content': return <ContentTab />;
       case 'team': return <TeamManagementTab />;
-      default: return <DummyTab title={tabs.find(t => t.key === activeTab)?.name || 'Settings'} />;
+      default: return null;
     }
   };
 
