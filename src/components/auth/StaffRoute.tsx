@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { AlertCircle } from 'lucide-react';
+import IdleLogout from './IdleLogout';
 
 interface StaffRouteProps {
   children: React.ReactNode;
@@ -52,5 +53,10 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <IdleLogout />
+      {children}
+    </>
+  );
 };

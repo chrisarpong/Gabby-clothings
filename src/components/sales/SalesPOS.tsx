@@ -13,20 +13,20 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   
   // POS State
   const [cart, setCart] = useState<{product: any, quantity: number, price: number, variantSku?: string, variantName?: string}[]>(() => {
-    const saved = sessionStorage.getItem('pos_cart');
+    const saved = localStorage.getItem('pos_cart');
     return saved ? JSON.parse(saved) : [];
   });
-  const [customerName, setCustomerName] = useState(() => sessionStorage.getItem('pos_customerName') || '');
-  const [customerEmail, setCustomerEmail] = useState(() => sessionStorage.getItem('pos_customerEmail') || '');
-  const [customerPhone, setCustomerPhone] = useState(() => sessionStorage.getItem('pos_customerPhone') || '');
+  const [customerName, setCustomerName] = useState(() => localStorage.getItem('pos_customerName') || '');
+  const [customerEmail, setCustomerEmail] = useState(() => localStorage.getItem('pos_customerEmail') || '');
+  const [customerPhone, setCustomerPhone] = useState(() => localStorage.getItem('pos_customerPhone') || '');
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
   // Persist state
   React.useEffect(() => {
-    sessionStorage.setItem('pos_cart', JSON.stringify(cart));
-    sessionStorage.setItem('pos_customerName', customerName);
-    sessionStorage.setItem('pos_customerEmail', customerEmail);
-    sessionStorage.setItem('pos_customerPhone', customerPhone);
+    localStorage.setItem('pos_cart', JSON.stringify(cart));
+    localStorage.setItem('pos_customerName', customerName);
+    localStorage.setItem('pos_customerEmail', customerEmail);
+    localStorage.setItem('pos_customerPhone', customerPhone);
   }, [cart, customerName, customerEmail, customerPhone]);
   const [amountTendered, setAmountTendered] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -119,10 +119,10 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
       setCustomerEmail('');
       setCustomerPhone('');
       setAmountTendered('');
-      sessionStorage.removeItem('pos_cart');
-      sessionStorage.removeItem('pos_customerName');
-      sessionStorage.removeItem('pos_customerEmail');
-      sessionStorage.removeItem('pos_customerPhone');
+      localStorage.removeItem('pos_cart');
+      localStorage.removeItem('pos_customerName');
+      localStorage.removeItem('pos_customerEmail');
+      localStorage.removeItem('pos_customerPhone');
       setActiveTab('history');
     } catch (err: any) {
       toast.error(err.message || "Failed to record order");
