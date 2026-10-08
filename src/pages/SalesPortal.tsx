@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStaffAuth } from '../context/StaffAuthContext';
+import { useStaffAuth } from '../hooks/useStaffAuth';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../convex/_generated/api';
 import { ShoppingBag, History, Users, BarChart3, LogOut } from 'lucide-react';
@@ -10,14 +10,14 @@ import SalesCRM from '../components/sales/SalesCRM';
 import SalesDashboard from '../components/sales/SalesDashboard';
 
 export default function SalesPortal() {
-  const { staffData, logout } = useStaffAuth();
+  const { profile, logout } = useStaffAuth();
   // We still need the products query, wait! SalesPOS needs products, but it expects no staffToken argument. 
   // Wait, products.getActive is public, so it's fine!
   const products = useQuery(api.products.getActive) || [];
 
   const [activeTab, setActiveTab] = useState<'pos' | 'history' | 'crm' | 'dashboard'>('pos');
 
-  if (!staffData) return null;
+  if (!profile) return null;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -48,7 +48,7 @@ export default function SalesPortal() {
         <div className="p-6 border-b border-surface-variant">
           <h1 className="font-serif text-2xl text-primary tracking-tight mb-2">Sales Portal</h1>
           <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">
-            {staffData.name}
+            {profile.name}
           </p>
         </div>
         

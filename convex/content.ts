@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { checkAdmin } from "./authHelper";
+
 import { requireStaff } from "./staffAuth";
 
 export const get = query({
@@ -70,7 +70,7 @@ export const set = mutation({
         status: args.status,
         seo: args.seo,
         updatedAt: Date.now(),
-        updatedBy: identity.subject,
+        updatedBy: staff._id,
       });
       return existing._id;
     } else {
@@ -80,7 +80,7 @@ export const set = mutation({
         status: args.status || "published",
         seo: args.seo,
         updatedAt: Date.now(),
-        updatedBy: identity.subject,
+        updatedBy: staff._id,
       });
     }
   },

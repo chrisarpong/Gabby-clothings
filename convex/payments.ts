@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { checkAdmin } from "./authHelper";
+
 import { requireStaff } from "./staffAuth";
 
 export const recordCashPayment = mutation({
@@ -21,7 +21,7 @@ export const recordCashPayment = mutation({
       orderId: args.orderId,
       amount: args.amount,
       paymentMethod: args.paymentMethod,
-      recordedBy: identity.subject,
+      recordedBy: staff._id,
       notes: args.notes,
       date: new Date().toISOString(),
     });

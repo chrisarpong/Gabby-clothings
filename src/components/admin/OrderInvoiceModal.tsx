@@ -12,10 +12,11 @@ interface OrderInvoiceModalProps {
 
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalProps) {
   const { activeCurrency, rates } = useCurrencyStore();
-  const storeInfoSetting = useQuery(api.settings.getByKey, { key: "storeInfo" });
+  const storeInfoSetting = useStaffQuery(api.settings.getByKey, { key: "storeInfo" });
   const storeInfo = storeInfoSetting?.value;
   
   const storeName = storeInfo?.storeName || 'Gabby Newluk';

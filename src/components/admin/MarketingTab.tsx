@@ -5,13 +5,14 @@ import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Mail, Users, Eye, EyeOff, Send, MessageSquare, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function MarketingTab() {
-  const messages = useQuery(api.messages.getMessages);
-  const subscribers = useQuery(api.subscribers.getAll);
-  const markAsRead = useMutation(api.messages.markAsRead);
-  const sendNewsletterBroadcast = useAction(api.email.sendNewsletterBroadcast);
-  const replyToMessageAction = useAction(api.email.replyToMessage);
+  const messages = useStaffQuery(api.messages.getMessages);
+  const subscribers = useStaffQuery(api.subscribers.getAll);
+  const markAsRead = useStaffMutation(api.messages.markAsRead);
+  const sendNewsletterBroadcast = useStaffAction(api.email.sendNewsletterBroadcast);
+  const replyToMessageAction = useStaffAction(api.email.replyToMessage);
 
   // Newsletter State
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { useStaffAuth } from '../../context/StaffAuthContext';
+import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { ShoppingBag, Search, Plus, CreditCard, LogOut, Calendar } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function SalesPOS({ products, setActiveTab }: { products: any, setActiveTab: any }) {
-  const { staffToken, staffData } = useStaffAuth();
-  const createPOSOrder = useMutation(api.orders.createPOSOrder);
+  const { token, profile } = useStaffAuth();
+  const createPOSOrder = useStaffMutation(api.orders.createPOSOrder);
   
   // POS State
   const [cart, setCart] = useState<{product: any, quantity: number, price: number, variantSku?: string, variantName?: string}[]>(() => {
@@ -36,7 +37,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [selectedVariantSku, setSelectedVariantSku] = useState<string>('');
 
-  const categories = ['All', ...Array.from(new Set(products.map((p: any) => p.category)))];
+  const categories = ['All', ...Array.from(new Set(products.map((p: any) => p.category as string)))];
 
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -92,7 +93,6 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     setIsProcessing(true);
     try {
       await createPOSOrder({
-        staffToken: staffToken as string,
         customerDetails: {
           firstName: customerName.split(' ')[0],
           lastName: customerName.split(' ').slice(1).join(' ') || 'Customer',
@@ -151,7 +151,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
             
             {/* Category Filter Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map(cat => (
+              {(categories as string[]).map((cat: string) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
@@ -169,7 +169,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
 
           <div className="flex-1 overflow-y-auto p-4 relative">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {filteredProducts.map(product => (
+                {filteredProducts.map((product: any) => (
                   <div key={product._id} className="border border-outline-variant/30 bg-surface p-3 flex flex-col group cursor-pointer hover:border-primary transition-colors" onClick={() => openProductModal(product)}>
                     <div className="aspect-square bg-surface-container mb-3 overflow-hidden">
                       {product.images?.[0] ? (

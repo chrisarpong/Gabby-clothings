@@ -2,9 +2,10 @@ import React from 'react';
 import { BarChart3, TrendingUp, DollarSign } from 'lucide-react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function SalesDashboard() {
-  const orders = useQuery(api.orders.getAll) || [];
+  const orders = useStaffQuery(api.orders.getAll) || [];
   
   const today = new Date();
   today.setHours(0,0,0,0);

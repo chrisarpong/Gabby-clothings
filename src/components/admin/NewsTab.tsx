@@ -3,12 +3,13 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, CheckCircle2, Globe, FileText } from 'lucide-react';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function NewsTab() {
-  const posts = useQuery(api.posts.getAll);
-  const createPost = useMutation(api.posts.createPost);
-  const updatePost = useMutation(api.posts.updatePost);
-  const deletePost = useMutation(api.posts.deletePost);
+  const posts = useStaffQuery(api.posts.getAll);
+  const createPost = useStaffMutation(api.posts.createPost);
+  const updatePost = useStaffMutation(api.posts.updatePost);
+  const deletePost = useStaffMutation(api.posts.deletePost);
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentPost, setCurrentPost] = useState<any>(null);

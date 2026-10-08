@@ -2,9 +2,10 @@ import React from 'react';
 import { History, Search } from 'lucide-react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function SalesHistory() {
-  const orders = useQuery(api.orders.getAll) || [];
+  const orders = useStaffQuery(api.orders.getAll) || [];
   const posOrders = orders.filter(o => o.orderId?.startsWith('GB-'));
 
   return (

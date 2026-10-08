@@ -5,6 +5,7 @@ import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { X, User, ShoppingBag, CreditCard, ChevronRight, Ruler } from 'lucide-react';
 import { usePaystackPayment } from 'react-paystack';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 interface AdminCreateOrderDrawerProps {
   isOpen: boolean;
@@ -12,9 +13,9 @@ interface AdminCreateOrderDrawerProps {
 }
 
 export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateOrderDrawerProps) {
-  const users = useQuery(api.users.getAll) || [];
-  const products = useQuery(api.products.getAll) || [];
-  const createOrder = useMutation(api.orders.createPOSOrder);
+  const users = useStaffQuery(api.users.getAll) || [];
+  const products = useStaffQuery(api.products.getAll) || [];
+  const createOrder = useStaffMutation(api.orders.createPOSOrder);
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);

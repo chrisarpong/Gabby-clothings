@@ -5,6 +5,7 @@ import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Plus, X, Edit2, Archive, PackageOpen, FolderOpen, Image as ImageIcon, Search, Filter, CheckSquare, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDeviceInfo } from '../../utils/deviceInfo';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function InventoryTab() {
   const [activeSubTab, setActiveSubTab] = useState<'products' | 'catalogs'>('products');
@@ -15,15 +16,15 @@ export default function InventoryTab() {
   const [bulkCatalogId, setBulkCatalogId] = useState('');
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
   
-  const products = useQuery(api.products.getAll);
-  const catalogs = useQuery(api.catalogs.getAll, { includeArchived: true });
+  const products = useStaffQuery(api.products.getAll);
+  const catalogs = useStaffQuery(api.catalogs.getAll, { includeArchived: true });
 
-  const createProduct = useMutation(api.products.create);
-  const updateProduct = useMutation(api.products.update);
-  const createCatalog = useMutation(api.catalogs.create);
-  const updateCatalog = useMutation(api.catalogs.update);
-  const generateUploadUrl = useMutation(api.products.generateUploadUrl);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const createProduct = useStaffMutation(api.products.create);
+  const updateProduct = useStaffMutation(api.products.update);
+  const createCatalog = useStaffMutation(api.catalogs.create);
+  const updateCatalog = useStaffMutation(api.catalogs.update);
+  const generateUploadUrl = useStaffMutation(api.products.generateUploadUrl);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [isCatalogFormOpen, setIsCatalogFormOpen] = useState(false);

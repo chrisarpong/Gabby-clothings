@@ -1,4 +1,4 @@
-import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -23,13 +23,12 @@ const PUBLIC_SETTING_KEYS = [
 ];
 
 export const getByKey = query({
-  args: { key: v.string() },
+  args: { key: v.string(), staffToken: v.optional(v.string()) },
   handler: async (ctx, args) => {
     // If the key is not public, require admin authentication
     if (!PUBLIC_SETTING_KEYS.includes(args.key)) {
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) throw new Error("Unauthenticated");
-      await checkAdmin(ctx, identity);
+      if (!args.staffToken) throw new Error("Unauthenticated");
+      await requireStaff(ctx, args.staffToken, { permission: "settings" });
     }
 
     return await ctx.db
@@ -40,11 +39,9 @@ export const getByKey = query({
 });
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "settings" });
     return await ctx.db.query("settings").collect();
   },
 });
@@ -53,11 +50,10 @@ export const setSetting = mutation({
   args: {
     key: v.string(),
     value: v.any(),
+    staffToken: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "settings" });
 
     const existing = await ctx.db
       .query("settings")
@@ -67,14 +63,14 @@ export const setSetting = mutation({
     if (existing) {
       return await ctx.db.patch(existing._id, {
         value: args.value,
-        updatedBy: identity.subject,
+        updatedBy: staff._id,
       });
     }
 
     return await ctx.db.insert("settings", {
       key: args.key,
       value: args.value,
-      updatedBy: identity.subject,
+      updatedBy: staff._id,
     });
   },
 });

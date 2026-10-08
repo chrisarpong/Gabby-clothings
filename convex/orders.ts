@@ -1,4 +1,4 @@
-import { checkAdmin } from "./authHelper";
+
 import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
@@ -486,7 +486,7 @@ export const createPOSOrder = mutation({
         orderId,
         amount: args.amountPaid,
         paymentMethod: args.paymentMethod,
-        recordedBy: identity.subject,
+        recordedBy: staff._id,
         notes: `Initial POS order payment`,
         date: new Date().toISOString(),
       });
@@ -527,7 +527,7 @@ export const recordDeposit = mutation({
       orderId: args.orderId,
       amount: args.amountPaid,
       paymentMethod: "paystack",
-      recordedBy: identity.subject,
+      recordedBy: staff._id,
       notes: `Deposit payment via Paystack (${args.paystackReference})`,
       date: new Date().toISOString(),
     });
@@ -538,13 +538,11 @@ export const assignDesigner = mutation({
   args: {
       staffToken: v.string(),
     orderId: v.id("orders"),
-    designerId: v.id("users"),
+    designerId: v.id("staff"),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
-    const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
-    if (!user) throw new Error("User not found");
 
     await ctx.db.patch(args.orderId, {
       assignedDesignerId: args.designerId,
@@ -553,7 +551,7 @@ export const assignDesigner = mutation({
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
       stage: "assigned",
-      performedBy: user._id,
+      performedBy: staff._id,
       note: args.note || "Assigned to designer",
       timestamp: Date.now(),
     });
@@ -564,8 +562,8 @@ export const assignDesigner = mutation({
       targetId: args.orderId,
       targetType: "order",
       timestamp: Date.now(),
-      userId: identity.subject,
-      adminName: user.firstName || "Admin",
+      userId: staff._id,
+      adminName: staff.name || "Admin",
     });
   }
 });
@@ -579,8 +577,6 @@ export const updateProductionStatus = mutation({
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
-    const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
-    if (!user) throw new Error("User not found");
 
     await ctx.db.patch(args.orderId, {
       productionStatus: args.status,
@@ -589,7 +585,7 @@ export const updateProductionStatus = mutation({
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
       stage: args.status,
-      performedBy: user._id,
+      performedBy: staff._id,
       note: args.note || `Production status updated to ${args.status}`,
       timestamp: Date.now(),
     });
@@ -600,8 +596,8 @@ export const updateProductionStatus = mutation({
       targetId: args.orderId,
       targetType: "order",
       timestamp: Date.now(),
-      userId: identity.subject,
-      adminName: user.firstName || "Admin",
+      userId: staff._id,
+      adminName: staff.name || "Admin",
     });
 
     if (args.status === 'completed' || args.status === 'ready_for_pickup') {
@@ -662,12 +658,10 @@ export const notifyClient = mutation({
       });
     }
 
-    const adminUser = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", identity.subject)).first();
-    
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
       stage: order.productionStatus || "pending",
-      performedBy: adminUser?._id || ("unknown" as any),
+      performedBy: staff._id,
       note: `Sent manual notification to client: ${args.message}`,
       timestamp: Date.now(),
     });

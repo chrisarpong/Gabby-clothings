@@ -1,6 +1,5 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { checkAdmin } from "./authHelper";
 
 export const getUserNotifications = query({
   args: {},

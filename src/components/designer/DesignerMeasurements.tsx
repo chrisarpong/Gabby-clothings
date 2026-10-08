@@ -2,9 +2,10 @@ import React from 'react';
 import { Ruler, Search } from 'lucide-react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function DesignerMeasurements() {
-  const users = useQuery(api.users.getAll) || [];
+  const users = useStaffQuery(api.users.getAll) || [];
   
   // Get all users who have savedMeasurements
   const measuredClients = users.filter(u => u.savedMeasurements && Object.keys(u.savedMeasurements).length > 0);
@@ -44,7 +45,7 @@ export default function DesignerMeasurements() {
                   {Object.entries(client.savedMeasurements!).map(([key, value]) => (
                     <div key={key} className="flex justify-between text-sm border-b border-outline-variant/20 pb-1 last:border-0 last:pb-0">
                       <span className="capitalize text-on-surface-variant">{key}</span>
-                      <span className="font-mono text-primary">{value}</span>
+                      <span className="font-mono text-primary">{String(value)}</span>
                     </div>
                   ))}
                 </div>

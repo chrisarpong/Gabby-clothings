@@ -4,12 +4,13 @@ import { api } from '../../../convex/_generated/api';
 import { Plus, Trash2, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDeviceInfo } from '../../utils/deviceInfo';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function TailorsSection() {
-  const tailors = useQuery(api.tailors.getAll);
-  const addTailor = useMutation(api.tailors.addTailor);
-  const removeTailor = useMutation(api.tailors.removeTailor);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const tailors = useStaffQuery(api.tailors.getAll);
+  const addTailor = useStaffMutation(api.tailors.addTailor);
+  const removeTailor = useStaffMutation(api.tailors.removeTailor);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const [newTailor, setNewTailor] = useState({ name: '', phone: '', specialty: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);

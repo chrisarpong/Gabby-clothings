@@ -5,12 +5,13 @@ import { Doc } from '../../../convex/_generated/dataModel';
 import { Search, ChevronRight, X, User, Ruler, Mail, Calendar, Phone, MessageCircle, Globe, ShoppingBag, CreditCard, ArrowUpRight, Edit2, Check, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function ClientsTab() {
-  const clients = useQuery(api.users.getAll) || [];
-  const allOrders = useQuery(api.orders.getAll) || [];
+  const clients = useStaffQuery(api.users.getAll) || [];
+  const allOrders = useStaffQuery(api.orders.getAll) || [];
   
-  const updateProfile = useMutation(api.users.updateProfile);
+  const updateProfile = useStaffMutation(api.users.updateProfile);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Doc<"users"> | null>(null);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStaffAuth } from '../context/StaffAuthContext';
+import { useStaffAuth } from '../hooks/useStaffAuth';
 import { Scissors, Calendar, Archive, Ruler, LogOut } from 'lucide-react';
 import DesignerTasks from '../components/designer/DesignerTasks';
 import DesignerAppointments from '../components/designer/DesignerAppointments';
@@ -7,11 +7,11 @@ import DesignerHistory from '../components/designer/DesignerHistory';
 import DesignerMeasurements from '../components/designer/DesignerMeasurements';
 
 export default function DesignerPortal() {
-  const { staffData, logout } = useStaffAuth();
+  const { profile, logout } = useStaffAuth();
 
   const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'history' | 'measurements'>('tasks');
 
-  if (!staffData) return null;
+  if (!profile) return null;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -42,7 +42,7 @@ export default function DesignerPortal() {
         <div className="p-6 border-b border-surface-variant">
           <h1 className="font-serif text-2xl text-primary tracking-tight mb-2">Designer Portal</h1>
           <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">
-            {staffData.name}
+            {profile.name}
           </p>
         </div>
         

@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { TrendingUp, Users, ShoppingBag, Calendar, Activity, AlertTriangle, Plus, Tag, Settings, ChevronRight, UserPlus, CheckCircle, XCircle, Clock, ShieldCheck, Printer, X, Search, Monitor, Smartphone, Globe } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 class DashboardErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -52,16 +53,16 @@ type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' 
 const COLORS = ['#352421', '#827472', '#d4c3c1', '#735c00'];
 
 function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: TabKey) => void, adminName?: string }) {
-  const stats = useQuery(api.analytics.getDashboardStats);
+  const stats = useStaffQuery(api.analytics.getDashboardStats);
   const [logCategoryFilter, setLogCategoryFilter] = useState<string>('All');
   const [logSearchQuery, setLogSearchQuery] = useState('');
   
-  const adminLogs = useQuery(api.adminLogs.getRecentLogs, { 
+  const adminLogs = useStaffQuery(api.adminLogs.getRecentLogs, { 
     limit: 100, 
     category: logCategoryFilter !== 'All' ? logCategoryFilter.toLowerCase() : undefined 
   });
   
-  const activeSessions = useQuery(api.adminLogs.getActiveSessions);
+  const activeSessions = useStaffQuery(api.adminLogs.getActiveSessions);
 
   const [chartMode, setChartMode] = useState<'revenue' | 'orders'>('revenue');
   const [greeting, setGreeting] = useState('Good day');

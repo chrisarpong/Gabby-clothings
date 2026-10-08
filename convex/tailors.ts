@@ -1,25 +1,19 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: 'admin' });
     return await ctx.db.query("tailors").collect();
   },
 });
 
 export const listActiveTailors = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: 'admin' });
     return await ctx.db
       .query("tailors")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -29,15 +23,13 @@ export const listActiveTailors = query({
 
 export const addTailor = mutation({
   args: {
+    staffToken: v.string(),
     name: v.string(),
     phone: v.optional(v.string()),
     specialty: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+    await requireStaff(ctx, args.staffToken, { permission: 'admin' });
     return await ctx.db.insert("tailors", {
       name: args.name,
       phone: args.phone,
@@ -49,6 +41,7 @@ export const addTailor = mutation({
 
 export const updateTailor = mutation({
   args: {
+    staffToken: v.string(),
     id: v.id("tailors"),
     name: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -56,24 +49,19 @@ export const updateTailor = mutation({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
-    const { id, ...updates } = args;
+    await requireStaff(ctx, args.staffToken, { permission: 'admin' });
+    const { staffToken, id, ...updates } = args;
     await ctx.db.patch(id, updates);
   },
 });
 
 export const removeTailor = mutation({
   args: {
+    staffToken: v.string(),
     id: v.id("tailors"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+    await requireStaff(ctx, args.staffToken, { permission: 'admin' });
     await ctx.db.delete(args.id);
   },
 });

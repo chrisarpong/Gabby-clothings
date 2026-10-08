@@ -4,12 +4,13 @@ import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { getDeviceInfo } from '../../utils/deviceInfo';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function PromotionsTab() {
-  const promos = useQuery(api.promotions.getPromoCodes) || [];
-  const createPromo = useMutation(api.promotions.createPromoCode);
-  const sendBroadcast = useAction(api.email.sendPromoBroadcast);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const promos = useStaffQuery(api.promotions.getPromoCodes) || [];
+  const createPromo = useStaffMutation(api.promotions.createPromoCode);
+  const sendBroadcast = useStaffAction(api.email.sendPromoBroadcast);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
   
   const [formData, setFormData] = useState({
     code: '',

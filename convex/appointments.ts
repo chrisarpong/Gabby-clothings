@@ -1,4 +1,4 @@
-import { checkAdmin, checkRateLimit } from "./authHelper";
+import { checkRateLimit } from "./authHelper";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
@@ -468,6 +468,20 @@ export const recordDeposit = mutation({
     await ctx.db.patch(args.appointmentId, {
       amountPaid: (apt.amountPaid || 0) + args.amountPaid,
       paymentStatus: "paid", // For appointments, the deposit usually means paid
+      paystackReference: args.paystackReference,
+    });
+  }
+});
+
+export const confirmCustomerPayment = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    paystackReference: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Called by the public storefront after Paystack success
+    await ctx.db.patch(args.appointmentId, {
+      paymentStatus: "paid",
       paystackReference: args.paystackReference,
     });
   }

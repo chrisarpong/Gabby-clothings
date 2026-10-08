@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import OrderInvoiceModal from './OrderInvoiceModal';
 import AdminCreateOrderDrawer from './AdminCreateOrderDrawer';
 import { getDeviceInfo } from '../../utils/deviceInfo';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   pending: { bg: 'bg-surface-variant/30', text: 'text-primary' },
@@ -26,10 +27,10 @@ const formatStatus = (status: string) => {
 };
 
 export default function OrdersTab() {
-  const orders = useQuery(api.orders.getAll) || [];
-  const updateStatus = useMutation(api.orders.updateStatus);
-  const recordCashPayment = useMutation(api.payments.recordCashPayment);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const orders = useStaffQuery(api.orders.getAll) || [];
+  const updateStatus = useStaffMutation(api.orders.updateStatus);
+  const recordCashPayment = useStaffMutation(api.payments.recordCashPayment);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -43,12 +44,12 @@ export default function OrdersTab() {
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
 
   // Assignment & Production State
-  const staff = useQuery(api.users.listStaffUsers) || [];
-  const orderActivity = useQuery(api.orderActivity.getByOrder, selectedOrder ? { orderId: selectedOrder._id } : "skip") || [];
-  const assignDesigner = useMutation(api.orders.assignDesigner);
-  const updateProductionStatus = useMutation(api.orders.updateProductionStatus);
-  const addNote = useMutation(api.orderActivity.addNote);
-  const notifyClient = useMutation(api.orders.notifyClient);
+  const staff = useStaffQuery(api.staffAuth.listStaff) || [];
+  const orderActivity = useStaffQuery(api.orderActivity.getByOrder, selectedOrder ? { orderId: selectedOrder._id } : "skip") || [];
+  const assignDesigner = useStaffMutation(api.orders.assignDesigner);
+  const updateProductionStatus = useStaffMutation(api.orders.updateProductionStatus);
+  const addNote = useStaffMutation(api.orderActivity.addNote);
+  const notifyClient = useStaffMutation(api.orders.notifyClient);
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [clientMessage, setClientMessage] = useState('');
@@ -464,8 +465,8 @@ export default function OrdersTab() {
                         className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
                       >
                         <option value="">Unassigned</option>
-                        {staff.map(user => (
-                          <option key={user._id} value={user._id}>{user.firstName} {user.lastName} ({user.role || 'Staff'})</option>
+                        {staff.map((user: any) => (
+                          <option key={user._id} value={user._id}>{user.name} ({user.role || 'Staff'})</option>
                         ))}
                       </select>
                     </div>

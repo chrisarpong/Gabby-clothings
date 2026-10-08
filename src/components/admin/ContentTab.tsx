@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { CMSImagePreview } from './CMSImagePreview';
 import ReactMarkdown from 'react-markdown';
 import { getDeviceInfo } from '../../utils/deviceInfo';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 type PageKey = 'home_hero' | 'story_page' | 'faq_items' | 'custom_tailoring' | 'legal_page';
 type EditorTab = 'content' | 'seo';
@@ -14,9 +15,9 @@ export default function ContentTab() {
   const [activePage, setActivePage] = useState<PageKey>('home_hero');
   const [activeEditorTab, setActiveEditorTab] = useState<EditorTab>('content');
   const [isSaving, setIsSaving] = useState(false);
-  const generateUploadUrl = useMutation(api.products.generateUploadUrl);
+  const generateUploadUrl = useStaffMutation(api.products.generateUploadUrl);
 
-  const allBlocks = useQuery(api.content.getAll) || [];
+  const allBlocks = useStaffQuery(api.content.getAll) || [];
   
   const currentBlock = allBlocks.find((b: any) => b.key === activePage);
 
@@ -40,8 +41,8 @@ export default function ContentTab() {
     }
   }, [activePage, currentBlock]);
 
-  const setContent = useMutation(api.content.set);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const setContent = useStaffMutation(api.content.set);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const handleSave = async () => {
     setIsSaving(true);

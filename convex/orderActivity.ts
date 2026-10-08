@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
-import { checkAdmin } from "./authHelper";
+
 import { requireStaff } from "./staffAuth";
 
 export const getByOrder = query({
@@ -18,10 +19,10 @@ export const getByOrder = query({
     // Attach user details to each log
     const logsWithUsers = await Promise.all(
       logs.map(async (log) => {
-        const user = await ctx.db.get(log.performedBy);
+        const user = await ctx.db.get(log.performedBy as Id<"staff">);
         return {
           ...log,
-          performedByName: user ? `${user.firstName} ${user.lastName}` : "Unknown User",
+          performedByName: user ? user.name : "Unknown User",
         };
       })
     );
@@ -38,13 +39,10 @@ export const addNote = mutation({
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "designer_portal" });
-    const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
-    if (!user) throw new Error("User not found");
-
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
       stage: "note",
-      performedBy: user._id,
+      performedBy: staff._id,
       note: args.note,
       timestamp: Date.now(),
     });

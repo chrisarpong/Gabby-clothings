@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStaffAuth } from '../context/StaffAuthContext';
+import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { 
   LayoutDashboard, 
@@ -43,10 +43,10 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
-  const { staffData, logout } = useStaffAuth();
+  const { profile, logout } = useStaffAuth();
 
-  // StaffRoute handles unauthenticated state, so we know staffData exists
-  if (!staffData) return null;
+  // StaffRoute handles unauthenticated state, so we know profile exists
+  if (!profile) return null;
 
   const allTabs: { key: TabKey; name: string; icon: React.ElementType; permission: string }[] = [
     { key: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' },
@@ -63,11 +63,11 @@ export default function Admin() {
     { key: 'team_management', name: 'Team & Roles', icon: Shield, permission: 'team_management' },
   ];
 
-  const tabs = allTabs.filter(tab => hasPermission(staffData.role as StaffRole, tab.permission));
+  const tabs = allTabs.filter(tab => hasPermission(profile.role as StaffRole, tab.permission));
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} adminName={staffData.name || 'Admin'} />;
+      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} adminName={profile.name || 'Admin'} />;
       case 'inventory': return <InventoryTab />;
       case 'settings': return <SettingsTab />;
       case 'orders': return <OrdersTab />;

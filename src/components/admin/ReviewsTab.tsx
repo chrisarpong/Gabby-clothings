@@ -4,12 +4,13 @@ import { api } from '../../../convex/_generated/api';
 import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Star, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function ReviewsTab() {
-  const reviews = useQuery(api.reviews.getAll);
-  const products = useQuery(api.products.getAll);
-  const updateStatus = useMutation(api.reviews.updateStatus);
-  const deleteReview = useMutation(api.reviews.deleteReview);
+  const reviews = useStaffQuery(api.reviews.getAll);
+  const products = useStaffQuery(api.products.getAll);
+  const updateStatus = useStaffMutation(api.reviews.updateStatus);
+  const deleteReview = useStaffMutation(api.reviews.deleteReview);
 
   if (reviews === undefined || products === undefined) {
     return (

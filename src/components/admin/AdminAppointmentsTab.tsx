@@ -9,6 +9,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Calendar as CalendarIcon, List, Download, Printer } from 'lucide-react';
 import AppointmentDrawer from './AppointmentDrawer';
 import { getDeviceInfo } from '../../utils/deviceInfo';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 const locales = {
   'en-US': enUS,
@@ -23,11 +24,11 @@ const localizer = dateFnsLocalizer({
 });
 
 export default function AdminAppointmentsTab() {
-  const appointments = useQuery(api.appointments.getUpcoming);
-  const tailors = useQuery(api.tailors.listActiveTailors);
-  const updateStatus = useMutation(api.appointments.updateStatus);
-  const assignTailor = useMutation(api.appointments.assignTailor);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const appointments = useStaffQuery(api.appointments.getUpcoming);
+  const tailors = useStaffQuery(api.tailors.listActiveTailors);
+  const updateStatus = useStaffMutation(api.appointments.updateStatus);
+  const assignTailor = useStaffMutation(api.appointments.assignTailor);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedApt, setSelectedApt] = useState<any | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());

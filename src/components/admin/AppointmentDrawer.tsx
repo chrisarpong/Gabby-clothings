@@ -4,6 +4,7 @@ import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { X, Calendar, Video, Edit2, DollarSign, Tag, ClipboardList, CheckCircle, MessageCircle, MapPin, AlertCircle, ShoppingBag } from 'lucide-react';
 import { usePaystackPayment } from 'react-paystack';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 const PaystackDepositButton = ({ appointment, amount, onSuccess }: { appointment: any, amount: number, onSuccess: (ref: any) => void }) => {
   const config = {
@@ -33,14 +34,14 @@ interface AppointmentDrawerProps {
 }
 
 export default function AppointmentDrawer({ appointment, onClose }: AppointmentDrawerProps) {
-  const updateStatus = useMutation(api.appointments.updateStatus);
-  const updateDetails = useMutation(api.appointments.updateDetails);
-  const recordAptDeposit = useMutation(api.appointments.recordDeposit);
-  const recordOrderDeposit = useMutation(api.orders.recordDeposit);
-  const createClientFromAppointment = useMutation(api.users.createClientFromAppointment);
-  const linkToUser = useMutation(api.appointments.linkToUser);
-  const createAdminOrder = useMutation(api.orders.createPOSOrder);
-  const products = useQuery(api.products.getAll);
+  const updateStatus = useStaffMutation(api.appointments.updateStatus);
+  const updateDetails = useStaffMutation(api.appointments.updateDetails);
+  const recordAptDeposit = useStaffMutation(api.appointments.recordDeposit);
+  const recordOrderDeposit = useStaffMutation(api.orders.recordDeposit);
+  const createClientFromAppointment = useStaffMutation(api.users.createClientFromAppointment);
+  const linkToUser = useStaffMutation(api.appointments.linkToUser);
+  const createAdminOrder = useStaffMutation(api.orders.createPOSOrder);
+  const products = useStaffQuery(api.products.getAll);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');

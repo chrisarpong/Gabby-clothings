@@ -1,15 +1,13 @@
-import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { checkRateLimit } from "./authHelper";
 import { v } from "convex/values";
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "marketing" });
     return await ctx.db.query("subscribers").order("desc").collect();
   },
 });

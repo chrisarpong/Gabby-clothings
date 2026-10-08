@@ -3,19 +3,20 @@ import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useStaffAuth } from '../../context/StaffAuthContext';
+import { useStaffAuth } from '../../hooks/useStaffAuth';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function TeamManagementTab() {
-  const { staffToken } = useStaffAuth();
-  const staff = useQuery(api.staffAuth.listStaff, { staffToken: staffToken as string }) || [];
+  const { token } = useStaffAuth();
+  const staff = useStaffQuery(api.staffAuth.listStaff, {}) || [];
   
-  const createStaff = useAction(api.staffAuthNode.createStaffUser);
-  const resetPassword = useAction(api.staffAuthNode.resetStaffPassword);
+  const createStaff = useStaffAction(api.staffAuthNode.createStaffUser);
+  const resetPassword = useStaffAction(api.staffAuthNode.resetStaffPassword);
   
-  const toggleActive = useMutation(api.staffAuth.toggleStaffActive);
-  const updateRole = useMutation(api.staffAuth.updateStaffRole);
-  const revokeSessions = useMutation(api.staffAuth.revokeStaffSessions);
-  const reset2FA = useMutation(api.staffAuth.resetStaff2FA);
+  const toggleActive = useStaffMutation(api.staffAuth.toggleStaffActive);
+  const updateRole = useStaffMutation(api.staffAuth.updateStaffRole);
+  const revokeSessions = useStaffMutation(api.staffAuth.revokeStaffSessions);
+  const reset2FA = useStaffMutation(api.staffAuth.resetStaff2FA);
 
   const [newStaffName, setNewStaffName] = useState('');
   const [newStaffEmail, setNewStaffEmail] = useState('');
@@ -28,8 +29,8 @@ export default function TeamManagementTab() {
   const [selectedStaffLogins, setSelectedStaffLogins] = useState<any[] | null>(null);
   const [isViewingLogins, setIsViewingLogins] = useState<string | null>(null);
 
-  const getLogins = useQuery(api.staffAuth.getStaffLogins, 
-    isViewingLogins ? { staffToken: staffToken as string, targetStaffId: isViewingLogins as any } : "skip"
+  const getLogins = useStaffQuery(api.staffAuth.getStaffLogins, 
+    isViewingLogins ? {  targetStaffId: isViewingLogins as any } : "skip"
   );
 
   const handleAddStaff = async () => {
@@ -39,7 +40,7 @@ export default function TeamManagementTab() {
     setIsSubmitting(true);
     try {
       const otp = await createStaff({
-        staffToken: staffToken as string,
+        
         name: newStaffName,
         email: newStaffEmail,
         role: newStaffRole
@@ -61,7 +62,7 @@ export default function TeamManagementTab() {
     
     try {
       const otp = await resetPassword({
-        staffToken: staffToken as string,
+        
         targetStaffId: id as any,
       });
       setGeneratedPassword({ email: name, password: otp });
@@ -75,7 +76,7 @@ export default function TeamManagementTab() {
     if (!confirm(`Are you sure you want to reset 2FA for ${name}? They will be forced to re-enroll on their next login.`)) return;
     try {
       await reset2FA({
-        staffToken: staffToken as string,
+        
         targetStaffId: id as any,
       });
       toast.success(`2FA reset for ${name}`);
@@ -87,7 +88,7 @@ export default function TeamManagementTab() {
   const handleToggleActive = async (id: string, currentlyActive: boolean) => {
     try {
       await toggleActive({
-        staffToken: staffToken as string,
+        
         targetStaffId: id as any,
         isActive: !currentlyActive
       });
@@ -101,7 +102,7 @@ export default function TeamManagementTab() {
     if (!confirm("Are you sure you want to log this user out of all devices?")) return;
     try {
       await revokeSessions({
-        staffToken: staffToken as string,
+        
         targetStaffId: id as any,
       });
       toast.success("All sessions revoked");
@@ -113,7 +114,7 @@ export default function TeamManagementTab() {
   const handleRoleChange = async (id: string, newRole: string) => {
     try {
       await updateRole({
-        staffToken: staffToken as string,
+        
         targetStaffId: id as any,
         role: newRole,
       });

@@ -1,6 +1,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { checkAdmin } from "./authHelper";
+
 import { requireStaff } from "./staffAuth";
 
 export const logAction = mutation({
@@ -17,10 +17,10 @@ export const logAction = mutation({
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
-    const adminName = identity.name || identity.email?.split('@')[0] || "Admin";
+    const adminName = staff.name || staff.email?.split('@')[0] || "Admin";
 
     await ctx.db.insert("adminLogs", {
-      userId: identity.subject,
+      userId: staff._id,
       adminName: adminName,
       action: args.action,
       details: args.details,
@@ -93,7 +93,7 @@ export const getActiveSessions = query({
     const activeSessions = new Map<string, any>();
     
     for (const log of logs) {
-      if (log._creationTime > oneDayAgo && !activeSessions.has(log.userId)) {
+      if (log.userId && log._creationTime > oneDayAgo && !activeSessions.has(log.userId)) {
         if (log.action.includes("Logged In")) {
            activeSessions.set(log.userId, log);
         }

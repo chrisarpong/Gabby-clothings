@@ -3,13 +3,14 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Bell, Check, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  const unreadCount = useQuery(api.notifications.getUnreadCount) || 0;
-  const notifications = useQuery(api.notifications.getUserNotifications) || [];
-  const markAsRead = useMutation(api.notifications.markAsRead);
-  const markAllAsRead = useMutation(api.notifications.markAllAsRead);
+  const unreadCount = useStaffQuery(api.notifications.getUnreadCount) || 0;
+  const notifications = useStaffQuery(api.notifications.getUserNotifications) || [];
+  const markAsRead = useStaffMutation(api.notifications.markAsRead);
+  const markAllAsRead = useStaffMutation(api.notifications.markAllAsRead);
 
   return (
     <div className="relative">

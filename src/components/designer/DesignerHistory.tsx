@@ -2,10 +2,11 @@ import React from 'react';
 import { Archive, Search } from 'lucide-react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function DesignerHistory() {
-  const convexUser = useQuery(api.users.getCurrentUser);
-  const orders = useQuery(api.orders.getAll) || [];
+  const convexUser = useStaffQuery(api.users.getCurrentUser);
+  const orders = useStaffQuery(api.orders.getAll) || [];
 
   // Filter completed/delivered orders assigned to this designer
   const historyOrders = orders.filter(

@@ -230,21 +230,18 @@ export const sendAppointmentUpdate = internalAction({
 
 export const sendPromoBroadcast = action({
   args: {
+    staffToken: v.string(),
     promoCode: v.string(),
     discountValue: v.number(),
   },
   handler: async (ctx, args) => {
     // Admin-only guard: actions don't have ctx.db, so verify identity
-    // and rely on getAllEmails (which itself enforces admin via checkAdmin).
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated: You must be signed in.");
+    // and rely on getAllEmails (which itself enforces admin via staffAuth).
 
     const resend = getResendClient();
     if (!resend) throw new Error("Resend API key not configured");
 
-    // This call will throw "Unauthorized: Admin access required" if the
-    // caller is not an admin, because getAllEmails enforces checkAdmin.
-    const emailsList = await ctx.runQuery(api.users.getAllEmails);
+    const emailsList = await ctx.runQuery(api.users.getAllEmails, { staffToken: args.staffToken });
 
     let sentCount = 0;
     
@@ -340,17 +337,15 @@ export const sendSubscriptionConfirmation = internalAction({
 
 export const sendNewsletterBroadcast = action({
   args: {
+    staffToken: v.string(),
     subject: v.string(),
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated: You must be signed in.");
-
     const resend = getResendClient();
     if (!resend) throw new Error("Resend API key not configured");
 
-    const subscribers = await ctx.runQuery(api.subscribers.getAll);
+    const subscribers = await ctx.runQuery(api.subscribers.getAll, { staffToken: args.staffToken });
     const activeSubscribers = subscribers.filter((s: any) => s.status === 'active');
 
     let sentCount = 0;

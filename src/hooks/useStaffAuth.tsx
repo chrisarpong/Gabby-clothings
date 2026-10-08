@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
+import { FunctionReference, FunctionReturnType } from 'convex/server';
 import { api } from '../../convex/_generated/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -102,4 +103,21 @@ export function useStaffAuth() {
     throw new Error('useStaffAuth must be used within a StaffAuthProvider');
   }
   return context;
+}
+
+export function useStaffQuery<Query extends FunctionReference<"query", "public">>(queryFunc: Query, args?: any): FunctionReturnType<Query> | undefined {
+  const { token } = useStaffAuth();
+  return useQuery(queryFunc, token ? { ...args, staffToken: token } : 'skip') as any;
+}
+
+export function useStaffMutation<Mutation extends FunctionReference<"mutation", "public">>(mutationFunc: Mutation): (args?: any) => Promise<FunctionReturnType<Mutation>> {
+  const { token } = useStaffAuth();
+  const mutate = useMutation(mutationFunc);
+  return (args?: any) => mutate({ ...args, staffToken: token }) as any;
+}
+
+export function useStaffAction<Action extends FunctionReference<"action", "public">>(actionFunc: Action): (args?: any) => Promise<FunctionReturnType<Action>> {
+  const { token } = useStaffAuth();
+  const act = useAction(actionFunc);
+  return (args?: any) => act({ ...args, staffToken: token }) as any;
 }

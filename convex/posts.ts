@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { checkAdmin } from "./authHelper";
+
 import { requireStaff } from "./staffAuth";
 
 export const getNewsFlash = query({
@@ -44,7 +44,7 @@ export const createPost = mutation({
       coverImageId: args.coverImageId,
       category: args.category,
       status: args.status,
-      authorId: identity.subject,
+      authorId: staff._id,
     });
   },
 });

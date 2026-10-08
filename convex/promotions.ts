@@ -1,4 +1,4 @@
-import { checkAdmin, checkRateLimit } from "./authHelper";
+import { checkRateLimit } from "./authHelper";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireStaff } from "./staffAuth";

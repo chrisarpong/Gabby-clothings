@@ -11,7 +11,7 @@ import { formatPrice } from "../utils/currency";
 
 export default function BookAppointment() {
   const bookAppointment = useMutation(api.appointments.book);
-  const updateAppointment = useMutation(api.appointments.updateDetails);
+  const confirmPayment = useMutation(api.appointments.confirmCustomerPayment);
   const { activeCurrency, rates } = useCurrencyStore();
 
   const [step, setStep] = useState(1);
@@ -68,9 +68,8 @@ export default function BookAppointment() {
   const handlePaystackSuccessAction = async (reference: { reference: string }) => {
     setIsSubmitting(true);
     try {
-      await updateAppointment({
+      await confirmPayment({
         appointmentId: createdAppointmentId,
-        paymentStatus: 'paid',
         paystackReference: reference.reference,
       });
       toast.success("Appointment Confirmed", {

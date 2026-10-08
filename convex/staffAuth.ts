@@ -1,4 +1,5 @@
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
 import { STAFF_ROLES, StaffRole, hasPermission } from "./staffPermissions";
 
@@ -134,7 +135,7 @@ export async function validateStaffSession(ctx: any, token: string) {
   if (session.revokedAt) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Session revoked" });
   if (Date.now() > session.expiresAt) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Session expired" });
   
-  const staff = await ctx.db.get(session.staffId);
+  const staff = await ctx.db.get(session.staffId as Id<"staff">);
   if (!staff || !staff.isActive) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Staff account inactive" });
   
   const role = staff.role as StaffRole;
@@ -145,7 +146,7 @@ export async function validateStaffSession(ctx: any, token: string) {
     throw new ConvexError({ code: "UNAUTHENTICATED", message: "Session idle timeout" });
   }
 
-  return { staff, session };
+  return { staff, session: session as { _id: Id<"staffSessions">; staffId: Id<"staff">; revokedAt?: number; lastActivityAt: number; [key: string]: any } };
 }
 
 export async function requireStaff(ctx: any, token: string, options?: { permission?: string }) {

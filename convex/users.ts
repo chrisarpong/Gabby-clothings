@@ -1,13 +1,11 @@
-import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     return await ctx.db.query("users").collect();
   },
 });
@@ -20,11 +18,9 @@ export const getUserByClerkId = internalQuery({
 });
 
 export const getAllEmails = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "marketing" });
 
     // Used by internal actions to get mailing list
     const users = await ctx.db.query("users").collect();
@@ -39,12 +35,13 @@ export const syncUser = mutation({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     role: v.optional(v.string()),
+    staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId) {
-      await checkAdmin(ctx, identity);
+    if (!identity || identity.subject !== args.clerkId) {
+      if (!args.staffToken) throw new Error("Unauthenticated");
+      await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     }
 
     const existingUser = await ctx.db
@@ -75,12 +72,13 @@ export const updateMeasurements = mutation({
   args: {
     clerkId: v.string(),
     measurements: v.any(),
+    staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId) {
-      await checkAdmin(ctx, identity);
+    if (!identity || identity.subject !== args.clerkId) {
+      if (!args.staffToken) throw new Error("Unauthenticated");
+      await requireStaff(ctx, args.staffToken, { permission: "designer_portal" });
     }
 
     const user = await ctx.db
@@ -139,12 +137,13 @@ export const updateProfile = mutation({
       city: v.optional(v.string()),
       region: v.optional(v.string()),
     })),
+    staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== args.clerkId) {
-      await checkAdmin(ctx, identity);
+    if (!identity || identity.subject !== args.clerkId) {
+      if (!args.staffToken) throw new Error("Unauthenticated");
+      await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     }
 
     const user = await ctx.db
@@ -175,11 +174,10 @@ export const createClientFromAppointment = mutation({
     name: v.string(),
     email: v.string(),
     phone: v.optional(v.string()),
+    staffToken: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+    await requireStaff(ctx, args.staffToken, { permission: "appointments" });
 
     const [firstName, ...lastNameParts] = args.name.split(' ');
     const lastName = lastNameParts.join(' ');

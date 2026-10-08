@@ -3,6 +3,7 @@ import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { Image as ImageIcon } from 'lucide-react';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 interface CMSImagePreviewProps {
   imageId: string;
@@ -11,7 +12,7 @@ interface CMSImagePreviewProps {
 }
 
 export function CMSImagePreview({ imageId, className = "w-full h-full object-cover", alt = "Preview" }: CMSImagePreviewProps) {
-  const url = useQuery(api.products.getFileUrl, { storageId: imageId as Id<"_storage"> });
+  const url = useStaffQuery(api.products.getFileUrl, { storageId: imageId as Id<"_storage"> });
 
   if (url === undefined) {
     return (

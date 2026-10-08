@@ -7,6 +7,7 @@ import { getDeviceInfo } from '../../utils/deviceInfo';
 import { toast } from 'sonner';
 import { SUPPORTED_CURRENCIES } from '../../utils/currency';
 import TailorsSection from './TailorsSection';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 // ─── Sub-navigation tabs ───
 type SettingsSection = 'general' | 'team' | 'commerce' | 'currency' | 'appointments' | 'storefront' | 'notifications';
@@ -95,10 +96,10 @@ function SectionCard({ title, description, children }: { title: string; descript
 
 // ─── Main Component ───
 export default function SettingsTab() {
-  const settingsRecords = useQuery(api.settings.getAll);
-  const dbRates = useQuery(api.currency.getRates);
-  const setSetting = useMutation(api.settings.setSetting);
-  const logAction = useMutation(api.adminLogs.logAction);
+  const settingsRecords = useStaffQuery(api.settings.getAll);
+  const dbRates = useStaffQuery(api.currency.getRates);
+  const setSetting = useStaffMutation(api.settings.setSetting);
+  const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [isSaving, setIsSaving] = useState(false);

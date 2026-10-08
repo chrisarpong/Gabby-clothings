@@ -4,12 +4,13 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Scissors, Search, Clock, CheckCircle2, ChevronRight, Menu, X, LogOut, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function DesignerTasks() {
-  const convexUser = useQuery(api.users.getCurrentUser);
-  const orders = useQuery(api.orders.getAll) || [];
-  const updateProductionStatus = useMutation(api.orders.updateProductionStatus);
-  const addNote = useMutation(api.orderActivity.addNote);
+  const convexUser = useStaffQuery(api.users.getCurrentUser);
+  const orders = useStaffQuery(api.orders.getAll) || [];
+  const updateProductionStatus = useStaffMutation(api.orders.updateProductionStatus);
+  const addNote = useStaffMutation(api.orderActivity.addNote);
 
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [newNote, setNewNote] = useState('');
@@ -165,7 +166,7 @@ export default function DesignerTasks() {
 }
 
 function OrderActivityList({ orderId }: { orderId: any }) {
-  const activity = useQuery(api.orderActivity.getByOrder, { orderId }) || [];
+  const activity = useStaffQuery(api.orderActivity.getByOrder, { orderId }) || [];
   
   if (activity.length === 0) {
     return <p className="text-xs italic text-on-surface-variant">No notes yet.</p>;

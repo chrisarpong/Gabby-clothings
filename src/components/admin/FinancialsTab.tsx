@@ -4,11 +4,12 @@ import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { DollarSign, ArrowUpRight, TrendingUp, ShoppingBag } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 const COLORS = ['#352421', '#827472', '#d4c3c1', '#735c00', '#1C1B1F'];
 
 export default function FinancialsTab() {
-  const orders = useQuery(api.orders.getAll);
+  const orders = useStaffQuery(api.orders.getAll);
 
   if (orders === undefined) {
     return (

@@ -2,10 +2,11 @@ import React from 'react';
 import { Calendar, Search } from 'lucide-react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function DesignerAppointments() {
-  const convexUser = useQuery(api.users.getCurrentUser);
-  const allAppointments = useQuery(api.appointments.getUpcoming) || [];
+  const convexUser = useStaffQuery(api.users.getCurrentUser);
+  const allAppointments = useStaffQuery(api.appointments.getUpcoming) || [];
   
   // Filter appointments assigned to this tailor
   const appointments = allAppointments.filter((apt: any) => 
@@ -51,8 +52,8 @@ export default function DesignerAppointments() {
                 {appointments.map((apt, idx) => (
                   <tr key={apt._id} className={idx !== appointments.length - 1 ? 'border-b border-outline-variant/30' : ''}>
                     <td className="p-4 text-primary font-mono">{new Date(apt.date).toLocaleString()}</td>
-                    <td className="p-4 text-on-surface-variant">{apt.firstName} {apt.lastName}</td>
-                    <td className="p-4 text-on-surface-variant capitalize">{apt.type}</td>
+                    <td className="p-4 text-on-surface-variant">{apt.name}</td>
+                    <td className="p-4 text-on-surface-variant capitalize">{apt.garmentType}</td>
                     <td className="p-4">
                       <span className="bg-primary/10 text-primary px-2 py-1 text-[10px] uppercase tracking-widest font-bold">
                         {apt.status}
