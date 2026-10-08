@@ -37,6 +37,7 @@ const SalesPortal = lazy(() => import('./pages/SalesPortal'));
 const StaffLogin = lazy(() => import('./pages/StaffLogin'));
 const StaffChangePassword = lazy(() => import('./pages/StaffChangePassword'));
 const StaffSetup2FA = lazy(() => import('./pages/StaffSetup2FA'));
+const StaffVerify2FA = lazy(() => import('./pages/StaffVerify2FA'));
 
 import ScrollToTop from './components/ScrollToTop';
 import { useUser } from '@clerk/clerk-react';
@@ -110,7 +111,7 @@ function CurrencySync() {
 
 import CookieBanner from './components/CookieBanner';
 import NewsFlashModal from './components/NewsFlashModal';
-import { StaffAuthProvider } from './context/StaffAuthContext';
+import { StaffAuthProvider } from './hooks/useStaffAuth';
 import { StaffRoute } from './components/auth/StaffRoute';
 
 export default function App() {
@@ -145,6 +146,11 @@ export default function App() {
             <StaffRoute>
               <StaffSetup2FA />
             </StaffRoute>
+          </Suspense>
+        } />
+        <Route path="/staff/2fa-verify" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+            <StaffVerify2FA />
           </Suspense>
         } />
 

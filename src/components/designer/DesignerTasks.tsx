@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUser, SignInButton } from '@clerk/clerk-react';
+
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Scissors, Search, Clock, CheckCircle2, ChevronRight, Menu, X, LogOut, MessageSquare } from 'lucide-react';

@@ -19,9 +19,9 @@ interface StaffAuthContextType {
   token: string | null;
   profile: StaffProfile | null | undefined; // undefined = loading, null = unauthenticated
   login: (email: string, pass: string) => Promise<{ status: string; token: string }>;
-  changePassword: (challengeToken: string, pass: string) => Promise<{ status: string; token: string }>;
-  setup2FA: (challengeToken: string) => Promise<{ secret: string; uri: string }>;
-  verify2FA: (challengeToken: string, code: string, isSetup?: boolean) => Promise<{ status: string; token: string; recoveryCodes?: string[] }>;
+  changePassword: (pass: string) => Promise<{ status: string; token: string }>;
+  setup2FA: () => Promise<{ secret: string; uri: string }>;
+  verify2FA: (token: string, code: string, isSetup?: boolean) => Promise<{ status: string; token: string; recoveryCodes?: string[] }>;
   logout: () => Promise<void>;
 }
 
@@ -58,20 +58,23 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     return res;
   };
 
-  const changePassword = async (challengeToken: string, pass: string) => {
-    const res = await changePassAction({ challengeToken, newPassword: pass });
+  const changePassword = async (pass: string) => {
+    if (!token) throw new Error("No session");
+    const res = await changePassAction({ staffToken: token, newPassword: pass });
+    // We already have the token in state, but the server also returns it
     if (res.status === 'success') {
       setToken(res.token);
     }
     return res;
   };
 
-  const setup2FA = async (challengeToken: string) => {
-    return await setup2faAction({ challengeToken });
+  const setup2FA = async () => {
+    if (!token) throw new Error("No session");
+    return await setup2faAction({ staffToken: token });
   };
 
-  const verify2FA = async (challengeToken: string, code: string, isSetup?: boolean) => {
-    const res = await verify2faAction({ challengeToken, totpCode: code, isSetup });
+  const verify2FA = async (challengeTokenOrSessionToken: string, code: string, isSetup?: boolean) => {
+    const res = await verify2faAction({ token: challengeTokenOrSessionToken, code, isSetup });
     if (res.status === 'success') {
       setToken(res.token);
     }
