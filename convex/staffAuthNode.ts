@@ -185,3 +185,68 @@ export const verify2FA = action({
     }
   }
 });
+
+function generateTempPassword() {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let temp = "";
+  for (let i = 0; i < 16; i++) {
+    temp += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return temp;
+}
+
+export const createStaffUser = action({
+  args: {
+    staffToken: v.string(),
+    name: v.string(),
+    email: v.string(),
+    role: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // 1. Validate session & permissions
+    const { staff } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.staffToken });
+    if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
+
+    // 2. Generate strong OTP
+    const tempPassword = generateTempPassword();
+
+    // 3. Hash password
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = await hashPassword(tempPassword, salt);
+
+    // 4. Create user
+    await ctx.runMutation(internal.staffAuth.createStaffInternal, {
+      name: args.name,
+      email: args.email,
+      role: args.role,
+      passwordHash: hash,
+      passwordSalt: salt,
+      createdBy: staff._id,
+    });
+
+    return tempPassword;
+  }
+});
+
+export const resetStaffPassword = action({
+  args: {
+    staffToken: v.string(),
+    targetStaffId: v.id("staff"),
+  },
+  handler: async (ctx, args) => {
+    const { staff } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.staffToken });
+    if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
+
+    const tempPassword = generateTempPassword();
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = await hashPassword(tempPassword, salt);
+
+    await ctx.runMutation(internal.staffAuth.updateStaffPasswordInternal, {
+      staffId: args.targetStaffId,
+      passwordHash: hash,
+      passwordSalt: salt,
+    });
+
+    return tempPassword;
+  }
+});
