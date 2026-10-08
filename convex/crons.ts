@@ -20,4 +20,10 @@ crons.interval(
   internal.currency.fetchLiveRates
 );
 
+crons.interval(
+  "cleanup-staff-sessions",
+  { hours: 1 },
+  internal.staffAuth.cleanupSessions
+);
+
 export default crons;
