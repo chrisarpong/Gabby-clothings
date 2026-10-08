@@ -1,6 +1,7 @@
 import { checkAdmin } from "./authHelper";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireStaff } from "./staffAuth";
 
 export const getAll = query({
   args: {},
@@ -59,6 +60,7 @@ export const getByIds = query({
 
 export const create = mutation({
   args: {
+      staffToken: v.string(),
     name: v.string(),
     basePrice: v.number(),
     description: v.string(),
@@ -86,15 +88,14 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "inventory" });
     return await ctx.db.insert("products", args);
   },
 });
 
 export const update = mutation({
   args: {
+      staffToken: v.string(),
     id: v.id("products"),
     name: v.optional(v.string()),
     basePrice: v.optional(v.number()),
@@ -123,10 +124,7 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-    
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "inventory" });
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
   },
@@ -134,15 +132,13 @@ export const update = mutation({
 
 export const updateVariantStock = mutation({
   args: {
+      staffToken: v.string(),
     productId: v.id("products"),
     sku: v.string(),
     quantityToDecrease: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "inventory" });
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");
     if (!product.variants) return; 
@@ -171,16 +167,14 @@ export const getFileUrl = query({
 });
 
 export const seed = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "inventory" });
     if (process.env.NODE_ENV === "production") {
       throw new Error("Danger: Seed mutation is strictly disabled in production environments.");
     }
-    
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
     const existing = await ctx.db.query("products").collect();
     
     // Fallbacks for existing dummy data that might not have images
@@ -278,21 +272,18 @@ export const seed = mutation({
   }
 });
 
-export const generateUploadUrl = mutation(async (ctx) => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Unauthenticated: You must be signed in to upload.");
-  await checkAdmin(ctx, identity);
+export const generateUploadUrl = mutation({ args: { staffToken: v.string() }, handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "inventory" });
   return await ctx.storage.generateUploadUrl();
-});
+} });
 
 export const fixMissingImages = internalMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "inventory" });
     // Only allow admins to run this
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
     const products = await ctx.db.query("products").collect();
     let fixedCount = 0;
     

@@ -1,44 +1,17 @@
 import React, { useState } from 'react';
-import { useUser, SignInButton } from '@clerk/clerk-react';
-import { useQuery } from '@/hooks/useConvex';
-import { api } from '../../convex/_generated/api';
+import { useStaffAuth } from '../context/StaffAuthContext';
 import { Scissors, Calendar, Archive, Ruler, LogOut } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
-
 import DesignerTasks from '../components/designer/DesignerTasks';
 import DesignerAppointments from '../components/designer/DesignerAppointments';
 import DesignerHistory from '../components/designer/DesignerHistory';
 import DesignerMeasurements from '../components/designer/DesignerMeasurements';
 
 export default function DesignerPortal() {
-  const { user, isLoaded } = useUser();
-  const convexUser = useQuery(api.users.getCurrentUser);
+  const { staffData, logout } = useStaffAuth();
 
   const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'history' | 'measurements'>('tasks');
 
-  if (!isLoaded || (user && convexUser === undefined)) {
-    return <div className="min-h-screen bg-surface flex items-center justify-center font-sans tracking-widest text-primary text-sm uppercase">Loading...</div>;
-  }
-
-  if (!user) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-surface text-primary font-sans">
-        <Scissors className="w-12 h-12 mb-4 text-outline" />
-        <h1 className="font-serif text-3xl mb-2 text-primary">Designer Portal</h1>
-        <p className="text-on-surface-variant mb-8">Please sign in to view your assigned orders.</p>
-        <SignInButton mode="modal" fallbackRedirectUrl="/designer">
-          <button className="px-6 py-3 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors rounded-none">
-            Log In
-          </button>
-        </SignInButton>
-      </div>
-    );
-  }
-
-  // Basic check: they must be a staff user (or have a role) to access this
-  if (!convexUser?.roleId && convexUser?.role === 'client') {
-    return <Navigate to="/" replace />;
-  }
+  if (!staffData) return null;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -69,7 +42,7 @@ export default function DesignerPortal() {
         <div className="p-6 border-b border-surface-variant">
           <h1 className="font-serif text-2xl text-primary tracking-tight mb-2">Designer Portal</h1>
           <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">
-            {user.firstName} {user.lastName}
+            {staffData.name}
           </p>
         </div>
         
@@ -95,10 +68,10 @@ export default function DesignerPortal() {
         </nav>
 
         <div className="p-4 border-t border-surface-variant">
-          <a href="/" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-error hover:bg-error/10 transition-colors">
+          <button onClick={() => logout()} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-error hover:bg-error/10 transition-colors">
             <LogOut className="w-5 h-5" />
             Exit Portal
-          </a>
+          </button>
         </div>
       </aside>
 

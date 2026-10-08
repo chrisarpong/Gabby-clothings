@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useUser, SignOutButton, SignInButton } from '@clerk/clerk-react';
+import React, { useState } from 'react';
+import { useStaffAuth } from '../context/StaffAuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { useQuery, useMutation } from '@/hooks/useConvex';
-import { api } from '../../convex/_generated/api';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -21,9 +19,8 @@ import {
   Shield,
   FileText
 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
-import { getDeviceInfo } from '../utils/deviceInfo';
+import { hasPermission, StaffRole } from '../../convex/staffPermissions';
 
 import InventoryTab from '../components/admin/InventoryTab';
 import SettingsTab from '../components/admin/SettingsTab';
@@ -40,95 +37,37 @@ import NewsTab from '../components/admin/NewsTab';
 import TeamManagementTab from '../components/admin/TeamManagementTab';
 import NotificationBell from '../components/admin/NotificationBell';
 
-
-
-type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team';
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team_management';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
-  const { user, isLoaded } = useUser();
-  const convexUser = useQuery(api.users.getCurrentUser);
+  const { staffData, logout } = useStaffAuth();
 
-  // convexUser is undefined while loading, null if no matching record found
-  const isConvexLoading = convexUser === undefined;
+  // StaffRoute handles unauthenticated state, so we know staffData exists
+  if (!staffData) return null;
 
-  // RBAC — support both "admin" and "superadmin" roles
-  const clerkRole = user?.publicMetadata?.role as string | undefined;
-  const isAdminRole = (role?: string) => role === 'admin' || role === 'superadmin';
-  const bossEmail = 'd.alexanderelorm@gmail.com';
-  const isBoss = user?.primaryEmailAddress?.emailAddress === bossEmail;
-  const isAdmin = isBoss || isAdminRole(clerkRole) || isAdminRole(convexUser?.role) || !!convexUser?.roleId;
-  const syncUser = useMutation(api.users.syncUser);
-  const logAction = useMutation(api.adminLogs.logAction);
-  const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
-
-  useEffect(() => {
-    if (user && isAdmin && convexUser) {
-      syncUser({
-        clerkId: user.id,
-        email: user.primaryEmailAddress?.emailAddress || "",
-        firstName: user.firstName || undefined,
-        lastName: user.lastName || undefined,
-        role: convexUser.role, // preserve their existing role (admin or superadmin)
-      }).catch(console.error);
-
-      if (!hasLoggedLogin) {
-        setHasLoggedLogin(true);
-        getDeviceInfo().then(deviceInfo => {
-          logAction({ 
-            action: "Logged In to Admin Dashboard",
-            category: "auth",
-            ...deviceInfo
-          }).catch(() => {}); // Silently swallow — login logging is non-critical
-        }).catch(() => {}); // getDeviceInfo failure is non-critical
-      }
-    }
-  }, [user, isAdmin, convexUser, hasLoggedLogin]);
-
-
-  if (!isLoaded || (user && isConvexLoading)) {
-    return <div className="min-h-screen bg-surface flex items-center justify-center font-sans tracking-widest text-primary text-sm uppercase">Loading...</div>;
-  }
-
-  if (!user) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-surface text-primary font-sans">
-        <ShieldAlert className="w-12 h-12 mb-4 text-outline" />
-        <h1 className="font-serif text-3xl mb-2 text-primary">Admin Portal</h1>
-        <p className="text-on-surface-variant mb-8">Please sign in to access the administrator dashboard.</p>
-        <SignInButton mode="modal" fallbackRedirectUrl="/admin">
-          <button className="px-6 py-3 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors rounded-none">
-            Log In as Admin
-          </button>
-        </SignInButton>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
-  const tabs: { key: TabKey; name: string; icon: React.ElementType }[] = [
-    { key: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { key: 'orders', name: 'Orders', icon: ShoppingCart },
-    { key: 'inventory', name: 'Inventory', icon: Package },
-    { key: 'clients', name: 'Clients', icon: Users },
-    { key: 'appointments', name: 'Appointments', icon: HeartHandshake },
-    { key: 'news', name: 'News & Blog', icon: Volume2 },
-    { key: 'reviews', name: 'Reviews', icon: Star },
-    { key: 'financials', name: 'Financials', icon: LineChart },
-    { key: 'marketing', name: 'Marketing', icon: Volume2 },
-    { key: 'promotions', name: 'Promotions', icon: Tag },
-    { key: 'content', name: 'Pages & Content', icon: FileText },
-    { key: 'team', name: 'Team & Roles', icon: Shield },
+  const allTabs: { key: TabKey; name: string; icon: React.ElementType; permission: string }[] = [
+    { key: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' },
+    { key: 'orders', name: 'Orders', icon: ShoppingCart, permission: 'orders' },
+    { key: 'inventory', name: 'Inventory', icon: Package, permission: 'inventory' },
+    { key: 'clients', name: 'Clients', icon: Users, permission: 'clients' },
+    { key: 'appointments', name: 'Appointments', icon: HeartHandshake, permission: 'appointments' },
+    { key: 'news', name: 'News & Blog', icon: Volume2, permission: 'news' },
+    { key: 'reviews', name: 'Reviews', icon: Star, permission: 'reviews' },
+    { key: 'financials', name: 'Financials', icon: LineChart, permission: 'financials' },
+    { key: 'marketing', name: 'Marketing', icon: Volume2, permission: 'marketing' },
+    { key: 'promotions', name: 'Promotions', icon: Tag, permission: 'promotions' },
+    { key: 'content', name: 'Pages & Content', icon: FileText, permission: 'content' },
+    { key: 'team_management', name: 'Team & Roles', icon: Shield, permission: 'team_management' },
   ];
+
+  const tabs = allTabs.filter(tab => hasPermission(staffData.role as StaffRole, tab.permission));
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} adminName={user.firstName || 'Admin'} />;
+      case 'dashboard': return <DashboardTab setActiveTab={setActiveTab} adminName={staffData.name || 'Admin'} />;
       case 'inventory': return <InventoryTab />;
       case 'settings': return <SettingsTab />;
       case 'orders': return <OrdersTab />;
@@ -140,7 +79,7 @@ export default function Admin() {
       case 'financials': return <FinancialsTab />;
       case 'marketing': return <MarketingTab />;
       case 'content': return <ContentTab />;
-      case 'team': return <TeamManagementTab />;
+      case 'team_management': return <TeamManagementTab />;
       default: return null;
     }
   };
@@ -247,15 +186,14 @@ export default function Admin() {
           <div className={isDesktopExpanded ? 'flex justify-center' : 'flex justify-center w-full'}>
             <ThemeToggle isCompact={!isDesktopExpanded} />
           </div>
-          <SignOutButton>
-            <button 
+          <button 
+              onClick={() => logout()}
               title="Logout" 
               className={`flex items-center justify-center gap-3 py-2.5 font-label text-[10px] tracking-[0.15em] uppercase text-red-500 border border-red-900/30 bg-red-950/20 hover:bg-red-600 hover:text-white transition-colors duration-300 rounded-none whitespace-nowrap overflow-hidden ${isDesktopExpanded ? 'w-full px-4 text-left' : 'w-10 h-10 px-0'}`}
             >
               <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} /> 
               {isDesktopExpanded && <span>Logout</span>}
             </button>
-          </SignOutButton>
         </div>
       </aside>
 

@@ -1,332 +1,330 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@/hooks/useConvex';
+import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
-import { Users, Shield, Plus, Trash2 } from 'lucide-react';
+import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useStaffAuth } from '../../context/StaffAuthContext';
 
 export default function TeamManagementTab() {
-  const staff = useQuery(api.users.listStaffUsers);
-  const roles = useQuery(api.roles.listRoles);
+  const { staffToken } = useStaffAuth();
+  const staff = useQuery(api.staffAuth.listStaff, { staffToken: staffToken as string }) || [];
   
-  const createStaff = useMutation(api.users.createStaffUser);
-  const updateUserRole = useMutation(api.users.updateUserRole);
-  const createRole = useMutation(api.roles.createRole);
-  const removeRole = useMutation(api.roles.removeRole);
+  const createStaff = useAction(api.staffAuthNode.createStaffUser);
+  const resetPassword = useAction(api.staffAuthNode.resetStaffPassword);
+  
+  const toggleActive = useMutation(api.staffAuth.toggleStaffActive);
+  const updateRole = useMutation(api.staffAuth.updateStaffRole);
+  const revokeSessions = useMutation(api.staffAuth.revokeStaffSessions);
+  const reset2FA = useMutation(api.staffAuth.resetStaff2FA);
 
-  const [activeTab, setActiveTab] = useState<'staff' | 'roles'>('staff');
-  
-  // New Staff State
   const [newStaffName, setNewStaffName] = useState('');
   const [newStaffEmail, setNewStaffEmail] = useState('');
-  const [newStaffPhone, setNewStaffPhone] = useState('');
-  const [newStaffRoleId, setNewStaffRoleId] = useState('');
-  const [isSubmittingStaff, setIsSubmittingStaff] = useState(false);
+  const [newStaffRole, setNewStaffRole] = useState('designer');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [generatedPassword, setGeneratedPassword] = useState<{email: string, password: string} | null>(null);
+  const [copied, setCopied] = useState(false);
+  
+  const [selectedStaffLogins, setSelectedStaffLogins] = useState<any[] | null>(null);
+  const [isViewingLogins, setIsViewingLogins] = useState<string | null>(null);
 
-  // New Role State
-  const [newRoleName, setNewRoleName] = useState('');
-  const [newRoleLabel, setNewRoleLabel] = useState('');
-  const [newRolePermissions, setNewRolePermissions] = useState<string[]>([]);
-  const [isSubmittingRole, setIsSubmittingRole] = useState(false);
-
-  const availablePermissions = [
-    { id: 'all', label: 'Full Admin Access' },
-    { id: 'manage_inventory', label: 'Manage Inventory' },
-    { id: 'manage_orders', label: 'Manage Orders' },
-    { id: 'manage_appointments', label: 'Manage Appointments' },
-    { id: 'manage_clients', label: 'Manage Clients' },
-    { id: 'manage_team', label: 'Manage Team & Roles' },
-    { id: 'manage_content', label: 'Manage Content & CMS' },
-    { id: 'manage_settings', label: 'Manage Settings' },
-    { id: 'sales_person', label: 'Sales Person (Walk-ins & Appointments)' },
-  ];
+  const getLogins = useQuery(api.staffAuth.getStaffLogins, 
+    isViewingLogins ? { staffToken: staffToken as string, targetStaffId: isViewingLogins as any } : "skip"
+  );
 
   const handleAddStaff = async () => {
-    if (!newStaffName || !newStaffEmail || !newStaffRoleId) {
-      toast.error('Name, email, and role are required');
-      return;
+    if (!newStaffName || !newStaffEmail || !newStaffRole) {
+      return toast.error("All fields are required");
     }
-    
-    setIsSubmittingStaff(true);
+    setIsSubmitting(true);
     try {
-      await createStaff({
+      const otp = await createStaff({
+        staffToken: staffToken as string,
         name: newStaffName,
         email: newStaffEmail,
-        phone: newStaffPhone || undefined,
-        roleId: newStaffRoleId as any,
+        role: newStaffRole
       });
-      toast.success('Staff user created (Clerk invite required manually for now)');
+      setGeneratedPassword({ email: newStaffEmail, password: otp });
       setNewStaffName('');
       setNewStaffEmail('');
-      setNewStaffPhone('');
-      setNewStaffRoleId('');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create staff');
+      setNewStaffRole('designer');
+      toast.success("Staff member created successfully");
+    } catch (err: any) {
+      toast.error(err.message);
     } finally {
-      setIsSubmittingStaff(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleAddRole = async () => {
-    if (!newRoleName || !newRoleLabel || newRolePermissions.length === 0) {
-      toast.error('Role name, label, and at least 1 permission required');
-      return;
-    }
+  const handleResetPassword = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to reset the password for ${name}? This will revoke all their active sessions immediately.`)) return;
     
-    setIsSubmittingRole(true);
     try {
-      await createRole({
-        name: newRoleName,
-        label: newRoleLabel,
-        permissions: newRolePermissions,
-        isSystemRole: false,
+      const otp = await resetPassword({
+        staffToken: staffToken as string,
+        targetStaffId: id as any,
       });
-      toast.success('Role created successfully');
-      setNewRoleName('');
-      setNewRoleLabel('');
-      setNewRolePermissions([]);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create role');
-    } finally {
-      setIsSubmittingRole(false);
+      setGeneratedPassword({ email: name, password: otp });
+      toast.success(`Password reset for ${name}`);
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
-  const togglePermission = (id: string) => {
-    if (newRolePermissions.includes(id)) {
-      setNewRolePermissions(newRolePermissions.filter(p => p !== id));
-    } else {
-      setNewRolePermissions([...newRolePermissions, id]);
+  const handleReset2FA = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to reset 2FA for ${name}? They will be forced to re-enroll on their next login.`)) return;
+    try {
+      await reset2FA({
+        staffToken: staffToken as string,
+        targetStaffId: id as any,
+      });
+      toast.success(`2FA reset for ${name}`);
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
-  const handleDeleteRole = async (id: string) => {
-    if (confirm('Are you sure you want to delete this role? Users with this role may lose access.')) {
-      try {
-        await removeRole({ id: id as any });
-        toast.success('Role deleted');
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to delete role');
-      }
+  const handleToggleActive = async (id: string, currentlyActive: boolean) => {
+    try {
+      await toggleActive({
+        staffToken: staffToken as string,
+        targetStaffId: id as any,
+        isActive: !currentlyActive
+      });
+      toast.success(currentlyActive ? "Staff member deactivated" : "Staff member activated");
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
-  if (staff === undefined || roles === undefined) {
-    return <div className="p-8 text-on-surface-variant text-xs uppercase tracking-widest animate-pulse">Loading team data...</div>;
-  }
+  const handleRevokeSessions = async (id: string) => {
+    if (!confirm("Are you sure you want to log this user out of all devices?")) return;
+    try {
+      await revokeSessions({
+        staffToken: staffToken as string,
+        targetStaffId: id as any,
+      });
+      toast.success("All sessions revoked");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+  
+  const handleRoleChange = async (id: string, newRole: string) => {
+    try {
+      await updateRole({
+        staffToken: staffToken as string,
+        targetStaffId: id as any,
+        role: newRole,
+      });
+      toast.success("Role updated");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const copyPassword = () => {
+    if (generatedPassword) {
+      navigator.clipboard.writeText(generatedPassword.password);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Tabs */}
-      <div className="flex border-b border-surface-variant">
-        <button
-          onClick={() => setActiveTab('staff')}
-          className={`px-6 py-4 text-sm font-medium transition-colors ${
-            activeTab === 'staff'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface'
-          }`}
-        >
-          Staff Members
-        </button>
-        <button
-          onClick={() => setActiveTab('roles')}
-          className={`px-6 py-4 text-sm font-medium transition-colors ${
-            activeTab === 'roles'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface'
-          }`}
-        >
-          Roles & Permissions
-        </button>
-      </div>
-
-      {activeTab === 'staff' && (
-        <div className="space-y-8">
-          <div className="bg-surface border border-surface-variant p-6 sm:p-8">
-            <h2 className="font-serif text-2xl text-primary mb-2 flex items-center gap-3">
-              <Users className="w-5 h-5 text-on-surface-variant" />
-              Add Staff Member
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-              <div>
-                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Name *</label>
-                <input 
-                  type="text" 
-                  value={newStaffName} onChange={e => setNewStaffName(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Email *</label>
-                <input 
-                  type="email" 
-                  value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Phone</label>
-                <input 
-                  type="tel" 
-                  value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Role *</label>
-                <div className="flex gap-2">
-                  <select 
-                    value={newStaffRoleId} onChange={e => setNewStaffRoleId(e.target.value)}
-                    className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                  >
-                    <option value="">Select a role...</option>
-                    {roles.map(r => (
-                      <option key={r._id} value={r._id}>{r.label}</option>
-                    ))}
-                  </select>
-                  <button 
-                    onClick={handleAddStaff} disabled={isSubmittingStaff}
-                    className="bg-primary text-surface px-4 py-3 hover:bg-tertiary transition-colors flex items-center justify-center disabled:opacity-50"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* Generated Password Modal/Banner */}
+      {generatedPassword && (
+        <div className="bg-yellow-500/10 border border-yellow-500/50 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h3 className="text-yellow-600 dark:text-yellow-400 font-bold uppercase tracking-widest text-xs mb-2">Important: One-Time Password</h3>
+            <p className="text-sm text-on-surface-variant max-w-lg">
+              A temporary password has been generated for <strong>{generatedPassword.email}</strong>. 
+              Please copy and securely share this password. <span className="font-bold text-error">It will NOT be shown again.</span> The user will be forced to change it on their first login.
+            </p>
           </div>
-
-          <div className="border border-surface-variant bg-surface-container-lowest">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-surface border-b border-surface-variant">
-                <tr>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Name</th>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Email</th>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Role</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-variant">
-                {staff.map(user => (
-                  <tr key={user._id} className="hover:bg-surface/50">
-                    <td className="px-6 py-4 text-primary font-medium">{user.firstName} {user.lastName}</td>
-                    <td className="px-6 py-4 text-on-surface-variant">{user.email}</td>
-                    <td className="px-6 py-4">
-                      {user.roleId ? (
-                        <select
-                          value={user.roleId}
-                          onChange={(e) => updateUserRole({ userId: user._id, roleId: e.target.value as any })}
-                          className="bg-transparent border border-surface-variant px-2 py-1 text-sm focus:border-primary text-primary"
-                        >
-                          {roles.map(r => (
-                            <option key={r._id} value={r._id}>{r.label}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="text-secondary">{user.role} (Legacy)</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {staff.length === 0 && (
-                  <tr><td colSpan={3} className="p-8 text-center text-on-surface-variant">No staff found.</td></tr>
-                )}
-              </tbody>
-            </table>
+          <div className="flex items-center gap-3 bg-surface p-2 border border-surface-variant shrink-0">
+            <code className="px-4 py-2 text-lg font-mono text-primary font-bold tracking-widest">
+              {generatedPassword.password}
+            </code>
+            <button 
+              onClick={copyPassword}
+              className="p-3 bg-primary text-surface hover:bg-tertiary transition-colors"
+            >
+              {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            </button>
           </div>
+          <button 
+            onClick={() => setGeneratedPassword(null)}
+            className="text-xs uppercase tracking-widest text-outline hover:text-primary transition-colors underline underline-offset-4 mt-4 md:mt-0"
+          >
+            I have saved this password
+          </button>
         </div>
       )}
 
-      {activeTab === 'roles' && (
-        <div className="space-y-8">
-          <div className="bg-surface border border-surface-variant p-6 sm:p-8">
-            <h2 className="font-serif text-2xl text-primary mb-2 flex items-center gap-3">
-              <Shield className="w-5 h-5 text-on-surface-variant" />
-              Create Custom Role
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-              <div>
-                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Role ID (Internal) *</label>
-                <input 
-                  type="text" placeholder="e.g. quality_control"
-                  value={newRoleName} onChange={e => setNewRoleName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                  className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Display Label *</label>
-                <input 
-                  type="text" placeholder="e.g. Quality Control"
-                  value={newRoleLabel} onChange={e => setNewRoleLabel(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                />
-              </div>
-            </div>
-            <div className="mt-6">
-              <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-4">Permissions *</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {availablePermissions.map(p => (
-                  <label key={p.id} className="flex items-center gap-2 text-sm text-primary cursor-pointer group">
-                    <div className="relative flex items-center justify-center">
-                      <input 
-                        type="checkbox" 
-                        checked={newRolePermissions.includes(p.id)}
-                        onChange={() => togglePermission(p.id)}
-                        className="peer appearance-none w-4 h-4 border border-surface-variant rounded-sm checked:bg-primary checked:border-primary cursor-pointer transition-colors"
-                      />
-                      <div className="pointer-events-none absolute text-surface opacity-0 peer-checked:opacity-100 transition-opacity">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                      </div>
-                    </div>
-                    <span className="group-hover:text-primary/80 transition-colors">{p.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="mt-6">
-              <button 
-                onClick={handleAddRole} disabled={isSubmittingRole}
-                className="bg-primary text-surface px-6 py-3 hover:bg-tertiary transition-colors disabled:opacity-50"
+      {/* Add Staff */}
+      <div className="bg-surface border border-surface-variant p-6 sm:p-8">
+        <h2 className="font-serif text-2xl text-primary mb-2 flex items-center gap-3">
+          <Users className="w-5 h-5 text-on-surface-variant" />
+          Add Staff Member
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Name *</label>
+            <input 
+              type="text" 
+              value={newStaffName} onChange={e => setNewStaffName(e.target.value)}
+              className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Email *</label>
+            <input 
+              type="email" 
+              value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)}
+              className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Role *</label>
+            <div className="flex gap-2">
+              <select 
+                value={newStaffRole} onChange={e => setNewStaffRole(e.target.value)}
+                className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
               >
-                Create Role
+                <option value="designer">Designer</option>
+                <option value="sales">Sales</option>
+                <option value="admin">Admin</option>
+                <option value="ceo">CEO</option>
+              </select>
+              <button 
+                onClick={handleAddStaff} disabled={isSubmitting}
+                className="bg-primary text-surface px-4 py-3 hover:bg-tertiary transition-colors flex items-center justify-center disabled:opacity-50"
+              >
+                <Plus className="w-5 h-5" />
               </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="border border-surface-variant bg-surface-container-lowest">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-surface border-b border-surface-variant">
-                <tr>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Role</th>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Internal ID</th>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Permissions</th>
-                  <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider text-right">Actions</th>
+      {/* Staff List */}
+      <div className="border border-surface-variant bg-surface-container-lowest overflow-x-auto">
+        <table className="w-full text-left text-sm min-w-[800px]">
+          <thead className="bg-surface border-b border-surface-variant">
+            <tr>
+              <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Status</th>
+              <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Name & Email</th>
+              <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Role</th>
+              <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-surface-variant">
+            {staff.map((member: any) => (
+              <React.Fragment key={member._id}>
+                <tr className={`hover:bg-surface/50 ${!member.isActive ? 'opacity-60' : ''}`}>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[9px] uppercase tracking-widest font-bold ${member.isActive ? 'text-green-600 bg-green-500/10' : 'text-red-500 bg-red-500/10'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${member.isActive ? 'bg-green-600' : 'bg-red-500'}`}></span>
+                      {member.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-primary font-medium">{member.name}</div>
+                    <div className="text-on-surface-variant text-xs mt-0.5">{member.email}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <select
+                      value={member.role}
+                      onChange={(e) => handleRoleChange(member._id, e.target.value)}
+                      disabled={!member.isActive}
+                      className="bg-transparent border border-surface-variant px-2 py-1 text-sm focus:border-primary text-primary disabled:opacity-50"
+                    >
+                      <option value="designer">Designer</option>
+                      <option value="sales">Sales</option>
+                      <option value="admin">Admin</option>
+                      <option value="ceo">CEO</option>
+                    </select>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => setIsViewingLogins(isViewingLogins === member._id ? null : member._id)}
+                        title="View Login Activity"
+                        className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors"
+                      >
+                        <Activity className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleResetPassword(member._id, member.name)}
+                        disabled={!member.isActive}
+                        title="Reset Password"
+                        className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors disabled:opacity-50"
+                      >
+                        <Key className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleReset2FA(member._id, member.name)}
+                        disabled={!member.isActive || !member.totpEnabled}
+                        title="Reset 2FA"
+                        className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors disabled:opacity-50"
+                      >
+                        <Shield className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleRevokeSessions(member._id)}
+                        title="Revoke All Sessions"
+                        className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleToggleActive(member._id, member.isActive)}
+                        title={member.isActive ? "Deactivate" : "Reactivate"}
+                        className={`p-2 transition-colors ${member.isActive ? 'text-error hover:bg-error/10' : 'text-green-600 hover:bg-green-600/10'}`}
+                      >
+                        <Power className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-variant">
-                {roles.map(role => (
-                  <tr key={role._id} className="hover:bg-surface/50">
-                    <td className="px-6 py-4 text-primary font-medium">
-                      {role.label}
-                      {role.isSystemRole && <span className="ml-2 bg-surface-variant text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">System</span>}
-                    </td>
-                    <td className="px-6 py-4 text-on-surface-variant font-mono text-xs">{role.name}</td>
-                    <td className="px-6 py-4 text-on-surface-variant text-xs">
-                      {role.permissions.includes('all') ? 'Full Access' : role.permissions.join(', ')}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {!role.isSystemRole && (
-                        <button onClick={() => handleDeleteRole(role._id)} className="text-error hover:text-error/80 transition-colors p-2">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                {isViewingLogins === member._id && (
+                  <tr className="bg-surface-container-high/50">
+                    <td colSpan={4} className="p-4 sm:p-6 border-b border-surface-variant">
+                      <h4 className="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-4">Recent Activity for {member.name}</h4>
+                      {getLogins === undefined ? (
+                        <div className="text-sm text-outline animate-pulse">Loading...</div>
+                      ) : getLogins && getLogins.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {getLogins.map((login: any) => (
+                            <div key={login._id} className="bg-surface border border-surface-variant p-4 flex flex-col gap-2">
+                              <div className="flex justify-between items-start">
+                                <span className={`text-[10px] font-bold tracking-wider uppercase ${login.revokedAt ? 'text-error' : 'text-green-600'}`}>
+                                  {login.revokedAt ? 'Revoked' : 'Active'}
+                                </span>
+                                <span className="text-xs text-on-surface-variant">{new Date(login.createdAt).toLocaleString()}</span>
+                              </div>
+                              <div className="text-xs text-on-surface-variant font-mono break-all">{login.userAgent || 'Unknown Device'}</div>
+                              <div className="text-xs text-outline">{login.ip || 'Unknown IP'}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-outline">No recent logins.</div>
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                )}
+              </React.Fragment>
+            ))}
+            {staff.length === 0 && (
+              <tr><td colSpan={4} className="p-8 text-center text-on-surface-variant">No staff found.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

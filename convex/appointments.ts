@@ -2,6 +2,7 @@ import { checkAdmin, checkRateLimit } from "./authHelper";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { requireStaff } from "./staffAuth";
 
 export const book = mutation({
   args: {
@@ -128,25 +129,23 @@ export const generateUploadUrl = mutation(async (ctx) => {
 });
 
 export const getUpcoming = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     return await ctx.db.query("appointments").collect();
   },
 });
 
 export const updateStatus = mutation({
   args: {
+      staffToken: v.string(),
     id: v.id("appointments"),
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-    
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     const appointment = await ctx.db.get(args.id);
     if (!appointment) throw new Error("Appointment not found");
     
@@ -368,16 +367,16 @@ export const saveGoogleEventId = internalMutation({
 });
 
 export const getUserAppointments = query({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string() 
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    // Only the owner or an admin can view appointments
+    if (!identity) throw new Error("Unauthenticated");
     if (identity.subject !== args.userId) {
-      await checkAdmin(ctx, identity);
+      throw new Error("Unauthorized");
     }
-
+    // Only the owner or an admin can view appointments
     return await ctx.db
       .query("appointments")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
@@ -387,14 +386,12 @@ export const getUserAppointments = query({
 
 export const assignTailor = mutation({
   args: {
+      staffToken: v.string(),
     appointmentId: v.id("appointments"),
     tailorName: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-    
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     await ctx.db.patch(args.appointmentId, {
       assignedTo: args.tailorName,
     });
@@ -409,14 +406,9 @@ export const reschedule = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
     const apt = await ctx.db.get(args.appointmentId);
     if (!apt) throw new Error("Appointment not found");
-
-    if (!identity) throw new Error("Unauthenticated");
-    if (identity.subject !== apt.userId) {
-      await checkAdmin(ctx, identity);
-    }
-
     await ctx.db.patch(args.appointmentId, {
       date: args.date,
       time: args.time,
@@ -443,6 +435,7 @@ export const reschedule = mutation({
 
 export const updateDetails = mutation({
   args: {
+      staffToken: v.string(),
     appointmentId: v.id("appointments"),
     appointmentType: v.optional(v.string()),
     assignedTo: v.optional(v.string()),
@@ -454,10 +447,7 @@ export const updateDetails = mutation({
     measurementsCaptured: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     const { appointmentId, ...updates } = args;
     await ctx.db.patch(appointmentId, updates);
   }
@@ -465,15 +455,13 @@ export const updateDetails = mutation({
 
 export const recordDeposit = mutation({
   args: {
+      staffToken: v.string(),
     appointmentId: v.id("appointments"),
     amountPaid: v.number(),
     paystackReference: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     const apt = await ctx.db.get(args.appointmentId);
     if (!apt) throw new Error("Appointment not found");
 
@@ -487,14 +475,12 @@ export const recordDeposit = mutation({
 
 export const linkToUser = mutation({
   args: {
+      staffToken: v.string(),
     appointmentId: v.id("appointments"),
     userId: v.string(), // This is the clerkId / user ID
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     await ctx.db.patch(args.appointmentId, {
       userId: args.userId,
     });

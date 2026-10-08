@@ -1,19 +1,18 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 
 export const recordCashPayment = mutation({
   args: {
+      staffToken: v.string(),
     orderId: v.id("orders"),
     amount: v.number(),
     paymentMethod: v.string(), // "cash", "momo_manual", "bank_transfer"
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "financials" });
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
 

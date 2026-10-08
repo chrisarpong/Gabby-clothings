@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 
 export const getNewsFlash = query({
   args: {},
@@ -24,6 +25,7 @@ export const getAll = query({
 
 export const createPost = mutation({
   args: {
+      staffToken: v.string(),
     title: v.string(),
     slug: v.string(),
     content: v.string(),
@@ -33,10 +35,7 @@ export const createPost = mutation({
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     return await ctx.db.insert("posts", {
       title: args.title,
       slug: args.slug,
@@ -52,6 +51,7 @@ export const createPost = mutation({
 
 export const updatePost = mutation({
   args: {
+      staffToken: v.string(),
     id: v.id("posts"),
     title: v.optional(v.string()),
     slug: v.optional(v.string()),
@@ -62,21 +62,18 @@ export const updatePost = mutation({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     const { id, ...updates } = args;
     return await ctx.db.patch(id, updates);
   },
 });
 
 export const deletePost = mutation({
-  args: { id: v.id("posts") },
+  args: {
+      staffToken: v.string(),
+    id: v.id("posts") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     return await ctx.db.delete(args.id);
   },
 });

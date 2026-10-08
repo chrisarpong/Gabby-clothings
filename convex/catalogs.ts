@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { checkAdmin } from "./authHelper";
-
+import { requireStaff } from "./staffAuth";
 
 export const getAll = query({
   args: { includeArchived: v.optional(v.boolean()) },
@@ -26,6 +26,7 @@ export const getBySlug = query({
 
 export const create = mutation({
   args: {
+      staffToken: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
     coverImageId: v.optional(v.string()),
@@ -33,11 +34,7 @@ export const create = mutation({
     slug: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     // Check if slug exists
     const existing = await ctx.db
       .query("catalogs")
@@ -58,6 +55,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+      staffToken: v.string(),
     id: v.id("catalogs"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
@@ -67,11 +65,7 @@ export const update = mutation({
     oldImageIdToDelete: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     // Delete old image if provided
     if (args.oldImageIdToDelete) {
       try {

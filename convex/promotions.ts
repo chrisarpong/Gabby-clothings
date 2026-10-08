@@ -1,19 +1,21 @@
 import { checkAdmin, checkRateLimit } from "./authHelper";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireStaff } from "./staffAuth";
 
 export const getPromoCodes = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "promotions" });
     return await ctx.db.query("promotions").order("desc").collect();
   }
 });
 
 export const createPromoCode = mutation({
   args: {
+      staffToken: v.string(),
     code: v.string(),
     discountType: v.string(),
     discountValue: v.number(),
@@ -23,9 +25,7 @@ export const createPromoCode = mutation({
     minOrderAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "promotions" });
     return await ctx.db.insert("promotions", { ...args, redemptions: 0 });
   }
 });

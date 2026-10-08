@@ -1,3 +1,4 @@
+"use node";
 import * as crypto from 'crypto';
 import { authenticator } from 'otplib';
 

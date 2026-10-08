@@ -19,16 +19,32 @@ http.route({
     // 1. Determine if the file is private
     const ownership = await ctx.runQuery(internal.appointments.getFileOwner, { storageId });
     if (ownership.isPrivate) {
-      // 2. Enforce authentication for private files
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) {
-        return new Response("Unauthorized: Authentication required", { status: 401 });
+      // Check for staffToken first
+      const staffToken = searchParams.get("staffToken");
+      let isStaffAuthorized = false;
+      
+      if (staffToken) {
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(staffToken));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const tokenHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+        if (staff) {
+          isStaffAuthorized = true;
+        }
       }
 
-      // 3. Enforce ownership or admin
-      if (identity.subject !== ownership.ownerId) {
-        const user = await ctx.runQuery(internal.users.getUserByClerkId, { clerkId: identity.subject });
-        if (user?.role !== "admin") {
+      if (!isStaffAuthorized) {
+        // 2. Enforce Clerk authentication for private files
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+          return new Response("Unauthorized: Authentication required", { status: 401 });
+        }
+
+        // 3. Enforce ownership (Clerk user must own it, we no longer rely on Clerk 'admin' role here, 
+        // since admins should use staffToken)
+        if (identity.subject !== ownership.ownerId) {
           return new Response("Forbidden: You do not have permission to view this file", { status: 403 });
         }
       }

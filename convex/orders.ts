@@ -3,6 +3,7 @@ import { mutation, query, action, internalMutation, internalQuery } from "./_gen
 import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { requireStaff } from "./staffAuth";
 
 export const shippingAddressValidator = v.object({
   street: v.string(),
@@ -317,11 +318,11 @@ export const create = internalMutation({
 });
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     return await ctx.db.query("orders").collect();
   },
 });
@@ -332,12 +333,11 @@ export const getUserOrders = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    
-    // Admins can see any order, specific user can see their own
+    if (!identity) throw new Error("Unauthenticated");
     if (identity.subject !== args.userId) {
-      await checkAdmin(ctx, identity);
+      throw new Error("Unauthorized");
     }
+    // Specific user can see their own
     return await ctx.db
       .query("orders")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -347,14 +347,12 @@ export const getUserOrders = query({
 
 export const updateStatus = mutation({
   args: {
+      staffToken: v.string(),
     orderId: v.id("orders"),
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-    
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     await ctx.db.patch(args.orderId, {
       status: args.status,
     });
@@ -383,6 +381,7 @@ export const getByPaystackReference = internalQuery({
 
 export const createPOSOrder = mutation({
   args: {
+      staffToken: v.string(),
     userId: v.optional(v.string()), // Optional clerkId if they have an account
     customerDetails: v.object({
       email: v.string(),
@@ -406,10 +405,7 @@ export const createPOSOrder = mutation({
     paystackReference: v.optional(v.string()), // Required if paymentMethod is 'paystack'
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     // If it's a paystack MoMo/Card payment, verify it first
     if (args.paymentMethod === 'paystack' && args.paystackReference) {
       // Duplicate order prevention
@@ -502,15 +498,13 @@ export const createPOSOrder = mutation({
 
 export const recordDeposit = mutation({
   args: {
+      staffToken: v.string(),
     orderId: v.id("orders"),
     amountPaid: v.number(),
     paystackReference: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
 
@@ -542,15 +536,13 @@ export const recordDeposit = mutation({
 
 export const assignDesigner = mutation({
   args: {
+      staffToken: v.string(),
     orderId: v.id("orders"),
     designerId: v.id("users"),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
     if (!user) throw new Error("User not found");
 
@@ -580,15 +572,13 @@ export const assignDesigner = mutation({
 
 export const updateProductionStatus = mutation({
   args: {
+      staffToken: v.string(),
     orderId: v.id("orders"),
     status: v.string(), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     const user = await ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject)).first();
     if (!user) throw new Error("User not found");
 
@@ -643,14 +633,12 @@ export const updateProductionStatus = mutation({
 
 export const notifyClient = mutation({
   args: {
+      staffToken: v.string(),
     orderId: v.id("orders"),
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     const order = await ctx.db.get(args.orderId);
     if (!order || !order.userId) throw new Error("Order or customer not found");
 

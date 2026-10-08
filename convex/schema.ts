@@ -9,7 +9,7 @@ export default defineSchema({
     lastName: v.optional(v.string()),
     fullBodyImageId: v.optional(v.string()),
     inspoImageId: v.optional(v.string()),
-    role: v.string(), // 'admin' | 'client'
+    role: v.string(), // 'client'
     roleId: v.optional(v.id("roles")),
     savedMeasurements: v.optional(v.any()),
     dob: v.optional(v.string()),
@@ -24,6 +24,35 @@ export default defineSchema({
       region: v.optional(v.string()),
     })),
   }).index("by_clerkId", ["clerkId"]),
+
+  staff: defineTable({
+    email: v.string(),
+    name: v.string(),
+    role: v.string(), // 'ceo', 'admin', 'designer', 'sales'
+    passwordHash: v.string(),
+    passwordSalt: v.string(),
+    mustChangePassword: v.boolean(),
+    isActive: v.boolean(),
+    failedAttempts: v.number(),
+    lockedUntil: v.optional(v.number()),
+    totpSecret: v.optional(v.string()),
+    totpEnabled: v.boolean(),
+    recoveryCodes: v.optional(v.string()), // hashed
+    createdBy: v.optional(v.id("staff")),
+    createdAt: v.number(),
+    lastLoginAt: v.optional(v.number()),
+  }).index("by_email", ["email"]),
+
+  staffSessions: defineTable({
+    staffId: v.id("staff"),
+    tokenHash: v.string(),
+    createdAt: v.number(),
+    lastActivityAt: v.number(),
+    expiresAt: v.number(),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    revokedAt: v.optional(v.number()),
+  }).index("by_tokenHash", ["tokenHash"]).index("by_staffId", ["staffId"]),
 
   roles: defineTable({
     name: v.string(),
@@ -118,14 +147,14 @@ export default defineSchema({
     paymentMethod: v.optional(v.string()), // 'paystack', 'cash', 'transfer', 'momo'
     
     // Assignment & Production
-    assignedDesignerId: v.optional(v.id("users")),
+    assignedDesignerId: v.optional(v.id("staff")),
     productionStatus: v.optional(v.string()), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
   }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]),
 
   orderActivityLog: defineTable({
     orderId: v.id("orders"),
     stage: v.string(), // 'assigned', 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
-    performedBy: v.id("users"),
+    performedBy: v.id("staff"),
     note: v.optional(v.string()),
     timestamp: v.number(),
   }).index("by_order", ["orderId"]),
@@ -133,7 +162,7 @@ export default defineSchema({
   settings: defineTable({
     key: v.string(),
     value: v.any(),
-    updatedBy: v.optional(v.string()), // clerkId of admin
+    updatedBy: v.optional(v.id("staff")),
   }).index("by_key", ["key"]),
 
   exchangeRates: defineTable({
@@ -228,7 +257,7 @@ export default defineSchema({
       ogImageId: v.optional(v.string()),
     })),
     updatedAt: v.optional(v.number()),
-    updatedBy: v.optional(v.string()), // clerkId of admin
+    updatedBy: v.optional(v.id("staff")),
   }).index("by_key", ["key"]),
 
   catalogs: defineTable({
@@ -273,7 +302,7 @@ export default defineSchema({
     content: v.string(), // Markdown/Rich text
     excerpt: v.optional(v.string()),
     coverImageId: v.optional(v.string()),
-    authorId: v.optional(v.string()), // clerkId
+    authorId: v.optional(v.id("staff")),
     status: v.string(), // 'draft' | 'published'
     publishedAt: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),
@@ -293,7 +322,7 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   adminLogs: defineTable({
-    userId: v.string(), // clerkId of the admin
+    userId: v.union(v.id("staff"), v.null()),
     adminName: v.string(), // Extracted name of admin
     action: v.string(), // e.g. "Logged In", "Created Order"
     category: v.optional(v.string()), // e.g. "auth", "orders", "inventory", "settings", "content"
@@ -317,8 +346,17 @@ export default defineSchema({
     orderId: v.id("orders"),
     amount: v.number(),
     paymentMethod: v.string(),
-    recordedBy: v.string(), // clerkId of admin
+    recordedBy: v.id("staff"),
     notes: v.optional(v.string()),
     date: v.string(),
   }).index("by_orderId", ["orderId"]),
+
+  staffLoginChallenges: defineTable({
+    staffId: v.id("staff"),
+    tokenHash: v.string(),
+    purpose: v.union(v.literal("change_password"), v.literal("setup_2fa"), v.literal("verify_2fa")),
+    expiresAt: v.number(),
+    attempts: v.number(),
+    usedAt: v.optional(v.number()),
+  }).index("by_tokenHash", ["tokenHash"]),
 });

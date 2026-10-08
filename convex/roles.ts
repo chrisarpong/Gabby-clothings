@@ -1,19 +1,18 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 
 export const createRole = mutation({
   args: {
+      staffToken: v.string(),
     name: v.string(),
     label: v.string(),
     permissions: v.array(v.string()),
     isSystemRole: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     // Check if role already exists
     const existing = await ctx.db
       .query("roles")
@@ -34,27 +33,24 @@ export const createRole = mutation({
 });
 
 export const listRoles = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     return await ctx.db.query("roles").collect();
   },
 });
 
 export const updateRole = mutation({
   args: {
+      staffToken: v.string(),
     id: v.id("roles"),
     label: v.optional(v.string()),
     permissions: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
   },
@@ -62,13 +58,11 @@ export const updateRole = mutation({
 
 export const removeRole = mutation({
   args: {
+      staffToken: v.string(),
     id: v.id("roles"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     const role = await ctx.db.get(args.id);
     if (!role) throw new Error("Role not found");
     if (role.isSystemRole) {

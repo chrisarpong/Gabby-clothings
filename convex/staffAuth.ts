@@ -18,22 +18,41 @@ export const getStaffForLogin = internalQuery({
   }
 });
 
+export const getStaffById = internalQuery({
+  args: { staffId: v.id("staff") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.staffId);
+  }
+});
+
 export const checkLoginRateLimit = internalMutation({
   args: { email: v.string(), ip: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const now = Date.now();
+    
+    // Global throttle (30 failures / minute)
+    let globalLimit = await ctx.db.query("rateLimits")
+      .withIndex("by_identifier_endpoint", q => q.eq("identifier", "global_failed_logins").eq("endpoint", "staffLogin"))
+      .first();
+      
+    if (globalLimit) {
+      if (now - globalLimit.lastAttempt < 60 * 1000) {
+        if (globalLimit.count >= 30) return { allowed: false, reason: "global" };
+      }
+    }
+
     const ipIdentifier = args.ip ? `ip_${args.ip}` : `email_${args.email}`;
     
     let limit = await ctx.db.query("rateLimits")
       .withIndex("by_identifier_endpoint", q => q.eq("identifier", ipIdentifier).eq("endpoint", "staffLogin"))
       .first();
       
-    const now = Date.now();
     const windowMs = 5 * 60 * 1000;
-    const maxAttempts = 10; // IP rate limit
+    const maxAttempts = 10;
     
     if (limit) {
       if (now - limit.lastAttempt < windowMs) {
-        if (limit.count >= maxAttempts) return { allowed: false };
+        if (limit.count >= maxAttempts) return { allowed: false, reason: "ip" };
         await ctx.db.patch(limit._id, { count: limit.count + 1, lastAttempt: now });
       } else {
         await ctx.db.patch(limit._id, { count: 1, lastAttempt: now });
@@ -48,6 +67,21 @@ export const checkLoginRateLimit = internalMutation({
 export const recordFailedLogin = internalMutation({
   args: { email: v.string(), ip: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const now = Date.now();
+    let globalLimit = await ctx.db.query("rateLimits")
+      .withIndex("by_identifier_endpoint", q => q.eq("identifier", "global_failed_logins").eq("endpoint", "staffLogin"))
+      .first();
+      
+    if (globalLimit) {
+      if (now - globalLimit.lastAttempt < 60 * 1000) {
+        await ctx.db.patch(globalLimit._id, { count: globalLimit.count + 1, lastAttempt: now });
+      } else {
+        await ctx.db.patch(globalLimit._id, { count: 1, lastAttempt: now });
+      }
+    } else {
+      await ctx.db.insert("rateLimits", { identifier: "global_failed_logins", endpoint: "staffLogin", count: 1, lastAttempt: now });
+    }
+
     const staff = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", args.email)).first();
     if (!staff) return { lockedNow: false };
     
@@ -55,7 +89,7 @@ export const recordFailedLogin = internalMutation({
     if (newAttempts >= 5) {
       await ctx.db.patch(staff._id, {
         failedAttempts: 0,
-        lockedUntil: Date.now() + 15 * 60 * 1000 // 15 mins lock
+        lockedUntil: now + 15 * 60 * 1000 // 15 mins lock
       });
       return { lockedNow: true };
     } else {
@@ -551,3 +585,64 @@ export const resetStaff2FA = mutation({
     });
   }
 });
+export const updateStaffTotpSecret = internalMutation({
+  args: {
+    staffId: v.id("staff"),
+    totpSecret: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.staffId, { totpSecret: args.totpSecret });
+  }
+});
+
+export const createChallenge = internalMutation({
+  args: { staffId: v.id("staff"), tokenHash: v.string(), purpose: v.union(v.literal("change_password"), v.literal("setup_2fa"), v.literal("verify_2fa")) },
+  handler: async (ctx, args) => {
+    // Revoke any existing challenges for this user to be safe
+    const existing = await ctx.db.query("staffLoginChallenges").withIndex("by_tokenHash").filter(q => q.eq(q.field("staffId"), args.staffId)).collect();
+    for (const ex of existing) {
+       await ctx.db.patch(ex._id, { usedAt: Date.now() });
+    }
+    
+    await ctx.db.insert("staffLoginChallenges", {
+      staffId: args.staffId,
+      tokenHash: args.tokenHash,
+      purpose: args.purpose,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 mins
+      attempts: 0,
+    });
+  }
+});
+
+export const getChallenge = internalQuery({
+  args: { tokenHash: v.string(), purpose: v.union(v.literal("change_password"), v.literal("setup_2fa"), v.literal("verify_2fa")) },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.query("staffLoginChallenges").withIndex("by_tokenHash", q => q.eq("tokenHash", args.tokenHash)).first();
+    if (!challenge || challenge.usedAt || Date.now() > challenge.expiresAt || challenge.purpose !== args.purpose) return null;
+    return challenge;
+  }
+});
+
+export const incrementChallengeAttempts = internalMutation({
+  args: { challengeId: v.id("staffLoginChallenges") },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    if (challenge) {
+      const newAttempts = challenge.attempts + 1;
+      const updates: any = { attempts: newAttempts };
+      if (newAttempts >= 5) updates.usedAt = Date.now();
+      await ctx.db.patch(challenge._id, updates);
+      return newAttempts >= 5; // Return true if burned
+    }
+    return false;
+  }
+});
+
+export const consumeChallenge = internalMutation({
+  args: { challengeId: v.id("staffLoginChallenges") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.challengeId, { usedAt: Date.now() });
+  }
+});
+
+

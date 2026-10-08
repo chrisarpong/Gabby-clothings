@@ -1,6 +1,7 @@
   import { checkAdmin } from "./authHelper";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireStaff } from "./staffAuth";
 
 export const getByProduct = query({
   args: { productId: v.id("products") },
@@ -66,34 +67,33 @@ export const addReview = mutation({
 });
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "reviews" });
     return await ctx.db.query("reviews").order("desc").collect();
   },
 });
 
 export const updateStatus = mutation({
   args: {
+      staffToken: v.string(),
     reviewId: v.id("reviews"),
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "reviews" });
     await ctx.db.patch(args.reviewId, { status: args.status });
   },
 });
 
 export const deleteReview = mutation({
-  args: { reviewId: v.id("reviews") },
+  args: {
+      staffToken: v.string(),
+    reviewId: v.id("reviews") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "reviews" });
     await ctx.db.delete(args.reviewId);
   },
 });

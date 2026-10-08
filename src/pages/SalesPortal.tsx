@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useUser, SignInButton } from '@clerk/clerk-react';
+import { useStaffAuth } from '../context/StaffAuthContext';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../convex/_generated/api';
 import { ShoppingBag, History, Users, BarChart3, LogOut } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
 
 import SalesPOS from '../components/sales/SalesPOS';
 import SalesHistory from '../components/sales/SalesHistory';
@@ -11,40 +10,19 @@ import SalesCRM from '../components/sales/SalesCRM';
 import SalesDashboard from '../components/sales/SalesDashboard';
 
 export default function SalesPortal() {
-  const { user, isLoaded } = useUser();
-  const convexUser = useQuery(api.users.getCurrentUser);
+  const { staffData, logout } = useStaffAuth();
+  // We still need the products query, wait! SalesPOS needs products, but it expects no staffToken argument. 
+  // Wait, products.getActive is public, so it's fine!
   const products = useQuery(api.products.getActive) || [];
 
   const [activeTab, setActiveTab] = useState<'pos' | 'history' | 'crm' | 'dashboard'>('pos');
 
-  if (!isLoaded || (user && convexUser === undefined)) {
-    return <div className="min-h-screen bg-surface flex items-center justify-center font-sans tracking-widest text-primary text-sm uppercase">Loading...</div>;
-  }
-
-  if (!user) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-surface text-primary font-sans">
-        <ShoppingBag className="w-12 h-12 mb-4 text-outline" />
-        <h1 className="font-serif text-3xl mb-2 text-primary">Sales Portal</h1>
-        <p className="text-on-surface-variant mb-8">Please sign in to access the point of sale.</p>
-        <SignInButton mode="modal" fallbackRedirectUrl="/sales">
-          <button className="px-6 py-3 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors rounded-none">
-            Log In
-          </button>
-        </SignInButton>
-      </div>
-    );
-  }
-
-  // Basic check: must be staff
-  if (!convexUser?.roleId && convexUser?.role === 'client') {
-    return <Navigate to="/" replace />;
-  }
+  if (!staffData) return null;
 
   const renderContent = () => {
     switch (activeTab) {
       case 'pos':
-        return <SalesPOS user={user} convexUser={convexUser} products={products} setActiveTab={setActiveTab} />;
+        return <SalesPOS products={products} setActiveTab={setActiveTab} />;
       case 'history':
         return <SalesHistory />;
       case 'crm':
@@ -52,7 +30,7 @@ export default function SalesPortal() {
       case 'dashboard':
         return <SalesDashboard />;
       default:
-        return <SalesPOS user={user} convexUser={convexUser} products={products} setActiveTab={setActiveTab} />;
+        return <SalesPOS products={products} setActiveTab={setActiveTab} />;
     }
   };
 
@@ -70,7 +48,7 @@ export default function SalesPortal() {
         <div className="p-6 border-b border-surface-variant">
           <h1 className="font-serif text-2xl text-primary tracking-tight mb-2">Sales Portal</h1>
           <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">
-            {user.firstName} {user.lastName}
+            {staffData.name}
           </p>
         </div>
         
@@ -96,10 +74,10 @@ export default function SalesPortal() {
         </nav>
 
         <div className="p-4 border-t border-surface-variant">
-          <a href="/" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-error hover:bg-error/10 transition-colors">
+          <button onClick={() => logout()} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-error hover:bg-error/10 transition-colors">
             <LogOut className="w-5 h-5" />
             Exit Portal
-          </a>
+          </button>
         </div>
       </aside>
 

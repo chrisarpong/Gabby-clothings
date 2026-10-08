@@ -2,6 +2,7 @@ import { checkAdmin } from "./authHelper";
 import { query, mutation } from "./_generated/server";
 import { checkRateLimit } from "./authHelper";
 import { v } from "convex/values";
+import { requireStaff } from "./staffAuth";
 
 export const submitMessage = mutation({
   args: {
@@ -21,21 +22,21 @@ export const submitMessage = mutation({
 });
 
 export const getMessages = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     return await ctx.db.query("messages").order("desc").collect();
   }
 });
 
 export const markAsRead = mutation({
-  args: { messageId: v.id("messages") },
+  args: {
+      staffToken: v.string(),
+    messageId: v.id("messages") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
-    await checkAdmin(ctx, identity);
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     await ctx.db.patch(args.messageId, { status: "read" });
   },
 });

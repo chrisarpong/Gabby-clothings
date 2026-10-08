@@ -34,6 +34,9 @@ const NewsArticlePage = lazy(() => import('./pages/NewsArticlePage'));
 const Admin = lazy(() => import('./pages/Admin'));
 const DesignerPortal = lazy(() => import('./pages/DesignerPortal'));
 const SalesPortal = lazy(() => import('./pages/SalesPortal'));
+const StaffLogin = lazy(() => import('./pages/StaffLogin'));
+const StaffChangePassword = lazy(() => import('./pages/StaffChangePassword'));
+const StaffSetup2FA = lazy(() => import('./pages/StaffSetup2FA'));
 
 import ScrollToTop from './components/ScrollToTop';
 import { useUser } from '@clerk/clerk-react';
@@ -107,9 +110,12 @@ function CurrencySync() {
 
 import CookieBanner from './components/CookieBanner';
 import NewsFlashModal from './components/NewsFlashModal';
+import { StaffAuthProvider } from './context/StaffAuthContext';
+import { StaffRoute } from './components/auth/StaffRoute';
 
 export default function App() {
   return (
+    <StaffAuthProvider>
     <BrowserRouter>
       <ScrollToTop />
       <UserSync />
@@ -121,6 +127,27 @@ export default function App() {
         className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
       }} />
       <Routes>
+        {/* Staff Auth Routes */}
+        <Route path="/staff/login" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+            <StaffLogin />
+          </Suspense>
+        } />
+        <Route path="/staff/change-password" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+            <StaffRoute>
+              <StaffChangePassword />
+            </StaffRoute>
+          </Suspense>
+        } />
+        <Route path="/staff/setup-2fa" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+            <StaffRoute>
+              <StaffSetup2FA />
+            </StaffRoute>
+          </Suspense>
+        } />
+
         {/* Admin Route - Custom State based tabs */}
         <Route path="/admin/*" element={
           <Suspense fallback={
@@ -128,7 +155,9 @@ export default function App() {
               <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
             </div>
           }>
-            <Admin />
+            <StaffRoute allowedRoles={["ceo", "admin"]}>
+              <Admin />
+            </StaffRoute>
           </Suspense>
         } />
         
@@ -139,7 +168,9 @@ export default function App() {
               <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
             </div>
           }>
-            <DesignerPortal />
+            <StaffRoute allowedRoles={["designer", "ceo", "admin"]}>
+              <DesignerPortal />
+            </StaffRoute>
           </Suspense>
         } />
 
@@ -150,7 +181,9 @@ export default function App() {
               <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
             </div>
           }>
-            <SalesPortal />
+            <StaffRoute allowedRoles={["sales", "ceo", "admin"]}>
+              <SalesPortal />
+            </StaffRoute>
           </Suspense>
         } />
 
@@ -181,5 +214,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </StaffAuthProvider>
   );
 }

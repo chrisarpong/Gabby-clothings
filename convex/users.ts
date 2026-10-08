@@ -57,7 +57,7 @@ export const syncUser = mutation({
         email: args.email,
         firstName: args.firstName ?? existingUser.firstName,
         lastName: args.lastName ?? existingUser.lastName,
-        role: args.role ?? existingUser.role,
+        // role is intentionally omitted so clerk cannot override it
       });
     }
 
@@ -66,7 +66,7 @@ export const syncUser = mutation({
       email: args.email,
       firstName: args.firstName,
       lastName: args.lastName,
-      role: args.role ?? "client",
+      role: "client",
     });
   },
 });
@@ -197,82 +197,4 @@ export const createClientFromAppointment = mutation({
   }
 });
 
-export const createStaffUser = mutation({
-  args: {
-    name: v.string(),
-    email: v.string(),
-    phone: v.optional(v.string()),
-    roleId: v.id("roles"),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
 
-    const [firstName, ...lastNameParts] = args.name.split(' ');
-    const lastName = lastNameParts.join(' ');
-
-    const userId = await ctx.db.insert("users", {
-      clerkId: `manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-      email: args.email,
-      firstName: firstName,
-      lastName: lastName,
-      phone: args.phone,
-      role: "staff", 
-      roleId: args.roleId,
-    });
-
-    await ctx.db.insert("adminLogs", {
-      action: `Created staff user: ${args.name}`,
-      category: "team",
-      targetId: userId,
-      targetType: "user",
-      timestamp: Date.now(),
-      userId: identity.subject,
-      adminName: "Admin",
-    });
-
-    return userId;
-  }
-});
-
-export const updateUserRole = mutation({
-  args: {
-    userId: v.id("users"),
-    roleId: v.id("roles"),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
-    await ctx.db.patch(args.userId, {
-      roleId: args.roleId,
-      role: "staff",
-    });
-
-    await ctx.db.insert("adminLogs", {
-      action: `Updated role for user`,
-      category: "team",
-      targetId: args.userId,
-      targetType: "user",
-      timestamp: Date.now(),
-      userId: identity.subject,
-      adminName: "Admin",
-    });
-  }
-});
-
-export const listStaffUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    await checkAdmin(ctx, identity);
-
-    const users = await ctx.db.query("users").collect();
-    
-    // In memory filter for staff members (anyone with a roleId or role that isn't 'client')
-    return users.filter(u => u.roleId !== undefined || (u.role && u.role !== 'client'));
-  }
-});

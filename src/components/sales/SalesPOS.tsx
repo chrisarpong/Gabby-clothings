@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
-import { useUser, SignInButton } from '@clerk/clerk-react';
+import { useStaffAuth } from '../../context/StaffAuthContext';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { ShoppingBag, Search, Plus, CreditCard, LogOut, Calendar } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-export default function SalesPOS({ user, convexUser, products, setActiveTab }: { user: any, convexUser: any, products: any, setActiveTab: any }) {
+export default function SalesPOS({ products, setActiveTab }: { products: any, setActiveTab: any }) {
+  const { staffToken, staffData } = useStaffAuth();
   const createPOSOrder = useMutation(api.orders.createPOSOrder);
   
   // POS State
-  const [cart, setCart] = useState<{product: any, quantity: number, price: number, variantSku?: string, variantName?: string}[]>([]);
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [cart, setCart] = useState<{product: any, quantity: number, price: number, variantSku?: string, variantName?: string}[]>(() => {
+    const saved = sessionStorage.getItem('pos_cart');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [customerName, setCustomerName] = useState(() => sessionStorage.getItem('pos_customerName') || '');
+  const [customerEmail, setCustomerEmail] = useState(() => sessionStorage.getItem('pos_customerEmail') || '');
+  const [customerPhone, setCustomerPhone] = useState(() => sessionStorage.getItem('pos_customerPhone') || '');
   const [paymentMethod, setPaymentMethod] = useState('cash');
+
+  // Persist state
+  React.useEffect(() => {
+    sessionStorage.setItem('pos_cart', JSON.stringify(cart));
+    sessionStorage.setItem('pos_customerName', customerName);
+    sessionStorage.setItem('pos_customerEmail', customerEmail);
+    sessionStorage.setItem('pos_customerPhone', customerPhone);
+  }, [cart, customerName, customerEmail, customerPhone]);
   const [amountTendered, setAmountTendered] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,6 +92,7 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
     setIsProcessing(true);
     try {
       await createPOSOrder({
+        staffToken: staffToken as string,
         customerDetails: {
           firstName: customerName.split(' ')[0],
           lastName: customerName.split(' ').slice(1).join(' ') || 'Customer',
@@ -106,6 +119,10 @@ export default function SalesPOS({ user, convexUser, products, setActiveTab }: {
       setCustomerEmail('');
       setCustomerPhone('');
       setAmountTendered('');
+      sessionStorage.removeItem('pos_cart');
+      sessionStorage.removeItem('pos_customerName');
+      sessionStorage.removeItem('pos_customerEmail');
+      sessionStorage.removeItem('pos_customerPhone');
       setActiveTab('history');
     } catch (err: any) {
       toast.error(err.message || "Failed to record order");

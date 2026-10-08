@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { checkAdmin } from "./authHelper";
-
+import { requireStaff } from "./staffAuth";
 
 export const get = query({
   args: { key: v.string() },
@@ -16,21 +16,13 @@ export const get = query({
 });
 
 export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     let allBlocks = await ctx.db.query("contentBlocks").collect();
-
-    const identity = await ctx.auth.getUserIdentity();
     let isAdmin = false;
-    if (identity) {
-      try {
-        await checkAdmin(ctx, identity);
-        isAdmin = true;
-      } catch {
-        isAdmin = false;
-      }
-    }
-
     if (!isAdmin) {
       allBlocks = allBlocks.filter(block => block.status === "published");
     }
@@ -41,6 +33,7 @@ export const getAll = query({
 
 export const set = mutation({
   args: {
+      staffToken: v.string(),
     key: v.string(),
     data: v.any(),
     status: v.optional(v.string()),
@@ -54,12 +47,7 @@ export const set = mutation({
     oldImageIdsToDelete: v.optional(v.array(v.string())), // for media cleanup
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthenticated call to mutation");
-    }
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "content" });
     // Media Cleanup
     if (args.oldImageIdsToDelete && args.oldImageIdsToDelete.length > 0) {
       for (const id of args.oldImageIdsToDelete) {

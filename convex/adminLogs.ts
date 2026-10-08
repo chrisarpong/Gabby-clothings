@@ -1,9 +1,11 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { checkAdmin } from "./authHelper";
+import { requireStaff } from "./staffAuth";
 
 export const logAction = mutation({
   args: {
+      staffToken: v.string(),
     action: v.string(),
     details: v.optional(v.string()),
     category: v.optional(v.string()),
@@ -14,11 +16,7 @@ export const logAction = mutation({
     deviceName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    
-    await checkAdmin(ctx, identity);
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     const adminName = identity.name || identity.email?.split('@')[0] || "Admin";
 
     await ctx.db.insert("adminLogs", {
@@ -37,20 +35,34 @@ export const logAction = mutation({
   },
 });
 
+export const logInternalAction = internalMutation({
+  args: {
+    userId: v.union(v.id("staff"), v.null()),
+    adminName: v.string(),
+    action: v.string(),
+    details: v.optional(v.string()),
+    category: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("adminLogs", {
+      userId: args.userId as any, 
+      adminName: args.adminName,
+      action: args.action,
+      details: args.details,
+      category: args.category,
+      timestamp: Date.now(),
+    });
+  }
+});
+
 export const getRecentLogs = query({
   args: {
+      staffToken: v.string(),
     limit: v.optional(v.number()),
     category: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    try {
-      await checkAdmin(ctx, identity);
-    } catch {
-      return [];
-    }
-
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     const limit = args.limit || 50;
 
     let query = ctx.db.query("adminLogs").order("desc");
@@ -64,16 +76,11 @@ export const getRecentLogs = query({
 });
 
 export const getActiveSessions = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    try {
-      await checkAdmin(ctx, identity);
-    } catch {
-      return [];
-    }
-
+  args: {
+      staffToken: v.string()
+},
+  handler: async (ctx, args) => {
+      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     // Get all auth logs in the last 24 hours to find recent active sessions
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     
