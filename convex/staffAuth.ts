@@ -182,9 +182,9 @@ export const validateSession = internalQuery({
 });
 
 export const logout = mutation({
-  args: { tokenHash: v.string() }, 
+  args: { staffToken: v.string() }, 
   handler: async (ctx, args) => {
-    const session = await ctx.db.query("staffSessions").withIndex("by_tokenHash", q => q.eq("tokenHash", args.tokenHash)).first();
+    const { session } = await validateStaffSession(ctx, args.staffToken).catch(() => ({ session: null }));
     if (session) {
       await ctx.db.patch(session._id, { revokedAt: Date.now() });
       
@@ -203,10 +203,9 @@ export const logout = mutation({
 });
 
 export const revokeAllMySessions = mutation({
-  args: { tokenHash: v.string() }, 
+  args: { staffToken: v.string() }, 
   handler: async (ctx, args) => {
-    const session = await ctx.db.query("staffSessions").withIndex("by_tokenHash", q => q.eq("tokenHash", args.tokenHash)).first();
-    if (!session) return;
+    const { session } = await validateStaffSession(ctx, args.staffToken);
     
     const staff = await ctx.db.get(session.staffId);
     if (!staff) return;
@@ -230,11 +229,11 @@ export const revokeAllMySessions = mutation({
 
 export const revokeSession = mutation({
   args: { 
-    tokenHash: v.string(), // caller's token
+    staffToken: v.string(), // caller's token
     targetSessionId: v.id("staffSessions")
   }, 
   handler: async (ctx, args) => {
-    const callerStaff = await requireStaff(ctx, args.tokenHash, { permission: "team_management" });
+    const callerStaff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     
     const targetSession = await ctx.db.get(args.targetSessionId);
     if (targetSession) {
