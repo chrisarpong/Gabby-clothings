@@ -13,6 +13,7 @@ interface StaffProfile {
   role: StaffRole;
   isActive: boolean;
   mustChangePassword?: boolean;
+  totpEnabled?: boolean;
 }
 
 interface StaffAuthContextType {

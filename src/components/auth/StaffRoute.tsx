@@ -32,6 +32,12 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
     return <Navigate to="/staff/change-password" replace />;
   }
 
+  const requires2FA = profile.role === 'ceo' || profile.role === 'admin';
+  if (requires2FA && !profile.totpEnabled && location.pathname !== '/staff/setup-2fa') {
+    // Force 2FA setup for admins and CEOs
+    return <Navigate to="/staff/setup-2fa" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
     // 403 Forbidden
     return (
