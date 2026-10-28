@@ -1,14 +1,13 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 
-export const wipeTestData = mutation({
+export const wipeTestData = internalMutation({
   args: {
-    isDevDeployment: v.boolean(),
     confirmWipe: v.boolean(),
   },
   handler: async (ctx, args) => {
-    if (!args.isDevDeployment) {
-      throw new ConvexError("Refusing to run: not explicitly marked as dev deployment.");
+    if (process.env.ALLOW_DATA_WIPE !== "true") {
+      throw new ConvexError("Refusing to run: ALLOW_DATA_WIPE is not set to 'true'.");
     }
     if (!args.confirmWipe) {
       throw new ConvexError("Refusing to run: confirmation flag is false.");
