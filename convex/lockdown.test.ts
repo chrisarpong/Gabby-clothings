@@ -144,6 +144,106 @@ describe("Phase 1 Security Tests", () => {
     expect(payments.length).toBe(1);
     expect(payments[0].amount).toBe(200);
   });
+
+  it("Task 1.4: currency.setManualRate validates permissions, currencies, rates, and expiry", async () => {
+    const t = convexTest(schema);
+
+    // Setup staff: one admin (no financials), one ceo (has financials)
+    const adminToken = "admin-currency-token";
+    const ceoToken = "ceo-currency-token";
+
+    await t.run(async (ctx) => {
+      const adminId = await ctx.db.insert("staff", {
+        name: "Admin",
+        email: "admin-curr@test.com",
+        role: "admin",
+        passwordHash: "h",
+        passwordSalt: "s",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId: adminId,
+        tokenHash: hashToken(adminToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+
+      const ceoId = await ctx.db.insert("staff", {
+        name: "CEO",
+        email: "ceo-curr@test.com",
+        role: "ceo",
+        passwordHash: "h",
+        passwordSalt: "s",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId: ceoId,
+        tokenHash: hashToken(ceoToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+    });
+
+    // 1. Admin without financials is forbidden
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: adminToken,
+        currency: "USD",
+        rate: 15.5,
+      })
+    ).rejects.toThrow("Unauthorized: Requires financials");
+
+    // 2. CEO with invalid currency is rejected
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: ceoToken,
+        currency: "BITCOIN",
+        rate: 15.5,
+      })
+    ).rejects.toThrow("Invalid currency");
+
+    // 3. Rate <= 0 is rejected
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: ceoToken,
+        currency: "USD",
+        rate: -1,
+      })
+    ).rejects.toThrow("Rate must be a positive finite number");
+
+    // 4. Past expiry is rejected
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: ceoToken,
+        currency: "USD",
+        rate: 15.5,
+        manualRateExpiry: Date.now() - 1000,
+      })
+    ).rejects.toThrow("Manual rate expiry must be in the future");
+
+    // 5. Valid call succeeds
+    const futureExpiry = Date.now() + 86400000;
+    await t.mutation(api.currency.setManualRate, {
+      staffToken: ceoToken,
+      currency: "USD",
+      rate: 15.75,
+      manualRateExpiry: futureExpiry,
+    });
+
+    // Verify rate in database
+    const rates = await t.query(api.currency.getRates, {});
+    expect(rates["USD"]).toBe(15.75);
+  });
 });
 
 

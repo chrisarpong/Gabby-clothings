@@ -1,6 +1,7 @@
-import { internalAction, internalMutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { internalAction, internalMutation, query, mutation } from "./_generated/server";
+import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
+import { requireStaff } from "./staffAuth";
 
 const TARGET_CURRENCIES = ["USD", "GBP", "EUR", "ZAR", "NGN", "CAD", "AUD", "JPY", "AED"];
 
@@ -110,3 +111,67 @@ export const getRates = query({
     return result;
   }
 });
+
+export const setManualRate = mutation({
+  args: {
+    staffToken: v.string(),
+    currency: v.string(),
+    rate: v.number(),
+    manualRateExpiry: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "financials" });
+
+    const ALLOWED_CURRENCIES = ["GHS", "USD", "EUR", "GBP", "ZAR", "NGN", "CAD", "AUD", "JPY", "AED"];
+    if (!ALLOWED_CURRENCIES.includes(args.currency)) {
+      throw new ConvexError(`Invalid currency: ${args.currency}. Must be one of: ${ALLOWED_CURRENCIES.join(", ")}`);
+    }
+
+    if (typeof args.rate !== "number" || !Number.isFinite(args.rate) || args.rate <= 0) {
+      throw new ConvexError("Rate must be a positive finite number");
+    }
+
+    if (args.manualRateExpiry !== undefined && args.manualRateExpiry <= Date.now()) {
+      throw new ConvexError("Manual rate expiry must be in the future");
+    }
+
+    const existing = await ctx.db
+      .query("exchangeRates")
+      .withIndex("by_currency", (q) => q.eq("currency", args.currency))
+      .first();
+
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        manualRate: args.rate,
+        manualRateExpiry: args.manualRateExpiry,
+        lastUpdated: now,
+      });
+    } else {
+      await ctx.db.insert("exchangeRates", {
+        currency: args.currency,
+        liveRate: args.rate,
+        manualRate: args.rate,
+        manualRateExpiry: args.manualRateExpiry,
+        lastUpdated: now,
+      });
+    }
+
+    // Also update settings table for backward compatibility with getRates and existing UI
+    const settingKey = `manualRate${args.currency}`;
+    const settingRecord = await ctx.db
+      .query("settings")
+      .withIndex("by_key", (q) => q.eq("key", settingKey))
+      .first();
+
+    if (settingRecord) {
+      await ctx.db.patch(settingRecord._id, { value: String(args.rate) });
+    } else {
+      await ctx.db.insert("settings", {
+        key: settingKey,
+        value: String(args.rate),
+      });
+    }
+  },
+});
+

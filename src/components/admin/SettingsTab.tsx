@@ -99,6 +99,7 @@ export default function SettingsTab() {
   const settingsRecords = useStaffQuery(api.settings.getAll);
   const dbRates = useStaffQuery(api.currency.getRates);
   const setSetting = useStaffMutation(api.settings.setSetting);
+  const setManualRate = useStaffMutation(api.currency.setManualRate);
   const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
@@ -254,10 +255,15 @@ export default function SettingsTab() {
           break;
         case 'currency':
           updates.push({ key: 'safetyBufferPercentage', value: currencySettings.safetyBufferPercentage });
-          SUPPORTED_CURRENCIES.filter(c => c !== 'GHS').forEach(curr => {
+          for (const curr of SUPPORTED_CURRENCIES.filter(c => c !== 'GHS')) {
             const val = currencySettings.manualRates[curr];
-            updates.push({ key: `manualRate${curr}`, value: val && val !== '' ? val : '' });
-          });
+            const num = val && val !== '' ? parseFloat(val) : NaN;
+            if (!isNaN(num) && num > 0) {
+              await setManualRate({ currency: curr, rate: num });
+            } else {
+              updates.push({ key: `manualRate${curr}`, value: '' });
+            }
+          }
           break;
         case 'appointments':
           updates.push({ key: 'availability', value: availability });
