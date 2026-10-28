@@ -406,6 +406,82 @@ describe("Phase 1 Security Tests", () => {
     expect(sessions.length).toBe(1);
     expect(sessions[0].userId).toBe(staffId);
   });
+
+  it("Task 1.8: users mutations prevent spoofing identity and role escalation", async () => {
+    const t = convexTest(schema);
+
+    // 1. Unauthenticated syncUser throws
+    await expect(
+      t.mutation(api.users.syncUser, {
+        clerkId: "spoofed_id",
+        email: "spoofed@test.com",
+      })
+    ).rejects.toThrow("Unauthenticated");
+
+    // 2. Customer alice cannot elevate role or spoof clerkId
+    const alice = t.withIdentity({ subject: "user_alice" });
+    await alice.mutation(api.users.syncUser, {
+      clerkId: "user_bob",
+      email: "alice@test.com",
+      role: "admin",
+    });
+
+    // Check user was inserted with alice's identity and client role
+    const aliceDoc = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", "user_alice"))
+        .first();
+    });
+    expect(aliceDoc).not.toBeNull();
+    expect(aliceDoc?.clerkId).toBe("user_alice");
+    expect(aliceDoc?.role).toBe("client");
+
+    // Bob doc should not exist
+    const bobDoc = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", "user_bob"))
+        .first();
+    });
+    expect(bobDoc).toBeNull();
+
+    // 3. Alice cannot update Bob's profile or measurements
+    await t.run(async (ctx) => {
+      await ctx.db.insert("users", {
+        clerkId: "user_bob",
+        email: "bob@test.com",
+        role: "client",
+      });
+    });
+
+    await expect(
+      alice.mutation(api.users.updateProfile, {
+        clerkId: "user_bob",
+        phone: "+233550000000",
+      })
+    ).rejects.toThrow("Forbidden: Cannot update another user's profile");
+
+    await expect(
+      alice.mutation(api.users.updateMeasurements, {
+        clerkId: "user_bob",
+        measurements: { chest: 40 },
+      })
+    ).rejects.toThrow("Forbidden: Cannot update another user's measurements");
+
+    // 4. Alice can update her own profile and measurements
+    await alice.mutation(api.users.updateProfile, {
+      clerkId: "user_alice",
+      phone: "+233551111111",
+    });
+    const updatedAlice = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", "user_alice"))
+        .first();
+    });
+    expect(updatedAlice?.phone).toBe("+233551111111");
+  });
 });
 
 

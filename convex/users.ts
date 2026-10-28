@@ -1,6 +1,7 @@
 import { requireStaff } from "./staffAuth";
 import { mutation, query, internalQuery } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
+import { hasPermission, StaffRole } from "./staffPermissions";
 
 export const getAll = query({
   args: { staffToken: v.string() },
@@ -30,23 +31,34 @@ export const getAllEmails = query({
 
 export const syncUser = mutation({
   args: {
-    clerkId: v.string(),
+    clerkId: v.optional(v.string()),
     email: v.string(),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     role: v.optional(v.string()),
+    roleId: v.optional(v.string()),
     staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
-      if (!args.staffToken) throw new Error("Unauthenticated");
+    let targetClerkId: string;
+
+    if (args.staffToken) {
       await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+      if (!args.clerkId) {
+        throw new ConvexError("clerkId is required when syncing user via staffToken");
+      }
+      targetClerkId = args.clerkId;
+    } else {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new ConvexError("Unauthenticated: Must be logged in to sync user");
+      }
+      targetClerkId = identity.subject;
     }
 
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", targetClerkId))
       .first();
 
     if (existingUser) {
@@ -54,16 +66,16 @@ export const syncUser = mutation({
         email: args.email,
         firstName: args.firstName ?? existingUser.firstName,
         lastName: args.lastName ?? existingUser.lastName,
-        // role is intentionally omitted so clerk cannot override it
+        // Role cannot be modified or escalated via syncUser
       });
     }
 
     return await ctx.db.insert("users", {
-      clerkId: args.clerkId,
+      clerkId: targetClerkId,
       email: args.email,
       firstName: args.firstName,
       lastName: args.lastName,
-      role: "client",
+      role: "client", // Always 'client'
     });
   },
 });
@@ -75,10 +87,19 @@ export const updateMeasurements = mutation({
     staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
-      if (!args.staffToken) throw new Error("Unauthenticated");
-      await requireStaff(ctx, args.staffToken, { permission: "designer_portal" });
+    if (args.staffToken) {
+      const staff = await requireStaff(ctx, args.staffToken);
+      if (!hasPermission(staff.role as StaffRole, "designer_portal") && !hasPermission(staff.role as StaffRole, "orders")) {
+        throw new ConvexError({ code: "FORBIDDEN", message: "Unauthorized: Requires orders or designer_portal permission" });
+      }
+    } else {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new ConvexError("Unauthenticated: Must be logged in");
+      }
+      if (identity.subject !== args.clerkId) {
+        throw new ConvexError("Forbidden: Cannot update another user's measurements");
+      }
     }
 
     const user = await ctx.db
@@ -87,7 +108,7 @@ export const updateMeasurements = mutation({
       .first();
 
     if (!user) {
-      throw new Error("User not found");
+      throw new ConvexError("User not found");
     }
 
     return await ctx.db.patch(user._id, {
@@ -140,10 +161,16 @@ export const updateProfile = mutation({
     staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
-      if (!args.staffToken) throw new Error("Unauthenticated");
+    if (args.staffToken) {
       await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+    } else {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new ConvexError("Unauthenticated: Must be logged in");
+      }
+      if (identity.subject !== args.clerkId) {
+        throw new ConvexError("Forbidden: Cannot update another user's profile");
+      }
     }
 
     const user = await ctx.db
@@ -152,7 +179,7 @@ export const updateProfile = mutation({
       .first();
 
     if (!user) {
-      throw new Error("User not found");
+      throw new ConvexError("User not found");
     }
 
     return await ctx.db.patch(user._id, {
