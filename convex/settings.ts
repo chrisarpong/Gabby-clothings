@@ -28,7 +28,7 @@ export const getByKey = query({
     // If the key is not public, require admin authentication
     if (!PUBLIC_SETTING_KEYS.includes(args.key)) {
       if (!args.staffToken) throw new Error("Unauthenticated");
-      await requireStaff(ctx, args.staffToken, { permission: "settings" });
+      await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     }
 
     return await ctx.db
@@ -41,7 +41,7 @@ export const getByKey = query({
 export const getAll = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "settings" });
+    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     return await ctx.db.query("settings").collect();
   },
 });
@@ -53,7 +53,7 @@ export const setSetting = mutation({
     staffToken: v.string(),
   },
   handler: async (ctx, args) => {
-    const staff = await requireStaff(ctx, args.staffToken, { permission: "settings" });
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
 
     const existing = await ctx.db
       .query("settings")

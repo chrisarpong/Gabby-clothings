@@ -256,6 +256,95 @@ describe("Phase 1 Security Tests", () => {
     expect(catalogs.length).toBe(3);
     expect(catalogs.some((c) => c.slug === "summer-2026")).toBe(true);
   });
+
+  it("Task 1.6: orderActivity.getByOrder requires staffToken and allows orders or designer_portal permission", async () => {
+    const t = convexTest(schema);
+
+    const orderId = await t.run(async (ctx) => {
+      return await ctx.db.insert("orders", {
+        orderId: "GB-101",
+        totalAmount: 100,
+        status: "processing",
+        items: [],
+      });
+    });
+
+    const adminToken = "admin-order-token";
+    const designerToken = "designer-order-token";
+
+    await t.run(async (ctx) => {
+      const adminId = await ctx.db.insert("staff", {
+        name: "Admin",
+        email: "admin-oa@test.com",
+        role: "admin",
+        passwordHash: "h",
+        passwordSalt: "s",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId: adminId,
+        tokenHash: hashToken(adminToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+
+      const designerId = await ctx.db.insert("staff", {
+        name: "Designer",
+        email: "designer-oa@test.com",
+        role: "designer",
+        passwordHash: "h",
+        passwordSalt: "s",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId: designerId,
+        tokenHash: hashToken(designerToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+
+      await ctx.db.insert("orderActivityLog", {
+        orderId,
+        stage: "cutting",
+        performedBy: designerId,
+        timestamp: Date.now(),
+        note: "Fabric cut",
+      });
+    });
+
+    // 1. Invalid token throws
+    await expect(
+      t.query(api.orderActivity.getByOrder, {
+        staffToken: "invalid-token",
+        orderId,
+      })
+    ).rejects.toThrow();
+
+    // 2. Admin (orders permission) succeeds
+    const adminLogs = await t.query(api.orderActivity.getByOrder, {
+      staffToken: adminToken,
+      orderId,
+    });
+    expect(adminLogs.length).toBe(1);
+    expect(adminLogs[0].stage).toBe("cutting");
+
+    // 3. Designer (designer_portal permission) succeeds
+    const designerLogs = await t.query(api.orderActivity.getByOrder, {
+      staffToken: designerToken,
+      orderId,
+    });
+    expect(designerLogs.length).toBe(1);
+  });
 });
 
 
