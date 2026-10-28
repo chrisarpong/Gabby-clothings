@@ -244,6 +244,18 @@ describe("Phase 1 Security Tests", () => {
     const rates = await t.query(api.currency.getRates, {});
     expect(rates["USD"]).toBe(15.75);
   });
+
+  it("Task 1.5: catalogs.seed works as internal mutation", async () => {
+    const t = convexTest(schema);
+
+    await t.mutation(internal.catalogs.seed, {});
+
+    const catalogs = await t.run(async (ctx) => {
+      return await ctx.db.query("catalogs").collect();
+    });
+    expect(catalogs.length).toBe(3);
+    expect(catalogs.some((c) => c.slug === "summer-2026")).toBe(true);
+  });
 });
 
 

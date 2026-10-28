@@ -80,7 +80,7 @@ export const update = mutation({
   },
 });
 
-export const seed = mutation({
+export const seed = internalMutation({
   args: {},
   handler: async (ctx) => {
     const catalogsToInsert = [
