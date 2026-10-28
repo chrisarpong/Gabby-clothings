@@ -90,4 +90,10 @@ describe("Phase 2 permission matrix", () => {
     const stats = await t.query(api.analytics.getDashboardStats, { staffToken });
     expect(stats).toBeTruthy();
   });
+
+  it("dashboard analytics throws for an invalid staff session", async () => {
+    const t = convexTest(schema);
+    await expect(t.query(api.analytics.getDashboardStats, { staffToken: "invalid-dashboard-token" }))
+      .rejects.toThrow();
+  });
 });
