@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Component, ErrorInfo, ReactNode, useState } from 'react';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { 
@@ -20,7 +20,7 @@ import {
   FileText
 } from 'lucide-react';
 import logo from '../assets/logo.png';
-import { hasPermission, StaffRole } from '../../convex/staffPermissions';
+import { hasPermission, StaffPermission, StaffRole } from '../../convex/staffPermissions';
 
 import InventoryTab from '../components/admin/InventoryTab';
 import SettingsTab from '../components/admin/SettingsTab';
@@ -35,9 +35,30 @@ import MarketingTab from '../components/admin/MarketingTab';
 import ContentTab from '../components/admin/ContentTab';
 import NewsTab from '../components/admin/NewsTab';
 import TeamManagementTab from '../components/admin/TeamManagementTab';
-import NotificationBell from '../components/admin/NotificationBell';
 
 type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team_management';
+
+class StaffSectionErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    console.error('Staff section failed to render', error);
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    const forbidden = /FORBIDDEN|Unauthorized|permission/i.test(this.state.error.message);
+    return (
+      <div role="alert" className="m-8 border border-outline-variant bg-surface-container-lowest p-6 text-sm text-on-surface-variant">
+        {forbidden ? "You don't have access to this section." : 'This section could not be loaded. Please refresh and try again.'}
+      </div>
+    );
+  }
+}
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -48,19 +69,20 @@ export default function Admin() {
   // StaffRoute handles unauthenticated state, so we know profile exists
   if (!profile) return null;
 
-  const allTabs: { key: TabKey; name: string; icon: React.ElementType; permission: string }[] = [
+  const allTabs: { key: TabKey; name: string; icon: React.ElementType; permission: StaffPermission }[] = [
     { key: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' },
     { key: 'orders', name: 'Orders', icon: ShoppingCart, permission: 'orders' },
     { key: 'inventory', name: 'Inventory', icon: Package, permission: 'inventory' },
     { key: 'clients', name: 'Clients', icon: Users, permission: 'clients' },
     { key: 'appointments', name: 'Appointments', icon: HeartHandshake, permission: 'appointments' },
-    { key: 'news', name: 'News & Blog', icon: Volume2, permission: 'news' },
+    { key: 'news', name: 'News & Blog', icon: Volume2, permission: 'content' },
     { key: 'reviews', name: 'Reviews', icon: Star, permission: 'reviews' },
     { key: 'financials', name: 'Financials', icon: LineChart, permission: 'financials' },
     { key: 'marketing', name: 'Marketing', icon: Volume2, permission: 'marketing' },
     { key: 'promotions', name: 'Promotions', icon: Tag, permission: 'promotions' },
     { key: 'content', name: 'Pages & Content', icon: FileText, permission: 'content' },
     { key: 'team_management', name: 'Team & Roles', icon: Shield, permission: 'team_management' },
+    { key: 'settings', name: 'Settings', icon: Settings, permission: 'settings' },
   ];
 
   const tabs = allTabs.filter(tab => hasPermission(profile.role as StaffRole, tab.permission));
@@ -154,31 +176,6 @@ export default function Admin() {
               );
             })}
             
-            <div className={`mt-6 mb-3 transition-all duration-300 ${isDesktopExpanded ? 'px-6' : 'px-0 text-center'}`}>
-               {isDesktopExpanded ? (
-                 <p className="font-label text-[9px] tracking-widest uppercase text-outline whitespace-nowrap">System</p>
-               ) : (
-                 <div className="w-8 mx-auto h-px bg-surface-variant"></div>
-               )}
-            </div>
-            <button
-              title="Settings"
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                setActiveTab('settings'); 
-                setIsMobileMenuOpen(false); 
-              }}
-              className={`flex items-center gap-4 py-3 font-label text-[11px] tracking-[0.1em] uppercase text-left transition-all duration-200 whitespace-nowrap overflow-hidden ${
-                isDesktopExpanded ? 'px-6' : 'justify-center px-0'
-              } ${
-                activeTab === 'settings'
-                  ? 'bg-primary text-surface border-r-2 border-primary shadow-[inset_4px_0_0_0_rgba(255,255,255,0.1)]'
-                  : 'text-on-surface-variant hover:bg-surface-container/50 hover:text-primary'
-              }`}
-            >
-              <Settings className="w-5 h-5 shrink-0" strokeWidth={activeTab === 'settings' ? 2 : 1.5} />
-              {isDesktopExpanded && <span>Settings</span>}
-            </button>
           </nav>
         </div>
         
@@ -199,10 +196,7 @@ export default function Admin() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-surface-container-lowest relative ring-1 ring-surface-variant/50">
-        <div className="absolute top-4 right-4 z-[100]">
-          <NotificationBell />
-        </div>
-        {renderContent()}
+        <StaffSectionErrorBoundary key={activeTab}>{renderContent()}</StaffSectionErrorBoundary>
       </main>
     </div>
   );

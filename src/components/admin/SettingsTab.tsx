@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { SUPPORTED_CURRENCIES } from '../../utils/currency';
 import TailorsSection from './TailorsSection';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useStaffAuth } from "../../hooks/useStaffAuth";
+import { hasPermission, StaffRole } from "../../../convex/staffPermissions";
 
 // ─── Sub-navigation tabs ───
 type SettingsSection = 'general' | 'team' | 'commerce' | 'currency' | 'appointments' | 'storefront' | 'notifications';
@@ -96,6 +98,8 @@ function SectionCard({ title, description, children }: { title: string; descript
 
 // ─── Main Component ───
 export default function SettingsTab() {
+  const { profile } = useStaffAuth();
+  const canEditFinancials = profile ? hasPermission(profile.role as StaffRole, 'financials') : false;
   const settingsRecords = useStaffQuery(api.settings.getAll);
   const dbRates = useStaffQuery(api.currency.getRates);
   const setSetting = useStaffMutation(api.settings.setSetting);
@@ -235,6 +239,10 @@ export default function SettingsTab() {
 
   // ─── Save per section ───
   const saveSection = async (section: SettingsSection) => {
+    if ((section === 'commerce' || section === 'currency') && !canEditFinancials) {
+      toast.error("You don't have access to this section.");
+      return;
+    }
     setIsSaving(true);
     try {
       const updates: { key: string; value: any }[] = [];
@@ -723,7 +731,7 @@ export default function SettingsTab() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Sub-nav */}
         <div className="hidden md:flex flex-col w-56 shrink-0 border-r border-surface-variant bg-surface-container-lowest py-4 overflow-y-auto">
-          {SECTIONS.map(section => {
+          {SECTIONS.filter(section => canEditFinancials || (section.key !== 'commerce' && section.key !== 'currency')).map(section => {
             const Icon = section.icon;
             const isActive = activeSection === section.key;
             return (
@@ -745,7 +753,7 @@ export default function SettingsTab() {
 
         {/* Mobile Tab Bar */}
         <div className="md:hidden flex overflow-x-auto border-b border-surface-variant bg-surface-container-lowest shrink-0 no-scrollbar">
-          {SECTIONS.map(section => {
+          {SECTIONS.filter(section => canEditFinancials || (section.key !== 'commerce' && section.key !== 'currency')).map(section => {
             const Icon = section.icon;
             const isActive = activeSection === section.key;
             return (

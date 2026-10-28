@@ -3,7 +3,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { TrendingUp, Users, ShoppingBag, Calendar, Activity, AlertTriangle, Plus, Tag, Settings, ChevronRight, UserPlus, CheckCircle, XCircle, Clock, ShieldCheck, Printer, X, Search, Monitor, Smartphone, Globe } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useStaffAuth, useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 class DashboardErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -53,6 +53,7 @@ type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' 
 const COLORS = ['#352421', '#827472', '#d4c3c1', '#735c00'];
 
 function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: TabKey) => void, adminName?: string }) {
+  const { profile } = useStaffAuth();
   const stats = useStaffQuery(api.analytics.getDashboardStats);
   const [logCategoryFilter, setLogCategoryFilter] = useState<string>('All');
   const [logSearchQuery, setLogSearchQuery] = useState('');
@@ -62,7 +63,8 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
     category: logCategoryFilter !== 'All' ? logCategoryFilter.toLowerCase() : undefined 
   });
   
-  const activeSessions = useStaffQuery(api.adminLogs.getActiveSessions);
+  const canViewActiveSessions = profile?.role === 'ceo';
+  const activeSessions = useStaffQuery(api.adminLogs.getActiveSessions, canViewActiveSessions ? undefined : 'skip');
 
   const [chartMode, setChartMode] = useState<'revenue' | 'orders'>('revenue');
   const [greeting, setGreeting] = useState('Good day');
@@ -446,7 +448,7 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
             
             <div className="flex-1 overflow-y-auto bg-surface flex flex-col">
                {/* Active Sessions Panel */}
-               {activeSessions && activeSessions.length > 0 && (
+               {canViewActiveSessions && activeSessions && activeSessions.length > 0 && (
                  <div className="p-6 border-b border-outline-variant/20 bg-surface-container-lowest shrink-0">
                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4 flex items-center gap-2">
                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>

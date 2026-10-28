@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import OrderInvoiceModal from './OrderInvoiceModal';
 import AdminCreateOrderDrawer from './AdminCreateOrderDrawer';
 import { getDeviceInfo } from '../../utils/deviceInfo';
-import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useStaffAuth, useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { hasPermission, StaffRole } from "../../../convex/staffPermissions";
 
 const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   pending: { bg: 'bg-surface-variant/30', text: 'text-primary' },
@@ -27,6 +28,8 @@ const formatStatus = (status: string) => {
 };
 
 export default function OrdersTab() {
+  const { profile } = useStaffAuth();
+  const canRecordPayments = profile ? hasPermission(profile.role as StaffRole, 'financials') : false;
   const orders = useStaffQuery(api.orders.getAll) || [];
   const updateStatus = useStaffMutation(api.orders.updateStatus);
   const recordCashPayment = useStaffMutation(api.payments.recordCashPayment);
@@ -44,7 +47,7 @@ export default function OrdersTab() {
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
 
   // Assignment & Production State
-  const staff = useStaffQuery(api.staffAuth.listStaff) || [];
+  const staff = useStaffQuery(api.staffAuth.listStaff, profile?.role === 'ceo' ? undefined : 'skip') || [];
   const orderActivity = useStaffQuery(api.orderActivity.getByOrder, selectedOrder ? { orderId: selectedOrder._id } : "skip") || [];
   const assignDesigner = useStaffMutation(api.orders.assignDesigner);
   const updateProductionStatus = useStaffMutation(api.orders.updateProductionStatus);
@@ -372,7 +375,7 @@ export default function OrdersTab() {
                     )}
                   </div>
 
-                  {selectedOrder.paymentStatus !== 'paid' && selectedOrder.status !== 'cancelled' && (
+                  {canRecordPayments && selectedOrder.paymentStatus !== 'paid' && selectedOrder.status !== 'cancelled' && (
                     <div className="mt-4 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm">
                       <div className="flex justify-between items-center mb-3">
                         <h5 className="text-xs font-bold uppercase tracking-widest text-primary">Record Manual Payment</h5>
