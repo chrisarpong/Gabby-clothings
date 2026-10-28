@@ -62,7 +62,7 @@ export const getRecentLogs = query({
     category: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+    await requireStaff(ctx, args.staffToken, { permission: "audit_logs" });
     const limit = args.limit || 50;
 
     let query = ctx.db.query("adminLogs").order("desc");
@@ -80,7 +80,7 @@ export const getActiveSessions = query({
     staffToken: v.string()
   },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+    await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     const now = Date.now();
     const sessions = await ctx.db
       .query("staffSessions")

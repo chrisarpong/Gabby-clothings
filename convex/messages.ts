@@ -26,7 +26,7 @@ export const getMessages = query({
       staffToken: v.string()
 },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+      await requireStaff(ctx, args.staffToken, { permission: "messages" });
     return await ctx.db.query("messages").order("desc").collect();
   }
 });
@@ -36,7 +36,7 @@ export const markAsRead = mutation({
       staffToken: v.string(),
     messageId: v.id("messages") },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+      await requireStaff(ctx, args.staffToken, { permission: "messages" });
     await ctx.db.patch(args.messageId, { status: "read" });
   },
 });

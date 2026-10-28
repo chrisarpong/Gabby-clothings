@@ -1,7 +1,7 @@
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
-import { STAFF_ROLES, StaffRole, hasPermission } from "./staffPermissions";
+import { StaffPermission, StaffRole, hasPermission } from "./staffPermissions";
 
 const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
   sales: 5 * 60 * 1000,
@@ -149,10 +149,17 @@ export async function validateStaffSession(ctx: any, token: string) {
   return { staff, session: session as { _id: Id<"staffSessions">; staffId: Id<"staff">; revokedAt?: number; lastActivityAt: number; [key: string]: any } };
 }
 
-export async function requireStaff(ctx: any, token: string, options?: { permission?: string }) {
+export async function requireStaff(
+  ctx: any,
+  token: string,
+  options?: { permission?: StaffPermission | StaffPermission[] },
+) {
   const { staff } = await validateStaffSession(ctx, token);
-  if (options?.permission && !hasPermission(staff.role as StaffRole, options.permission)) {
-    throw new ConvexError({ code: "FORBIDDEN", message: `Unauthorized: Requires ${options.permission}` });
+  const permissions = options?.permission
+    ? Array.isArray(options.permission) ? options.permission : [options.permission]
+    : [];
+  if (permissions.length > 0 && !permissions.some((permission) => hasPermission(staff.role as StaffRole, permission))) {
+    throw new ConvexError({ code: "FORBIDDEN", message: `Unauthorized: Requires ${permissions.join(" or ")}` });
   }
   return staff;
 }
@@ -280,7 +287,7 @@ export const getStaffProfile = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
     try {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+      const staff = await requireStaff(ctx, args.staffToken);
       const { passwordHash, passwordSalt, totpSecret, recoveryCodes, ...safeProfile } = staff;
       return safeProfile;
     } catch (e: any) {

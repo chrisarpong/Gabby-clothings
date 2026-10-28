@@ -243,7 +243,7 @@ export const createStaffUser = action({
   handler: async (ctx, args) => {
     // 1. Validate session & permissions
     const tokenHash = hashToken(args.staffToken);
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
 
@@ -276,7 +276,7 @@ export const resetStaffPassword = action({
   },
   handler: async (ctx, args) => {
     const tokenHash = hashToken(args.staffToken);
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
 

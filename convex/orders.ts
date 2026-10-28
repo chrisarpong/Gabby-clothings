@@ -411,7 +411,7 @@ export const createPOSOrder = mutation({
     paystackReference: v.optional(v.string()), // Required if paymentMethod is 'paystack'
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
+      const staff = await requireStaff(ctx, args.staffToken, { permission: ["sales_portal", "orders"] });
     // If it's a paystack MoMo/Card payment, verify it first
     if (args.paymentMethod === 'paystack' && args.paystackReference) {
       // Duplicate order prevention

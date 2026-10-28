@@ -412,9 +412,9 @@ describe("Phase 1 Security Tests", () => {
     let staffId: any;
     await t.run(async (ctx) => {
       staffId = await ctx.db.insert("staff", {
-        name: "Log Admin",
-        email: "logadmin@test.com",
-        role: "admin",
+        name: "CEO Log Staff",
+        email: "ceolog@test.com",
+        role: "ceo",
         passwordHash: "h",
         passwordSalt: "s",
         mustChangePassword: false,

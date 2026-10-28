@@ -1,8 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { requireStaff } from "./staffAuth";
-import { hasPermission, StaffRole } from "./staffPermissions";
 
 export const getByOrder = query({
   args: {
@@ -10,10 +9,7 @@ export const getByOrder = query({
     orderId: v.id("orders"),
   },
   handler: async (ctx, args) => {
-    const staff = await requireStaff(ctx, args.staffToken);
-    if (!hasPermission(staff.role as StaffRole, "designer_portal") && !hasPermission(staff.role as StaffRole, "orders")) {
-      throw new ConvexError({ code: "FORBIDDEN", message: "Unauthorized: Requires orders or designer_portal permission" });
-    }
+    await requireStaff(ctx, args.staffToken, { permission: ["designer_portal", "orders"] });
     const logs = await ctx.db
       .query("orderActivityLog")
       .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
@@ -42,10 +38,7 @@ export const addNote = mutation({
     note: v.string(),
   },
   handler: async (ctx, args) => {
-    const staff = await requireStaff(ctx, args.staffToken);
-    if (!hasPermission(staff.role as StaffRole, "designer_portal") && !hasPermission(staff.role as StaffRole, "orders")) {
-      throw new ConvexError({ code: "FORBIDDEN", message: "Unauthorized: Requires orders or designer_portal permission" });
-    }
+    const staff = await requireStaff(ctx, args.staffToken, { permission: ["designer_portal", "orders"] });
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
       stage: "note",

@@ -1,12 +1,11 @@
 import { requireStaff } from "./staffAuth";
 import { mutation, query, internalQuery } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
-import { hasPermission, StaffRole } from "./staffPermissions";
 
 export const getAll = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+    await requireStaff(ctx, args.staffToken, { permission: "clients" });
     return await ctx.db.query("users").collect();
   },
 });
@@ -43,7 +42,7 @@ export const syncUser = mutation({
     let targetClerkId: string;
 
     if (args.staffToken) {
-      await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+      await requireStaff(ctx, args.staffToken, { permission: "clients" });
       if (!args.clerkId) {
         throw new ConvexError("clerkId is required when syncing user via staffToken");
       }
@@ -84,22 +83,14 @@ export const updateMeasurements = mutation({
   args: {
     clerkId: v.string(),
     measurements: v.any(),
-    staffToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (args.staffToken) {
-      const staff = await requireStaff(ctx, args.staffToken);
-      if (!hasPermission(staff.role as StaffRole, "designer_portal") && !hasPermission(staff.role as StaffRole, "orders")) {
-        throw new ConvexError({ code: "FORBIDDEN", message: "Unauthorized: Requires orders or designer_portal permission" });
-      }
-    } else {
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) {
-        throw new ConvexError("Unauthenticated: Must be logged in");
-      }
-      if (identity.subject !== args.clerkId) {
-        throw new ConvexError("Forbidden: Cannot update another user's measurements");
-      }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Unauthenticated: Must be logged in");
+    }
+    if (identity.subject !== args.clerkId) {
+      throw new ConvexError("Forbidden: Cannot update another user's measurements");
     }
 
     const user = await ctx.db
@@ -162,7 +153,7 @@ export const updateProfile = mutation({
   },
   handler: async (ctx, args) => {
     if (args.staffToken) {
-      await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+      await requireStaff(ctx, args.staffToken, { permission: "clients" });
     } else {
       const identity = await ctx.auth.getUserIdentity();
       if (!identity) {
@@ -204,7 +195,7 @@ export const createClientFromAppointment = mutation({
     staffToken: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "appointments" });
+    await requireStaff(ctx, args.staffToken, { permission: "clients" });
 
     const [firstName, ...lastNameParts] = args.name.split(' ');
     const lastName = lastNameParts.join(' ');
