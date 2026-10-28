@@ -69,8 +69,7 @@ export default function MessagesTab() {
                   if (!reply.trim()) return;
                   setSending(true);
                   try {
-                    await replyToMessage({ email: replyingTo.email, subject: replyingTo.subject, message: reply, originalMessage: replyingTo.message });
-                    if (replyingTo.status === 'unread') await markRead(replyingTo._id);
+                    await replyToMessage({ messageId: replyingTo._id, message: reply });
                     toast.success('Reply sent');
                     setReplyingTo(null);
                     setReply('');

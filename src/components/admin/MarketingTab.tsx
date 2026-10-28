@@ -282,15 +282,10 @@ export default function MarketingTab() {
                   setIsSendingReply(true);
                   try {
                     await replyToMessageAction({ 
-                      email: replyingToMsg.email, 
-                      subject: replyingToMsg.subject, 
+                      messageId: replyingToMsg._id,
                       message: replyMessage, 
-                      originalMessage: replyingToMsg.message 
                     });
                     toast.success("Reply sent successfully.");
-                    if (replyingToMsg.status === 'unread') {
-                      await markAsRead({ messageId: replyingToMsg._id });
-                    }
                     setReplyingToMsg(null);
                     setReplyMessage("");
                   } catch (e: any) {

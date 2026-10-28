@@ -1,5 +1,5 @@
 
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
 import { checkRateLimit } from "./authHelper";
 import { v } from "convex/values";
 import { requireStaff } from "./staffAuth";
@@ -38,5 +38,20 @@ export const markAsRead = mutation({
   handler: async (ctx, args) => {
       await requireStaff(ctx, args.staffToken, { permission: "messages" });
     await ctx.db.patch(args.messageId, { status: "read" });
+  },
+});
+
+export const getByIdForReply = internalQuery({
+  args: { messageId: v.id("messages") },
+  handler: async (ctx, args) => await ctx.db.get(args.messageId),
+});
+
+export const markRepliedInternal = internalMutation({
+  args: { messageId: v.id("messages") },
+  handler: async (ctx, args) => {
+    const message = await ctx.db.get(args.messageId);
+    if (message && message.status !== "replied") {
+      await ctx.db.patch(args.messageId, { status: "replied" });
+    }
   },
 });

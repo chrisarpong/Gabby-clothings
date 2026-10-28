@@ -114,4 +114,20 @@ describe("Phase 2 permission matrix", () => {
     expect(ceoFeed.counts).toEqual({ messages: 1, appointments: 1, orders: 1, total: 3 });
     expect(ceoFeed.items).toHaveLength(3);
   });
+
+  it("message replies reject invalid staff sessions before sending", async () => {
+    const t = convexTest(schema);
+    const messageId = await t.run(async (ctx) => await ctx.db.insert("messages", {
+      name: "Client",
+      email: "client@example.test",
+      subject: "Question",
+      message: "Hello",
+      status: "unread",
+    }));
+    await expect(t.action(api.email.replyToMessage, {
+      staffToken: "invalid-message-reply-token",
+      messageId,
+      message: "Thanks for reaching out",
+    })).rejects.toThrow("Unauthorized: Requires an active staff session with messages permission.");
+  });
 });

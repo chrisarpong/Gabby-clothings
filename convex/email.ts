@@ -1,7 +1,7 @@
 import { internalAction, action } from "./_generated/server";
 import { v } from "convex/values";
 import { Resend } from "resend";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 function getResendClient() {
   const key = process.env.RESEND_API_KEY;
@@ -386,33 +386,49 @@ export const sendNewsletterBroadcast = action({
 
 export const replyToMessage = action({
   args: {
-    email: v.string(),
-    subject: v.string(),
+    staffToken: v.string(),
+    messageId: v.id("messages"),
     message: v.string(),
-    originalMessage: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const tokenBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(args.staffToken));
+    const tokenHash = Array.from(new Uint8Array(tokenBytes), byte => byte.toString(16).padStart(2, "0")).join("");
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "messages" });
+    if (!staff) throw new Error("Unauthorized: Requires an active staff session with messages permission.");
+
+    const customerMessage = await ctx.runQuery(internal.messages.getByIdForReply, { messageId: args.messageId });
+    if (!customerMessage) throw new Error("Message not found.");
 
     const resend = getResendClient();
     if (!resend) throw new Error("Resend API key not configured");
 
+    const escapeHtml = (value: string) => value.replace(/[&<>\"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;",
+    })[character]!);
+    const safeReply = escapeHtml(args.message);
+    const safeOriginal = escapeHtml(customerMessage.message);
+    const sender = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
-      to: args.email,
-      subject: `Re: ${args.subject}`,
+      from: sender,
+      replyTo: sender,
+      to: customerMessage.email,
+      subject: `Re: ${customerMessage.subject}`,
       html: `
 <div style="font-family: 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; background-color: #ffffff; padding: 40px 20px;">
   <div style="margin-bottom: 30px;">
     <h1 style="color: #4a3c31; font-style: italic; font-family: Georgia, serif; font-size: 24px; margin: 0;">Gabby Newluk</h1>
   </div>
   
-  <p style="line-height: 1.6; color: #333; font-size: 15px; white-space: pre-wrap;">${args.message}</p>
+  <p style="line-height: 1.6; color: #333; font-size: 15px; white-space: pre-wrap;">${safeReply}</p>
   
   <div style="margin-top: 40px; padding-left: 15px; border-left: 3px solid #ccc; color: #666; font-size: 13px;">
     <p style="margin-bottom: 5px;"><strong>On ${new Date().toLocaleDateString()}, you wrote:</strong></p>
-    <p style="white-space: pre-wrap; font-style: italic;">${args.originalMessage}</p>
+    <p style="white-space: pre-wrap; font-style: italic;">${safeOriginal}</p>
   </div>
   
   <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; font-size: 11px; color: #999;">
@@ -421,6 +437,7 @@ export const replyToMessage = action({
 </div>
       `,
     });
+    await ctx.runMutation(internal.messages.markRepliedInternal, { messageId: args.messageId });
     
     return "Reply sent successfully.";
   }
