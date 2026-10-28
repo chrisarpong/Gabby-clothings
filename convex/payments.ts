@@ -45,8 +45,12 @@ export const recordCashPayment = mutation({
 });
 
 export const getByOrder = query({
-  args: { orderId: v.id("orders") },
+  args: {
+    staffToken: v.string(),
+    orderId: v.id("orders"),
+  },
   handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "financials" });
     return await ctx.db
       .query("payments")
       .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))

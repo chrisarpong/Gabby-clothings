@@ -1,10 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api, internal } from "./_generated/api";
+import * as crypto from "crypto";
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 describe("Phase 1 Security Tests", () => {
   const originalEnv = process.env.ALLOW_DATA_WIPE;
+
+  beforeAll(() => {
+    process.env.STAFF_2FA_ENC_KEY = crypto.randomBytes(32).toString("base64");
+  });
 
   afterEach(() => {
     process.env.ALLOW_DATA_WIPE = originalEnv;
@@ -43,6 +52,97 @@ describe("Phase 1 Security Tests", () => {
       return await ctx.db.get(productId);
     });
     expect(product?.stock).toBe(7);
+  });
+
+  it("Task 1.3: payments.getByOrder requires staffToken with financials permission", async () => {
+    const t = convexTest(schema);
+
+    const orderId = await t.run(async (ctx) => {
+      return await ctx.db.insert("orders", {
+        orderId: "ORD-001",
+        customerDetails: {
+          email: "cust@test.com",
+          firstName: "Customer",
+          lastName: "One",
+        },
+        items: [],
+        totalAmount: 500,
+        amountPaid: 200,
+        amountDue: 300,
+        displayCurrency: "GHS",
+        status: "pending",
+        paymentStatus: "partial",
+        paymentMethod: "cash",
+      });
+    });
+
+    // 1. Call with fake/invalid token -> fails
+    await expect(
+      t.query(api.payments.getByOrder, { staffToken: "invalid-token", orderId })
+    ).rejects.toThrow();
+
+    // 2. Call with admin (no financials permission) -> fails
+    const adminToken = "admin-secret-token";
+    await t.run(async (ctx) => {
+      const staffId = await ctx.db.insert("staff", {
+        name: "Admin Staff",
+        email: "admin@test.com",
+        role: "admin",
+        passwordHash: "hash",
+        passwordSalt: "salt",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId,
+        tokenHash: await hashToken(adminToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+    });
+
+    await expect(
+      t.query(api.payments.getByOrder, { staffToken: adminToken, orderId })
+    ).rejects.toThrow("Unauthorized: Requires financials");
+
+    // 3. Call with ceo (has financials permission) -> succeeds
+    const ceoToken = "ceo-secret-token";
+    await t.run(async (ctx) => {
+      const staffId = await ctx.db.insert("staff", {
+        name: "CEO Staff",
+        email: "ceo@test.com",
+        role: "ceo",
+        passwordHash: "hash",
+        passwordSalt: "salt",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId,
+        tokenHash: await hashToken(ceoToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+      await ctx.db.insert("payments", {
+        orderId,
+        amount: 200,
+        paymentMethod: "cash",
+        recordedBy: staffId,
+        date: new Date().toISOString(),
+      });
+    });
+
+    const payments = await t.query(api.payments.getByOrder, { staffToken: ceoToken, orderId });
+    expect(payments.length).toBe(1);
+    expect(payments[0].amount).toBe(200);
   });
 });
 
