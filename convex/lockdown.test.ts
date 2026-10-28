@@ -482,6 +482,82 @@ describe("Phase 1 Security Tests", () => {
     });
     expect(updatedAlice?.phone).toBe("+233551111111");
   });
+
+  it("Task 1.9: softReserveItems requires Clerk auth, validates bounds, and cleans up expired reserves", async () => {
+    const t = convexTest(schema);
+
+    // Setup active product and archived product
+    let activeProductId: any;
+    let archivedProductId: any;
+
+    await t.run(async (ctx) => {
+      activeProductId = await ctx.db.insert("products", {
+        name: "Active Kaftan",
+        category: "kaftans",
+        description: "A lovely kaftan",
+        type: "ready_to_wear",
+        status: "active",
+        basePrice: 200,
+        stock: 50,
+        images: ["kaftan.jpg"],
+      });
+
+      archivedProductId = await ctx.db.insert("products", {
+        name: "Archived Kaftan",
+        category: "kaftans",
+        description: "Old kaftan",
+        type: "ready_to_wear",
+        status: "archived",
+        basePrice: 200,
+        stock: 50,
+        images: ["old.jpg"],
+      });
+    });
+
+    // 1. Unauthenticated softReserveItems throws
+    await expect(
+      t.mutation(api.inventory.softReserveItems, {
+        items: [{ productId: activeProductId, quantity: 2 }],
+      })
+    ).rejects.toThrow("Authentication required: must be signed in to reserve items");
+
+    // 2. Authenticated user with invalid quantity (> 20) throws
+    const alice = t.withIdentity({ subject: "user_alice" });
+    await expect(
+      alice.mutation(api.inventory.softReserveItems, {
+        items: [{ productId: activeProductId, quantity: 25 }],
+      })
+    ).rejects.toThrow("Item quantity must be an integer between 1 and 20");
+
+    // 3. Authenticated user with archived product throws
+    await expect(
+      alice.mutation(api.inventory.softReserveItems, {
+        items: [{ productId: archivedProductId, quantity: 2 }],
+      })
+    ).rejects.toThrow("Product not found or not currently active");
+
+    // 4. Valid reserve succeeds
+    await alice.mutation(api.inventory.softReserveItems, {
+      items: [{ productId: activeProductId, quantity: 5 }],
+    });
+
+    // Verify count in getActiveReserves
+    const count = await t.query(api.inventory.getActiveReserves, { productId: activeProductId });
+    expect(count).toBe(5);
+
+    // 5. Test cleanupExpiredReserves
+    // Insert an expired reserve directly
+    await t.run(async (ctx) => {
+      await ctx.db.insert("activeCheckouts", {
+        userId: "user_expired",
+        items: [{ productId: activeProductId, quantity: 10 }],
+        expiresAt: Date.now() - 5000,
+      });
+    });
+
+    const cleanedCount = await t.mutation(internal.inventory.cleanupExpiredReserves, {});
+    expect(cleanedCount).toBe(1);
+  });
 });
 
 

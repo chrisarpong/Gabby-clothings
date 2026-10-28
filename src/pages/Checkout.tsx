@@ -49,15 +49,8 @@ export default function Checkout() {
   React.useEffect(() => {
     if (items.length === 0 && !isSuccess) {
       navigate("/cart");
-    } else if (items.length > 0 && !isSuccess) {
-      const sessionId = localStorage.getItem("gabby_guest_session") || crypto.randomUUID();
-      if (!localStorage.getItem("gabby_guest_session")) {
-        localStorage.setItem("gabby_guest_session", sessionId);
-      }
-      const userId = user?.id || sessionId;
-
+    } else if (items.length > 0 && !isSuccess && user) {
       softReserveItems({
-        userId,
         items: items.map(i => ({
           productId: i.productId as any,
           variantSku: i.variantSku,

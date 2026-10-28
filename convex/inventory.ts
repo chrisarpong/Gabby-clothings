@@ -6,7 +6,10 @@ import { api, internal } from "./_generated/api";
 const RESERVE_TIME_MS = 15 * 60 * 1000; // 15 minutes
 
 export const getActiveReserves = query({
-  args: { productId: v.id("products"), variantSku: v.optional(v.string()) },
+  args: {
+    productId: v.optional(v.id("products")),
+    variantSku: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const now = Date.now();
     const reserves = await ctx.db
@@ -14,21 +17,32 @@ export const getActiveReserves = query({
       .filter((q) => q.gt(q.field("expiresAt"), now))
       .collect();
 
-    let count = 0;
-    for (const r of reserves) {
-      for (const item of r.items) {
-        if (item.productId === args.productId && item.variantSku === args.variantSku) {
-          count += item.quantity;
+    if (args.productId) {
+      let count = 0;
+      for (const r of reserves) {
+        for (const item of r.items) {
+          if (item.productId === args.productId && (!args.variantSku || item.variantSku === args.variantSku)) {
+            count += item.quantity;
+          }
         }
       }
+      return count;
     }
-    return count;
+
+    const aggregated: Record<string, number> = {};
+    for (const r of reserves) {
+      for (const item of r.items) {
+        const key = `${item.productId}:${item.variantSku || "default"}`;
+        aggregated[key] = (aggregated[key] || 0) + item.quantity;
+      }
+    }
+    return aggregated;
   },
 });
 
 export const softReserveItems = mutation({
   args: {
-    userId: v.string(), // clerkId or anonymous sessionId
+    userId: v.optional(v.string()),
     items: v.array(
       v.object({
         productId: v.id("products"),
@@ -38,28 +52,44 @@ export const softReserveItems = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Authentication required: must be signed in to reserve items");
+    }
+    const userId = identity.subject;
+
+    if (!args.items || args.items.length === 0 || args.items.length > 30) {
+      throw new ConvexError("Items list must contain between 1 and 30 items");
+    }
+
     const now = Date.now();
-    
+
     // Clean up old reserves for this user
     const existing = await ctx.db
       .query("activeCheckouts")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     for (const res of existing) {
       await ctx.db.delete(res._id);
     }
 
-    // Check stock before reserving
+    // Validate each item and check stock before reserving
     for (const item of args.items) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20) {
+        throw new ConvexError("Item quantity must be an integer between 1 and 20");
+      }
+
       if (item.variantSku === "custom") continue;
-      
-      const product: any = await ctx.db.get(item.productId as any);
-      if (!product) throw new Error("Product not found");
+
+      const product = await ctx.db.get(item.productId);
+      if (!product || product.status !== "active") {
+        throw new ConvexError("Product not found or not currently active");
+      }
 
       let availableStock = 0;
       if (product.variants && product.variants.length > 0) {
-        const variant = product.variants.find((v: any) => v.sku === item.variantSku);
+        const variant = product.variants.find((v) => v.sku === item.variantSku);
         availableStock = variant ? variant.stock : 0;
       } else {
         availableStock = product.stock ?? 0;
@@ -73,7 +103,7 @@ export const softReserveItems = mutation({
 
       let reservedCount = 0;
       for (const r of otherReserves) {
-        if (r.userId === args.userId) continue;
+        if (r.userId === userId) continue;
         for (const rItem of r.items) {
           if (rItem.productId === item.productId && rItem.variantSku === item.variantSku) {
             reservedCount += rItem.quantity;
@@ -87,10 +117,26 @@ export const softReserveItems = mutation({
     }
 
     await ctx.db.insert("activeCheckouts", {
-      userId: args.userId,
+      userId,
       items: args.items,
       expiresAt: now + RESERVE_TIME_MS,
     });
+  },
+});
+
+export const cleanupExpiredReserves = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const expired = await ctx.db
+      .query("activeCheckouts")
+      .filter((q) => q.lte(q.field("expiresAt"), now))
+      .collect();
+
+    for (const record of expired) {
+      await ctx.db.delete(record._id);
+    }
+    return expired.length;
   },
 });
 

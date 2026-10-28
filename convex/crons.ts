@@ -26,4 +26,10 @@ crons.interval(
   internal.staffAuth.cleanupSessions
 );
 
+crons.interval(
+  "cleanup-expired-reserves",
+  { hours: 1 },
+  internal.inventory.cleanupExpiredReserves
+);
+
 export default crons;
