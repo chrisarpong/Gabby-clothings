@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /designer/
+Disallow: /sales/
+Disallow: /staff/
+
+Sitemap: https://gabbynewluk.com/sitemap.xml
+
