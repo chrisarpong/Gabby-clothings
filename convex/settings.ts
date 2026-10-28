@@ -55,6 +55,10 @@ export const setSetting = mutation({
   handler: async (ctx, args) => {
     const staff = await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
 
+    if (args.key.startsWith("manualRate")) {
+      throw new Error("Manual exchange rates must be changed through currency rate management.");
+    }
+
     const existing = await ctx.db
       .query("settings")
       .withIndex("by_key", (q) => q.eq("key", args.key))

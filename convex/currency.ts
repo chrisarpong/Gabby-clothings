@@ -122,7 +122,7 @@ export const setManualRate = mutation({
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "financials" });
 
-    const ALLOWED_CURRENCIES = ["GHS", "USD", "EUR", "GBP", "ZAR", "NGN", "CAD", "AUD", "JPY", "AED"];
+    const ALLOWED_CURRENCIES = ["USD", "EUR", "GBP", "ZAR", "NGN", "CAD", "AUD", "JPY", "AED"];
     if (!ALLOWED_CURRENCIES.includes(args.currency)) {
       throw new ConvexError(`Invalid currency: ${args.currency}. Must be one of: ${ALLOWED_CURRENCIES.join(", ")}`);
     }
@@ -139,6 +139,14 @@ export const setManualRate = mutation({
       .query("exchangeRates")
       .withIndex("by_currency", (q) => q.eq("currency", args.currency))
       .first();
+
+    if (existing && Number.isFinite(existing.liveRate) && existing.liveRate > 0) {
+      const minRate = existing.liveRate * 0.2;
+      const maxRate = existing.liveRate * 5;
+      if (args.rate < minRate || args.rate > maxRate) {
+        throw new ConvexError(`Rate must be between ${minRate} and ${maxRate} for ${args.currency}`);
+      }
+    }
 
     const now = Date.now();
     if (existing) {
@@ -172,6 +180,39 @@ export const setManualRate = mutation({
         value: String(args.rate),
       });
     }
+  },
+});
+
+export const clearManualRate = mutation({
+  args: {
+    staffToken: v.string(),
+    currency: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "financials" });
+
+    const allowedCurrencies = ["USD", "EUR", "GBP", "ZAR", "NGN", "CAD", "AUD", "JPY", "AED"];
+    if (!allowedCurrencies.includes(args.currency)) {
+      throw new ConvexError(`Invalid manual-rate currency: ${args.currency}`);
+    }
+
+    const existingRate = await ctx.db
+      .query("exchangeRates")
+      .withIndex("by_currency", (q) => q.eq("currency", args.currency))
+      .first();
+    if (existingRate) {
+      await ctx.db.patch(existingRate._id, {
+        manualRate: undefined,
+        manualRateExpiry: undefined,
+      });
+    }
+
+    const settingKey = `manualRate${args.currency}`;
+    const setting = await ctx.db
+      .query("settings")
+      .withIndex("by_key", (q) => q.eq("key", settingKey))
+      .first();
+    if (setting) await ctx.db.delete(setting._id);
   },
 });
 

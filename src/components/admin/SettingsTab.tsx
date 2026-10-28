@@ -99,6 +99,7 @@ export default function SettingsTab() {
   const settingsRecords = useStaffQuery(api.settings.getAll);
   const dbRates = useStaffQuery(api.currency.getRates);
   const setSetting = useStaffMutation(api.settings.setSetting);
+  const clearManualRate = useStaffMutation(api.currency.clearManualRate);
   const setManualRate = useStaffMutation(api.currency.setManualRate);
   const logAction = useStaffMutation(api.adminLogs.logAction);
 
@@ -261,7 +262,7 @@ export default function SettingsTab() {
             if (!isNaN(num) && num > 0) {
               await setManualRate({ currency: curr, rate: num });
             } else {
-              updates.push({ key: `manualRate${curr}`, value: '' });
+              await clearManualRate({ currency: curr });
             }
           }
           break;

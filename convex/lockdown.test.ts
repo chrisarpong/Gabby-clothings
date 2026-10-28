@@ -192,6 +192,12 @@ describe("Phase 1 Security Tests", () => {
         lastActivityAt: Date.now(),
         expiresAt: Date.now() + 3600000,
       });
+
+      await ctx.db.insert("exchangeRates", {
+        currency: "USD",
+        liveRate: 10,
+        lastUpdated: Date.now(),
+      });
     });
 
     // 1. Admin without financials is forbidden
@@ -221,6 +227,31 @@ describe("Phase 1 Security Tests", () => {
       })
     ).rejects.toThrow("Rate must be a positive finite number");
 
+    // GHS is the base currency and cannot be manually overridden.
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: ceoToken,
+        currency: "GHS",
+        rate: 1,
+      })
+    ).rejects.toThrow("Invalid currency");
+
+    // A live rate of 10 bounds manual overrides to [2, 50].
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: ceoToken,
+        currency: "USD",
+        rate: 1.99,
+      })
+    ).rejects.toThrow("Rate must be between");
+    await expect(
+      t.mutation(api.currency.setManualRate, {
+        staffToken: ceoToken,
+        currency: "USD",
+        rate: 50.01,
+      })
+    ).rejects.toThrow("Rate must be between");
+
     // 4. Past expiry is rejected
     await expect(
       t.mutation(api.currency.setManualRate, {
@@ -243,6 +274,18 @@ describe("Phase 1 Security Tests", () => {
     // Verify rate in database
     const rates = await t.query(api.currency.getRates, {});
     expect(rates["USD"]).toBe(15.75);
+
+    await expect(
+      t.mutation(api.settings.setSetting, {
+        staffToken: ceoToken,
+        key: "manualRateUSD",
+        value: "99",
+      })
+    ).rejects.toThrow("Manual exchange rates must be changed through currency rate management");
+
+    await t.mutation(api.currency.clearManualRate, { staffToken: ceoToken, currency: "USD" });
+    const clearedRates = await t.query(api.currency.getRates, {});
+    expect(clearedRates["USD"]).toBe(10);
   });
 
   it("Task 1.5: catalogs.seed works as internal mutation", async () => {
