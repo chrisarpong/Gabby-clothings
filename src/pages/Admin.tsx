@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   Shield,
-  FileText
+  FileText,
+  MessageSquare,
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { hasPermission, StaffPermission, StaffRole } from '../../convex/staffPermissions';
@@ -35,8 +36,10 @@ import MarketingTab from '../components/admin/MarketingTab';
 import ContentTab from '../components/admin/ContentTab';
 import NewsTab from '../components/admin/NewsTab';
 import TeamManagementTab from '../components/admin/TeamManagementTab';
+import MessagesTab from '../components/admin/MessagesTab';
+import NotificationBell from '../components/admin/NotificationBell';
 
-type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team_management';
+type TabKey = 'dashboard' | 'orders' | 'inventory' | 'clients' | 'appointments' | 'news' | 'reviews' | 'financials' | 'marketing' | 'promotions' | 'settings' | 'content' | 'team_management' | 'messages';
 
 class StaffSectionErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -75,6 +78,7 @@ export default function Admin() {
     { key: 'inventory', name: 'Inventory', icon: Package, permission: 'inventory' },
     { key: 'clients', name: 'Clients', icon: Users, permission: 'clients' },
     { key: 'appointments', name: 'Appointments', icon: HeartHandshake, permission: 'appointments' },
+    { key: 'messages', name: 'Messages', icon: MessageSquare, permission: 'messages' },
     { key: 'news', name: 'News & Blog', icon: Volume2, permission: 'content' },
     { key: 'reviews', name: 'Reviews', icon: Star, permission: 'reviews' },
     { key: 'financials', name: 'Financials', icon: LineChart, permission: 'financials' },
@@ -96,6 +100,7 @@ export default function Admin() {
       case 'promotions': return <PromotionsTab />;
       case 'clients': return <ClientsTab />;
       case 'appointments': return <AdminAppointmentsTab />;
+      case 'messages': return <MessagesTab />;
       case 'news': return <NewsTab />;
       case 'reviews': return <ReviewsTab />;
       case 'financials': return <FinancialsTab />;
@@ -196,6 +201,9 @@ export default function Admin() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-surface-container-lowest relative ring-1 ring-surface-variant/50">
+        <div className="absolute top-4 right-4 z-[100]">
+          <NotificationBell onNavigate={(tab) => setActiveTab(tab)} />
+        </div>
         <StaffSectionErrorBoundary key={activeTab}>{renderContent()}</StaffSectionErrorBoundary>
       </main>
     </div>

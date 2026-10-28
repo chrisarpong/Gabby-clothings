@@ -35,6 +35,7 @@ import type * as settings from "../settings.js";
 import type * as sms from "../sms.js";
 import type * as staffAuth from "../staffAuth.js";
 import type * as staffAuthNode from "../staffAuthNode.js";
+import type * as staffNotifications from "../staffNotifications.js";
 import type * as staffPermissions from "../staffPermissions.js";
 import type * as subscribers from "../subscribers.js";
 import type * as tailors from "../tailors.js";
@@ -77,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   sms: typeof sms;
   staffAuth: typeof staffAuth;
   staffAuthNode: typeof staffAuthNode;
+  staffNotifications: typeof staffNotifications;
   staffPermissions: typeof staffPermissions;
   subscribers: typeof subscribers;
   tailors: typeof tailors;

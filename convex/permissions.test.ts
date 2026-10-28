@@ -96,4 +96,22 @@ describe("Phase 2 permission matrix", () => {
     await expect(t.query(api.analytics.getDashboardStats, { staffToken: "invalid-dashboard-token" }))
       .rejects.toThrow();
   });
+
+  it("staff notification feed only includes categories allowed by the role", async () => {
+    const t = convexTest(schema);
+    const designerToken = await seedStaff(t, "designer");
+    const ceoToken = await seedStaff(t, "ceo");
+    await t.run(async (ctx) => {
+      await ctx.db.insert("messages", { name: "Client", email: "client@example.test", subject: "Fitting", message: "Please call", status: "unread" });
+      await ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "000", date: "2026-11-01", status: "pending" });
+      await ctx.db.insert("orders", { orderId: "GB-TEST", items: [], totalAmount: 100, status: "processing" });
+    });
+
+    const designerFeed = await t.query(api.staffNotifications.getFeed, { staffToken: designerToken });
+    expect(designerFeed.counts).toEqual({ messages: 0, appointments: 0, orders: 0, total: 0 });
+
+    const ceoFeed = await t.query(api.staffNotifications.getFeed, { staffToken: ceoToken });
+    expect(ceoFeed.counts).toEqual({ messages: 1, appointments: 1, orders: 1, total: 3 });
+    expect(ceoFeed.items).toHaveLength(3);
+  });
 });
