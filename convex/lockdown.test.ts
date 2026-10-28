@@ -606,12 +606,12 @@ describe("Phase 1 Security Tests", () => {
     const t = convexTest(schema);
 
     // Setup staff with orders permission
-    const staffToken = "sales-staff-token";
+    const staffToken = "ceo-orders-token";
     await t.run(async (ctx) => {
       const staffId = await ctx.db.insert("staff", {
-        name: "Sales Agent",
-        email: "sales@test.com",
-        role: "sales",
+        name: "CEO",
+        email: "ceo-orders@test.com",
+        role: "ceo",
         passwordHash: "h",
         passwordSalt: "s",
         mustChangePassword: false,
