@@ -345,6 +345,67 @@ describe("Phase 1 Security Tests", () => {
     });
     expect(designerLogs.length).toBe(1);
   });
+
+  it("Task 1.7: adminLogs.logAction and getActiveSessions require authenticated staff", async () => {
+    const t = convexTest(schema);
+
+    // 1. Unauthenticated logAction fails
+    await expect(
+      t.mutation(api.adminLogs.logAction, {
+        staffToken: "bad-token",
+        action: "Updated setting",
+      })
+    ).rejects.toThrow();
+
+    // 2. Unauthenticated getActiveSessions fails
+    await expect(
+      t.query(api.adminLogs.getActiveSessions, {
+        staffToken: "bad-token",
+      })
+    ).rejects.toThrow();
+
+    // 3. Authenticated staff can log action
+    const staffToken = "valid-staff-log-token";
+    let staffId: any;
+    await t.run(async (ctx) => {
+      staffId = await ctx.db.insert("staff", {
+        name: "Log Admin",
+        email: "logadmin@test.com",
+        role: "admin",
+        passwordHash: "h",
+        passwordSalt: "s",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId,
+        tokenHash: hashToken(staffToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+        ip: "127.0.0.1",
+        userAgent: "MacBook Pro / Chrome",
+      });
+    });
+
+    await t.mutation(api.adminLogs.logAction, {
+      staffToken,
+      action: "Updated settings",
+      category: "settings",
+    });
+
+    const logs = await t.query(api.adminLogs.getRecentLogs, { staffToken });
+    expect(logs.length).toBe(1);
+    expect(logs[0].userId).toBe(staffId);
+    expect(logs[0].action).toBe("Updated settings");
+
+    const sessions = await t.query(api.adminLogs.getActiveSessions, { staffToken });
+    expect(sessions.length).toBe(1);
+    expect(sessions[0].userId).toBe(staffId);
+  });
 });
 
 

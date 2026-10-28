@@ -5,7 +5,7 @@ import { requireStaff } from "./staffAuth";
 
 export const logAction = mutation({
   args: {
-      staffToken: v.string(),
+    staffToken: v.string(),
     action: v.string(),
     details: v.optional(v.string()),
     category: v.optional(v.string()),
@@ -16,7 +16,7 @@ export const logAction = mutation({
     deviceName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    const staff = await requireStaff(ctx, args.staffToken);
     const adminName = staff.name || staff.email?.split('@')[0] || "Admin";
 
     await ctx.db.insert("adminLogs", {
@@ -57,12 +57,12 @@ export const logInternalAction = internalMutation({
 
 export const getRecentLogs = query({
   args: {
-      staffToken: v.string(),
+    staffToken: v.string(),
     limit: v.optional(v.number()),
     category: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
     const limit = args.limit || 50;
 
     let query = ctx.db.query("adminLogs").order("desc");
@@ -77,29 +77,53 @@ export const getRecentLogs = query({
 
 export const getActiveSessions = query({
   args: {
-      staffToken: v.string()
-},
+    staffToken: v.string()
+  },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
-    // Get all auth logs in the last 24 hours to find recent active sessions
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    
-    const logs = await ctx.db
-      .query("adminLogs")
-      .withIndex("by_category", q => q.eq("category", "auth"))
-      .order("desc")
-      .take(100);
+    await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
+    const now = Date.now();
+    const sessions = await ctx.db
+      .query("staffSessions")
+      .filter((q) => q.and(
+        q.gt(q.field("expiresAt"), now),
+        q.eq(q.field("revokedAt"), undefined)
+      ))
+      .collect();
 
-    const activeSessions = new Map<string, any>();
-    
-    for (const log of logs) {
-      if (log.userId && log._creationTime > oneDayAgo && !activeSessions.has(log.userId)) {
-        if (log.action.includes("Logged In")) {
-           activeSessions.set(log.userId, log);
-        }
+    const activeList = [];
+    for (const session of sessions) {
+      const staffMember = await ctx.db.get(session.staffId);
+      if (staffMember && staffMember.isActive) {
+        activeList.push({
+          _id: session._id,
+          userId: staffMember._id,
+          adminName: staffMember.name || staffMember.email.split("@")[0],
+          deviceName: session.userAgent || "Active Session",
+          ipAddress: session.ip || "Unknown IP",
+          _creationTime: session.createdAt,
+        });
       }
     }
 
-    return Array.from(activeSessions.values());
+    if (activeList.length === 0) {
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      const logs = await ctx.db
+        .query("adminLogs")
+        .withIndex("by_category", (q) => q.eq("category", "auth"))
+        .order("desc")
+        .take(100);
+
+      const activeMap = new Map<string, any>();
+      for (const log of logs) {
+        if (log.userId && log._creationTime > oneDayAgo && !activeMap.has(String(log.userId))) {
+          if (log.action.includes("Logged In")) {
+            activeMap.set(String(log.userId), log);
+          }
+        }
+      }
+      return Array.from(activeMap.values());
+    }
+
+    return activeList;
   },
 });
