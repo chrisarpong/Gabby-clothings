@@ -9,7 +9,13 @@ export const getByOrder = query({
     orderId: v.id("orders"),
   },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: ["designer_portal", "orders"] });
+    const staff = await requireStaff(ctx, args.staffToken, { permission: ["designer_portal", "orders"] });
+    if (staff.role === "designer") {
+      const order = await ctx.db.get(args.orderId);
+      if (!order || String(order.assignedDesignerId) !== String(staff._id)) {
+        throw new Error("This order is not assigned to this designer.");
+      }
+    }
     const logs = await ctx.db
       .query("orderActivityLog")
       .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
@@ -39,6 +45,12 @@ export const addNote = mutation({
   },
   handler: async (ctx, args) => {
     const staff = await requireStaff(ctx, args.staffToken, { permission: ["designer_portal", "orders"] });
+    if (staff.role === "designer") {
+      const order = await ctx.db.get(args.orderId);
+      if (!order || String(order.assignedDesignerId) !== String(staff._id)) {
+        throw new Error("This order is not assigned to this designer.");
+      }
+    }
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
       stage: "note",

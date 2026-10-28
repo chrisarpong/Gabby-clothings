@@ -300,7 +300,7 @@ describe("Phase 1 Security Tests", () => {
     expect(catalogs.some((c) => c.slug === "summer-2026")).toBe(true);
   });
 
-  it("Task 1.6: orderActivity.getByOrder requires staffToken and allows orders or designer_portal permission", async () => {
+  it("Task 1.6: orderActivity allows orders permission and scopes designer_portal to assignments", async () => {
     const t = convexTest(schema);
 
     const orderId = await t.run(async (ctx) => {
@@ -348,6 +348,7 @@ describe("Phase 1 Security Tests", () => {
         totpEnabled: false,
         createdAt: Date.now(),
       });
+      await ctx.db.patch(orderId, { assignedDesignerId: designerId });
       await ctx.db.insert("staffSessions", {
         staffId: designerId,
         tokenHash: hashToken(designerToken),
@@ -387,6 +388,17 @@ describe("Phase 1 Security Tests", () => {
       orderId,
     });
     expect(designerLogs.length).toBe(1);
+
+    const unassignedOrderId = await t.run(async (ctx) => await ctx.db.insert("orders", {
+      orderId: "GB-102",
+      totalAmount: 100,
+      status: "processing",
+      items: [],
+    }));
+    await expect(t.query(api.orderActivity.getByOrder, {
+      staffToken: designerToken,
+      orderId: unassignedOrderId,
+    })).rejects.toThrow("This order is not assigned to this designer.");
   });
 
   it("Task 1.7: adminLogs.logAction and getActiveSessions require authenticated staff", async () => {

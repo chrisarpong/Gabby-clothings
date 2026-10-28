@@ -130,4 +130,56 @@ describe("Phase 2 permission matrix", () => {
       message: "Thanks for reaching out",
     })).rejects.toThrow("Unauthorized: Requires an active staff session with messages permission.");
   });
+
+  it("designer work is assigned, bounded, and scoped to the session identity", async () => {
+    const t = convexTest(schema);
+    const designerToken = await seedStaff(t, "designer");
+    const otherDesignerToken = "other-designer-token";
+    const ceoToken = await seedStaff(t, "ceo");
+    let assignedDesignerId: any;
+    let orderId: any;
+    let appointmentId: any;
+    await t.run(async (ctx) => {
+      assignedDesignerId = await ctx.db.insert("staff", {
+        name: "Assigned Designer", email: "assigned-designer@example.test", role: "designer", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId: assignedDesignerId, tokenHash: tokenHash(otherDesignerToken), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000,
+      });
+      const userId = await ctx.db.insert("users", {
+        clerkId: "client-clerk-id", email: "private@example.test", firstName: "Private", lastName: "Client", role: "client", savedMeasurements: { chest: 40 },
+      });
+      void userId;
+      orderId = await ctx.db.insert("orders", {
+        orderId: "GB-DESIGN", userId: "client-clerk-id", customerDetails: { email: "private@example.test", firstName: "Private", lastName: "Client" },
+        items: [{ quantity: 1, productName: "Suit", measurements: { chest: 40 } }], totalAmount: 999, paymentStatus: "paid", status: "processing", assignedDesignerId: assignedDesignerId,
+      });
+      appointmentId = await ctx.db.insert("appointments", {
+        userId: "client-clerk-id", name: "Private Client", email: "private@example.test", phone: "000", date: "2026-11-02", status: "pending", assignedStaffId: assignedDesignerId,
+      });
+    });
+
+    const ownOrders = await t.query(api.designer.getMyOrders, { staffToken: otherDesignerToken });
+    expect(ownOrders).toHaveLength(1);
+    expect(ownOrders[0]).not.toHaveProperty("customerDetails");
+    expect(ownOrders[0]).not.toHaveProperty("paymentStatus");
+    expect(ownOrders[0]).not.toHaveProperty("shippingAddress");
+    expect(await t.query(api.designer.getMyOrders, { staffToken: designerToken })).toHaveLength(0);
+    await expect(t.query(api.designer.getClientMeasurements, { staffToken: designerToken, orderId }))
+      .rejects.toThrow("This order is not assigned to this designer.");
+    await expect(t.mutation(api.designer.updateMyOrderProduction, {
+      staffToken: designerToken, orderId, productionStatus: "completed",
+    })).rejects.toThrow("This order is not assigned to this designer.");
+
+    const measurements = await t.query(api.designer.getClientMeasurements, { staffToken: otherDesignerToken, appointmentId });
+    expect(measurements).toEqual({ chest: 40 });
+    await t.mutation(api.designer.updateMyOrderProduction, {
+      staffToken: otherDesignerToken, orderId, productionStatus: "completed", note: "Final stitching complete",
+    });
+    const history = await t.query(api.designer.getMyHistory, { staffToken: ceoToken, designerId: assignedDesignerId });
+    expect(history).toHaveLength(1);
+    const activity = await t.query(api.orderActivity.getByOrder, { staffToken: otherDesignerToken, orderId });
+    expect(activity.at(-1)?.performedBy).toBe(assignedDesignerId);
+  });
 });

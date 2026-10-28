@@ -17,6 +17,7 @@ import type * as catalogs from "../catalogs.js";
 import type * as content from "../content.js";
 import type * as crons from "../crons.js";
 import type * as currency from "../currency.js";
+import type * as designer from "../designer.js";
 import type * as email from "../email.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as http from "../http.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   content: typeof content;
   crons: typeof crons;
   currency: typeof currency;
+  designer: typeof designer;
   email: typeof email;
   googleCalendar: typeof googleCalendar;
   http: typeof http;
