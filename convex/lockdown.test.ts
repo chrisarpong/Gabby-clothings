@@ -558,6 +558,120 @@ describe("Phase 1 Security Tests", () => {
     const cleanedCount = await t.mutation(internal.inventory.cleanupExpiredReserves, {});
     expect(cleanedCount).toBe(1);
   });
+
+  it("Task 1.10: sequential POS orders produce sequential distinct IDs without string concatenation corruption", async () => {
+    const t = convexTest(schema);
+
+    // Setup staff with orders permission
+    const staffToken = "sales-staff-token";
+    await t.run(async (ctx) => {
+      const staffId = await ctx.db.insert("staff", {
+        name: "Sales Agent",
+        email: "sales@test.com",
+        role: "sales",
+        passwordHash: "h",
+        passwordSalt: "s",
+        mustChangePassword: false,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId,
+        tokenHash: hashToken(staffToken),
+        createdAt: Date.now(),
+        lastActivityAt: Date.now(),
+        expiresAt: Date.now() + 3600000,
+      });
+    });
+
+    // 1. Create order 1
+    const order1Id = await t.mutation(api.orders.createPOSOrder, {
+      staffToken,
+      customerDetails: { firstName: "Cust", lastName: "1", email: "c1@test.com" },
+      items: [{ productName: "Item 1", price: 100, quantity: 1 }],
+      shippingFee: 0,
+      amountPaid: 100,
+      amountDue: 0,
+      isDeposit: false,
+      paymentMethod: "cash",
+    });
+    const order1 = await t.run(async (ctx) => ctx.db.get(order1Id));
+    expect(order1?.orderId).toBe("GB-001");
+
+    // 2. Create order 2
+    const order2Id = await t.mutation(api.orders.createPOSOrder, {
+      staffToken,
+      customerDetails: { firstName: "Cust", lastName: "2", email: "c2@test.com" },
+      items: [{ productName: "Item 2", price: 100, quantity: 1 }],
+      shippingFee: 0,
+      amountPaid: 100,
+      amountDue: 0,
+      isDeposit: false,
+      paymentMethod: "cash",
+    });
+    const order2 = await t.run(async (ctx) => ctx.db.get(order2Id));
+    expect(order2?.orderId).toBe("GB-002");
+
+    // 3. Create order 3
+    const order3Id = await t.mutation(api.orders.createPOSOrder, {
+      staffToken,
+      customerDetails: { firstName: "Cust", lastName: "3", email: "c3@test.com" },
+      items: [{ productName: "Item 3", price: 100, quantity: 1 }],
+      shippingFee: 0,
+      amountPaid: 100,
+      amountDue: 0,
+      isDeposit: false,
+      paymentMethod: "cash",
+    });
+    const order3 = await t.run(async (ctx) => ctx.db.get(order3Id));
+    expect(order3?.orderId).toBe("GB-003");
+
+    // 4. Test string healing: if settings value was legacy string "15"
+    await t.run(async (ctx) => {
+      const setting = await ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", "orderCounter"))
+        .first();
+      await ctx.db.patch(setting!._id, { value: "15" });
+    });
+
+    const order4Id = await t.mutation(api.orders.createPOSOrder, {
+      staffToken,
+      customerDetails: { firstName: "Cust", lastName: "4", email: "c4@test.com" },
+      items: [{ productName: "Item 4", price: 100, quantity: 1 }],
+      shippingFee: 0,
+      amountPaid: 100,
+      amountDue: 0,
+      isDeposit: false,
+      paymentMethod: "cash",
+    });
+    const order4 = await t.run(async (ctx) => ctx.db.get(order4Id));
+    expect(order4?.orderId).toBe("GB-016"); // Parsed as 15 + 1 = 16, NOT "15" + 1 = "151"
+
+    // 5. Test NaN corruption throws
+    await t.run(async (ctx) => {
+      const setting = await ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", "orderCounter"))
+        .first();
+      await ctx.db.patch(setting!._id, { value: "corrupted_nan" });
+    });
+
+    await expect(
+      t.mutation(api.orders.createPOSOrder, {
+        staffToken,
+        customerDetails: { firstName: "Cust", lastName: "5", email: "c5@test.com" },
+        items: [{ productName: "Item 5", price: 100, quantity: 1 }],
+        shippingFee: 0,
+        amountPaid: 100,
+        amountDue: 0,
+        isDeposit: false,
+        paymentMethod: "cash",
+      })
+    ).rejects.toThrow("Invalid order counter stored in database");
+  });
 });
 
 
