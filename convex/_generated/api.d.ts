@@ -21,6 +21,7 @@ import type * as email from "../email.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as http from "../http.js";
 import type * as inventory from "../inventory.js";
+import type * as lib_staffCrypto from "../lib/staffCrypto.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as orderActivity from "../orderActivity.js";
@@ -30,15 +31,16 @@ import type * as posts from "../posts.js";
 import type * as products from "../products.js";
 import type * as promotions from "../promotions.js";
 import type * as reviews from "../reviews.js";
-import type * as roles from "../roles.js";
 import type * as settings from "../settings.js";
 import type * as sms from "../sms.js";
+import type * as staffAuth from "../staffAuth.js";
+import type * as staffAuthNode from "../staffAuthNode.js";
+import type * as staffPermissions from "../staffPermissions.js";
 import type * as subscribers from "../subscribers.js";
 import type * as tailors from "../tailors.js";
-import type * as testing from "../testing.js";
-import type * as testquery from "../testquery.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
+import type * as wipeData from "../wipeData.js";
 import type * as wishlists from "../wishlists.js";
 
 import type {
@@ -61,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   googleCalendar: typeof googleCalendar;
   http: typeof http;
   inventory: typeof inventory;
+  "lib/staffCrypto": typeof lib_staffCrypto;
   messages: typeof messages;
   notifications: typeof notifications;
   orderActivity: typeof orderActivity;
@@ -70,15 +73,16 @@ declare const fullApi: ApiFromModules<{
   products: typeof products;
   promotions: typeof promotions;
   reviews: typeof reviews;
-  roles: typeof roles;
   settings: typeof settings;
   sms: typeof sms;
+  staffAuth: typeof staffAuth;
+  staffAuthNode: typeof staffAuthNode;
+  staffPermissions: typeof staffPermissions;
   subscribers: typeof subscribers;
   tailors: typeof tailors;
-  testing: typeof testing;
-  testquery: typeof testquery;
   users: typeof users;
   webhooks: typeof webhooks;
+  wipeData: typeof wipeData;
   wishlists: typeof wishlists;
 }>;
 
