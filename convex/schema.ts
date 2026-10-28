@@ -145,12 +145,13 @@ export default defineSchema({
     depositRequired: v.optional(v.boolean()),
     depositPaid: v.optional(v.boolean()),
     paymentMethod: v.optional(v.string()), // 'paystack', 'cash', 'transfer', 'momo'
+    createdByStaffId: v.optional(v.id("staff")),
     
     // Assignment & Production
     // TODO(tighten): loosened to fit mock dev data
     assignedDesignerId: v.optional(v.union(v.id("staff"), v.string())),
     productionStatus: v.optional(v.string()), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
-  }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]),
+  }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedDesigner", ["assignedDesignerId"]).index("by_createdByStaff", ["createdByStaffId"]),
 
   orderActivityLog: defineTable({
     orderId: v.id("orders"),
@@ -192,6 +193,7 @@ export default defineSchema({
     meetLink: v.optional(v.string()),
     googleEventId: v.optional(v.string()), // ID from Google Calendar
     assignedTo: v.optional(v.string()), // ID or name of the assigned tailor
+    assignedStaffId: v.optional(v.id("staff")),
     referenceImages: v.optional(v.array(v.id("_storage"))),
     appointmentType: v.optional(v.string()), // 'Virtual Consultation', 'In-Person Measurement', 'First Fitting', 'Final Fitting'
     linkedOrderId: v.optional(v.id("orders")),
@@ -202,7 +204,7 @@ export default defineSchema({
     targetEventDate: v.optional(v.string()), // Actual event date for triage
     ghanaPostGps: v.optional(v.string()),
     landmarks: v.optional(v.string()),
-  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]).index("by_paystackReference", ["paystackReference"]),
+  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedStaff", ["assignedStaffId"]),
 
   reviews: defineTable({
     productId: v.id("products"),
