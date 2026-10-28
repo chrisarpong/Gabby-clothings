@@ -24,8 +24,8 @@ function tokenHash(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-async function seedStaff(t: ReturnType<typeof convexTest>, role: StaffRole) {
-  const token = `${role}-permission-test-token`;
+async function seedStaff(t: ReturnType<typeof convexTest>, role: StaffRole, suffix = "permission-test") {
+  const token = `${role}-${suffix}-token`;
   await t.run(async (ctx) => {
     const staffId = await ctx.db.insert("staff", {
       name: `${role} permission test`,
@@ -224,5 +224,39 @@ describe("Phase 2 permission matrix", () => {
     const appointment: any = await t.run(async ctx => await ctx.db.get(appointmentId));
     expect(appointment?.assignedStaffId).toBe(activeDesignerId);
     expect(appointment?.assignedTo).toBe("Active Designer");
+  });
+
+  it("POS sales are attributed to the session and sales users only see their own work", async () => {
+    const t = convexTest(schema);
+    const salesOneToken = await seedStaff(t, "sales", "one");
+    const adminToken = await seedStaff(t, "admin");
+    const ceoToken = await seedStaff(t, "ceo");
+    let salesTwoId: any;
+    await t.run(async (ctx) => {
+      salesTwoId = await ctx.db.insert("staff", {
+        name: "Second Sales", email: "second-sales@example.test", role: "sales", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      });
+      await ctx.db.insert("orders", { orderId: "GB-OTHER", items: [], totalAmount: 50, status: "processing", createdByStaffId: salesTwoId });
+      await ctx.db.insert("orders", { orderId: "WEB-001", items: [], totalAmount: 60, status: "processing" });
+    });
+    const createdOrderId = await t.mutation(api.orders.createPOSOrder, {
+      staffToken: salesOneToken,
+      customerDetails: { email: "buyer@example.test", firstName: "Buyer", lastName: "One" },
+      items: [{ quantity: 1, productName: "Test suit", price: 100 }],
+      shippingFee: 0,
+      amountPaid: 0,
+      amountDue: 100,
+      isDeposit: false,
+      paymentMethod: "cash",
+    });
+    const createdOrder: any = await t.run(async ctx => await ctx.db.get(createdOrderId));
+    expect(createdOrder.createdByStaffId).toBeTruthy();
+    const ownSales = await t.query(api.orders.getMySales, { staffToken: salesOneToken });
+    expect(ownSales).toHaveLength(1);
+    expect(ownSales[0]._id).toBe(createdOrderId);
+    await expect(t.query(api.orders.getAll, { staffToken: salesOneToken })).rejects.toThrow();
+    expect((await t.query(api.orders.getMySales, { staffToken: adminToken })).length).toBe(3);
+    expect((await t.query(api.orders.getMySales, { staffToken: ceoToken })).length).toBe(3);
   });
 });

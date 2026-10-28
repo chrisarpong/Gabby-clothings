@@ -468,6 +468,7 @@ export const createPOSOrder = mutation({
     const orderId = await ctx.db.insert("orders", {
       orderId: orderIdValue,
       userId: args.userId || "guest",
+      createdByStaffId: staff._id,
       customerDetails: args.customerDetails,
       items: args.items.map(item => ({
          productId: item.productId,
@@ -503,6 +504,20 @@ export const createPOSOrder = mutation({
 
     return orderId;
   }
+});
+
+export const getMySales = query({
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "sales_portal" });
+    if (staff.role === "sales") {
+      return await ctx.db.query("orders")
+        .withIndex("by_createdByStaff", q => q.eq("createdByStaffId", staff._id))
+        .order("desc")
+        .take(200);
+    }
+    return await ctx.db.query("orders").order("desc").take(200);
+  },
 });
 
 export const recordDeposit = mutation({

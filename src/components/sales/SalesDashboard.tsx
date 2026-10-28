@@ -5,7 +5,8 @@ import { api } from '../../../convex/_generated/api';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 export default function SalesDashboard() {
-  const orders = useStaffQuery(api.orders.getAll) || [];
+  const orders = useStaffQuery(api.orders.getMySales);
+  if (orders === undefined) return <div className="p-8 text-sm text-on-surface-variant">Loading your sales…</div>;
   
   const today = new Date();
   today.setHours(0,0,0,0);
