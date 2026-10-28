@@ -16,7 +16,7 @@ type SettingsSection = 'general' | 'team' | 'commerce' | 'currency' | 'appointme
 
 const SECTIONS: { key: SettingsSection; label: string; icon: React.ElementType; description: string }[] = [
   { key: 'general', label: 'General', icon: Store, description: 'Store identity & contact info' },
-  { key: 'team', label: 'Team', icon: Users, description: 'Tailors & staff management' },
+  { key: 'team', label: 'Legacy tailors', icon: Users, description: 'Deprecated tailor records' },
   { key: 'commerce', label: 'Commerce', icon: DollarSign, description: 'Shipping, deposits & pricing' },
   { key: 'currency', label: 'Currency', icon: Globe, description: 'Exchange rates & overrides' },
   { key: 'appointments', label: 'Appointments', icon: Clock, description: 'Availability & scheduling' },

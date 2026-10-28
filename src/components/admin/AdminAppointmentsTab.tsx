@@ -25,7 +25,7 @@ const localizer = dateFnsLocalizer({
 
 export default function AdminAppointmentsTab() {
   const appointments = useStaffQuery(api.appointments.getUpcoming);
-  const tailors = useStaffQuery(api.tailors.listActiveTailors);
+  const designers = useStaffQuery(api.staffAuth.listAssignableDesigners);
   const updateStatus = useStaffMutation(api.appointments.updateStatus);
   const assignTailor = useStaffMutation(api.appointments.assignTailor);
   const logAction = useStaffMutation(api.adminLogs.logAction);
@@ -78,17 +78,18 @@ export default function AdminAppointmentsTab() {
     }
   }
 
-  const handleAssignTailor = async (id: any, tailorName: string) => {
+  const handleAssignTailor = async (id: any, assignedStaffId: string) => {
+    const designerName = designers?.find(designer => designer._id === assignedStaffId)?.name;
     try {
-      await assignTailor({ appointmentId: id, tailorName });
+      await assignTailor({ appointmentId: id, assignedStaffId: assignedStaffId || null });
       getDeviceInfo().then(info => logAction({
-        action: `Assigned tailor ${tailorName} to appointment`,
+        action: assignedStaffId ? `Assigned designer ${designerName || ''} to appointment` : 'Unassigned designer from appointment',
         category: "appointments",
         targetId: id,
         targetType: "appointment",
         ...info
       }).catch(console.error));
-      toast.success("Tailor assigned successfully");
+      toast.success(assignedStaffId ? "Designer assigned successfully" : "Designer unassigned");
     } catch (e) {
       toast.error("Failed to assign tailor");
     }
@@ -289,15 +290,15 @@ export default function AdminAppointmentsTab() {
                     </td>
                     <td className="p-4">
                       <select
-                        value={apt.assignedTo || ""}
+                        value={apt.assignedStaffId || ""}
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => handleAssignTailor(apt._id, e.target.value)}
                         className="bg-transparent border-b border-outline-variant/30 text-xs py-1 focus:outline-none focus:border-primary transition-colors print:border-none"
                       >
-                        <option value="">Assign Tailor...</option>
-                        {tailors?.map((tailor) => (
-                          <option key={tailor._id} value={tailor._id}>
-                            {tailor.name} {tailor.specialty ? `(${tailor.specialty})` : ''}
+                        <option value="">{apt.assignedTo && !apt.assignedStaffId ? `Legacy: ${apt.assignedTo} (unassigned)` : 'Assign Designer…'}</option>
+                        {designers?.map((designer) => (
+                          <option key={designer._id} value={designer._id}>
+                            {designer.name}
                           </option>
                         ))}
                       </select>

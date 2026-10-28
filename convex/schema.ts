@@ -41,7 +41,7 @@ export default defineSchema({
     createdBy: v.optional(v.id("staff")),
     createdAt: v.number(),
     lastLoginAt: v.optional(v.number()),
-  }).index("by_email", ["email"]),
+  }).index("by_email", ["email"]).index("by_role", ["role"]),
 
   staffSessions: defineTable({
     staffId: v.id("staff"),

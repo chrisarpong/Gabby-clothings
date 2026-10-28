@@ -74,9 +74,9 @@ export default function TailorsSection() {
         <div className="relative z-10">
           <h2 className="font-serif text-2xl text-primary mb-2 flex items-center gap-3">
             <Scissors className="w-5 h-5 text-on-surface-variant" />
-            Manage Tailors
+            Legacy tailors (deprecated)
           </h2>
-          <p className="text-sm text-on-surface-variant mb-6">Add and manage tailors to assign them to appointments and orders.</p>
+          <p className="text-sm text-on-surface-variant mb-6">These legacy records are kept for older data. Create and manage designer staff accounts under Team &amp; Roles, then assign designers from appointments or orders.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>

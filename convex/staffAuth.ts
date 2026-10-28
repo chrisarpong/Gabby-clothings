@@ -431,6 +431,15 @@ export const listStaff = query({
   }
 });
 
+export const listAssignableDesigners = query({
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: ["orders", "appointments"] });
+    const designers = await ctx.db.query("staff").withIndex("by_role", q => q.eq("role", "designer")).take(500);
+    return designers.filter(designer => designer.isActive).map(({ _id, name }) => ({ _id, name }));
+  },
+});
+
 export const toggleStaffActive = mutation({
   args: {
     staffToken: v.string(),

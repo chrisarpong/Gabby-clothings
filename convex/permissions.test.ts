@@ -182,4 +182,47 @@ describe("Phase 2 permission matrix", () => {
     const activity = await t.query(api.orderActivity.getByOrder, { staffToken: otherDesignerToken, orderId });
     expect(activity.at(-1)?.performedBy).toBe(assignedDesignerId);
   });
+
+  it("assignment tools expose only active designers and validate both assignment targets", async () => {
+    const t = convexTest(schema);
+    const adminToken = await seedStaff(t, "admin");
+    const designerToken = await seedStaff(t, "designer");
+    let activeDesignerId: any;
+    let inactiveDesignerId: any;
+    let adminId: any;
+    let orderId: any;
+    let appointmentId: any;
+    await t.run(async (ctx) => {
+      activeDesignerId = await ctx.db.insert("staff", {
+        name: "Active Designer", email: "active-designer@example.test", role: "designer", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      });
+      inactiveDesignerId = await ctx.db.insert("staff", {
+        name: "Inactive Designer", email: "inactive-designer@example.test", role: "designer", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: false, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      });
+      adminId = await ctx.db.insert("staff", {
+        name: "Other Admin", email: "other-admin@example.test", role: "admin", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      });
+      orderId = await ctx.db.insert("orders", { orderId: "GB-ASSIGN", items: [], totalAmount: 100, status: "processing" });
+      appointmentId = await ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "000", date: "2026-11-03", status: "pending" });
+    });
+
+    const assignable = await t.query(api.staffAuth.listAssignableDesigners, { staffToken: adminToken });
+    expect(assignable.map(person => person._id)).toContain(activeDesignerId);
+    expect(assignable.map(person => person._id)).not.toContain(inactiveDesignerId);
+    expect(assignable.find(person => person._id === activeDesignerId)).toEqual({ _id: activeDesignerId, name: "Active Designer" });
+    expect(assignable.every(person => Object.keys(person).sort().join(",") === "_id,name")).toBe(true);
+    await expect(t.query(api.staffAuth.listAssignableDesigners, { staffToken: designerToken })).rejects.toThrow();
+    await t.mutation(api.orders.assignDesigner, { staffToken: adminToken, orderId, designerId: activeDesignerId });
+    await expect(t.mutation(api.orders.assignDesigner, { staffToken: adminToken, orderId, designerId: adminId }))
+      .rejects.toThrow("Assigned staff member must be an active designer.");
+    await expect(t.mutation(api.appointments.assignTailor, { staffToken: adminToken, appointmentId, assignedStaffId: inactiveDesignerId }))
+      .rejects.toThrow("Assigned staff member must be an active designer.");
+    await t.mutation(api.appointments.assignTailor, { staffToken: adminToken, appointmentId, assignedStaffId: activeDesignerId });
+    const appointment: any = await t.run(async ctx => await ctx.db.get(appointmentId));
+    expect(appointment?.assignedStaffId).toBe(activeDesignerId);
+    expect(appointment?.assignedTo).toBe("Active Designer");
+  });
 });

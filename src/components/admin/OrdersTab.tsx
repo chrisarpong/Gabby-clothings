@@ -47,7 +47,7 @@ export default function OrdersTab() {
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
 
   // Assignment & Production State
-  const staff = useStaffQuery(api.staffAuth.listStaff, profile?.role === 'ceo' ? undefined : 'skip') || [];
+  const designers = useStaffQuery(api.staffAuth.listAssignableDesigners) || [];
   const orderActivity = useStaffQuery(api.orderActivity.getByOrder, selectedOrder ? { orderId: selectedOrder._id } : "skip") || [];
   const assignDesigner = useStaffMutation(api.orders.assignDesigner);
   const updateProductionStatus = useStaffMutation(api.orders.updateProductionStatus);
@@ -458,9 +458,9 @@ export default function OrdersTab() {
                         value={selectedOrder.assignedDesignerId || ''}
                         onChange={async (e) => {
                           try {
-                            await assignDesigner({ orderId: selectedOrder._id, designerId: e.target.value as any });
-                            toast.success("Designer assigned");
-                            setSelectedOrder({...selectedOrder, assignedDesignerId: e.target.value as any});
+                            await assignDesigner({ orderId: selectedOrder._id, designerId: e.target.value ? e.target.value as any : null });
+                            toast.success(e.target.value ? "Designer assigned" : "Designer unassigned");
+                            setSelectedOrder({...selectedOrder, assignedDesignerId: e.target.value || undefined});
                           } catch (err: any) {
                             toast.error(err.message || "Failed to assign designer");
                           }
@@ -468,8 +468,8 @@ export default function OrdersTab() {
                         className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
                       >
                         <option value="">Unassigned</option>
-                        {staff.map((user: any) => (
-                          <option key={user._id} value={user._id}>{user.name} ({user.role || 'Staff'})</option>
+                        {designers.map((designer: any) => (
+                          <option key={designer._id} value={designer._id}>{designer.name}</option>
                         ))}
                       </select>
                     </div>

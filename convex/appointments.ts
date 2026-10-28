@@ -388,12 +388,17 @@ export const assignTailor = mutation({
   args: {
       staffToken: v.string(),
     appointmentId: v.id("appointments"),
-    tailorName: v.string(),
+    assignedStaffId: v.union(v.id("staff"), v.null()),
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
+    await requireStaff(ctx, args.staffToken, { permission: "appointments" });
+    const designer = args.assignedStaffId ? await ctx.db.get(args.assignedStaffId) : null;
+    if (args.assignedStaffId && (!designer || designer.role !== "designer" || !designer.isActive)) {
+      throw new Error("Assigned staff member must be an active designer.");
+    }
     await ctx.db.patch(args.appointmentId, {
-      assignedTo: args.tailorName,
+      assignedStaffId: args.assignedStaffId ?? undefined,
+      assignedTo: designer?.name,
     });
   },
 });

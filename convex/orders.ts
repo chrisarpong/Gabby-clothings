@@ -547,21 +547,25 @@ export const assignDesigner = mutation({
   args: {
       staffToken: v.string(),
     orderId: v.id("orders"),
-    designerId: v.id("staff"),
+    designerId: v.union(v.id("staff"), v.null()),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
+    const designer = args.designerId ? await ctx.db.get(args.designerId) : null;
+    if (args.designerId && (!designer || designer.role !== "designer" || !designer.isActive)) {
+      throw new Error("Assigned staff member must be an active designer.");
+    }
 
     await ctx.db.patch(args.orderId, {
-      assignedDesignerId: args.designerId,
+      assignedDesignerId: args.designerId ?? undefined,
     });
 
     await ctx.db.insert("orderActivityLog", {
       orderId: args.orderId,
-      stage: "assigned",
+      stage: designer ? "assigned" : "unassigned",
       performedBy: staff._id,
-      note: args.note || "Assigned to designer",
+      note: args.note || (designer ? `Assigned to ${designer.name}` : "Designer assignment cleared"),
       timestamp: Date.now(),
     });
 
