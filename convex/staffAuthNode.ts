@@ -1,10 +1,23 @@
 "use node";
 import { action } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
-import { api, internal } from "./_generated/api";
-import { verifyPassword, dummyVerifyPassword, hashPassword, validatePasswordPolicy } from "./lib/staffCrypto";
+import { internal } from "./_generated/api";
+import { 
+  verifyPassword, 
+  dummyVerifyPassword, 
+  hashPassword, 
+  validatePasswordPolicy,
+  encryptTotpSecret,
+  decryptTotpSecret,
+  generateRecoveryCodes,
+  verifyRecoveryCode
+} from "./lib/staffCrypto";
 import * as crypto from 'crypto';
 import { authenticator } from 'otplib';
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 export const loginAction = action({
   args: {
@@ -36,35 +49,26 @@ export const loginAction = action({
 
     if (!isValid) {
       // Record failed attempt
-      await ctx.runMutation(internal.staffAuth.recordFailedLogin, { staffId: staff._id });
+      await ctx.runMutation(internal.staffAuth.recordFailedLogin, { email: args.email });
       throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid email or password" });
     }
 
-    // 3. (Reset failed logins is handled within getStaffForLogin / recordFailedLogin indirectly or explicitly if added)
-    // For now we assume a successful login resets it (actually, we should add a resetFailedLogins to staffAuth.ts if needed. Let's just patch it inline)
-    await ctx.runMutation(internal.staffAuth.recordFailedLogin, { staffId: staff._id, reset: true });
-
-    // 4. Check if 2FA is required
+    // 3. Check if 2FA is required
     if (staff.totpEnabled) {
       // Return a challenge token instead of a session token
       const challengeToken = crypto.randomBytes(32).toString('hex');
+      const challengeHash = hashToken(challengeToken);
       await ctx.runMutation(internal.staffAuth.createChallenge, { 
         staffId: staff._id, 
-        tokenHash: crypto.subtle.digest ? (await (async () => {
-          const encoder = new TextEncoder();
-          const hb = await crypto.subtle.digest("SHA-256", encoder.encode(challengeToken));
-          return Array.from(new Uint8Array(hb)).map(b => b.toString(16).padStart(2, '0')).join('');
-        })()) : challengeToken,
-        purpose: "2fa"
+        tokenHash: challengeHash,
+        purpose: "verify_2fa"
       });
       return { status: "2fa_required", token: challengeToken };
     }
 
-    // 5. Generate session token
+    // 4. Generate session token
     const token = crypto.randomBytes(32).toString('hex');
-    const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(token));
-    const tokenHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const tokenHash = hashToken(token);
 
     await ctx.runMutation(internal.staffAuth.createSession, {
       staffId: staff._id,
@@ -84,25 +88,35 @@ export const changePasswordAction = action({
   },
   handler: async (ctx, args) => {
     // 1. Verify session
-    const { staff, session } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.staffToken });
+    const tokenHash = hashToken(args.staffToken);
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     
     // 2. Validate password policy
-    // We need email and name, which we have in staff
     validatePasswordPolicy(args.newPassword, staff.email, staff.name);
 
     // 3. Hash new password
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = await hashPassword(args.newPassword, salt);
 
-    // 4. Update password and revoke all other sessions
+    // 4. Update password and revoke old sessions
     await ctx.runMutation(internal.staffAuth.updatePassword, {
       staffId: staff._id,
       passwordHash: hash,
       passwordSalt: salt,
-      currentSessionId: session._id,
     });
 
-    return { status: "success", token: args.staffToken };
+    // 5. Create a new session so staff remains logged in
+    const newToken = crypto.randomBytes(32).toString('hex');
+    const newTokenHash = hashToken(newToken);
+    await ctx.runMutation(internal.staffAuth.createSession, {
+      staffId: staff._id,
+      tokenHash: newTokenHash,
+      ip: "unknown",
+      userAgent: "unknown"
+    });
+
+    return { status: "success", token: newToken };
   }
 });
 
@@ -111,14 +125,19 @@ export const setup2FA = action({
     staffToken: v.string(),
   },
   handler: async (ctx, args) => {
-    const { staff } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.staffToken });
+    const tokenHash = hashToken(args.staffToken);
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     
     const secret = authenticator.generateSecret();
     const uri = authenticator.keyuri(staff.email, "Gabby Newluk", secret);
 
+    const envKey = process.env.STAFF_2FA_ENC_KEY || '';
+    const storedSecret = envKey ? encryptTotpSecret(secret, envKey) : secret;
+
     await ctx.runMutation(internal.staffAuth.updateStaffTotpSecret, {
       staffId: staff._id,
-      secret: secret
+      totpSecret: storedSecret
     });
 
     return { secret, uri };
@@ -131,39 +150,67 @@ export const verify2FA = action({
     code: v.string(),
     isSetup: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => {
-    let secret = "";
-    let staffId = null;
+  handler: async (ctx, args): Promise<{ status: string; token: string; recoveryCodes?: string[] }> => {
+    const envKey = process.env.STAFF_2FA_ENC_KEY || '';
 
     if (args.isSetup) {
-      const { staff } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.token });
-      secret = staff.totpSecret || "";
-      staffId = staff._id;
+      const tokenHash = hashToken(args.token);
+      const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+      if (!staff || !staff.totpSecret) throw new ConvexError({ code: "UNAUTHENTICATED", message: "2FA not configured" });
+
+      const rawSecret = staff.totpSecret.includes(':') && envKey
+        ? decryptTotpSecret(staff.totpSecret, envKey)
+        : staff.totpSecret;
+
+      const isValid = authenticator.check(args.code, rawSecret);
+      if (!isValid) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid 2FA code" });
+
+      const { plain: recoveryCodes, hashed: hashedCodes } = envKey 
+        ? generateRecoveryCodes() 
+        : { plain: [], hashed: "" };
+
+      await ctx.runMutation(internal.staffAuth.enableStaff2FAInternal, {
+        staffId: staff._id,
+        totpSecret: staff.totpSecret,
+        recoveryCodes: hashedCodes,
+      });
+
+      return { status: "success", token: args.token, recoveryCodes };
     } else {
-      const encoder = new TextEncoder();
-      const hb = await crypto.subtle.digest("SHA-256", encoder.encode(args.token));
-      const hash = Array.from(new Uint8Array(hb)).map(b => b.toString(16).padStart(2, '0')).join('');
-      
-      const challenge = await ctx.runQuery(internal.staffAuth.getChallenge, { tokenHash: hash, purpose: "2fa" });
+      const tokenHash = hashToken(args.token);
+      const challenge = await ctx.runQuery(internal.staffAuth.getChallenge, { tokenHash, purpose: "verify_2fa" });
       if (!challenge) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid or expired challenge" });
       
       const isBurned = await ctx.runMutation(internal.staffAuth.incrementChallengeAttempts, { challengeId: challenge._id });
       if (isBurned) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Too many attempts" });
 
       const staff = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: challenge.staffId });
-      if (!staff || !staff.totpEnabled) throw new ConvexError({ code: "UNAUTHENTICATED", message: "2FA not configured" });
+      if (!staff || !staff.totpEnabled || !staff.totpSecret) throw new ConvexError({ code: "UNAUTHENTICATED", message: "2FA not configured" });
 
-      secret = staff.totpSecret || "";
-      staffId = staff._id;
-      
-      const isValid = authenticator.check(args.code, secret);
+      const rawSecret = staff.totpSecret.includes(':') && envKey
+        ? decryptTotpSecret(staff.totpSecret, envKey)
+        : staff.totpSecret;
+
+      let isValid = authenticator.check(args.code, rawSecret);
+
+      // Check recovery codes if TOTP fails and recovery codes exist
+      if (!isValid && staff.recoveryCodes && envKey) {
+        const { valid, remainingHashed } = verifyRecoveryCode(args.code, staff.recoveryCodes);
+        if (valid) {
+          isValid = true;
+          await ctx.runMutation(internal.staffAuth.updateStaffRecoveryCodes, {
+            staffId: staff._id,
+            recoveryCodes: remainingHashed,
+          });
+        }
+      }
+
       if (!isValid) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid 2FA code" });
       
       await ctx.runMutation(internal.staffAuth.consumeChallenge, { challengeId: challenge._id });
       
       const sessionToken = crypto.randomBytes(32).toString('hex');
-      const sb = await crypto.subtle.digest("SHA-256", encoder.encode(sessionToken));
-      const sessionHash = Array.from(new Uint8Array(sb)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const sessionHash = hashToken(sessionToken);
 
       await ctx.runMutation(internal.staffAuth.createSession, {
         staffId: staff._id,
@@ -173,15 +220,6 @@ export const verify2FA = action({
       });
 
       return { status: "success", token: sessionToken };
-    }
-
-    const isValid = authenticator.check(args.code, secret);
-    if (!isValid) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid 2FA code" });
-
-    if (args.isSetup) {
-      // Actually enable it
-      await ctx.runMutation(internal.staffAuth.enableStaff2FAInternal, { staffId: staffId });
-      return { status: "success", token: args.token };
     }
   }
 });
@@ -204,7 +242,9 @@ export const createStaffUser = action({
   },
   handler: async (ctx, args) => {
     // 1. Validate session & permissions
-    const { staff } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.staffToken });
+    const tokenHash = hashToken(args.staffToken);
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
 
     // 2. Generate strong OTP
@@ -222,6 +262,7 @@ export const createStaffUser = action({
       passwordHash: hash,
       passwordSalt: salt,
       createdBy: staff._id,
+      callerName: staff.name,
     });
 
     return tempPassword;
@@ -234,7 +275,9 @@ export const resetStaffPassword = action({
     targetStaffId: v.id("staff"),
   },
   handler: async (ctx, args) => {
-    const { staff } = await ctx.runQuery(internal.staffAuth.validateSession, { token: args.staffToken });
+    const tokenHash = hashToken(args.staffToken);
+    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
 
     const tempPassword = generateTempPassword();
@@ -242,9 +285,11 @@ export const resetStaffPassword = action({
     const hash = await hashPassword(tempPassword, salt);
 
     await ctx.runMutation(internal.staffAuth.updateStaffPasswordInternal, {
-      staffId: args.targetStaffId,
+      targetStaffId: args.targetStaffId,
       passwordHash: hash,
       passwordSalt: salt,
+      callerId: staff._id,
+      callerName: staff.name,
     });
 
     return tempPassword;

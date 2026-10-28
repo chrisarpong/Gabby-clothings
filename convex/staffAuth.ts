@@ -535,6 +535,16 @@ export const enableStaff2FAInternal = internalMutation({
   }
 });
 
+export const updateStaffRecoveryCodes = internalMutation({
+  args: {
+    staffId: v.id("staff"),
+    recoveryCodes: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.staffId, { recoveryCodes: args.recoveryCodes });
+  }
+});
+
 export const resetStaff2FAInternal = internalMutation({
   args: {
     targetStaffId: v.id("staff"),

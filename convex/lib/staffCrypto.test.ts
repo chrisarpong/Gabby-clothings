@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { 
   hashPassword, 
@@ -74,7 +75,7 @@ describe('staffCrypto', () => {
     
     // Tamper
     const parts = enc.split(':');
-    parts[2] = 'A' + parts[2].substring(1); // alter ciphertext
+    parts[2] = (parts[2].startsWith('A') ? 'B' : 'A') + parts[2].substring(1); // alter ciphertext
     expect(() => decryptTotpSecret(parts.join(':'), envKey)).toThrow();
   });
 

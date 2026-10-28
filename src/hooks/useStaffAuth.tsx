@@ -76,7 +76,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
   const verify2FA = async (challengeTokenOrSessionToken: string, code: string, isSetup?: boolean) => {
     const res = await verify2faAction({ token: challengeTokenOrSessionToken, code, isSetup });
-    if (res.status === 'success') {
+    if (res && res.status === 'success') {
       setToken(res.token);
     }
     return res;
@@ -111,7 +111,10 @@ export function useStaffAuth() {
 
 export function useStaffQuery<Query extends FunctionReference<"query", "public">>(queryFunc: Query, args?: any): FunctionReturnType<Query> | undefined {
   const { token } = useStaffAuth();
-  return useQuery(queryFunc, token ? { ...args, staffToken: token } : 'skip') as any;
+  if (!token || args === 'skip') {
+    return (useQuery as any)(queryFunc, 'skip');
+  }
+  return useQuery(queryFunc, { ...args, staffToken: token }) as any;
 }
 
 export function useStaffMutation<Mutation extends FunctionReference<"mutation", "public">>(mutationFunc: Mutation): (args?: any) => Promise<FunctionReturnType<Mutation>> {
