@@ -1,4 +1,4 @@
-import { mutation, action, query, internalQuery, internalAction } from "./_generated/server";
+import { mutation, action, query, internalQuery, internalAction, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { api, internal } from "./_generated/api";
 
@@ -94,7 +94,7 @@ export const softReserveItems = mutation({
   },
 });
 
-export const decrementStock = mutation({
+export const decrementStock = internalMutation({
   args: {
     items: v.array(
       v.object({
