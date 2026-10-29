@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice, CurrencyCode } from "../utils/currency";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { nestMeasurements } from "../utils/measurements";
 
 export default function Profile() {
   const { user } = useUser();
@@ -183,7 +184,7 @@ export default function Profile() {
     try {
       await updateMeasurements({
         clerkId: user.id,
-        measurements: measurements
+        measurements: nestMeasurements(measurements)
       });
       setIsSaved(true);
       toast.success("Measurements saved successfully!");

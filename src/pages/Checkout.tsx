@@ -13,6 +13,7 @@ import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
 import { parseConvexError } from "../utils/errorParser";
 import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
+import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -68,14 +69,14 @@ export default function Checkout() {
   React.useEffect(() => {
     // Smart Measurement Detection
     if (convexMeasurements) {
-      setMeasurements(convexMeasurements as any);
+      setMeasurements(flattenMeasurements(convexMeasurements) as any);
       setHasValidMeasurements(true);
       setMeasurementsLinked(true);
     } else {
       const saved = localStorage.getItem("gabby_newluk_measurements");
       if (saved) {
         const parsed = JSON.parse(saved);
-        setMeasurements(parsed);
+        setMeasurements(flattenMeasurements(parsed) as any);
         const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
         if (required.every(field => parsed[field])) {
           setHasValidMeasurements(true);
@@ -91,7 +92,7 @@ export default function Checkout() {
     const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
     if (required.every(field => newMeasurements[field as keyof typeof newMeasurements])) {
       setHasValidMeasurements(true);
-      localStorage.setItem("gabby_newluk_measurements", JSON.stringify(newMeasurements));
+          localStorage.setItem("gabby_newluk_measurements", JSON.stringify(nestMeasurements(newMeasurements)));
     } else {
       setHasValidMeasurements(false);
     }

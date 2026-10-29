@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Id } from "../../convex/_generated/dataModel";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
 
 import ReviewSection from "../components/ReviewSection";
 
@@ -38,7 +39,7 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (convexMeasurements) {
-      setMeasurements(convexMeasurements as any);
+      setMeasurements(flattenMeasurements(convexMeasurements) as any);
       const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
       if (required.every(field => (convexMeasurements as any)[field])) {
         setHasValidMeasurements(true);
@@ -50,7 +51,7 @@ export default function ProductDetailPage() {
       const saved = localStorage.getItem("gabby_newluk_measurements");
       if (saved) {
         const parsed = JSON.parse(saved);
-        setMeasurements(parsed);
+        setMeasurements(flattenMeasurements(parsed) as any);
         const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
         if (required.every(field => parsed[field])) {
           setHasValidMeasurements(true);
@@ -91,7 +92,7 @@ export default function ProductDetailPage() {
           return;
         }
       }
-      localStorage.setItem("gabby_newluk_measurements", JSON.stringify(measurements));
+      localStorage.setItem("gabby_newluk_measurements", JSON.stringify(nestMeasurements(measurements)));
       variantSku = "custom";
     } else if (product.variants && product.variants.length > 0) {
       if (!activeSize) {

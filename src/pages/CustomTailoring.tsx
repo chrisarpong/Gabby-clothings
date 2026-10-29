@@ -8,6 +8,7 @@ import { PaystackButton } from "react-paystack";
 import PhoneInputCustom from '../components/PhoneInputCustom';
 import { parseConvexError } from "../utils/errorParser";
 import { SignInButton, useUser } from "@clerk/clerk-react";
+import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
 
 export default function CustomTailoring() {
   const { isLoaded, isSignedIn } = useUser();
@@ -72,7 +73,7 @@ export default function CustomTailoring() {
   useEffect(() => {
     const saved = localStorage.getItem("gabby_newluk_measurements");
     if (saved) {
-      setMeasurements(JSON.parse(saved));
+      setMeasurements(flattenMeasurements(JSON.parse(saved)) as any);
     }
   }, []);
 
@@ -162,7 +163,7 @@ export default function CustomTailoring() {
   };
 
   const saveMeasurements = () => {
-    localStorage.setItem("gabby_newluk_measurements", JSON.stringify(measurements));
+    localStorage.setItem("gabby_newluk_measurements", JSON.stringify(nestMeasurements(measurements)));
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
