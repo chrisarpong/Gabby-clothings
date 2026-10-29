@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
 import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
+import { getAvailableStock } from "../utils/stock";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -33,26 +34,20 @@ export default function CartPage() {
 
   const standardShippingRateObj = useQuery(api.settings.getByKey, { key: "standardShippingRate" });
   const freeShippingThresholdObj = useQuery(api.settings.getByKey, { key: "freeShippingThreshold" });
-  const pricingTotalsPesewas = computeTotals({
-    lines: cartItemsWithDetails.map((item: any) => ({
-      unitPesewas: lineUnitPrice(item.product, item.variantSku),
-      quantity: item.quantity,
-    })),
-    shippingRatePesewas: toPesewas(Number(standardShippingRateObj?.value ?? 50)),
-    freeShippingThresholdPesewas: toPesewas(Number(freeShippingThresholdObj?.value ?? 0)),
-  });
+  let pricingTotalsPesewas = { subtotal: 0, discount: 0, shipping: 0, total: 0 };
+  let pricingError: string | null = null;
+  try {
+    pricingTotalsPesewas = computeTotals({
+      lines: cartItemsWithDetails.map((item: any) => ({ unitPesewas: lineUnitPrice(item.product, item.variantSku), quantity: item.quantity })),
+      shippingRatePesewas: toPesewas(Number(standardShippingRateObj?.value ?? 50)),
+      freeShippingThresholdPesewas: toPesewas(Number(freeShippingThresholdObj?.value ?? 0)),
+    });
+  } catch (error) {
+    pricingError = error instanceof Error ? error.message : "Unable to calculate your total.";
+  }
   const subtotal = fromPesewas(pricingTotalsPesewas.subtotal);
   const shippingAmount = fromPesewas(pricingTotalsPesewas.shipping);
   const totalAmount = fromPesewas(pricingTotalsPesewas.total);
-
-  const getAvailableStock = (item: any) => {
-    if (!item.variantSku || item.variantSku === 'custom') return 99; // Custom fit doesn't have strict stock
-    if (item.product?.variants && item.product.variants.length > 0) {
-      const variant = item.product.variants.find((v: any) => v.sku === item.variantSku);
-      return variant ? variant.stock : 0;
-    }
-    return 0; // Removed item.product?.stock ?? 0 because we deleted stock from schema
-  };
 
   const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));
 
@@ -201,7 +196,9 @@ export default function CartPage() {
                   <span className="font-label text-lg tracking-widest text-primary">{formatPrice(totalAmount, activeCurrency, rates)}</span>
                 </div>
 
-                {!user ? (
+                {pricingError ? (
+                  <p className="text-xs text-error border border-error p-4 mb-8">{pricingError}</p>
+                ) : !user ? (
                    <SignInButton mode="modal" forceRedirectUrl="/checkout"><button className="text-sm text-primary mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</button></SignInButton>
                 ) : hasOutOfStockItems ? (
                   <p className="text-xs text-error font-label tracking-widest uppercase mb-8 border border-error p-4 text-center w-full block">Please adjust quantities before checkout</p>

@@ -113,7 +113,7 @@ export const createCheckoutSession = mutation({
     const recentPending = await ctx.db.query("checkoutSessions")
       .withIndex("by_status_createdAt", (q) => q.eq("status", "pending").gt("createdAt", pendingSince))
       .collect();
-    if (recentPending.filter(session => session.userId === identity.subject).length >= 5) {
+    if (recentPending.filter(session => session.userId === identity.subject).length >= 20) {
       throw new ConvexError("Too many checkout attempts. Please wait before starting another payment.");
     }
 

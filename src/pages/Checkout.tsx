@@ -15,6 +15,7 @@ import { parseConvexError } from "../utils/errorParser";
 import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
 import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
 import { countryCodes } from "../utils/countries";
+import { getAvailableStock } from "../utils/stock";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -47,7 +48,9 @@ export default function Checkout() {
   const convex = useConvex();
 
   const [isSuccess, setIsSuccess] = useState(false);
-  const [checkoutSession, setCheckoutSession] = useState<{ reference: string; amountPesewas: number; email: string } | null>(null);
+  const [checkoutSession, setCheckoutSession] = useState<{ reference: string; amountPesewas: number; email: string; totals?: { total: number } } | null>(null);
+  const checkoutSignature = React.useMemo(() => JSON.stringify({ items, shippingAddress, appliedPromo, measurements }), [items, shippingAddress, appliedPromo, measurements]);
+  React.useEffect(() => { setCheckoutSession(null); }, [checkoutSignature]);
 
   const softReserveItems = useMutation(api.inventory.softReserveItems);
 
@@ -110,26 +113,20 @@ export default function Checkout() {
 
   const hasCustomFit = items.some(item => item.variantSku === "custom" || item.variantSku === undefined);
 
-  const getAvailableStock = (item: any) => {
-    if (!item.variantSku || item.variantSku === 'custom') return 99; 
-    if (item.product?.variants && item.product.variants.length > 0) {
-      const variant = item.product.variants.find((v: any) => v.sku === item.variantSku);
-      return variant ? variant.stock : 0;
-    }
-    return 0;
-  };
-
   const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));
 
-  const pricingTotalsPesewas = computeTotals({
-    lines: cartItemsWithDetails.map(item => ({
-      unitPesewas: lineUnitPrice(item.product!, item.variantSku),
-      quantity: item.quantity,
-    })),
-    shippingRatePesewas: toPesewas(Number(standardShippingRateObj?.value ?? 50)),
-    freeShippingThresholdPesewas: toPesewas(Number(freeShippingThresholdObj?.value ?? 0)),
-    promo: appliedPromo ? { discountType: "fixed", discountValue: appliedPromo.discountAmount } : undefined,
-  });
+  let pricingTotalsPesewas = { subtotal: 0, discount: 0, shipping: 0, total: 0 };
+  let pricingError: string | null = null;
+  try {
+    pricingTotalsPesewas = computeTotals({
+      lines: cartItemsWithDetails.map(item => ({ unitPesewas: lineUnitPrice(item.product!, item.variantSku), quantity: item.quantity })),
+      shippingRatePesewas: toPesewas(Number(standardShippingRateObj?.value ?? 50)),
+      freeShippingThresholdPesewas: toPesewas(Number(freeShippingThresholdObj?.value ?? 0)),
+      promo: appliedPromo ? { discountType: "fixed", discountValue: appliedPromo.discountAmount } : undefined,
+    });
+  } catch (error) {
+    pricingError = error instanceof Error ? error.message : "Unable to calculate your total.";
+  }
   const subtotal = fromPesewas(pricingTotalsPesewas.subtotal);
   const discountAmount = fromPesewas(pricingTotalsPesewas.discount);
   const shippingAmount = fromPesewas(pricingTotalsPesewas.shipping);
@@ -184,6 +181,12 @@ export default function Checkout() {
         promoCode: appliedPromo?.code,
         displayCurrency: activeCurrency,
       });
+      if (pricingError) { toast.error(pricingError); return; }
+      if (session.totals && Math.abs(Number(session.totals.total) - totalAmount) > 0.005) {
+        toast.error("Prices or shipping changed. Please review your order before paying.");
+        setCheckoutSession(null);
+        return;
+      }
       setCheckoutSession(session);
     } catch (error) {
       toast.error(parseConvexError(error) || "Unable to prepare checkout. Please review your cart.");
@@ -216,8 +219,9 @@ export default function Checkout() {
   };
 
   const componentProps = {
-    email: user?.primaryEmailAddress?.emailAddress || "guest@gabby.com",
+    email: checkoutSession?.email || user?.primaryEmailAddress?.emailAddress || "guest@gabby.com",
     amount: checkoutSession?.amountPesewas ?? 0,
+    reference: checkoutSession?.reference,
     currency: "GHS",
     metadata: {
       name: `${user?.firstName || 'Guest'} ${user?.lastName || ''}`,
@@ -464,6 +468,8 @@ export default function Checkout() {
                           <p className="text-sm text-on-surface-variant mb-6">Please authenticate to finalize your purchase.</p>
                           <SignInButton mode="modal" forceRedirectUrl="/checkout"><button className="bg-primary text-on-primary px-8 py-4 font-label text-[10px] tracking-[0.2em] uppercase border border-outline-variant w-full">WAITING FOR AUTHENTICATION</button></SignInButton>
                         </div>
+                      ) : pricingError ? (
+                        <div className="text-center py-8"><p className="text-sm text-error border border-error p-4">{pricingError}</p></div>
                       ) : hasOutOfStockItems ? (
                         <div className="text-center py-8">
                           <p className="font-serif text-xl text-error mb-2">Inventory Error</p>
