@@ -63,7 +63,7 @@ export const book = mutation({
       const existingApts = await ctx.db
         .query("appointments")
         .withIndex("by_date", (q) => q.eq("date", args.date))
-        .filter((q) => q.neq(q.field("status"), "cancelled"))
+        .filter((q) => q.and(q.neq(q.field("status"), "cancelled"), q.neq(q.field("status"), "expired"), q.or(q.neq(q.field("paymentStatus"), "awaiting_payment"), q.gt(q.field("paymentExpiresAt"), Date.now()))))
         .collect();
 
       for (const apt of existingApts) {
@@ -87,7 +87,7 @@ export const book = mutation({
       ...args,
       userId: identity ? identity.subject : undefined,
       status: "pending",
-      paymentStatus: expectedAmountPesewas > 0 ? "pending" : "not_required",
+      paymentStatus: expectedAmountPesewas > 0 ? "awaiting_payment" : "not_required",
       expectedAmountPesewas,
       paymentExpiresAt: expectedAmountPesewas > 0 ? Date.now() + 30 * 60 * 1000 : undefined,
       referenceImages: args.referenceImages,
@@ -166,6 +166,22 @@ export const verifyAppointmentPayment = action({
 export const getByIdInternal = internalQuery({
   args: { appointmentId: v.id("appointments") },
   handler: async (ctx, args) => await ctx.db.get(args.appointmentId),
+});
+
+export const expireAwaitingPayments = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const rows = await ctx.db.query("appointments").withIndex("by_paymentStatus_expiry", q => q.eq("paymentStatus", "awaiting_payment")).collect();
+    let expired = 0;
+    for (const appointment of rows) {
+      if (appointment.paymentExpiresAt && appointment.paymentExpiresAt < now) {
+        await ctx.db.patch(appointment._id, { paymentStatus: "expired", status: "expired", cancelReason: "payment_timeout" });
+        expired++;
+      }
+    }
+    return expired;
+  },
 });
 
 export const generateUploadUrl = mutation(async (ctx) => {
@@ -254,7 +270,7 @@ export const sendReminders = internalMutation({
 
     for (const reminder of dueReminders) {
       const appointment = await ctx.db.get(reminder.appointmentId);
-      if (appointment && appointment.status !== 'cancelled') {
+      if (appointment && appointment.status !== 'cancelled' && appointment.status !== 'expired') {
         await ctx.scheduler.runAfter(0, internal.email.sendAppointmentReminder, {
           appointmentId: appointment._id,
           email: appointment.email,
@@ -341,7 +357,7 @@ export const getAvailableSlots = query({
     const existingApts = await ctx.db
       .query("appointments")
       .withIndex("by_date", (q) => q.eq("date", args.date))
-      .filter((q) => q.neq(q.field("status"), "cancelled"))
+      .filter((q) => q.and(q.neq(q.field("status"), "cancelled"), q.neq(q.field("status"), "expired"), q.or(q.neq(q.field("paymentStatus"), "awaiting_payment"), q.gt(q.field("paymentExpiresAt"), Date.now()))))
       .collect();
 
     const appointmentDuration = 60; // Standard 60 mins per appointment

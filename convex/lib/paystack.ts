@@ -38,9 +38,10 @@ export function generatePaymentReference(): string {
 
 export async function verifyPaystackTransaction(reference: string): Promise<VerifiedPaystackTransaction> {
   const secret = process.env.PAYSTACK_SECRET_KEY;
-  if (!secret || !secret.startsWith("sk_test_")) {
-    throw new Error("PAYSTACK_SECRET_KEY must be configured with a Paystack test key.");
-  }
+  const mode = process.env.PAYSTACK_MODE || "test";
+  if (mode !== "test" && mode !== "live") throw new Error("PAYSTACK_MODE must be test or live.");
+  const expectedPrefix = mode === "live" ? "sk_live_" : "sk_test_";
+  if (!secret || !secret.startsWith(expectedPrefix)) throw new Error(`PAYSTACK_SECRET_KEY must match PAYSTACK_MODE=${mode}.`);
 
   let response: Response | undefined;
   let payload: any;

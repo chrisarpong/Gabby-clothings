@@ -75,6 +75,6 @@ describe("Paystack verification helpers", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     process.env.PAYSTACK_SECRET_KEY = "sk_live_never_use";
-    await expect(verifyPaystackTransaction("GB-BAD")).rejects.toThrow("test key");
+    await expect(verifyPaystackTransaction("GB-BAD")).rejects.toThrow("PAYSTACK_MODE=test");
   });
 });

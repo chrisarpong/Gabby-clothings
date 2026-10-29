@@ -31,5 +31,6 @@ crons.interval(
   { hours: 1 },
   internal.inventory.cleanupExpiredReserves
 );
+crons.interval("expire-appointment-payments", { minutes: 10 }, internal.appointments.expireAwaitingPayments);
 
 export default crons;
