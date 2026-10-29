@@ -94,6 +94,37 @@ describe("staff authentication integration", () => {
     }));
   });
 
+  it("2FA setup and verification fail closed without the encryption key", async () => {
+    const t = convexTest(schema);
+    const salt = crypto.randomBytes(16).toString("hex");
+    const password = "CorrectPassword2026!";
+    const passwordHash = await hashPassword(password, salt, { N: 1024, r: 8, p: 1, keylen: 64, maxmem: 64 * 1024 * 1024 });
+    const staffId = await t.run(async (ctx) => ctx.db.insert("staff", {
+      name: "Missing Key",
+      email: "missing-key@gabbytest.com",
+      role: "admin",
+      passwordHash,
+      passwordSalt: salt,
+      mustChangePassword: false,
+      isActive: true,
+      failedAttempts: 0,
+      totpEnabled: false,
+      createdAt: Date.now(),
+    }));
+    const login = await t.action(api.staffAuthNode.loginAction, { email: "missing-key@gabbytest.com", password });
+    const configuredKey = process.env.STAFF_2FA_ENC_KEY;
+
+    try {
+      delete process.env.STAFF_2FA_ENC_KEY;
+      await expect(t.action(api.staffAuthNode.setup2FA, { staffToken: login.token! })).rejects.toThrow("STAFF_2FA_ENC_KEY is required");
+      await expect(t.action(api.staffAuthNode.verify2FA, { token: login.token!, code: "000000", isSetup: true })).rejects.toThrow("STAFF_2FA_ENC_KEY is required");
+      const staff = await t.run(async (ctx) => ctx.db.get(staffId));
+      expect(staff?.totpSecret).toBeUndefined();
+    } finally {
+      if (configuredKey) process.env.STAFF_2FA_ENC_KEY = configuredKey;
+    }
+  });
+
   it("failed logins increment counter and lock account", async () => {
     const t = convexTest(schema);
     const salt = crypto.randomBytes(16).toString("hex");

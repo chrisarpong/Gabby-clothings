@@ -19,6 +19,17 @@ function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+function requireStaff2FAKey(): string {
+  const envKey = process.env.STAFF_2FA_ENC_KEY || "";
+  if (!envKey) {
+    throw new ConvexError({ code: "CONFIGURATION_ERROR", message: "STAFF_2FA_ENC_KEY is required to set up or verify staff 2FA." });
+  }
+  if (Buffer.from(envKey, "base64").length !== 32) {
+    throw new ConvexError({ code: "CONFIGURATION_ERROR", message: "STAFF_2FA_ENC_KEY must be a base64-encoded 32-byte key." });
+  }
+  return envKey;
+}
+
 export const loginAction = action({
   args: {
     email: v.string(),
@@ -134,12 +145,12 @@ export const setup2FA = action({
     const tokenHash = hashToken(args.staffToken);
     const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
+    const envKey = requireStaff2FAKey();
     
     const secret = authenticator.generateSecret();
     const uri = authenticator.keyuri(staff.email, "Gabby Newluk", secret);
 
-    const envKey = process.env.STAFF_2FA_ENC_KEY || '';
-    const storedSecret = envKey ? encryptTotpSecret(secret, envKey) : secret;
+    const storedSecret = encryptTotpSecret(secret, envKey);
 
     await ctx.runMutation(internal.staffAuth.updateStaffTotpSecret, {
       staffId: staff._id,
@@ -157,7 +168,7 @@ export const verify2FA = action({
     isSetup: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{ status: string; token: string; recoveryCodes?: string[] }> => {
-    const envKey = process.env.STAFF_2FA_ENC_KEY || '';
+    const envKey = requireStaff2FAKey();
 
     if (args.isSetup) {
       const tokenHash = hashToken(args.token);
@@ -171,9 +182,7 @@ export const verify2FA = action({
       const isValid = authenticator.check(args.code, rawSecret);
       if (!isValid) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid 2FA code" });
 
-      const { plain: recoveryCodes, hashed: hashedCodes } = envKey 
-        ? generateRecoveryCodes() 
-        : { plain: [], hashed: "" };
+      const { plain: recoveryCodes, hashed: hashedCodes } = generateRecoveryCodes();
 
       await ctx.runMutation(internal.staffAuth.enableStaff2FAInternal, {
         staffId: staff._id,
