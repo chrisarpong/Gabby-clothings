@@ -17,4 +17,9 @@ describe("catalog product lookup", () => {
     await t.run(async (ctx: any) => { for (let i = 0; i < 55; i++) await ctx.db.insert("products", { name: `Kaftan ${i}`, category: "kaftans", basePrice: 1, description: "search", images: [], status: "active", type: "physical" }); });
     expect(await t.query(api.products.searchProducts, { q: "kaftan" })).toHaveLength(50);
   });
+  it("finds matches beyond the first fifty active products", async () => {
+    const t = convexTest(schema);
+    await t.run(async (ctx: any) => { for (let i = 0; i < 60; i++) await ctx.db.insert("products", { name: i === 57 ? "Needlework Match" : `Product ${i}`, category: "other", basePrice: 1, description: "plain", images: [], status: "active", type: "physical" }); });
+    expect((await t.query(api.products.searchProducts, { q: "needlework" })).map((p: any) => p.name)).toContain("Needlework Match");
+  });
 });

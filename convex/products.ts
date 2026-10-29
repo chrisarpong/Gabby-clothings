@@ -23,9 +23,9 @@ export const getActive = query({
 export const searchProducts = query({
   args: { q: v.string() },
   handler: async (ctx, args) => {
-    const all = await ctx.db.query("products").withIndex("by_status", q => q.eq("status", "active")).take(50);
+    const all = await ctx.db.query("products").withIndex("by_status", q => q.eq("status", "active")).take(500);
     const query = args.q.toLowerCase();
-    return all.filter(p => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query));
+    return all.filter(p => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query)).slice(0, 50);
   }
 });
 
