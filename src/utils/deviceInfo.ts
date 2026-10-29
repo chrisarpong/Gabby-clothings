@@ -14,13 +14,10 @@ export async function getDeviceInfo() {
 
   // Call our Convex HTTP endpoint to get the IP address
   try {
-    const convexUrl = import.meta.env.VITE_CONVEX_URL;
-    if (convexUrl) {
+    if (convexSiteUrl()) {
       // The HTTP endpoint is typically served from the .site domain instead of .cloud
       // but in local development it's just the same URL.
-      const siteUrl = convexUrl.includes('.cloud') 
-        ? convexUrl.replace('.cloud', '.site')
-        : convexUrl;
+      const siteUrl = convexSiteUrl();
         
       const res = await fetch(`${siteUrl}/client-info`);
       if (res.ok) {
@@ -36,3 +33,5 @@ export async function getDeviceInfo() {
 
   return { ipAddress, userAgent: ua, deviceName };
 }
+import { convexSiteUrl } from './fileUrl';
+
