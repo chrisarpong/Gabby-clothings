@@ -1,11 +1,12 @@
 import { Check, Download, Printer } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice, CurrencyCode } from "../utils/currency";
+import { useCartStore } from "../store/cartStore";
 
 export default function Success() {
   const [searchParams] = useSearchParams();
@@ -14,6 +15,8 @@ export default function Success() {
   const allProducts = useQuery(api.products.getAll);
   const storeInfo = useQuery(api.settings.getByKey, { key: "storeInfo" });
   const { activeCurrency, rates } = useCurrencyStore();
+  const clearCart = useCartStore(state => state.clearCart);
+  const clearedReference = useRef<string | null>(null);
   
   const waiting = Boolean(reference && !currentOrder);
   const [showSupport, setShowSupport] = useState(false);
@@ -22,6 +25,12 @@ export default function Success() {
     const timer = window.setTimeout(() => setShowSupport(true), 60_000);
     return () => window.clearTimeout(timer);
   }, [waiting]);
+  useEffect(() => {
+    if (currentOrder && reference && clearedReference.current !== reference) {
+      clearCart();
+      clearedReference.current = reference;
+    }
+  }, [currentOrder, reference, clearCart]);
 
   const displayCurrency = (currentOrder?.displayCurrency as CurrencyCode) || activeCurrency;
   const displayRates = currentOrder?.rateAtOrderTime ? { [displayCurrency]: currentOrder.rateAtOrderTime } : rates;
