@@ -154,4 +154,12 @@ describe("POS money core", () => {
     await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails: { firstName: "UI", lastName: "Customer", email: "ui@example.test", phone: "0240000000" }, items: [{ productId, name: undefined, unitPriceOverride: undefined, quantity: 1, notes: undefined, variantSku: undefined }], payInFull: true, amountPaid: undefined, paymentMethod: "cash", idempotencyKey: "sales-ui-base" });
     expect((await t.run((ctx: any) => ctx.db.get(productId)) as any).stock).toBe(1);
   });
+
+  it("accepts the SalesPOS catalogue adjustment payload with a reason", async () => {
+    const t = convexTest(schema); const token = await staff(t, "sales", "sales-ui-adjust"); const productId = await product(t);
+    const orderId = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails: { firstName: "UI", lastName: "Customer", email: "ui@example.test", phone: "0240000000" }, items: [{ productId, name: undefined, unitPriceOverride: 90, overrideReason: "Approved customer discount", quantity: 1, notes: undefined, variantSku: undefined }], payInFull: true, amountPaid: undefined, paymentMethod: "cash", idempotencyKey: "sales-ui-adjust" });
+    const row: any = await t.run((ctx: any) => ctx.db.get(orderId));
+    expect(row.items[0].priceAtPurchase).toBe(90);
+    expect(row.hasPriceAdjustment).toBe(true);
+  });
 });
