@@ -29,6 +29,7 @@ export default function ProductDetailPage() {
     : 0;
   
   const [activeSize, setActiveSize] = useState("");
+  const [activeImage, setActiveImage] = useState(0);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
   const [measurements, setMeasurements] = useState({
@@ -152,7 +153,7 @@ export default function ProductDetailPage() {
           >
             <div className="w-full aspect-[3/4] bg-surface-container overflow-hidden group">
                <img 
-                src={product?.images?.[0] || "/assets/1.jpg"} 
+                src={product?.images?.[activeImage] || "/assets/1.jpg"} 
                 alt={product?.name || "Product"} 
                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 fetchPriority="high"
@@ -162,14 +163,14 @@ export default function ProductDetailPage() {
             {product?.images && product.images.length > 1 && (
               <div className="grid grid-cols-3 gap-4 sm:gap-6">
                 {product.images.map((img, idx) => (
-                  <div key={idx} className="aspect-[3/4] bg-surface-container overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
+                  <button type="button" key={idx} onClick={() => setActiveImage(idx)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setActiveImage(idx); }} aria-label={`View image ${idx + 1}`} className={`aspect-[3/4] bg-surface-container overflow-hidden hover:opacity-80 transition-opacity cursor-pointer ${activeImage === idx ? 'ring-2 ring-primary' : ''}`}>
                     <img 
                       src={img} 
                       alt={`Thumbnail ${idx + 1}`} 
                       className="w-full h-full object-cover grayscale-[20%]"
                       loading="lazy"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

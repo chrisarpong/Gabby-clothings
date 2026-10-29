@@ -6,7 +6,7 @@ import { useCartStore } from "../store/cartStore";
 import { useQuery, useAction } from "@/hooks/useConvex";
 import { useConvex, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useUser } from "@clerk/clerk-react";
+import { SignInButton, useUser } from "@clerk/clerk-react";
 import { PaystackButton } from "react-paystack";
 import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
@@ -463,9 +463,7 @@ export default function Checkout() {
                         <div className="text-center py-8">
                           <p className="font-serif text-xl text-primary mb-2">Sign In Required</p>
                           <p className="text-sm text-on-surface-variant mb-6">Please authenticate to finalize your purchase.</p>
-                          <button disabled className="bg-surface-variant text-on-surface-variant px-8 py-4 font-label text-[10px] tracking-[0.2em] uppercase cursor-not-allowed border border-outline-variant w-full">
-                            WAITING FOR AUTHENTICATION
-                          </button>
+                          <SignInButton mode="modal" forceRedirectUrl="/checkout"><button className="bg-primary text-on-primary px-8 py-4 font-label text-[10px] tracking-[0.2em] uppercase border border-outline-variant w-full">WAITING FOR AUTHENTICATION</button></SignInButton>
                         </div>
                       ) : hasOutOfStockItems ? (
                         <div className="text-center py-8">

@@ -63,6 +63,7 @@ export default function Wishlist() {
                           onClick={(e) => { 
                             e.preventDefault(); 
                             e.stopPropagation(); 
+                            if (product.variants?.length || product.type === 'showcase_template') { navigate(`/product/${product._id}`); return; }
                             addItem({ productId: product._id, quantity: 1 });
                             toast.success("Added to cart");
                             navigate('/cart'); 

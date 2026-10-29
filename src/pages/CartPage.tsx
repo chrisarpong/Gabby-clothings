@@ -5,7 +5,7 @@ import { useCartStore } from "../store/cartStore";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { Doc } from '../../convex/_generated/dataModel';
-import { useUser } from "@clerk/clerk-react";
+import { SignInButton, useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
@@ -202,7 +202,7 @@ export default function CartPage() {
                 </div>
 
                 {!user ? (
-                   <p className="text-sm text-primary mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</p>
+                   <SignInButton mode="modal" forceRedirectUrl="/checkout"><button className="text-sm text-primary mb-8 border border-outline-variant p-4 text-center w-full block">Please Sign In to Checkout</button></SignInButton>
                 ) : hasOutOfStockItems ? (
                   <p className="text-xs text-error font-label tracking-widest uppercase mb-8 border border-error p-4 text-center w-full block">Please adjust quantities before checkout</p>
                 ) : (
