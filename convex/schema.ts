@@ -228,6 +228,9 @@ export default defineSchema({
     notes: v.optional(v.string()),
     status: v.string(), // 'pending', 'confirmed', 'completed', 'cancelled'
     paymentStatus: v.optional(v.string()), // 'pending', 'paid'
+    expectedAmountPesewas: v.optional(v.number()),
+    paymentExpiresAt: v.optional(v.number()),
+    cancelReason: v.optional(v.string()),
     paystackReference: v.optional(v.string()),
     amountPaid: v.optional(v.number()),
     meetLink: v.optional(v.string()),
@@ -244,7 +247,7 @@ export default defineSchema({
     targetEventDate: v.optional(v.string()), // Actual event date for triage
     ghanaPostGps: v.optional(v.string()),
     landmarks: v.optional(v.string()),
-  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedStaff", ["assignedStaffId"]),
+  }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedStaff", ["assignedStaffId"]).index("by_paymentStatus_expiry", ["paymentStatus", "paymentExpiresAt"]),
 
   reviews: defineTable({
     productId: v.id("products"),
