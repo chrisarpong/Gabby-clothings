@@ -110,6 +110,17 @@ describe("expired appointment payment revival", () => {
     const slots = await t.query(api.appointments.getAvailableSlots, { date: "2099-11-01" });
     expect(slots).toContain("10:00");
   });
+
+  it("rechecks an awaiting payment that expired before the cron ran", async () => {
+    const t = convexTest(schema);
+    const appointmentId = await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Waiting", email: "waiting@example.test", phone: "0240000000", date: "2099-11-01", time: "10:00", status: "pending", paymentStatus: "awaiting_payment", paymentExpiresAt: Date.now() - 1000, expectedAmountPesewas: 5000, paystackReference: "STALE-A" }));
+    await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "New", email: "new@example.test", phone: "0240000001", date: "2099-11-01", time: "10:00", status: "confirmed", paymentStatus: "paid" }));
+    const result = await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "STALE-A", amountPesewas: 5000, currency: "GHS" });
+    expect(result).toBeNull();
+    const state: any = await t.run(async (ctx: any) => ({ appointment: await ctx.db.get(appointmentId), issues: await ctx.db.query("paymentIssues").collect() }));
+    expect(state.appointment.paymentStatus).toBe("awaiting_payment");
+    expect(state.issues[0].kind).toBe("paid_but_slot_taken");
+  });
 });
 
 describe("appointment input and staff payment controls", () => {

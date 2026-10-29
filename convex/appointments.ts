@@ -152,7 +152,7 @@ export const finalizeAppointmentPayment = internalMutation({
       await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "amount_mismatch", details: `Expected ${expectedAmountPesewas} pesewas but received ${args.amountPesewas}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
       return null;
     }
-    if (appointment.status === "expired") {
+    if (appointment.status === "expired" || (appointment.paymentStatus === "awaiting_payment" && appointment.paymentExpiresAt !== undefined && appointment.paymentExpiresAt < Date.now())) {
       const availabilitySetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "availability")).first();
       const bufferTime = availabilitySetting?.value?.bufferTime || 30;
       const toMinutes = (value: string) => { const [h, m] = value.split(":").map(Number); return h * 60 + m; };
