@@ -4,6 +4,13 @@ import { Resend } from "resend";
 import { api, internal } from "./_generated/api";
 import { unsubscribeToken } from './lib/unsubscribe';
 
+async function marketingUnsubscribeUrl(email: string) {
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!secret) throw new Error('UNSUBSCRIBE_SECRET is not configured');
+  const token = await unsubscribeToken(email.trim().toLowerCase(), secret);
+  return `${process.env.SITE_URL || 'https://gabbynewluk.com'}/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
+}
+
 function getResendClient() {
   const key = process.env.RESEND_API_KEY;
   return key ? new Resend(key) : null;
@@ -250,10 +257,9 @@ export const sendPromoBroadcast = action({
     // Using Resend's batch send or loop. Looping to avoid batch limits for now.
     for (const user of emailsList) {
       try {
-        const secret = process.env.UNSUBSCRIBE_SECRET;
-        if (!secret) throw new Error('UNSUBSCRIBE_SECRET is not configured');
-        const token = await unsubscribeToken(user.email, secret);
-        const unsubscribeUrl = `${process.env.SITE_URL || 'https://gabbynewluk.com'}/unsubscribe?email=${encodeURIComponent(user.email)}&token=${token}`;
+        const unsubscribeUrl = await marketingUnsubscribeUrl(user.email);
+        const subscribers = await ctx.runQuery(api.subscribers.getAll, { staffToken: args.staffToken });
+        if (subscribers.some((s: any) => s.email.toLowerCase() === user.email.toLowerCase() && s.status === 'unsubscribed')) continue;
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
           to: user.email,
@@ -358,6 +364,7 @@ export const sendNewsletterBroadcast = action({
     
     for (const sub of activeSubscribers) {
       try {
+        const unsubscribeUrl = await marketingUnsubscribeUrl(sub.email);
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
           to: sub.email,
@@ -375,7 +382,7 @@ export const sendNewsletterBroadcast = action({
     <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p style="margin-top: 10px;">
       You are receiving this email because you subscribed to our newsletter.<br>
-      To unsubscribe, reply to this email or contact us.
+      <a href="${unsubscribeUrl}" style="color: #999; text-decoration: underline;">Unsubscribe</a> from marketing emails.
     </p>
   </div>
 </div>

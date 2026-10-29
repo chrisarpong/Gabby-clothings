@@ -15,4 +15,12 @@ describe('unsubscribe links', () => {
     await t.mutation(api.subscribers.unsubscribe, { email: 'person@example.com', token });
     expect((await t.run(ctx => ctx.db.query('subscribers').first()))?.status).toBe('unsubscribed');
   });
+  it('creates an unsubscribed row when the email was not subscribed', async () => {
+    process.env.UNSUBSCRIBE_SECRET = 'test-unsubscribe-secret';
+    const t = convexTest(schema);
+    const email = 'buyer@example.com';
+    const token = await unsubscribeToken(email, process.env.UNSUBSCRIBE_SECRET);
+    await t.mutation(api.subscribers.unsubscribe, { email, token });
+    expect(await t.run(ctx => ctx.db.query('subscribers').withIndex('by_email', q => q.eq('email', email)).first())).toMatchObject({ email, status: 'unsubscribed' });
+  });
 });

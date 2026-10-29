@@ -24,6 +24,7 @@ export const unsubscribe = mutation({
     if (!constantTimeEqual(expected, args.token)) throw new ConvexError('Invalid unsubscribe link.');
     const subscriber = await ctx.db.query('subscribers').withIndex('by_email', q => q.eq('email', email)).first();
     if (subscriber && subscriber.status !== 'unsubscribed') await ctx.db.patch(subscriber._id, { status: 'unsubscribed' });
+    if (!subscriber) await ctx.db.insert('subscribers', { email, status: 'unsubscribed' });
     return { status: 'unsubscribed' };
   },
 });
