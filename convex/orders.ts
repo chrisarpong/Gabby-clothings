@@ -375,7 +375,10 @@ export const updateStatus = mutation({
     });
 
     const order = await ctx.db.get(args.orderId);
-    if (order && order.customerDetails) {
+    if (args.status === "on_hold") {
+      await ctx.db.insert("orderActivityLog", { orderId: args.orderId, stage: "on_hold", performedBy: staff._id, note: "Order placed on hold", timestamp: Date.now() });
+    }
+    if (args.status !== "on_hold" && order && order.customerDetails) {
       await ctx.scheduler.runAfter(0, internal.email.sendOrderStatusUpdate, {
         orderId: args.orderId,
         email: order.customerDetails.email,

@@ -107,6 +107,7 @@ export default function OrdersTab() {
   }, [orders, searchQuery, statusFilter]);
 
   const handleStatusChange = async (orderId: Id<"orders">, newStatus: string) => {
+    if (newStatus === "cancelled" && !window.confirm("Cancelling does not refund the customer or return stock. Handle refunds in Paystack and update inventory manually.")) return;
     try {
       await updateStatus({ orderId, status: newStatus });
       getDeviceInfo().then(info => logAction({

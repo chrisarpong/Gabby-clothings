@@ -62,9 +62,10 @@ export const sendOrderStatusUpdate = internalAction({
   },
   handler: async (ctx, args) => {
     const resend = getResendClient();
+    const friendlyStatus = args.status.split("_").map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 
     if (!resend) {
-      console.log(`[Email Mock] Would send order ${args.status} update to ${args.email} for order ${args.orderId}`);
+      console.log(`[Email Mock] Would send order ${friendlyStatus} update to ${args.email} for order ${args.orderId}`);
       return;
     }
     
@@ -90,7 +91,7 @@ export const sendOrderStatusUpdate = internalAction({
         break;
       default:
         subject = "Order Update - Gabby Atelier";
-        message = `Your order status has been updated to: ${args.status}`;
+        message = `Your order status has been updated to: ${friendlyStatus}`;
         break;
     }
 
@@ -106,7 +107,7 @@ export const sendOrderStatusUpdate = internalAction({
             <p>${message}</p>
             <div style="background-color: #f9f8f6; padding: 20px; border-left: 4px solid #4a3c31; margin: 20px 0;">
               <p style="margin: 0; font-family: monospace;"><strong>Order ID:</strong> ${args.orderId}</p>
-              <p style="margin: 5px 0 0 0; text-transform: capitalize;"><strong>Status:</strong> ${args.status}</p>
+              <p style="margin: 5px 0 0 0;"><strong>Status:</strong> ${friendlyStatus}</p>
             </div>
             <p>Thank you for choosing Gabby Atelier,</p>
             <p><strong>The Gabby Atelier Team</strong></p>

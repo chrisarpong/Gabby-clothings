@@ -87,6 +87,8 @@ describe("POS money core", () => {
     await t.mutation(api.orders.updateStatus, { staffToken: token, orderId, status: "processing" });
     await expect(t.mutation(api.orders.updateStatus, { staffToken: token, orderId, status: "invented" })).rejects.toThrow();
     expect((await t.run((ctx: any) => ctx.db.get(productId)) as any).stock).toBe(1);
+    const activities: any[] = await t.run((ctx: any) => ctx.db.query("orderActivityLog").collect());
+    expect(activities.some(row => row.stage === "on_hold")).toBe(true);
   });
 
   it("tracks base SKU stock, requires variants, leaves custom untracked, and uses pesewa precision", async () => {
