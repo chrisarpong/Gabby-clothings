@@ -4,12 +4,15 @@ import { api } from "../../convex/_generated/api";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
+import { useCurrencyStore } from "../store/currencyStore";
+import { formatPrice } from "../utils/currency";
 
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "Kaftan";
+  const query = (searchParams.get("q") || "").trim().slice(0, 100);
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
+  const { activeCurrency, rates } = useCurrencyStore();
 
   const results = useQuery(api.products.searchProducts, { q: query });
 
@@ -36,7 +39,9 @@ export default function SearchResults() {
 
       {/* Grid Section */}
       <section className="px-5 md:px-20 max-w-[1536px] mx-auto">
-        {results === undefined ? (
+        {!query ? (
+          <div className="py-32 text-center text-primary font-serif italic text-2xl">Enter a search term to find a product.</div>
+        ) : results === undefined ? (
           <div className="py-32 text-center text-primary font-serif italic text-2xl">Loading results...</div>
         ) : results.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-16">
@@ -77,7 +82,7 @@ export default function SearchResults() {
                     </span>
                   </div>
                   <span className="font-label text-sm tracking-wide text-primary whitespace-nowrap">
-                    ${(product?.basePrice ?? 0).toFixed(2)}
+                    {formatPrice(product?.basePrice ?? 0, activeCurrency, rates)}
                   </span>
                 </div>
               </motion.div>

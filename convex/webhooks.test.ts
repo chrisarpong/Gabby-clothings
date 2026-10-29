@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createHmac } from "node:crypto";
 import { convexTest } from "convex-test";
 import schema from "./schema";
@@ -6,6 +6,7 @@ import { internal } from "./_generated/api";
 import { constantTimeEqual, verifyPaystackWebhookSignature } from "./lib/paystack";
 
 const address = { street: "123 Main Street", city: "Accra", region: "Greater Accra", postalCode: "00233", country: "Ghana" };
+vi.spyOn(console, "log").mockImplementation(() => undefined);
 
 async function seedProduct(t: any) {
   return await t.run(async (ctx: any) => ctx.db.insert("products", { name: "Webhook Shirt", slug: `webhook-${Date.now()}`, category: "shirts", description: "test", type: "ready_to_wear", status: "active", basePrice: 100, sku: "WEBHOOK-SKU", stock: 3, images: [] }));

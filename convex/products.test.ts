@@ -12,4 +12,9 @@ describe("catalog product lookup", () => {
     expect(await t.query(api.products.getByCatalogSlug, { slug: "kaftans" })).toHaveLength(1);
     expect(await t.query(api.products.getByCatalogSlug, { slug: "missing" })).toBeNull();
   });
+  it("limits search results to 50 active products", async () => {
+    const t = convexTest(schema);
+    await t.run(async (ctx: any) => { for (let i = 0; i < 55; i++) await ctx.db.insert("products", { name: `Kaftan ${i}`, category: "kaftans", basePrice: 1, description: "search", images: [], status: "active", type: "physical" }); });
+    expect(await t.query(api.products.searchProducts, { q: "kaftan" })).toHaveLength(50);
+  });
 });
