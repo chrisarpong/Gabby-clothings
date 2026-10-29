@@ -52,9 +52,10 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
       if (live.variants?.length && (!item.variantSku || !live.variants.some((v: any) => v.sku === item.variantSku))) { removed++; return []; }
       const variant = item.variantSku ? live.variants?.find((v: any) => v.sku === item.variantSku) : undefined;
       const available = variant?.stock ?? live.stock;
+      if (Number.isFinite(available) && available <= 0) { removed++; return []; }
       const quantity = Number.isFinite(available) ? Math.min(item.quantity, Math.max(1, available)) : item.quantity;
       if (quantity !== item.quantity || item.price !== live.basePrice || item.product !== live) changed++;
-      return [{ ...item, product: live, price: live.basePrice, quantity }];
+      return [{ ...item, product: live, price: item.unitPriceOverride ?? live.basePrice, quantity }];
     }));
     if (removed || changed) toast.info(`${removed ? `${removed} unavailable item${removed === 1 ? '' : 's'} removed` : ''}${removed && changed ? '; ' : ''}${changed ? `${changed} cart item${changed === 1 ? '' : 's'} refreshed` : ''}`);
   }, [products]);
