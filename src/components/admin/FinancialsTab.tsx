@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
-import { DollarSign, ArrowUpRight, TrendingUp, ShoppingBag } from 'lucide-react';
+import { DollarSign, ArrowUpRight, TrendingUp, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
@@ -10,6 +10,8 @@ const COLORS = ['#352421', '#827472', '#d4c3c1', '#735c00', '#1C1B1F'];
 
 export default function FinancialsTab() {
   const orders = useStaffQuery(api.orders.getAll);
+  const paymentIssues = useStaffQuery(api.paymentIssues.list, { includeResolved: false });
+  const resolvePaymentIssue = useStaffMutation(api.paymentIssues.resolve);
 
   if (orders === undefined) {
     return (
@@ -89,6 +91,20 @@ export default function FinancialsTab() {
             <ShoppingBag className="w-5 h-5" /> {paidOrders} / {totalOrders}
           </span>
         </div>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle className="w-5 h-5 text-amber-700" />
+          <h3 className="font-serif text-xl text-amber-900">Payment Issues</h3>
+          <span className="text-xs text-amber-800">{paymentIssues?.length ?? 0} unresolved</span>
+        </div>
+        {paymentIssues?.length ? paymentIssues.map(issue => (
+          <div key={issue._id} className="flex items-center justify-between gap-4 border-t border-amber-200 py-3 text-sm">
+            <div><span className="font-medium text-amber-950">{issue.kind}</span><p className="text-amber-900/80">{issue.details}</p></div>
+            <button type="button" onClick={() => resolvePaymentIssue({ issueId: issue._id })} className="border border-amber-700 px-3 py-1 text-[10px] uppercase tracking-widest text-amber-900">Resolve</button>
+          </div>
+        )) : <p className="text-sm text-amber-900/70">No unresolved payment issues.</p>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
