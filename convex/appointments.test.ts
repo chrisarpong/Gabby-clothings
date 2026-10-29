@@ -185,4 +185,13 @@ describe("appointment confirmation", () => {
     const reminders: any[] = await t.run(async (ctx: any) => ctx.db.query("reminders").collect());
     expect(reminders).toHaveLength(1);
   });
+
+  it("deduplicates unresolved payment issues by reference and kind", async () => {
+    const t = convexTest(schema);
+    const appointmentId = await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "0240000000", date: futureDate, status: "pending", paymentStatus: "awaiting_payment", expectedAmountPesewas: 5000, paystackReference: "DEDUP-REF" }));
+    await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "DEDUP-REF", amountPesewas: 4000, currency: "GHS" });
+    await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "DEDUP-REF", amountPesewas: 4000, currency: "GHS" });
+    const issues: any[] = await t.run(async (ctx: any) => ctx.db.query("paymentIssues").collect());
+    expect(issues).toHaveLength(1);
+  });
 });

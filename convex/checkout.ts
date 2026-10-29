@@ -6,6 +6,7 @@ import { computeTotals, fromPesewas, lineUnitPrice, mergeAndValidateCartLines, t
 import { checkAvailability, apply } from "./lib/stock";
 import { generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 import { nextOrderNumber } from "./lib/orderNumber";
+import { recordPaymentIssue } from "./lib/paymentIssues";
 
 const customerDetailsValidator = v.object({
   firstName: v.string(),
@@ -260,11 +261,7 @@ export const finalizeCheckoutPaid = internalMutation({
     const session = await ctx.db.query("checkoutSessions")
       .withIndex("by_reference", q => q.eq("reference", args.reference)).first();
     if (!session) {
-      await ctx.db.insert("paymentIssues", {
-        reference: args.reference, kind: "payment_without_session",
-        details: `Received verified Paystack payment from ${args.source} without a checkout session.`,
-        amountPesewas: args.amountPesewas, resolved: false, createdAt: Date.now(),
-      });
+      await recordPaymentIssue(ctx, { reference: args.reference, kind: "payment_without_session", details: `Received verified Paystack payment from ${args.source} without a checkout session.`, amountPesewas: args.amountPesewas });
       return null;
     }
     if (session.status === "paid" && session.orderId) {
@@ -273,16 +270,7 @@ export const finalizeCheckoutPaid = internalMutation({
       return { orderId: existing._id, orderNumber: existing.orderId ?? "" };
     }
 
-    const recordIssue = async (kind: string, details: string, amountPesewas?: number) => {
-      const existingIssues = await ctx.db.query("paymentIssues")
-        .withIndex("by_reference", q => q.eq("reference", args.reference)).collect();
-      if (!existingIssues.some(issue => issue.kind === kind && !issue.resolved)) {
-        await ctx.db.insert("paymentIssues", {
-          reference: args.reference, kind, details, amountPesewas,
-          relatedId: session._id, resolved: false, createdAt: Date.now(),
-        });
-      }
-    };
+    const recordIssue = async (kind: string, details: string, amountPesewas?: number) => recordPaymentIssue(ctx, { reference: args.reference, kind, details, amountPesewas, relatedId: session._id });
 
     if (!Number.isSafeInteger(args.amountPesewas) || args.amountPesewas < 0) {
       await recordIssue("amount_mismatch", "Verified transaction amount was invalid.", args.amountPesewas);

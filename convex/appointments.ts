@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { requireStaff } from "./staffAuth";
 import { constantTimeEqual, generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
+import { recordPaymentIssue } from "./lib/paymentIssues";
 
 export const getStorageMetadata = internalQuery({
   args: { storageId: v.id("_storage") },
@@ -145,11 +146,11 @@ export const finalizeAppointmentPayment = internalMutation({
     if (appointment.paymentStatus === "paid") return appointment._id;
     const expectedAmountPesewas = appointment.expectedAmountPesewas ?? 0;
     if (args.currency !== "GHS") {
-      await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "wrong_currency", details: `Expected GHS but verified ${args.currency}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
+      await recordPaymentIssue(ctx, { reference: args.reference, kind: "wrong_currency", details: `Expected GHS but verified ${args.currency}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id });
       return null;
     }
     if (args.amountPesewas !== expectedAmountPesewas) {
-      await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "amount_mismatch", details: `Expected ${expectedAmountPesewas} pesewas but received ${args.amountPesewas}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
+      await recordPaymentIssue(ctx, { reference: args.reference, kind: "amount_mismatch", details: `Expected ${expectedAmountPesewas} pesewas but received ${args.amountPesewas}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id });
       return null;
     }
     if (appointment.status === "expired" || (appointment.paymentStatus === "awaiting_payment" && appointment.paymentExpiresAt !== undefined && appointment.paymentExpiresAt < Date.now())) {
@@ -161,7 +162,7 @@ export const finalizeAppointmentPayment = internalMutation({
         const end = start + 60 + bufferTime;
         const existing = await ctx.db.query("appointments").withIndex("by_date", q => q.eq("date", appointment.date)).filter(q => q.and(q.neq(q.field("_id"), appointment._id), q.neq(q.field("status"), "cancelled"), q.neq(q.field("status"), "expired"), q.or(q.neq(q.field("paymentStatus"), "awaiting_payment"), q.gt(q.field("paymentExpiresAt"), Date.now())))).collect();
         if (existing.some(other => other.time && start < toMinutes(other.time) + 60 + bufferTime && end > toMinutes(other.time))) {
-          await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "paid_but_slot_taken", details: "Payment arrived after the appointment expired and its slot was taken.", amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
+          await recordPaymentIssue(ctx, { reference: args.reference, kind: "paid_but_slot_taken", details: "Payment arrived after the appointment expired and its slot was taken.", amountPesewas: args.amountPesewas, relatedId: appointment._id });
           return null;
         }
       }

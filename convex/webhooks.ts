@@ -1,6 +1,7 @@
 import { internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { recordPaymentIssue } from "./lib/paymentIssues";
 
 export const reconcilePaystackPayment = internalMutation({
   args: { reference: v.string(), amountPesewas: v.number(), currency: v.string(), paidAt: v.optional(v.string()) },
@@ -11,7 +12,7 @@ export const reconcilePaystackPayment = internalMutation({
     if (appointment) return await ctx.runMutation(internal.appointments.finalizeAppointmentPayment, { appointmentId: appointment._id, reference: args.reference, amountPesewas: args.amountPesewas, currency: args.currency });
     const order = await ctx.db.query("orders").withIndex("by_paystackReference", q => q.eq("paystackReference", args.reference)).first();
     if (order) return order._id;
-    await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "unmatched_payment", details: "Verified Paystack payment did not match a checkout session, appointment, or order.", amountPesewas: args.amountPesewas, resolved: false, createdAt: Date.now() });
+    await recordPaymentIssue(ctx, { reference: args.reference, kind: "unmatched_payment", details: "Verified Paystack payment did not match a checkout session, appointment, or order.", amountPesewas: args.amountPesewas });
     return null;
   },
 });

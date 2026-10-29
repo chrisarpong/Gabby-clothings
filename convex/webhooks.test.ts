@@ -33,6 +33,7 @@ describe("Paystack webhook reconciliation", () => {
     expect(response.status).toBe(200);
     const orders: any[] = await t.run(async (ctx: any) => ctx.db.query("orders").collect());
     expect(orders).toHaveLength(1);
+    await t.finishInProgressScheduledFunctions();
   });
 
   it("finalizes a checkout reference idempotently", async () => {
@@ -45,6 +46,7 @@ describe("Paystack webhook reconciliation", () => {
     const result = await t.run(async (ctx: any) => ({ orders: await ctx.db.query("orders").collect(), product: await ctx.db.get(productId) }));
     expect(result.orders).toHaveLength(1);
     expect(result.product.stock).toBe(2);
+    await t.finishInProgressScheduledFunctions();
   });
 
   it("confirms an appointment reference once", async () => {
@@ -55,6 +57,7 @@ describe("Paystack webhook reconciliation", () => {
     const appointment: any = await t.run(async (ctx: any) => ctx.db.get(appointmentId));
     expect(appointment.paymentStatus).toBe("paid");
     expect(appointment.status).toBe("confirmed");
+    await t.finishInProgressScheduledFunctions();
   });
 
   it("records an unmatched reference and does not create a session issue", async () => {
