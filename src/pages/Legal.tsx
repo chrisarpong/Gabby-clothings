@@ -1,7 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useQuery } from '@/hooks/useConvex';
+import { api } from '../../convex/_generated/api';
+import ReactMarkdown from 'react-markdown';
 
 export default function Legal() {
+  const legal = useQuery(api.content.get, { key: 'legal_page' });
+  const cmsText = typeof legal?.data === 'string' ? legal.data : (legal?.data as any)?.content;
   return (
     <main className="bg-surface relative w-full pt-40 pb-32 min-h-screen">
       <section className="px-5 md:px-20 max-w-[1536px] mx-auto flex flex-col">
@@ -21,6 +26,7 @@ export default function Legal() {
         </motion.h1>
 
         <div className="flex flex-col gap-12 max-w-3xl font-sans text-on-surface-variant">
+          {cmsText ? <ReactMarkdown>{cmsText}</ReactMarkdown> : <>
           <div>
             <h2 className="font-serif text-3xl text-primary mb-4">Privacy Policy</h2>
             <p className="leading-relaxed mb-4">
@@ -56,6 +62,7 @@ export default function Legal() {
               All content on this website, including but not limited to textile designs, garment designs, photography, text, and logos, is the exclusive property of Gabby Newluk and protected by international and Ghanaian intellectual property laws. Unauthorized reproduction is strictly prohibited.
             </p>
           </div>
+          </>}
         </div>
       </section>
     </main>

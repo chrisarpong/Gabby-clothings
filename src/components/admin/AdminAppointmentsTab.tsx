@@ -10,6 +10,7 @@ import { Calendar as CalendarIcon, List, Download, Printer } from 'lucide-react'
 import AppointmentDrawer from './AppointmentDrawer';
 import { getDeviceInfo } from '../../utils/deviceInfo';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { getFileUrl } from '../../utils/fileUrl';
 
 const locales = {
   'en-US': enUS,
@@ -275,7 +276,7 @@ export default function AdminAppointmentsTab() {
                           {apt.referenceImages.map((imgId: string, idx: number) => (
                             <a
                               key={idx}
-                              href={`${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${imgId}`}
+                              href={getFileUrl(imgId)}
                               target="_blank"
                               rel="noreferrer"
                               className="text-blue-600 hover:underline text-[10px] border border-blue-200 px-1.5 py-0.5"

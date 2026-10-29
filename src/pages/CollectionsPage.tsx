@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function CollectionsPage() {
   const catalogs = useQuery(api.catalogs.getAll, {}) || [];
@@ -12,7 +13,7 @@ export default function CollectionsPage() {
     desc: cat.description || '',
     slug: cat.slug,
     img: cat.coverImageId 
-      ? `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${cat.coverImageId}` 
+      ? getFileUrl(cat.coverImageId)
       : "/assets/18.jpeg"
   })) : [
     {

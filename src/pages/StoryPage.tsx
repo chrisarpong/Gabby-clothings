@@ -2,13 +2,14 @@ import { motion } from "framer-motion";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function StoryPage() {
   const contentBlock = useQuery(api.content.get, { key: "story_page" });
   const data = contentBlock?.data || {};
 
   const coverImageUrl = data.imageId 
-    ? `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${data.imageId}` 
+    ? getFileUrl(data.imageId)
     : "/assets/17.jpeg";
 
   const heading = data.heading || "Obsessed with the Architecture of the Human Form.";

@@ -6,6 +6,7 @@ import { Plus, X, Edit2, Archive, PackageOpen, FolderOpen, Image as ImageIcon, S
 import { toast } from 'sonner';
 import { getDeviceInfo } from '../../utils/deviceInfo';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { getFileUrl } from '../../utils/fileUrl';
 
 export default function InventoryTab() {
   const [activeSubTab, setActiveSubTab] = useState<'products' | 'catalogs'>('products');
@@ -153,7 +154,7 @@ export default function InventoryTab() {
       if (productImageFiles.length > 0) {
         const storageIds = await handleUploadFiles(productImageFiles);
         // For products, historically using URLs. You can map storageId to URL:
-        const urls = storageIds.map(id => `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${id}`);
+        const urls = storageIds.map(id => getFileUrl(id));
         imageUrls.push(...urls);
       }
 

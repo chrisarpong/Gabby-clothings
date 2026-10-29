@@ -5,6 +5,7 @@ import { api } from '../../convex/_generated/api';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { getFileUrl } from '../utils/fileUrl';
 
 export default function NewsArticlePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -60,7 +61,7 @@ export default function NewsArticlePage() {
           {article.coverImageId && (
             <div className="w-full aspect-video bg-surface-container overflow-hidden mb-12 border border-surface-variant">
               <img 
-                src={article.coverImageId} 
+                src={getFileUrl(article.coverImageId)} 
                 alt={article.title} 
                 className="w-full h-full object-cover"
               />

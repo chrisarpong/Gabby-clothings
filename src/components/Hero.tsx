@@ -2,6 +2,7 @@ import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function Hero() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export default function Hero() {
   const subHeading = data.subHeading || "";
   
   const images = (data.images && data.images.length > 0) 
-    ? data.images.map((id: string) => `${import.meta.env.VITE_CONVEX_URL?.replace('.cloud', '.site')}/getFile?storageId=${id}`)
+    ? data.images.map((id: string) => getFileUrl(id))
     : ["/assets/hero2.jpg"];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

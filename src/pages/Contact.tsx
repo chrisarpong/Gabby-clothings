@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMutation } from '@/hooks/useConvex';
+import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Mail, Phone, MapPin, Clock, ChevronDown, ChevronUp } from "lucide-react";
@@ -75,6 +75,10 @@ const faqs = [
 
 export default function Contact() {
   const submitMessage = useMutation(api.messages.submitMessage);
+  const storeInfo = useQuery(api.settings.getByKey, { key: 'storeInfo' });
+  const cmsFaqs = useQuery(api.content.get, { key: 'faq_items' });
+  const info: any = storeInfo?.value || {};
+  const contactFaqs = Array.isArray(cmsFaqs?.data) && cmsFaqs.data.length ? cmsFaqs.data : faqs;
   
   const [formData, setFormData] = useState({
     name: "",
@@ -154,8 +158,8 @@ export default function Contact() {
               <Mail className="w-5 h-5 text-brand-gold mt-1 shrink-0" />
               <div>
                 <h3 className="font-label text-[10px] tracking-[0.2em] uppercase text-brand-bone/50 mb-2">Email Inquiries</h3>
-                <a href="mailto:studio@gabbynewluk.com" className="text-base hover:text-brand-gold transition-colors">
-                  studio@gabbynewluk.com
+                <a href={`mailto:${info.email || 'studio@gabbynewluk.com'}`} className="text-base hover:text-brand-gold transition-colors">
+                  {info.email || 'studio@gabbynewluk.com'}
                 </a>
               </div>
             </div>
@@ -164,8 +168,8 @@ export default function Contact() {
               <Phone className="w-5 h-5 text-brand-gold mt-1 shrink-0" />
               <div>
                 <h3 className="font-label text-[10px] tracking-[0.2em] uppercase text-brand-bone/50 mb-2">Phone / WhatsApp</h3>
-                <a href="tel:+233240000000" className="text-base hover:text-brand-gold transition-colors">
-                  +233 (0) 24 000 0000
+                <a href={`tel:${info.phone || '+233240000000'}`} className="text-base hover:text-brand-gold transition-colors">
+                  {info.phone || '+233 (0) 24 000 0000'}
                 </a>
               </div>
             </div>
@@ -175,9 +179,7 @@ export default function Contact() {
               <div>
                 <h3 className="font-label text-[10px] tracking-[0.2em] uppercase text-brand-bone/50 mb-2">Studio Address</h3>
                 <address className="not-italic text-base text-pretty leading-relaxed">
-                  14 Independence Avenue,<br />
-                  Osu, Accra<br />
-                  Ghana
+                  {(info.address || '14 Independence Avenue, Osu, Accra, Ghana').split(',').map((part: string, i: number) => <React.Fragment key={i}>{part.trim()}{i < (info.address || '').split(',').length - 1 && <br />}</React.Fragment>)}
                 </address>
               </div>
             </div>
@@ -250,7 +252,7 @@ export default function Contact() {
         </div>
         
         <div className="flex flex-col border-t border-surface-variant">
-          {faqs.map((faq, index) => (
+              {contactFaqs.map((faq: any, index: number) => (
             <div key={index} className="border-b border-surface-variant">
               <button 
                 onClick={() => setOpenFaq(openFaq === index ? null : index)}
