@@ -503,16 +503,20 @@ export const getMySales = query({
 
 export const recordDeposit = mutation({
   args: {
-      staffToken: v.string(),
+    staffToken: v.string(),
     orderId: v.id("orders"),
     amountPaid: v.number(),
-    paystackReference: v.string(),
+    paymentMethod: v.union(v.literal("cash"), v.literal("momo"), v.literal("transfer")),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
-
+    if (order.status === "cancelled") throw new Error("Cancelled orders cannot receive payments.");
+    if (!Number.isFinite(args.amountPaid) || args.amountPaid <= 0) throw new Error("Payment amount must be positive.");
+    const currentDue = Math.max(0, order.amountDue ?? ((order.totalAmount || 0) - (order.amountPaid || 0)));
+    if (args.amountPaid > currentDue) throw new Error("Payment cannot exceed the amount due.");
     const newAmountPaid = (order.amountPaid || 0) + args.amountPaid;
     const amountDue = (order.totalAmount || 0) - newAmountPaid;
     
@@ -524,18 +528,18 @@ export const recordDeposit = mutation({
       amountPaid: newAmountPaid,
       amountDue: Math.max(0, amountDue),
       paymentStatus: paymentStatus,
-      paystackReference: args.paystackReference,
-      isDeposit: true, // Mark that a deposit was made
+      isDeposit: amountDue > 0,
     });
 
     await ctx.db.insert("payments", {
       orderId: args.orderId,
       amount: args.amountPaid,
-      paymentMethod: "paystack",
+      paymentMethod: args.paymentMethod,
       recordedBy: staff._id,
-      notes: `Deposit payment via Paystack (${args.paystackReference})`,
+      notes: args.notes || "Manual order payment",
       date: new Date().toISOString(),
     });
+    await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Recorded manual order payment", details: JSON.stringify({ orderId: args.orderId, amount: args.amountPaid, method: args.paymentMethod }), category: "financials", timestamp: Date.now() });
   }
 });
 

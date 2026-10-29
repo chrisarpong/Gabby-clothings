@@ -8,13 +8,17 @@ export const recordCashPayment = mutation({
       staffToken: v.string(),
     orderId: v.id("orders"),
     amount: v.number(),
-    paymentMethod: v.string(), // "cash", "momo_manual", "bank_transfer"
+    paymentMethod: v.union(v.literal("cash"), v.literal("momo"), v.literal("transfer")),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "financials" });
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
+    if (order.status === "cancelled") throw new Error("Cancelled orders cannot receive payments.");
+    if (!Number.isFinite(args.amount) || args.amount <= 0) throw new Error("Payment amount must be positive.");
+    const currentDue = Math.max(0, order.amountDue ?? ((order.totalAmount || 0) - (order.amountPaid || 0)));
+    if (args.amount > currentDue) throw new Error("Payment cannot exceed the amount due.");
 
     // Record the payment
     const paymentId = await ctx.db.insert("payments", {
@@ -39,6 +43,8 @@ export const recordCashPayment = mutation({
       amountDue: amountDue,
       paymentStatus: paymentStatus,
     });
+
+    await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Recorded manual order payment", details: JSON.stringify({ orderId: args.orderId, amount: args.amount, method: args.paymentMethod }), category: "financials", timestamp: Date.now() });
 
     return paymentId;
   },

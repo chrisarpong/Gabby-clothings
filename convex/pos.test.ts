@@ -56,4 +56,16 @@ describe("POS money core", () => {
     await expect(t.mutation(api.orders.createPOSOrder, { ...args, idempotencyKey: "over", payInFull: false, amountPaid: 101 })).rejects.toThrow();
     await expect(t.mutation(api.orders.createPOSOrder, { ...args, idempotencyKey: "fake", userId: "missing" })).rejects.toThrow();
   });
+
+  it("manual payments cap at due, transition partial to paid, and reject cancelled orders", async () => {
+    const t = convexTest(schema); const token = await staff(t, "ceo", "payments");
+    const orderId: any = await t.run((ctx: any) => ctx.db.insert("orders", { userId: "guest", items: [], totalAmount: 100, amountPaid: 0, amountDue: 100, paymentStatus: "pending", status: "processing" }));
+    await expect(t.mutation(api.orders.recordDeposit, { staffToken: token, orderId, amountPaid: 101, paymentMethod: "cash" })).rejects.toThrow();
+    await expect(t.mutation(api.orders.recordDeposit, { staffToken: token, orderId, amountPaid: 0, paymentMethod: "cash" })).rejects.toThrow();
+    await t.mutation(api.orders.recordDeposit, { staffToken: token, orderId, amountPaid: 40, paymentMethod: "transfer" });
+    await t.mutation(api.payments.recordCashPayment, { staffToken: token, orderId, amount: 60, paymentMethod: "cash" });
+    expect((await t.run((ctx: any) => ctx.db.get(orderId)) as any).paymentStatus).toBe("paid");
+    await t.run((ctx: any) => ctx.db.patch(orderId, { status: "cancelled" }));
+    await expect(t.mutation(api.payments.recordCashPayment, { staffToken: token, orderId, amount: 1, paymentMethod: "cash" })).rejects.toThrow();
+  });
 });
