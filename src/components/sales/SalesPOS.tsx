@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
@@ -13,21 +13,25 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   
   // POS State
   const [cart, setCart] = useState<{product: any, quantity: number, price: number, variantSku?: string, variantName?: string}[]>(() => {
-    const saved = localStorage.getItem('pos_cart');
+    const saved = sessionStorage.getItem(`pos_cart_${profile?._id || 'staff'}`);
     return saved ? JSON.parse(saved) : [];
   });
-  const [customerName, setCustomerName] = useState(() => localStorage.getItem('pos_customerName') || '');
-  const [customerEmail, setCustomerEmail] = useState(() => localStorage.getItem('pos_customerEmail') || '');
-  const [customerPhone, setCustomerPhone] = useState(() => localStorage.getItem('pos_customerPhone') || '');
+  const [customerName, setCustomerName] = useState(() => sessionStorage.getItem(`pos_customerName_${profile?._id || 'staff'}`) || '');
+  const [customerEmail, setCustomerEmail] = useState(() => sessionStorage.getItem(`pos_customerEmail_${profile?._id || 'staff'}`) || '');
+  const [customerPhone, setCustomerPhone] = useState(() => sessionStorage.getItem(`pos_customerPhone_${profile?._id || 'staff'}`) || '');
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [payInFull, setPayInFull] = useState(true);
+  const [depositAmount, setDepositAmount] = useState('');
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
+  const submitGuardRef = useRef(false);
 
   // Persist state
   React.useEffect(() => {
-    localStorage.setItem('pos_cart', JSON.stringify(cart));
-    localStorage.setItem('pos_customerName', customerName);
-    localStorage.setItem('pos_customerEmail', customerEmail);
-    localStorage.setItem('pos_customerPhone', customerPhone);
-  }, [cart, customerName, customerEmail, customerPhone]);
+    sessionStorage.setItem(`pos_cart_${profile?._id || 'staff'}`, JSON.stringify(cart));
+    sessionStorage.setItem(`pos_customerName_${profile?._id || 'staff'}`, customerName);
+    sessionStorage.setItem(`pos_customerEmail_${profile?._id || 'staff'}`, customerEmail);
+    sessionStorage.setItem(`pos_customerPhone_${profile?._id || 'staff'}`, customerPhone);
+  }, [cart, customerName, customerEmail, customerPhone, profile?._id]);
   const [amountTendered, setAmountTendered] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,6 +91,8 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleCheckout = async () => {
+    if (submitGuardRef.current) return;
+    submitGuardRef.current = true;
     if (cart.length === 0) return toast.error("Cart is empty");
     if (!customerName || !customerEmail) return toast.error("Customer name and email required");
 
@@ -101,12 +107,13 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
         },
         items: cart.map(c => ({
           productId: c.product._id,
-          variantSku: c.variantSku,
+          variantSku: c.variantSku || undefined,
           quantity: c.quantity,
         })),
-        payInFull: true,
+        payInFull,
+        amountPaid: payInFull ? undefined : Number(depositAmount),
         paymentMethod: paymentMethod === 'cash' || paymentMethod === 'momo' || paymentMethod === 'transfer' ? paymentMethod : 'cash',
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: idempotencyKeyRef.current,
       });
 
       toast.success("Order recorded successfully!");
@@ -115,15 +122,17 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
       setCustomerEmail('');
       setCustomerPhone('');
       setAmountTendered('');
-      localStorage.removeItem('pos_cart');
-      localStorage.removeItem('pos_customerName');
-      localStorage.removeItem('pos_customerEmail');
-      localStorage.removeItem('pos_customerPhone');
+      const key = profile?._id || 'staff';
+      sessionStorage.removeItem(`pos_cart_${key}`);
+      sessionStorage.removeItem(`pos_customerName_${key}`);
+      sessionStorage.removeItem(`pos_customerEmail_${key}`);
+      sessionStorage.removeItem(`pos_customerPhone_${key}`);
       setActiveTab('history');
     } catch (err: any) {
       toast.error(err.message || "Failed to record order");
     } finally {
       setIsProcessing(false);
+      submitGuardRef.current = false;
     }
   };
 
@@ -300,9 +309,16 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Payment Method</label>
                 <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors">
                   <option value="cash">Cash</option>
-                  <option value="momo">MoMo / Transfer (Manual)</option>
+                  <option value="momo">MoMo</option>
+                  <option value="transfer">Transfer</option>
                 </select>
               </div>
+
+              <div className="flex gap-3 text-xs">
+                <button type="button" onClick={() => setPayInFull(true)} className={payInFull ? 'font-bold text-primary' : 'text-on-surface-variant'}>Pay in full</button>
+                <button type="button" onClick={() => setPayInFull(false)} className={!payInFull ? 'font-bold text-primary' : 'text-on-surface-variant'}>Deposit</button>
+              </div>
+              {!payInFull && <input type="number" min="0.01" max={cartTotal - 0.01} value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Deposit amount" className="w-full bg-surface-container-lowest border border-outline-variant/50 text-sm p-3" />}
 
               {paymentMethod === 'cash' && (
                 <div>
@@ -331,11 +347,12 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
                     </span>
                   </div>
                 )}
+                {!payInFull && <div className="flex justify-between text-xs text-on-surface-variant"><span>Balance due</span><span>₵{Math.max(0, cartTotal - Number(depositAmount || 0)).toFixed(2)}</span></div>}
               </div>
               
               <button 
                 onClick={handleCheckout}
-                disabled={isProcessing || cart.length === 0}
+                disabled={isProcessing || cart.length === 0 || (payInFull && paymentMethod === 'cash' && amountTendered !== '' && Number(amountTendered) < cartTotal) || (!payInFull && !(Number(depositAmount) > 0 && Number(depositAmount) < cartTotal))}
                 className="w-full py-4 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors disabled:opacity-50"
               >
                 {isProcessing ? 'Processing...' : 'Complete Sale'}
