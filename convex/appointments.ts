@@ -483,18 +483,49 @@ export const assignTailor = mutation({
 export const reschedule = mutation({
   args: {
     appointmentId: v.id("appointments"),
+    staffToken: v.optional(v.string()),
     date: v.string(),
     time: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (args.staffToken) {
+      await requireStaff(ctx, args.staffToken, { permission: "appointments" });
+    } else if (!identity) {
+      throw new Error("Unauthenticated");
+    }
     const apt = await ctx.db.get(args.appointmentId);
     if (!apt) throw new Error("Appointment not found");
+    if (!args.staffToken && apt.userId !== identity?.subject) throw new Error("Unauthorized");
+    if (["cancelled", "expired", "completed"].includes(apt.status)) throw new Error("Appointment cannot be rescheduled in its current state");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(args.date) || (args.time !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(args.time))) throw new Error("Invalid appointment date or time.");
+    const target = new Date(`${args.date}T${args.time || "00:00"}:00Z`);
+    const now = new Date();
+    const max = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+    if (Number.isNaN(target.getTime()) || target < now || target > max) throw new Error("Appointment must be within the next 180 days.");
+    if (args.time) {
+      const availabilitySetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "availability")).first();
+      const bufferTime = availabilitySetting?.value?.bufferTime || 30;
+      const toMinutes = (value: string) => { const [h, m] = value.split(":").map(Number); return h * 60 + m; };
+      const start = toMinutes(args.time);
+      const end = start + 60 + bufferTime;
+      const existing = await ctx.db.query("appointments").withIndex("by_date", q => q.eq("date", args.date)).filter(q => q.and(q.neq(q.field("_id"), args.appointmentId), q.neq(q.field("status"), "cancelled"), q.neq(q.field("status"), "expired"), q.or(q.neq(q.field("paymentStatus"), "awaiting_payment"), q.gt(q.field("paymentExpiresAt"), Date.now())))).collect();
+      for (const other of existing) {
+        if (!other.time) continue;
+        const otherStart = toMinutes(other.time);
+        if (start < otherStart + 60 + bufferTime && end > otherStart) throw new Error("This time slot is no longer available.");
+      }
+    }
+    const oldReminders = await ctx.db.query("reminders").withIndex("by_status", q => q.eq("status", "pending")).collect();
+    for (const reminder of oldReminders.filter(row => row.appointmentId === apt._id)) await ctx.db.delete(reminder._id);
     await ctx.db.patch(args.appointmentId, {
       date: args.date,
       time: args.time,
     });
+    if (args.time) {
+      const reminderTime = new Date(`${args.date}T${args.time}:00Z`).getTime() - 24 * 60 * 60 * 1000;
+      if (reminderTime > Date.now()) await ctx.db.insert("reminders", { appointmentId: apt._id, scheduledFor: new Date(reminderTime).toISOString(), status: "pending", type: "24h_reminder" });
+    }
 
     if (apt.googleEventId) {
       await ctx.scheduler.runAfter(0, internal.googleCalendar.updateEventTime, {
