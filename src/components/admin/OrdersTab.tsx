@@ -33,7 +33,7 @@ export default function OrdersTab() {
   const canRecordPayments = profile ? hasPermission(profile.role as StaffRole, 'financials') : false;
   const orders = useStaffQuery(api.orders.getAll) || [];
   const updateStatus = useStaffMutation(api.orders.updateStatus);
-  const recordCashPayment = useStaffMutation(api.payments.recordCashPayment);
+  const recordManualPayment = useStaffMutation(api.orders.recordManualPayment);
   const logAction = useStaffMutation(api.adminLogs.logAction);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +63,7 @@ export default function OrdersTab() {
     if (!selectedOrder || !paymentAmount) return;
     setIsRecordingPayment(true);
     try {
-      await recordCashPayment({
+      await recordManualPayment({
         orderId: selectedOrder._id,
         amount: Number(paymentAmount),
         paymentMethod,

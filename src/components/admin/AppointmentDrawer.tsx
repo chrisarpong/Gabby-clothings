@@ -14,7 +14,6 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   const updateStatus = useStaffMutation(api.appointments.updateStatus);
   const updateDetails = useStaffMutation(api.appointments.updateDetails);
   const recordAptDeposit = useStaffMutation(api.appointments.recordDeposit);
-  const recordOrderDeposit = useStaffMutation(api.orders.recordDeposit);
   const createClientFromAppointment = useStaffMutation(api.users.createClientFromAppointment);
   const linkToUser = useStaffMutation(api.appointments.linkToUser);
   const createAdminOrder = useStaffMutation(api.orders.createPOSOrder);

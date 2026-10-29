@@ -60,13 +60,24 @@ describe("POS money core", () => {
   it("manual payments cap at due, transition partial to paid, and reject cancelled orders", async () => {
     const t = convexTest(schema); const token = await staff(t, "ceo", "payments");
     const orderId: any = await t.run((ctx: any) => ctx.db.insert("orders", { userId: "guest", items: [], totalAmount: 100, amountPaid: 0, amountDue: 100, paymentStatus: "pending", status: "processing" }));
-    await expect(t.mutation(api.orders.recordDeposit, { staffToken: token, orderId, amountPaid: 101, paymentMethod: "cash" })).rejects.toThrow();
-    await expect(t.mutation(api.orders.recordDeposit, { staffToken: token, orderId, amountPaid: 0, paymentMethod: "cash" })).rejects.toThrow();
-    await t.mutation(api.orders.recordDeposit, { staffToken: token, orderId, amountPaid: 40, paymentMethod: "transfer" });
-    await t.mutation(api.payments.recordCashPayment, { staffToken: token, orderId, amount: 60, paymentMethod: "cash" });
+    await expect(t.mutation(api.orders.recordManualPayment, { staffToken: token, orderId, amount: 101, paymentMethod: "cash" })).rejects.toThrow();
+    await expect(t.mutation(api.orders.recordManualPayment, { staffToken: token, orderId, amount: 0, paymentMethod: "cash" })).rejects.toThrow();
+    await t.mutation(api.orders.recordManualPayment, { staffToken: token, orderId, amount: 40, paymentMethod: "transfer" });
+    await t.mutation(api.orders.recordManualPayment, { staffToken: token, orderId, amount: 60, paymentMethod: "cash" });
     expect((await t.run((ctx: any) => ctx.db.get(orderId)) as any).paymentStatus).toBe("paid");
     await t.run((ctx: any) => ctx.db.patch(orderId, { status: "cancelled" }));
-    await expect(t.mutation(api.payments.recordCashPayment, { staffToken: token, orderId, amount: 1, paymentMethod: "cash" })).rejects.toThrow();
+    await expect(t.mutation(api.orders.recordManualPayment, { staffToken: token, orderId, amount: 1, paymentMethod: "cash" })).rejects.toThrow();
+  });
+
+  it("scopes manual payments to sales-owned orders and denies designers", async () => {
+    const t = convexTest(schema); const sales = await staff(t, "sales", "manual-sales"); const other = await staff(t, "sales", "manual-other"); const designer = await staff(t, "designer", "manual-designer");
+    const own: any = await t.run((ctx: any) => ctx.db.insert("orders", { createdByStaffId: undefined, items: [], totalAmount: 20, amountDue: 20, amountPaid: 0, status: "processing" }));
+    const staffRows: any[] = await t.run((ctx: any) => ctx.db.query("staff").collect());
+    const salesRow = staffRows.find(row => row.name === "manual-sales");
+    await t.run((ctx: any) => ctx.db.patch(own, { createdByStaffId: salesRow._id }));
+    await t.mutation(api.orders.recordManualPayment, { staffToken: sales, orderId: own, amount: 5, paymentMethod: "cash" });
+    await expect(t.mutation(api.orders.recordManualPayment, { staffToken: other, orderId: own, amount: 5, paymentMethod: "cash" })).rejects.toThrow();
+    await expect(t.mutation(api.orders.recordManualPayment, { staffToken: designer, orderId: own, amount: 5, paymentMethod: "cash" })).rejects.toThrow();
   });
 
   it("accepts on_hold and rejects invented statuses without touching stock", async () => {
