@@ -26,7 +26,6 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   const [fabricSelection, setFabricSelection] = useState('');
   const [styleNotes, setStyleNotes] = useState('');
   const [depositAmount, setDepositAmount] = useState<number | ''>('');
-  const [paymentReference, setPaymentReference] = useState('');
   const [depositMethod, setDepositMethod] = useState<'cash' | 'momo' | 'transfer'>('cash');
   const [measurementsCaptured, setMeasurementsCaptured] = useState(false);
   const [meetLink, setMeetLink] = useState('');
@@ -37,14 +36,17 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   // Default POS order values
   const [orderProductId, setOrderProductId] = useState('');
   const [orderPrice, setOrderPrice] = useState<number | ''>('');
+  const [orderAmountPaid, setOrderAmountPaid] = useState<number | ''>('');
+  const [orderPaymentMethod, setOrderPaymentMethod] = useState<'cash' | 'momo' | 'transfer'>('cash');
 
   useEffect(() => {
     if (appointment) {
       setAdminNotes(appointment.adminNotes || '');
       setFabricSelection(appointment.fabricAndStyling?.fabric || '');
       setStyleNotes(appointment.fabricAndStyling?.styleNotes || '');
-      setDepositAmount(appointment.depositAmount || appointment.amountPaid || '');
-      setPaymentReference(appointment.paymentReference || appointment.paystackReference || '');
+      const expected = Number(appointment.expectedAmountPesewas || 0) / 100;
+      const paid = Number(appointment.amountPaid || 0);
+      setDepositAmount(expected > 0 ? Math.max(0, expected - paid) : '');
       setMeasurementsCaptured(appointment.measurementsCaptured || false);
       setMeetLink(appointment.meetLink || '');
     }
@@ -52,7 +54,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
 
   useEffect(() => {
     if (appointment) idempotencyKeyRef.current = crypto.randomUUID();
-  }, [appointment, orderProductId, orderPrice, depositAmount]);
+  }, [appointment, orderProductId, orderPrice, orderAmountPaid, orderPaymentMethod, depositAmount]);
 
   if (!appointment) return null;
 
@@ -97,7 +99,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
       setIsSubmitting(true);
       const product = products?.find(p => p._id === orderProductId);
       const price = Number(orderPrice);
-      const paid = depositAmount ? Number(depositAmount) : 0;
+      const paid = orderAmountPaid === '' ? 0 : Number(orderAmountPaid);
       
       await createAdminOrder({
         customerDetails: {
@@ -114,7 +116,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
         }],
         payInFull: paid >= price,
         amountPaid: paid,
-        paymentMethod: 'cash',
+        paymentMethod: orderPaymentMethod,
         idempotencyKey: idempotencyKeyRef.current,
       });
       
@@ -295,7 +297,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Deposit Amount (GH₵)</label>
+                <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Remaining deposit amount (GH₵)</label>
                 <input 
                   type="number" 
                   value={depositAmount} 
@@ -304,18 +306,14 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Payment Reference</label>
-                <input 
-                  type="text" 
-                  value={paymentReference} 
-                  readOnly
-                  className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
-                />
+                {(appointment.paymentReference || appointment.paystackReference) && (
+                  <p className="text-xs text-on-surface-variant mt-5">Payment reference: {appointment.paymentReference || appointment.paystackReference}</p>
+                )}
               </div>
             </div>
             
             <div className="mt-4 flex items-center justify-between">
-              {(appointment.paymentStatus === 'paid' || paymentReference) ? (
+              {appointment.paymentStatus === 'paid' ? (
                 <div className="text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-2 inline-block">
                   ✓ Payment Verified
                 </div>
@@ -425,6 +423,18 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                          <option key={p._id} value={p._id}>{p.name}</option>
                        ))}
                      </select>
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Amount paid now (GH₵)</label>
+                       <input type="number" min="0" value={orderAmountPaid} onChange={(e) => setOrderAmountPaid(e.target.value ? Number(e.target.value) : '')} className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary" placeholder="Leave empty for unpaid" />
+                     </div>
+                     <div>
+                       <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Payment method</label>
+                       <select value={orderPaymentMethod} onChange={(e) => setOrderPaymentMethod(e.target.value as any)} className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2">
+                         <option value="cash">Cash</option><option value="momo">MoMo</option><option value="transfer">Transfer</option>
+                       </select>
+                     </div>
                    </div>
                    <div>
                      <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Agreed Final Price (GH₵)</label>
