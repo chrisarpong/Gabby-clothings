@@ -1,9 +1,10 @@
 
 import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { requireStaff } from "./staffAuth";
+import { nextOrderNumber } from "./lib/orderNumber";
 
 export const shippingAddressValidator = v.object({
   street: v.string(),
@@ -239,22 +240,7 @@ export const create = internalMutation({
 
     const calculatedTotalAmount = calculatedSubtotal - discountAmount + args.shippingFee;
 
-    // Atomic sequential order ID generation
-    let orderCounter = 1;
-    const counterSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "orderCounter")).first();
-    if (counterSetting) {
-      const parsed = typeof counterSetting.value === "number"
-        ? counterSetting.value
-        : parseInt(String(counterSetting.value), 10);
-      if (isNaN(parsed) || !Number.isFinite(parsed) || parsed < 0) {
-        throw new ConvexError("Invalid order counter stored in database");
-      }
-      orderCounter = parsed + 1;
-      await ctx.db.patch(counterSetting._id, { value: orderCounter });
-    } else {
-      await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
-    }
-    const orderId = `GB-${String(orderCounter).padStart(3, '0')}`;
+    const orderId = await nextOrderNumber(ctx);
 
     // Insert using exact schema field names
     const newOrderId = await ctx.db.insert("orders", {
@@ -443,22 +429,7 @@ export const createPOSOrder = mutation({
 
     const totalAmount = subtotal + args.shippingFee;
 
-    // Atomic sequential order ID generation
-    let orderCounter = 1;
-    const counterSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "orderCounter")).first();
-    if (counterSetting) {
-      const parsed = typeof counterSetting.value === "number"
-        ? counterSetting.value
-        : parseInt(String(counterSetting.value), 10);
-      if (isNaN(parsed) || !Number.isFinite(parsed) || parsed < 0) {
-        throw new ConvexError("Invalid order counter stored in database");
-      }
-      orderCounter = parsed + 1;
-      await ctx.db.patch(counterSetting._id, { value: orderCounter });
-    } else {
-      await ctx.db.insert("settings", { key: "orderCounter", value: orderCounter });
-    }
-    const orderIdValue = `GB-${String(orderCounter).padStart(3, '0')}`;
+    const orderIdValue = await nextOrderNumber(ctx);
 
     let paymentStatus = "pending";
     if (args.amountPaid > 0) {
