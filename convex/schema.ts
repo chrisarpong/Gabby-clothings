@@ -231,6 +231,7 @@ export default defineSchema({
     expectedAmountPesewas: v.optional(v.number()),
     paymentExpiresAt: v.optional(v.number()),
     cancelReason: v.optional(v.string()),
+    confirmedAt: v.optional(v.number()),
     paystackReference: v.optional(v.string()),
     amountPaid: v.optional(v.number()),
     meetLink: v.optional(v.string()),

@@ -45,6 +45,7 @@ export default function CustomTailoring() {
   const [bodyPhotoPreview, setBodyPhotoPreview] = useState<string | null>(null);
   const [designInspoFile, setDesignInspoFile] = useState<File | null>(null);
   const [bodyPhotoFile, setBodyPhotoFile] = useState<File | null>(null);
+  const [createdAppointment, setCreatedAppointment] = useState<{ appointmentId: any; paymentReference?: string; amountPesewas: number; email: string } | null>(null);
 
   const handleInspoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,22 +115,8 @@ export default function CustomTailoring() {
 
   const handlePaystackSuccessAction = async (reference: any) => {
     try {
-      toast.loading("Uploading reference images...");
-      const inspoStorageId = await uploadFile(designInspoFile);
-      const bodyStorageId = await uploadFile(bodyPhotoFile);
-      const storageIds = [inspoStorageId, bodyStorageId].filter(Boolean) as string[];
-
-      const created = await bookAppointment({
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        date: formData.fittingDate || new Date().toISOString(),
-        garmentType: formData.garmentType,
-        time: formData.time,
-        notes: formData.details,
-        referenceImages: storageIds.length > 0 ? (storageIds as any) : undefined,
-      });
-      await verifyPayment({ appointmentId: created.appointmentId, reference: reference.reference });
+      if (!createdAppointment) return;
+      await verifyPayment({ appointmentId: createdAppointment.appointmentId, reference: reference.reference });
 
       toast.dismiss();
       toast.success("Appointment request received!", {
@@ -149,6 +136,7 @@ export default function CustomTailoring() {
       setDesignInspoPreview(null);
       setBodyPhotoFile(null);
       setBodyPhotoPreview(null);
+      setCreatedAppointment(null);
     } catch (error) {
        toast.dismiss();
        toast.error("Failed to book appointment", { description: String(error) });
@@ -160,8 +148,9 @@ export default function CustomTailoring() {
   };
 
   const paystackProps = {
-    email: formData.email,
-    amount: Math.round(bookingDepositAmount * 100),
+    email: createdAppointment?.email || formData.email,
+    amount: createdAppointment?.amountPesewas || 0,
+    reference: createdAppointment?.paymentReference,
     metadata: {
       name: formData.fullName,
       custom_fields: []
@@ -180,14 +169,13 @@ export default function CustomTailoring() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (bookingDepositAmount > 0) return; // Prevent double-booking: let Paystack handle it
     try {
       toast.loading("Uploading reference images...");
       const inspoStorageId = await uploadFile(designInspoFile);
       const bodyStorageId = await uploadFile(bodyPhotoFile);
       const storageIds = [inspoStorageId, bodyStorageId].filter(Boolean) as string[];
 
-      await bookAppointment({
+      const created = await bookAppointment({
         name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
@@ -197,6 +185,12 @@ export default function CustomTailoring() {
         notes: formData.details,
         referenceImages: storageIds.length > 0 ? (storageIds as any) : undefined,
       });
+
+      if (bookingDepositAmount > 0) {
+        setCreatedAppointment(created);
+        toast.dismiss();
+        return;
+      }
 
       toast.dismiss();
       toast.success("Appointment request received!", {
@@ -548,15 +542,14 @@ export default function CustomTailoring() {
                  >
                    FILL ALL REQUIRED FIELDS & UPLOAD PHOTOS
                  </button>
-              ) : bookingDepositAmount > 0 ? (
+              ) : bookingDepositAmount > 0 && !createdAppointment ? (
                 <div className="w-full sm:w-auto self-center min-w-[250px]">
-                  <PaystackButton 
-                    {...paystackProps} 
-                    // @ts-ignore
-                    type="button"
+                  <button type="submit"
                     className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full"
-                  />
+                  >REQUEST A FITTING & PAY DEPOSIT</button>
                 </div>
+              ) : bookingDepositAmount > 0 && createdAppointment ? (
+                <div className="w-full sm:w-auto self-center min-w-[250px]"><PaystackButton {...paystackProps} className="bg-primary text-on-primary font-label text-[11px] tracking-[0.2em] uppercase py-5 px-12 hover:bg-surface-tint transition-colors w-full" /></div>
               ) : (
                 <button
                   type="submit"

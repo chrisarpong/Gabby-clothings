@@ -116,36 +116,24 @@ export const book = mutation({
       referenceImages: args.referenceImages,
     });
 
-    // Create 24h Reminder
-    if (args.time) {
-      const appointmentTime = new Date(`${args.date}T${args.time}`);
-      // Subtract 24 hours
-      const reminderTime = new Date(appointmentTime.getTime() - 24 * 60 * 60 * 1000);
-      
-      // Only schedule if it's in the future
-      if (reminderTime > new Date()) {
-        await ctx.db.insert("reminders", {
-          appointmentId: appointmentId,
-          scheduledFor: reminderTime.toISOString(),
-          status: "pending",
-          type: "24h_reminder",
-        });
-      }
+    if (expectedAmountPesewas === 0) await ctx.runMutation(internal.appointments.confirmAppointment, { appointmentId });
+    return { appointmentId, paymentReference, amountPesewas: expectedAmountPesewas, email: args.email };
+  },
+});
+
+export const confirmAppointment = internalMutation({
+  args: { appointmentId: v.id("appointments") },
+  handler: async (ctx, args) => {
+    const appointment = await ctx.db.get(args.appointmentId);
+    if (!appointment || appointment.confirmedAt) return appointment?._id;
+    await ctx.db.patch(args.appointmentId, { status: "confirmed", confirmedAt: Date.now() });
+    if (appointment.time) {
+      const reminderTime = new Date(`${appointment.date}T${appointment.time}:00Z`).getTime() - 24 * 60 * 60 * 1000;
+      if (reminderTime > Date.now()) await ctx.db.insert("reminders", { appointmentId: appointment._id, scheduledFor: new Date(reminderTime).toISOString(), status: "pending", type: "24h_reminder" });
     }
-
-    // Schedule Google Calendar event creation
-    await ctx.scheduler.runAfter(0, internal.googleCalendar.createEvent, {
-      appointmentId,
-      name: args.name,
-      email: args.email,
-      phone: args.phone,
-      date: args.date,
-      time: args.time,
-      garmentType: args.garmentType,
-      notes: args.notes,
-    });
-
-    return { appointmentId, paymentReference };
+    await ctx.scheduler.runAfter(0, internal.googleCalendar.createEvent, { appointmentId: appointment._id, name: appointment.name, email: appointment.email, phone: appointment.phone, date: appointment.date, time: appointment.time, garmentType: appointment.garmentType, notes: appointment.notes });
+    await ctx.scheduler.runAfter(0, internal.email.sendAppointmentUpdate, { email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, status: "confirmed" });
+    return appointment._id;
   },
 });
 
@@ -179,9 +167,8 @@ export const finalizeAppointmentPayment = internalMutation({
       }
       await ctx.db.patch(appointment._id, { status: "pending", paymentStatus: "awaiting_payment" });
     }
-    await ctx.db.patch(appointment._id, { paymentStatus: "paid", status: "confirmed", paystackReference: args.reference, amountPaid: args.amountPesewas / 100 });
-    if (appointment.time) await ctx.scheduler.runAfter(0, internal.email.sendAppointmentReminder, { appointmentId: appointment._id, email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, garmentType: appointment.garmentType });
-    await ctx.scheduler.runAfter(0, internal.email.sendAppointmentUpdate, { email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, status: "confirmed" });
+    await ctx.db.patch(appointment._id, { paymentStatus: "paid", paystackReference: args.reference, amountPaid: args.amountPesewas / 100 });
+    await ctx.runMutation(internal.appointments.confirmAppointment, { appointmentId: appointment._id });
     return appointment._id;
   },
 });
