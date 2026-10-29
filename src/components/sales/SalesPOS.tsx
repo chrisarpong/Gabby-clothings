@@ -101,10 +101,8 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
         },
         items: cart.map(c => ({
           productId: c.product._id,
-          productName: c.product.name,
           variantSku: c.variantSku,
           quantity: c.quantity,
-          price: c.price,
         })),
         shippingFee: 0,
         amountPaid: cartTotal,

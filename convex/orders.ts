@@ -1,10 +1,13 @@
 
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { requireStaff } from "./staffAuth";
 import { nextOrderNumber } from "./lib/orderNumber";
+import { checkAvailability, apply } from "./lib/stock";
+import { lineUnitPrice } from "./lib/pricing";
+import { verifyPaystackTransaction } from "./lib/paystack";
 
 export const shippingAddressValidator = v.object({
   street: v.string(),
@@ -389,11 +392,9 @@ export const createPOSOrder = mutation({
       phone: v.optional(v.string()),
     }),
     items: v.array(v.object({
-      productId: v.optional(v.id("products")),
+      productId: v.id("products"),
       variantSku: v.optional(v.string()),
       quantity: v.number(),
-      productName: v.string(),
-      price: v.number(), // The overridden or base price
       measurements: v.optional(v.any()), // custom-fit measurements taken in shop
     })),
     shippingFee: v.number(),
@@ -405,36 +406,26 @@ export const createPOSOrder = mutation({
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: ["sales_portal", "orders"] });
-    // If it's a paystack MoMo/Card payment, verify it first
-    if (args.paymentMethod === 'paystack' && args.paystackReference) {
-      // Duplicate order prevention
-      const existingOrder = await ctx.db
-        .query("orders")
-        .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference!))
-        .first();
-      if (existingOrder) {
-        return existingOrder._id;
-      }
-
-      const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
-      if (!paystackSecret) throw new Error("Payment verification failed: Server configuration error.");
-
-      const resp = await fetch(`https://api.paystack.co/transaction/verify/${args.paystackReference}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${paystackSecret}` },
-      });
-      const data = await resp.json();
-      if (!data.status || data.data?.status !== "success") {
-        throw new Error(`Payment verification failed: ${data.message || "Transaction not successful"}`);
-      }
-    }
-
+    if (args.paymentMethod === "paystack") throw new Error("Use the verified POS Paystack action for card or mobile-money payments.");
+    if (!["cash", "transfer", "momo"].includes(args.paymentMethod)) throw new Error("Unsupported POS payment method.");
+    if (!Number.isFinite(args.amountPaid) || args.amountPaid < 0) throw new Error("Payment amount must be non-negative.");
+    if (args.shippingFee !== 0) throw new Error("POS orders cannot set a client-controlled shipping fee.");
+    const shortages = await checkAvailability(ctx, args.items, {});
+    if (shortages.length > 0) throw new Error(`Insufficient stock for ${shortages.map(row => row.productName).join(", ")}.`);
     let subtotal = 0;
+    const finalItems = [];
     for (const item of args.items) {
-      subtotal += item.price * item.quantity;
+      const product = await ctx.db.get(item.productId);
+      if (!product || product.status !== "active") throw new Error("A POS product is unavailable.");
+      const price = lineUnitPrice(product, item.variantSku);
+      subtotal += price * item.quantity;
+      finalItems.push({ productId: item.productId, variantSku: item.variantSku, quantity: item.quantity, priceAtPurchase: price, productName: product.name, measurements: item.measurements });
     }
-
-    const totalAmount = subtotal + args.shippingFee;
+    const totalAmount = subtotal;
+    if (args.amountPaid > totalAmount) throw new Error("Payment cannot exceed the server-calculated POS total.");
+    const amountDue = totalAmount - args.amountPaid;
+    const appliedShortages = await apply(ctx, args.items);
+    if (appliedShortages.length > 0) throw new Error("Stock changed while this POS order was being prepared. Please retry.");
 
     const orderIdValue = await nextOrderNumber(ctx);
 
@@ -448,14 +439,7 @@ export const createPOSOrder = mutation({
       userId: args.userId || "guest",
       createdByStaffId: staff._id,
       customerDetails: args.customerDetails,
-      items: args.items.map(item => ({
-         productId: item.productId,
-         variantSku: item.variantSku,
-         quantity: item.quantity,
-         priceAtPurchase: item.price,
-         productName: item.productName,
-         measurements: item.measurements,
-      })),
+      items: finalItems,
       subtotal: subtotal,
       shippingFee: args.shippingFee,
       discountAmount: 0,
@@ -464,7 +448,7 @@ export const createPOSOrder = mutation({
       paymentStatus: paymentStatus,
       paystackReference: args.paystackReference || `manual_${Date.now()}`,
       amountPaid: args.amountPaid,
-      amountDue: args.amountDue,
+      amountDue,
       isDeposit: args.isDeposit,
       paymentMethod: args.paymentMethod,
     });

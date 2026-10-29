@@ -91,8 +91,6 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
         items: [{
           productId: productType === 'catalog' ? (selectedProductId as any) : undefined,
           quantity: 1,
-          productName: productType === 'catalog' ? (product?.name || 'Custom Item') : customProductName,
-          price: finalPrice,
           measurements: Object.values(measurements).some(v => v) ? measurements : undefined,
         }],
         shippingFee: 0,
@@ -120,8 +118,6 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
         items: [{
           productId: productType === 'catalog' ? (selectedProductId as any) : undefined,
           quantity: 1,
-          productName: productType === 'catalog' ? (product?.name || 'Custom Item') : customProductName,
-          price: finalPrice,
           measurements: Object.values(measurements).some(v => v) ? measurements : undefined,
         }],
         shippingFee: 0,

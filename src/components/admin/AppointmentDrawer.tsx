@@ -127,8 +127,6 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
           productId: orderProductId as any,
           variantSku: "custom",
           quantity: 1,
-          productName: product?.name || "custom-fit Garment",
-          price: price,
         }],
         shippingFee: 0,
         amountPaid: paid,

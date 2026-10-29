@@ -616,6 +616,7 @@ describe("Phase 1 Security Tests", () => {
 
   it("Task 1.10: sequential POS orders produce sequential distinct IDs without string concatenation corruption", async () => {
     const t = convexTest(schema);
+    let posProductId: any;
 
     // Setup staff with orders permission
     const staffToken = "ceo-orders-token";
@@ -639,13 +640,14 @@ describe("Phase 1 Security Tests", () => {
         lastActivityAt: Date.now(),
         expiresAt: Date.now() + 3600000,
       });
+      posProductId = await ctx.db.insert("products", { name: "POS Product", slug: "pos-product", category: "shirts", description: "test", type: "ready_to_wear", status: "active", basePrice: 100, sku: "POS-001", stock: 20, images: [] });
     });
 
     // 1. Create order 1
     const order1Id = await t.mutation(api.orders.createPOSOrder, {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "1", email: "c1@test.com" },
-      items: [{ productName: "Item 1", price: 100, quantity: 1 }],
+      items: [{ productId: posProductId, quantity: 1 }],
       shippingFee: 0,
       amountPaid: 100,
       amountDue: 0,
@@ -659,7 +661,7 @@ describe("Phase 1 Security Tests", () => {
     const order2Id = await t.mutation(api.orders.createPOSOrder, {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "2", email: "c2@test.com" },
-      items: [{ productName: "Item 2", price: 100, quantity: 1 }],
+      items: [{ productId: posProductId, quantity: 1 }],
       shippingFee: 0,
       amountPaid: 100,
       amountDue: 0,
@@ -673,7 +675,7 @@ describe("Phase 1 Security Tests", () => {
     const order3Id = await t.mutation(api.orders.createPOSOrder, {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "3", email: "c3@test.com" },
-      items: [{ productName: "Item 3", price: 100, quantity: 1 }],
+      items: [{ productId: posProductId, quantity: 1 }],
       shippingFee: 0,
       amountPaid: 100,
       amountDue: 0,
@@ -695,7 +697,7 @@ describe("Phase 1 Security Tests", () => {
     const order4Id = await t.mutation(api.orders.createPOSOrder, {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "4", email: "c4@test.com" },
-      items: [{ productName: "Item 4", price: 100, quantity: 1 }],
+      items: [{ productId: posProductId, quantity: 1 }],
       shippingFee: 0,
       amountPaid: 100,
       amountDue: 0,
@@ -718,7 +720,7 @@ describe("Phase 1 Security Tests", () => {
       t.mutation(api.orders.createPOSOrder, {
         staffToken,
         customerDetails: { firstName: "Cust", lastName: "5", email: "c5@test.com" },
-        items: [{ productName: "Item 5", price: 100, quantity: 1 }],
+        items: [{ productId: posProductId, quantity: 1 }],
         shippingFee: 0,
         amountPaid: 100,
         amountDue: 0,

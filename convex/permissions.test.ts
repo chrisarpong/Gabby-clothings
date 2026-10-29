@@ -242,6 +242,7 @@ describe("Phase 2 permission matrix", () => {
     const salesOneToken = await seedStaff(t, "sales", "one");
     const adminToken = await seedStaff(t, "admin");
     const ceoToken = await seedStaff(t, "ceo");
+    const posProductId = await t.run(async (ctx) => await ctx.db.insert("products", { name: "POS Product", slug: "pos-product", category: "shirts", description: "test", type: "ready_to_wear", status: "active", basePrice: 100, sku: "POS-001", stock: 20, images: [] }));
     let salesTwoId: any;
     await t.run(async (ctx) => {
       salesTwoId = await ctx.db.insert("staff", {
@@ -254,7 +255,7 @@ describe("Phase 2 permission matrix", () => {
     const createdOrderId = await t.mutation(api.orders.createPOSOrder, {
       staffToken: salesOneToken,
       customerDetails: { email: "buyer@example.test", firstName: "Buyer", lastName: "One" },
-      items: [{ quantity: 1, productName: "Test suit", price: 100 }],
+      items: [{ productId: posProductId, quantity: 1 }],
       shippingFee: 0,
       amountPaid: 0,
       amountDue: 100,
