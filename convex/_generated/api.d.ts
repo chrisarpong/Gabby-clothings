@@ -14,6 +14,7 @@ import type * as appointments from "../appointments.js";
 import type * as authHelper from "../authHelper.js";
 import type * as carts from "../carts.js";
 import type * as catalogs from "../catalogs.js";
+import type * as checkout from "../checkout.js";
 import type * as content from "../content.js";
 import type * as crons from "../crons.js";
 import type * as currency from "../currency.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   authHelper: typeof authHelper;
   carts: typeof carts;
   catalogs: typeof catalogs;
+  checkout: typeof checkout;
   content: typeof content;
   crons: typeof crons;
   currency: typeof currency;

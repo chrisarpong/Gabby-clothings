@@ -371,6 +371,11 @@ export const getByPaystackReference = internalQuery({
   },
 });
 
+export const getByIdInternal = internalQuery({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => await ctx.db.get(args.orderId),
+});
+
 export const createPOSOrder = mutation({
   args: {
       staffToken: v.string(),
