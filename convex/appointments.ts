@@ -621,22 +621,7 @@ export const recordDeposit = mutation({
   }
 });
 
-/* Removed unauthenticated appointment payment confirmation in Phase 3 F.
-const confirmCustomerPayment = mutation({
-  args: {
-    appointmentId: v.id("appointments"),
-    paystackReference: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // Called by the public storefront after Paystack success
-    await ctx.db.patch(args.appointmentId, {
-      paymentStatus: "paid",
-      paystackReference: args.paystackReference,
-    });
-  }
-});
 
-*/
 export const linkToUser = mutation({
   args: {
       staffToken: v.string(),
@@ -650,3 +635,4 @@ export const linkToUser = mutation({
     });
   }
 });
+
