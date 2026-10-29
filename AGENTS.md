@@ -1,0 +1,11 @@
+# Phase 3 Rules
+
+1. Dev only. Before ANY Convex command confirm `CONVEX_DEPLOYMENT` in `.env.local` starts with `dev:` (print only the prefix). Never `convex deploy`, never touch production (`silent-albatross-823`), never `git push`, never touch `main`, never print or commit secrets, Paystack TEST keys only.
+2. Verify before changing. Earlier reports contained errors. For each item open the real code and confirm; if reality differs from this prompt, record it and adapt sensibly. Do not invent fixes for things that are not there.
+3. Before changing/removing/renaming any function, grep ALL call sites (`convex/`, `src/`, tests) and update every caller in the same commit. Never leave the frontend calling something that no longer exists or whose arguments or return shape changed.
+4. The SERVER decides money: prices, shipping, discounts, totals, stock, payment status, amounts. The browser sends only identifiers, quantities, and user-entered text. Customer identity comes from `ctx.auth` only. Staff functions use `requireStaff(ctx, args.staffToken, {permission})`.
+5. Schema changes are additive and optional only. Do not tighten fields marked `TODO(tighten)`.
+6. After each task: `npm run lint`, `npm run build`, `npm test`, `npx convex dev --once`. All must pass before commit. One commit per task: `phase-3 task-X: ...`.
+7. Tests: mandatory for pricing (pure unit tests) and for each security rule listed below. If a `convex-test` case fails to work after 2 attempts, skip it, say so in the report, and continue.
+8. Make safe decisions yourself and document them. STOP and ask only for: anything touching production, deleting existing data, or genuinely unclear intent.
+9. Reporting: write everything to `REVIEW_PHASE3.md` in the repo root (exclude it from git via `.git/info/exclude`). Per task: (a) confirmed/not confirmed with file:line, (b) files changed, (c) call sites updated, (d) verification, (e) decisions, (f) unresolved. In chat give only a one-line progress note per task, then a final summary. At the end of the file include `git log --oneline` for Phase 3 and the full diff (`git diff 8f0eeeb`) of every file under `convex/` plus `src/pages/Checkout.tsx`, `src/pages/Success.tsx`, `src/pages/BookAppointment.tsx`, `src/pages/CustomTailoring.tsx` and `src/components/sales/`.
