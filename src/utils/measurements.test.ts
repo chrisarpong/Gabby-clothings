@@ -18,4 +18,8 @@ describe('measurements mapping', () => {
     expect(flattenMeasurements({ bottom: { trouserLength: '40', trouserWaist: '34', hips: '42' } }).inseam).toBe('');
     expect(missingMeasurements({ top: { chest: '40' } })).toContain('inseam');
   });
+  it('marks a complete nested profile complete after flattening', () => {
+    const flat = flattenMeasurements({ top: { chest: 40, shoulder: 18, sleeveLength: 25, topLength: 30 }, bottom: { trouserWaist: 34, hips: 42, inseam: 32 } });
+    expect(["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"].every(field => (flat as any)[field] !== '')).toBe(true);
+  });
 });

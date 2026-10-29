@@ -312,7 +312,6 @@ export default function Profile() {
                             { label: "Armhole / Bicep", name: "armhole", placeholder: "e.g. 15\"" },
                             { label: "Stomach / Waist", name: "stomach", placeholder: "e.g. 36\"" },
                             { label: "Top Length", name: "topLength", placeholder: "e.g. 38\"" },
-                            { label: "Inseam", name: "inseam", placeholder: "e.g. 32\"" },
                           ].map((field) => (
                             <div key={field.name} className="flex flex-col gap-2">
                               <label htmlFor={`top-${field.name}`} className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
@@ -342,6 +341,7 @@ export default function Profile() {
                             { label: "Thigh", name: "thigh", placeholder: "e.g. 24\"" },
                             { label: "Knee & Ankle (Base)", name: "kneeAnkle", placeholder: "e.g. 14\"" },
                             { label: "Trouser Length", name: "trouserLength", placeholder: "e.g. 40\"" },
+                            { label: "Inseam", name: "inseam", placeholder: "e.g. 32\"" },
                             { label: "Crotch / Rise (Flap)", name: "crotch", placeholder: "e.g. 28\"" },
                           ].map((field) => (
                             <div key={field.name} className="flex flex-col gap-2">
