@@ -101,6 +101,13 @@ describe("POS money core", () => {
     expect(((await t.run((ctx: any) => ctx.db.query("orders").collect())) as any[]).length).toBe(2);
   });
 
+  it("allows an admin to record a manual payment", async () => {
+    const t = convexTest(schema); const admin = await staff(t, "admin", "manual-admin");
+    const orderId: any = await t.run((ctx: any) => ctx.db.insert("orders", { items: [], totalAmount: 10, amountDue: 10, amountPaid: 0, status: "processing" }));
+    await t.mutation(api.orders.recordManualPayment, { staffToken: admin, orderId, amount: 10, paymentMethod: "cash" });
+    expect((await t.run((ctx: any) => ctx.db.get(orderId)) as any).paymentStatus).toBe("paid");
+  });
+
   it("accepts on_hold and rejects invented statuses without touching stock", async () => {
     const t = convexTest(schema); const token = await staff(t, "ceo", "statuses"); const productId = await product(t, 2);
     const orderId = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "status-order" });

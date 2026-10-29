@@ -2,11 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { History, Search } from 'lucide-react';
 import { useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
-import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useStaffQuery, useStaffMutation } from "../../hooks/useStaffAuth";
 
 export default function SalesHistory() {
   const orders = useStaffQuery(api.orders.getMySales);
+  const recordManualPayment = useStaffMutation(api.orders.recordManualPayment);
   const [search, setSearch] = useState('');
+  const [payment, setPayment] = useState<Record<string, { amount: string; method: string; notes: string }>>({});
   const posOrders = useMemo(() => (orders || []).filter(order =>
     order.orderId?.startsWith('GB-') && `${order.orderId} ${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''} ${order.status}`.toLowerCase().includes(search.toLowerCase())
   ), [orders, search]);
@@ -62,6 +64,11 @@ export default function SalesHistory() {
                       <span className="bg-primary/10 text-primary px-2 py-1 text-[10px] uppercase tracking-widest font-bold">
                         {order.status}
                       </span>
+                      {(order.amountDue || 0) > 0 && <div className="mt-2 flex flex-wrap gap-1">
+                        <input aria-label="Balance amount" className="w-20 border p-1 text-xs" type="number" value={payment[order._id]?.amount || ''} onChange={e => setPayment(prev => ({ ...prev, [order._id]: { amount: e.target.value, method: prev[order._id]?.method || 'cash', notes: prev[order._id]?.notes || '' } }))} placeholder="Amount" />
+                        <select aria-label="Balance method" className="border p-1 text-xs" value={payment[order._id]?.method || 'cash'} onChange={e => setPayment(prev => ({ ...prev, [order._id]: { amount: prev[order._id]?.amount || '', method: e.target.value, notes: prev[order._id]?.notes || '' } }))}><option value="cash">Cash</option><option value="momo">MoMo</option><option value="transfer">Transfer</option></select>
+                        <button className="border px-2 py-1 text-xs" onClick={async () => { try { const value = payment[order._id]; await recordManualPayment({ orderId: order._id, amount: Number(value?.amount), paymentMethod: value?.method || 'cash', notes: value?.notes }); setPayment(prev => ({ ...prev, [order._id]: { ...prev[order._id], amount: '' } })); } catch (error: any) { window.alert(error.message || 'Payment failed'); } }}>Record balance</button>
+                      </div>}
                     </td>
                   </tr>
                 ))}

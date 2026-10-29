@@ -30,7 +30,7 @@ const formatStatus = (status: string) => {
 
 export default function OrdersTab() {
   const { profile } = useStaffAuth();
-  const canRecordPayments = profile ? hasPermission(profile.role as StaffRole, 'financials') : false;
+  const canRecordPayments = profile ? ['ceo', 'admin', 'sales'].includes(profile.role) : false;
   const orders = useStaffQuery(api.orders.getAll) || [];
   const updateStatus = useStaffMutation(api.orders.updateStatus);
   const recordManualPayment = useStaffMutation(api.orders.recordManualPayment);
