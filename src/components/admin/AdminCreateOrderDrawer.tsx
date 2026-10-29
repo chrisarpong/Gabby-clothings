@@ -30,6 +30,7 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
 
   const [productType, setProductType] = useState('catalog'); // 'catalog' | 'custom'
   const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedVariantSku, setSelectedVariantSku] = useState('');
   const [customProductName, setCustomProductName] = useState('');
   const [overridePrice, setOverridePrice] = useState('');
   
@@ -51,6 +52,7 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
       setPhone('');
       setProductType('catalog');
       setSelectedProductId('');
+      setSelectedVariantSku('');
       setCustomProductName('');
       setOverridePrice('');
       setMeasurements({ chest: '', waist: '', hips: '', shoulder: '', sleeve: '', inseam: '', neck: '' });
@@ -81,14 +83,16 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
     }
   };
 
-  const product = products.find((p: any) => p._id === selectedProductId);
+  const activeProducts = products.filter((p: any) => p.status === 'active');
+  const product = activeProducts.find((p: any) => p._id === selectedProductId);
   const finalPrice = productType === 'catalog' 
     ? (overridePrice ? Number(overridePrice) : (product?.basePrice || 0))
     : Number(overridePrice);
-  const amountToCharge = paymentStructure === 'deposit' ? finalPrice / 2 : finalPrice;
+  const amountToCharge = paymentStructure === 'deposit' ? Math.round((finalPrice / 2) * 100) / 100 : finalPrice;
 
   const handleManualPayment = async () => {
     if (submitGuardRef.current) return;
+    if (!firstName.trim() || !lastName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { toast.error('Enter a valid customer first name, last name, and email.'); return; }
     if (productType === 'catalog' && !selectedProductId) { toast.error('Please select a product'); return; }
     if (productType === 'custom' && (!customProductName.trim() || !overridePrice)) { toast.error('Enter custom job name and price'); return; }
     submitGuardRef.current = true;
@@ -99,6 +103,7 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
         customerDetails: { email, firstName, lastName, phone },
         items: [{
           productId: productType === 'catalog' ? (selectedProductId as any) : undefined,
+          variantSku: productType === 'catalog' && product?.type === 'showcase_template' ? 'custom' : (selectedVariantSku || undefined),
           name: productType === 'custom' ? customProductName : undefined,
           unitPriceOverride: overridePrice ? Number(overridePrice) : undefined,
           quantity: 1,
@@ -112,8 +117,8 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
       toast.success(`Order created successfully via ${paymentMethod}!`);
       idempotencyKeyRef.current = crypto.randomUUID();
       onClose();
-    } catch (e) {
-      toast.error("Failed to create order");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to create order");
     } finally {
       setIsSubmitting(false);
       submitGuardRef.current = false;
@@ -228,17 +233,18 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
                           <label className="block text-sm font-medium text-on-surface-variant mb-1">Select Product Base *</label>
                           <select 
                             className="w-full p-3 bg-surface-container border border-outline-variant/50 rounded-xl text-sm"
-                            onChange={(e) => setSelectedProductId(e.target.value)}
+                            onChange={(e) => { setSelectedProductId(e.target.value); setSelectedVariantSku(''); }}
                             value={selectedProductId}
                           >
                             <option value="">-- Choose Product --</option>
-                            {products.map((p: any) => (
+                            {activeProducts.map((p: any) => (
                               <option key={p._id} value={p._id}>{p.name} - GHS {p.basePrice}</option>
                             ))}
                           </select>
                         </div>
                         {selectedProductId && (
                           <div>
+                            {product?.variants?.length ? <div className="mb-3"><label className="block text-sm font-medium text-on-surface-variant mb-1">Size / Variant *</label><select value={selectedVariantSku} onChange={e => setSelectedVariantSku(e.target.value)} className="w-full p-3 bg-surface-container border border-outline-variant/50 rounded-xl text-sm"><option value="">-- Choose size --</option>{product.variants.map((variant: any) => <option key={variant.sku} value={variant.sku}>{variant.size} {variant.color ? `— ${variant.color}` : ''}</option>)}</select></div> : null}
                             <label className="block text-sm font-medium text-on-surface-variant mb-1">Custom Price Override (Optional)</label>
                             <input type="number" value={overridePrice} onChange={e => setOverridePrice(e.target.value)} className="w-full p-3 bg-surface-container border border-outline-variant/50 rounded-xl text-sm" placeholder={`GHS ${product?.basePrice}`} />
                             <p className="text-xs text-on-surface-variant mt-1">Leave blank to use default base price.</p>
@@ -262,7 +268,7 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
                   <div className="flex gap-4">
                     <button onClick={() => setStep(1)} className="flex-1 py-3 bg-surface-variant/30 text-on-surface rounded-xl font-medium">Back</button>
                     <button 
-                      disabled={productType === 'catalog' ? !selectedProductId : (!customProductName || !overridePrice)}
+                      disabled={productType === 'catalog' ? (!selectedProductId || Boolean(product?.variants?.length && !selectedVariantSku)) : (!customProductName || !overridePrice)}
                       onClick={() => setStep(3)}
                       className="flex-1 py-3 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                     >

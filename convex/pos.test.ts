@@ -145,6 +145,12 @@ describe("POS money core", () => {
     expect(catalogue).toBeTruthy();
     const custom = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ name: "Custom appointment garment", unitPriceOverride: 120, quantity: 1, measurements: { chest: "40" } }], payInFull: false, amountPaid: 50, paymentMethod: "cash", idempotencyKey: "drawer-custom" });
     expect((await t.run((ctx: any) => ctx.db.get(custom)) as any).items[0].isCustomJob).toBe(true);
+    const variantId: any = await t.run((ctx: any) => ctx.db.insert("products", { name: "Drawer Variant", slug: "drawer-variant", category: "shirts", description: "x", type: "ready_to_wear", status: "active", basePrice: 100, variants: [{ sku: "DRAWER-S", size: "S", color: "black", stock: 2 }], images: [] }));
+    const variantOrder = await t.mutation(api.orders.createPOSOrder, { staffToken: token, userId: "clerk-drawer", customerDetails, items: [{ productId: variantId, variantSku: "DRAWER-S", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "drawer-variant" });
+    expect((await t.run((ctx: any) => ctx.db.get(variantOrder)) as any).items[0].variantSku).toBe("DRAWER-S");
+    const showcaseId: any = await t.run((ctx: any) => ctx.db.insert("products", { name: "Drawer Showcase", slug: "drawer-showcase", category: "custom", description: "x", type: "showcase_template", status: "active", basePrice: 100, images: [] }));
+    const showcaseOrder = await t.mutation(api.orders.createPOSOrder, { staffToken: token, userId: "clerk-drawer", customerDetails, items: [{ productId: showcaseId, variantSku: "custom", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "drawer-showcase" });
+    expect((await t.run((ctx: any) => ctx.db.get(showcaseOrder)) as any).items[0].variantSku).toBe("custom");
   });
 
   it("accepts the Appointment drawer custom-job payload", async () => {
