@@ -1,6 +1,7 @@
 import { checkRateLimit } from "./authHelper";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { ConvexError } from "convex/values";
 import { requireStaff } from "./staffAuth";
 
 export const getPromoCodes = query({
@@ -26,7 +27,27 @@ export const createPromoCode = mutation({
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "promotions" });
-    return await ctx.db.insert("promotions", { ...args, redemptions: 0 });
+    const code = args.code.trim().toUpperCase();
+    if (!/^[A-Z0-9][A-Z0-9_-]{2,31}$/.test(code)) throw new ConvexError("Promo code must be 3-32 letters, numbers, hyphens, or underscores.");
+    if (args.discountType !== "percentage" && args.discountType !== "fixed") throw new ConvexError("Discount type must be percentage or fixed.");
+    if (!Number.isFinite(args.discountValue) || args.discountValue <= 0 || (args.discountType === "percentage" && args.discountValue > 100)) {
+      throw new ConvexError("Discount value is outside the allowed range.");
+    }
+    if (args.validUntil !== undefined && (!Number.isFinite(args.validUntil) || args.validUntil <= Date.now())) throw new ConvexError("Promo expiry must be in the future.");
+    if (args.maxRedemptions !== undefined && (!Number.isSafeInteger(args.maxRedemptions) || args.maxRedemptions < 1)) throw new ConvexError("Maximum redemptions must be a positive integer.");
+    if (args.minOrderAmount !== undefined && (!Number.isFinite(args.minOrderAmount) || args.minOrderAmount < 0)) throw new ConvexError("Minimum order amount must be non-negative.");
+    const existing = await ctx.db.query("promotions").withIndex("by_code", q => q.eq("code", code)).first();
+    if (existing) throw new ConvexError("A promo code with this name already exists.");
+    return await ctx.db.insert("promotions", {
+      code,
+      discountType: args.discountType,
+      discountValue: args.discountValue,
+      validUntil: args.validUntil,
+      isActive: args.isActive,
+      maxRedemptions: args.maxRedemptions,
+      minOrderAmount: args.minOrderAmount,
+      redemptions: 0,
+    });
   }
 });
 
@@ -34,11 +55,13 @@ export const applyPromoCode = mutation({
   args: { code: v.string(), subtotal: v.number() },
   handler: async (ctx, args) => {
     await checkRateLimit(ctx, "applyPromoCode", 5, 60000);
+    if (!Number.isFinite(args.subtotal) || args.subtotal < 0) return { valid: false, discountAmount: 0 };
     const now = Date.now();
+    const code = args.code.trim().toUpperCase();
 
     const promo = await ctx.db
       .query("promotions")
-      .withIndex("by_code", (q) => q.eq("code", args.code))
+      .withIndex("by_code", (q) => q.eq("code", code))
       .first();
 
     if (!promo || !promo.isActive || (promo.validUntil && now > promo.validUntil)) {
@@ -60,7 +83,7 @@ export const applyPromoCode = mutation({
       discountAmount = promo.discountValue;
     }
 
-    return { valid: true, discountAmount };
+    return { valid: true, discountAmount: Math.min(args.subtotal, Math.max(0, discountAmount)) };
   }
 });
 
