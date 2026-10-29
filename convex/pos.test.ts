@@ -77,4 +77,17 @@ describe("POS money core", () => {
     await expect(t.mutation(api.orders.updateStatus, { staffToken: token, orderId, status: "invented" })).rejects.toThrow();
     expect((await t.run((ctx: any) => ctx.db.get(productId)) as any).stock).toBe(1);
   });
+
+  it("tracks base SKU stock, requires variants, leaves custom untracked, and uses pesewa precision", async () => {
+    const t = convexTest(schema); const token = await staff(t, "sales", "stock-rules");
+    const baseId = await product(t, 2);
+    await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: baseId, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "base-sku" });
+    expect((await t.run((ctx: any) => ctx.db.get(baseId)) as any).stock).toBe(1);
+    const variantId: any = await t.run((ctx: any) => ctx.db.insert("products", { name: "Variant", slug: "variant", category: "shirts", description: "x", type: "ready_to_wear", status: "active", basePrice: 100, variants: [{ sku: "V-S", size: "S", color: "default", stock: 2 }], images: [] }));
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: variantId, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "missing-variant" })).rejects.toThrow("choose a size");
+    const before = (await t.run((ctx: any) => ctx.db.get(baseId)) as any).stock;
+    await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: baseId, variantSku: "custom", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "custom-fit" });
+    expect((await t.run((ctx: any) => ctx.db.get(baseId)) as any).stock).toBe(before);
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: baseId, unitPriceOverride: 1.001, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "three-decimal" })).rejects.toThrow();
+  });
 });

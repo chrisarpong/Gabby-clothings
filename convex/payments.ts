@@ -3,6 +3,11 @@ import { v } from "convex/values";
 
 import { requireStaff } from "./staffAuth";
 
+function moneyPesewas(value: number): number {
+  if (!Number.isFinite(value) || Math.round(value * 100) !== value * 100) throw new Error("Payment amount must have at most 2 decimals.");
+  return Math.round(value * 100);
+}
+
 export const recordCashPayment = mutation({
   args: {
       staffToken: v.string(),
@@ -16,9 +21,10 @@ export const recordCashPayment = mutation({
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
     if (order.status === "cancelled") throw new Error("Cancelled orders cannot receive payments.");
-    if (!Number.isFinite(args.amount) || args.amount <= 0) throw new Error("Payment amount must be positive.");
-    const currentDue = Math.max(0, order.amountDue ?? ((order.totalAmount || 0) - (order.amountPaid || 0)));
-    if (args.amount > currentDue) throw new Error("Payment cannot exceed the amount due.");
+    const paymentPesewas = moneyPesewas(args.amount);
+    if (paymentPesewas <= 0) throw new Error("Payment amount must be positive.");
+    const currentDuePesewas = Math.max(0, Math.round((order.amountDue ?? ((order.totalAmount || 0) - (order.amountPaid || 0))) * 100));
+    if (paymentPesewas > currentDuePesewas) throw new Error("Payment cannot exceed the amount due.");
 
     // Record the payment
     const paymentId = await ctx.db.insert("payments", {
@@ -31,8 +37,8 @@ export const recordCashPayment = mutation({
     });
 
     // Update the order's amount paid
-    const newAmountPaid = (order.amountPaid || 0) + args.amount;
-    const amountDue = Math.max(0, (order.totalAmount || 0) - newAmountPaid);
+    const newAmountPaid = (Math.round((order.amountPaid || 0) * 100) + paymentPesewas) / 100;
+    const amountDue = Math.max(0, (Math.round((order.totalAmount || 0) * 100) - Math.round(newAmountPaid * 100)) / 100);
     
     let paymentStatus = "pending";
     if (newAmountPaid > 0 && amountDue > 0) paymentStatus = "partial";

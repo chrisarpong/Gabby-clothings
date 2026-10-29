@@ -150,6 +150,7 @@ export default defineSchema({
     paymentMethod: v.optional(v.string()), // 'paystack', 'cash', 'transfer', 'momo'
     createdByStaffId: v.optional(v.id("staff")),
     posIdempotencyKey: v.optional(v.string()),
+    hasPriceAdjustment: v.optional(v.boolean()),
     
     // Assignment & Production
     // TODO(tighten): loosened to fit mock dev data
