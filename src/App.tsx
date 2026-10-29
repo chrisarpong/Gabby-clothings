@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
 import PublicLayout from './layouts/PublicLayout';
 import React, { useEffect, useState, lazy, Suspense } from 'react';
@@ -110,6 +110,16 @@ function CurrencySync() {
   return null;
 }
 
+function RouteTitle() {
+  const location = useLocation();
+  useEffect(() => {
+    const path = location.pathname;
+    const title = path === '/' ? 'Gabby Newluk | Custom Elegance' : path.startsWith('/product/') ? 'Product | Gabby Newluk' : path.startsWith('/category/') ? 'Collection | Gabby Newluk' : `${path.slice(1).split('/')[0]?.replace(/-/g, ' ') || 'Gabby Newluk'} | Gabby Newluk`;
+    document.title = title.replace(/\b\w/g, c => c.toUpperCase());
+  }, [location.pathname]);
+  return null;
+}
+
 import CookieBanner from './components/CookieBanner';
 import NewsFlashModal from './components/NewsFlashModal';
 import { StaffAuthProvider } from './hooks/useStaffAuth';
@@ -120,6 +130,7 @@ export default function App() {
     <StaffAuthProvider>
     <BrowserRouter>
       <ScrollToTop />
+      <RouteTitle />
       <UserSync />
       <CartSync />
       <CurrencySync />

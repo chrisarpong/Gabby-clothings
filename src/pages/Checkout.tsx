@@ -14,6 +14,7 @@ import { formatPrice } from "../utils/currency";
 import { parseConvexError } from "../utils/errorParser";
 import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
 import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
+import { countryCodes } from "../utils/countries";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -333,14 +334,12 @@ export default function Checkout() {
                           </div>
                           <div>
                             <label className="block font-sans text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">Country</label>
-                            <input 
-                              type="text" 
+                            <select 
                               value={shippingAddress.country}
                               onChange={(e) => setShippingAddress({...shippingAddress, country: e.target.value})}
                               className="w-full bg-transparent border-b border-surface-variant py-3 font-sans text-sm focus:outline-none focus:border-primary transition-colors text-primary"
-                              placeholder="e.g. Ghana"
                               required
-                            />
+                            >{countryCodes.map(country => <option key={country.name} value={country.name}>{country.flag} {country.name}</option>)}</select>
                           </div>
                         </div>
                         

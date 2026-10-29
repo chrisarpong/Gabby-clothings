@@ -127,7 +127,7 @@ export default function ProductDetailPage() {
   };
 
   if (product === undefined) return <div className="min-h-screen pt-40 px-20">Loading product details...</div>;
-  if (product === null) return <div className="min-h-screen pt-40 px-20 text-on-surface-variant">Product not found.</div>;
+  if (product === null || product.status !== 'active') return <div className="min-h-screen pt-40 px-20 flex flex-col items-center justify-center text-center"><h1 className="font-serif text-4xl text-primary mb-4">Product not found</h1><p className="text-on-surface-variant mb-8">This product is unavailable or has been archived.</p><Link to="/shop" className="bg-primary text-on-primary px-8 py-3">Back to Shop</Link></div>;
 
   const isSoldOut = product.variants && product.variants.length > 0
     ? product.variants.every((v: any) => v.stock <= 0)

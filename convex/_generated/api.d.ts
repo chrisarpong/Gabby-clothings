@@ -29,6 +29,7 @@ import type * as lib_paystack from "../lib/paystack.js";
 import type * as lib_pricing from "../lib/pricing.js";
 import type * as lib_staffCrypto from "../lib/staffCrypto.js";
 import type * as lib_stock from "../lib/stock.js";
+import type * as lib_unsubscribe from "../lib/unsubscribe.js";
 import type * as maintenance from "../maintenance.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
@@ -81,6 +82,7 @@ declare const fullApi: ApiFromModules<{
   "lib/pricing": typeof lib_pricing;
   "lib/staffCrypto": typeof lib_staffCrypto;
   "lib/stock": typeof lib_stock;
+  "lib/unsubscribe": typeof lib_unsubscribe;
   maintenance: typeof maintenance;
   messages: typeof messages;
   notifications: typeof notifications;
