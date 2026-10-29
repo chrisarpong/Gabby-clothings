@@ -32,6 +32,9 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     sessionStorage.setItem(`pos_customerEmail_${profile?._id || 'staff'}`, customerEmail);
     sessionStorage.setItem(`pos_customerPhone_${profile?._id || 'staff'}`, customerPhone);
   }, [cart, customerName, customerEmail, customerPhone, profile?._id]);
+  useEffect(() => {
+    idempotencyKeyRef.current = crypto.randomUUID();
+  }, [cart, customerName, customerEmail, customerPhone, paymentMethod, payInFull, depositAmount]);
   const [amountTendered, setAmountTendered] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,10 +95,12 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
 
   const handleCheckout = async () => {
     if (submitGuardRef.current) return;
-    submitGuardRef.current = true;
     if (cart.length === 0) return toast.error("Cart is empty");
     if (!customerName || !customerEmail) return toast.error("Customer name and email required");
+    if (!payInFull && !(Number(depositAmount) > 0 && Number(depositAmount) < cartTotal)) return toast.error("Deposit must be greater than zero and less than the total.");
+    if (payInFull && paymentMethod === "cash" && amountTendered !== "" && Number(amountTendered) < cartTotal) return toast.error("Amount tendered is below the total.");
 
+    submitGuardRef.current = true;
     setIsProcessing(true);
     try {
       await createPOSOrder({

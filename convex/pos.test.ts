@@ -80,6 +80,15 @@ describe("POS money core", () => {
     await expect(t.mutation(api.orders.recordManualPayment, { staffToken: designer, orderId: own, amount: 5, paymentMethod: "cash" })).rejects.toThrow();
   });
 
+  it("creates separate sales for different idempotency keys", async () => {
+    const t = convexTest(schema); const token = await staff(t, "sales", "different-keys"); const productId = await product(t, 5);
+    const base: any = { staffToken: token, customerDetails, items: [{ productId, quantity: 1 }], payInFull: true, paymentMethod: "cash" };
+    const first = await t.mutation(api.orders.createPOSOrder, { ...base, idempotencyKey: "sale-a" });
+    const second = await t.mutation(api.orders.createPOSOrder, { ...base, idempotencyKey: "sale-b" });
+    expect(second).not.toBe(first);
+    expect(((await t.run((ctx: any) => ctx.db.query("orders").collect())) as any[]).length).toBe(2);
+  });
+
   it("accepts on_hold and rejects invented statuses without touching stock", async () => {
     const t = convexTest(schema); const token = await staff(t, "ceo", "statuses"); const productId = await product(t, 2);
     const orderId = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "status-order" });
