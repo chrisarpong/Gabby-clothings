@@ -11,11 +11,17 @@ const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
 };
 
 const MAX_SESSION_LENGTH = 12 * 60 * 60 * 1000; // 12 hours
+const VALID_STAFF_ROLES = ["ceo", "admin", "designer", "sales"] as const;
+
+async function getActiveCeoCount(ctx: any) {
+  const ceos = await ctx.db.query("staff").withIndex("by_role", (q: any) => q.eq("role", "ceo")).collect();
+  return ceos.filter((staff: any) => staff.isActive).length;
+}
 
 export const getStaffForLogin = internalQuery({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", args.email)).first();
+    return await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", args.email.trim().toLowerCase())).first();
   }
 });
 
@@ -83,7 +89,7 @@ export const recordFailedLogin = internalMutation({
       await ctx.db.insert("rateLimits", { identifier: "global_failed_logins", endpoint: "staffLogin", count: 1, lastAttempt: now });
     }
 
-    const staff = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", args.email)).first();
+    const staff = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", args.email.trim().toLowerCase())).first();
     if (!staff) return { lockedNow: false };
     
     const newAttempts = staff.failedAttempts + 1;
@@ -358,9 +364,18 @@ export const createStaffInternal = internalMutation({
     callerName: v.string(),
   },
   handler: async (ctx, args) => {
+    if (!(VALID_STAFF_ROLES as readonly string[]).includes(args.role)) {
+      throw new Error("Role must be ceo, admin, designer, or sales.");
+    }
+    const email = args.email.trim().toLowerCase();
+    if (!email) throw new Error("Email is required.");
+    const existingStaff = await ctx.db.query("staff").collect();
+    if (existingStaff.some((staff: any) => staff.email.trim().toLowerCase() === email)) {
+      throw new Error("A staff account with this email already exists.");
+    }
     const staffId = await ctx.db.insert("staff", {
       name: args.name,
-      email: args.email,
+      email,
       role: args.role,
       passwordHash: args.passwordHash,
       passwordSalt: args.passwordSalt,
@@ -376,7 +391,7 @@ export const createStaffInternal = internalMutation({
       userId: args.createdBy,
       adminName: args.callerName,
       action: "Created Staff User",
-      details: `Email: ${args.email}, Role: ${args.role}`,
+      details: `Email: ${email}, Role: ${args.role}`,
       category: "team",
       targetId: staffId,
       targetType: "staff",
@@ -426,7 +441,7 @@ export const listStaff = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "team_management" });
-    const staff = await ctx.db.query("staff").collect();
+    const staff = await ctx.db.query("staff").order("desc").take(500);
     return staff.map(({ passwordHash, passwordSalt, totpSecret, recoveryCodes, ...safeProfile }) => safeProfile);
   }
 });
@@ -448,6 +463,14 @@ export const toggleStaffActive = mutation({
   },
   handler: async (ctx, args) => {
     const caller = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    const target = await ctx.db.get(args.targetStaffId);
+    if (!target) throw new Error("Staff account not found.");
+    if (target._id === caller._id && !args.isActive) {
+      throw new Error("You cannot deactivate your own CEO account.");
+    }
+    if (!args.isActive && target.role === "ceo" && target.isActive && await getActiveCeoCount(ctx) <= 1) {
+      throw new Error("The system must keep at least one active CEO.");
+    }
     await ctx.db.patch(args.targetStaffId, { isActive: args.isActive });
 
     if (!args.isActive) {
@@ -480,6 +503,17 @@ export const updateStaffRole = mutation({
   },
   handler: async (ctx, args) => {
     const caller = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    if (!(VALID_STAFF_ROLES as readonly string[]).includes(args.role)) {
+      throw new Error("Role must be ceo, admin, designer, or sales.");
+    }
+    const target = await ctx.db.get(args.targetStaffId);
+    if (!target) throw new Error("Staff account not found.");
+    if (target._id === caller._id && args.role !== "ceo") {
+      throw new Error("You cannot demote your own CEO account.");
+    }
+    if (target.role === "ceo" && target.isActive && args.role !== "ceo" && await getActiveCeoCount(ctx) <= 1) {
+      throw new Error("The system must keep at least one active CEO.");
+    }
     await ctx.db.patch(args.targetStaffId, { role: args.role });
 
     await ctx.db.insert("adminLogs", {

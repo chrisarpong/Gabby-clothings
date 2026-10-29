@@ -228,7 +228,7 @@ function generateTempPassword() {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let temp = "";
   for (let i = 0; i < 16; i++) {
-    temp += chars[Math.floor(Math.random() * chars.length)];
+    temp += chars[crypto.randomInt(chars.length)];
   }
   return temp;
 }
@@ -246,6 +246,11 @@ export const createStaffUser = action({
     const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
+    if (!["ceo", "admin", "designer", "sales"].includes(args.role)) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "Role must be ceo, admin, designer, or sales." });
+    }
+    const email = args.email.trim().toLowerCase();
+    if (!email) throw new ConvexError({ code: "BAD_REQUEST", message: "Email is required." });
 
     // 2. Generate strong OTP
     const tempPassword = generateTempPassword();
@@ -257,7 +262,7 @@ export const createStaffUser = action({
     // 4. Create user
     await ctx.runMutation(internal.staffAuth.createStaffInternal, {
       name: args.name,
-      email: args.email,
+      email,
       role: args.role,
       passwordHash: hash,
       passwordSalt: salt,

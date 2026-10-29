@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import * as crypto from "crypto";
 import schema from "./schema";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { STAFF_ROLES, hasPermission } from "./staffPermissions";
 import type { StaffRole } from "./staffPermissions";
 
@@ -258,5 +258,51 @@ describe("Phase 2 permission matrix", () => {
     await expect(t.query(api.orders.getAll, { staffToken: salesOneToken })).rejects.toThrow();
     expect((await t.query(api.orders.getMySales, { staffToken: adminToken })).length).toBe(3);
     expect((await t.query(api.orders.getMySales, { staffToken: ceoToken })).length).toBe(3);
+  });
+
+  it("team management normalizes duplicate emails and enforces valid roles", async () => {
+    const t = convexTest(schema);
+    await seedStaff(t, "ceo");
+    const ceoId = await t.run(async ctx => {
+      const ceo = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", "ceo-permission-test@example.test")).first();
+      return ceo!._id;
+    });
+    const createArgs = {
+      name: "New Designer", email: "  New.Designer@Example.Test ", role: "designer", passwordHash: "hash", passwordSalt: "salt",
+      createdBy: ceoId, callerName: "CEO",
+    };
+    await t.mutation(internal.staffAuth.createStaffInternal, createArgs);
+    const storedEmail = await t.run(async ctx => (await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", "new.designer@example.test")).first())?.email);
+    expect(storedEmail).toBe("new.designer@example.test");
+    const caseInsensitiveLogin = await t.query(internal.staffAuth.getStaffForLogin, { email: "NEW.DESIGNER@EXAMPLE.TEST" });
+    expect(caseInsensitiveLogin?.email).toBe("new.designer@example.test");
+    await expect(t.mutation(internal.staffAuth.createStaffInternal, { ...createArgs, email: "NEW.DESIGNER@example.test" }))
+      .rejects.toThrow("A staff account with this email already exists.");
+    await expect(t.mutation(internal.staffAuth.createStaffInternal, { ...createArgs, email: "valid@example.test", role: "superuser" }))
+      .rejects.toThrow("Role must be ceo, admin, designer, or sales.");
+  });
+
+  it("CEO cannot deactivate or demote itself, and deactivation revokes target sessions", async () => {
+    const t = convexTest(schema);
+    const ceoToken = await seedStaff(t, "ceo");
+    const ceoId = await t.run(async ctx => (await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", "ceo-permission-test@example.test")).first())!._id);
+    const designerToken = "deactivation-target-token";
+    let designerId: any;
+    await t.run(async ctx => {
+      designerId = await ctx.db.insert("staff", {
+        name: "Target Designer", email: "target-designer@example.test", role: "designer", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      });
+      await ctx.db.insert("staffSessions", {
+        staffId: designerId, tokenHash: tokenHash(designerToken), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000,
+      });
+    });
+    await expect(t.mutation(api.staffAuth.toggleStaffActive, { staffToken: ceoToken, targetStaffId: ceoId, isActive: false }))
+      .rejects.toThrow("You cannot deactivate your own CEO account.");
+    await expect(t.mutation(api.staffAuth.updateStaffRole, { staffToken: ceoToken, targetStaffId: ceoId, role: "admin" }))
+      .rejects.toThrow("You cannot demote your own CEO account.");
+    await t.mutation(api.staffAuth.toggleStaffActive, { staffToken: ceoToken, targetStaffId: designerId, isActive: false });
+    const targetSession: any = await t.run(async ctx => await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", designerId)).first());
+    expect(targetSession.revokedAt).toBeTypeOf("number");
   });
 });
