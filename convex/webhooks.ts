@@ -1,3 +1,4 @@
+/* Deprecated email-matching reconciliation path removed in Phase 3 E2.
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -15,7 +16,7 @@ import { v } from "convex/values";
  *    that has paymentStatus "pending" → attach the reference and mark paid.
  * 4. If nothing matches, log and exit (the verify action will handle it
  *    when the user's browser eventually reconnects).
- */
+ * / (legacy documentation)
 export const reconcilePaystackPayment = internalMutation({
   args: {
     paystackReference: v.string(),
@@ -86,3 +87,4 @@ export const reconcilePaystackPayment = internalMutation({
     return { reconciled: "none", action: "logged" };
   },
 });
+*/

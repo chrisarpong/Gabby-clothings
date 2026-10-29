@@ -17,6 +17,19 @@ export function constantTimeEqual(a: string, b: string): boolean {
   return mismatch === 0;
 }
 
+export async function verifyPaystackWebhookSignature(rawBody: string, signature: string, secret: string): Promise<boolean> {
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-512" },
+    false,
+    ["sign"],
+  );
+  const digest = await globalThis.crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+  const expected = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+  return constantTimeEqual(expected, signature);
+}
+
 export function generatePaymentReference(): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   const bytes = globalThis.crypto.getRandomValues(new Uint8Array(20));

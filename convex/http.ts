@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import { verifyPaystackWebhookSignature } from "./lib/paystack";
 
 const http = httpRouter();
 
@@ -82,26 +83,7 @@ http.route({
       return new Response("Server configuration error", { status: 500 });
     }
 
-    // Use Web Crypto API (available in Convex runtime) for HMAC-SHA512
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(paystackSecret),
-      { name: "HMAC", hash: "SHA-512" },
-      false,
-      ["sign"]
-    );
-    const signatureBuffer = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      encoder.encode(rawBody)
-    );
-    const computedHash = Array.from(new Uint8Array(signatureBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    if (computedHash !== signature) {
-      console.error("Paystack webhook signature mismatch. Rejecting.");
+    if (!(await verifyPaystackWebhookSignature(rawBody, signature, paystackSecret))) {
       return new Response("Invalid signature", { status: 401 });
     }
 
@@ -113,22 +95,21 @@ http.route({
       return new Response("Invalid JSON", { status: 400 });
     }
 
-    // 4. Handle charge.success events
-    if (event.event === "charge.success") {
-      const data = event.data;
-      const reference = data.reference as string;
-      const amountInCurrency = (data.amount as number) / 100; // pesewas → GH₵
-
-      // Dispatch to an internal mutation that idempotently reconciles the payment
-      await ctx.runMutation(internal.webhooks.reconcilePaystackPayment, {
-        paystackReference: reference,
-        amountPaid: amountInCurrency,
-        customerEmail: data.customer?.email || "",
-        paidAt: data.paid_at || new Date().toISOString(),
-      });
+    if (event.event !== "charge.success" || !event.data || typeof event.data.reference !== "string") {
+      return new Response("Unsupported event", { status: 400 });
     }
+    const data = event.data;
+    if (!Number.isSafeInteger(data.amount) || data.amount < 0 || typeof data.currency !== "string") {
+      return new Response("Invalid payment payload", { status: 400 });
+    }
+    await ctx.runMutation(internal.checkout.finalizeCheckoutPaid, {
+      reference: data.reference,
+      amountPesewas: data.amount,
+      currency: data.currency,
+      paidAt: typeof data.paid_at === "string" ? data.paid_at : new Date().toISOString(),
+      source: "paystack_webhook",
+    });
 
-    // 5. Return 200 immediately so Paystack doesn't retry
     return new Response("OK", { status: 200 });
   }),
 });
