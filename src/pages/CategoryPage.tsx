@@ -25,7 +25,9 @@ export default function CategoryPage() {
   const displayCategory = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Category";
   
   // Use category string as the argument (in reality might need slug in products schema, but we'll use name matching)
-  const results = useQuery(api.products.getByCategory, { category: displayCategory });
+  const catalogResults = useQuery(api.products.getByCatalogSlug, { slug: slug || "" });
+  const categoryResults = useQuery(api.products.getByCategory, { category: displayCategory });
+  const results = catalogResults === null ? categoryResults : catalogResults;
 
   return (
     <main className="bg-surface relative w-full pt-40 pb-32 min-h-screen">

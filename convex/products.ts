@@ -39,6 +39,16 @@ export const getByCategory = query({
   },
 });
 
+export const getByCatalogSlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const catalog = await ctx.db.query("catalogs").withIndex("by_slug", q => q.eq("slug", args.slug)).first();
+    if (!catalog || catalog.status !== "active") return null;
+    const products = await ctx.db.query("products").withIndex("by_status", q => q.eq("status", "active")).take(500);
+    return products.filter(product => product.catalogIds?.some(id => String(id) === String(catalog._id)));
+  },
+});
+
 export const getById = query({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
