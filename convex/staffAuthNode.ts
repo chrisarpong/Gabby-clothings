@@ -25,8 +25,14 @@ export const loginAction = action({
     password: v.string(),
   },
   handler: async (ctx, args) => {
+    const normalizedEmail = args.email.trim().toLowerCase();
+    const rateLimit = await ctx.runMutation(internal.staffAuth.checkLoginRateLimit, { email: normalizedEmail });
+    if (!rateLimit.allowed) {
+      throw new ConvexError({ code: "TOO_MANY_REQUESTS", message: "Too many login attempts. Please try again later." });
+    }
+
     // 1. Fetch user by email via internal query
-    const staff = await ctx.runQuery(internal.staffAuth.getStaffForLogin, { email: args.email });
+    const staff = await ctx.runQuery(internal.staffAuth.getStaffForLogin, { email: normalizedEmail });
     
     // Constant time dummy verification to prevent timing attacks
     if (!staff) {
@@ -49,7 +55,7 @@ export const loginAction = action({
 
     if (!isValid) {
       // Record failed attempt
-      await ctx.runMutation(internal.staffAuth.recordFailedLogin, { email: args.email });
+      await ctx.runMutation(internal.staffAuth.recordFailedLogin, { email: normalizedEmail });
       throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid email or password" });
     }
 

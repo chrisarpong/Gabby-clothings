@@ -57,6 +57,43 @@ describe("staff authentication integration", () => {
     expect(profileAfterLogout).toBeNull();
   });
 
+  it("successful login resets account failures and rate limits normalized email", async () => {
+    const t = convexTest(schema);
+    const salt = crypto.randomBytes(16).toString("hex");
+    const password = "CorrectPassword2026!";
+    const passwordHash = await hashPassword(password, salt, { N: 1024, r: 8, p: 1, keylen: 64, maxmem: 64 * 1024 * 1024 });
+    const staffId = await t.run(async (ctx) => ctx.db.insert("staff", {
+      name: "Reset Counter",
+      email: "reset@gabbytest.com",
+      role: "admin",
+      passwordHash,
+      passwordSalt: salt,
+      mustChangePassword: false,
+      isActive: true,
+      failedAttempts: 4,
+      totpEnabled: false,
+      createdAt: Date.now(),
+    }));
+
+    const result = await t.action(api.staffAuthNode.loginAction, {
+      email: " RESET@GabbyTest.com ",
+      password,
+    });
+    expect(result.status).toBe("success");
+
+    const state = await t.run(async (ctx) => ({
+      staff: await ctx.db.get(staffId),
+      limits: await ctx.db.query("rateLimits").collect(),
+    }));
+    expect(state.staff?.failedAttempts).toBe(0);
+    expect(state.staff?.lockedUntil).toBeUndefined();
+    expect(state.limits).toContainEqual(expect.objectContaining({
+      identifier: "email_reset@gabbytest.com",
+      endpoint: "staffLogin",
+      count: 1,
+    }));
+  });
+
   it("failed logins increment counter and lock account", async () => {
     const t = convexTest(schema);
     const salt = crypto.randomBytes(16).toString("hex");
