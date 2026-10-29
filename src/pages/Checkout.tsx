@@ -203,7 +203,8 @@ export default function Checkout() {
       navigate(`/success?reference=${encodeURIComponent(paymentReference)}&order=${encodeURIComponent(result.orderId)}`);
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong processing your order.");
+      const paymentReference = typeof reference === "string" ? reference : reference.reference;
+      navigate(`/success?reference=${encodeURIComponent(paymentReference)}`);
     }
   };
 

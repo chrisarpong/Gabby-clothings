@@ -338,7 +338,20 @@ export const getUserOrders = query({
     return await ctx.db
       .query("orders")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
       .collect();
+  },
+});
+
+export const getMyOrderByReference = query({
+  args: { reference: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const order = await ctx.db.query("orders")
+      .withIndex("by_paystackReference", q => q.eq("paystackReference", args.reference))
+      .first();
+    return order && order.userId === identity.subject ? order : null;
   },
 });
 

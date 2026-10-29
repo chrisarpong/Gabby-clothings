@@ -1,22 +1,27 @@
 import { Check, Download, Printer } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
-import { useUser } from "@clerk/clerk-react";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice, CurrencyCode } from "../utils/currency";
 
 export default function Success() {
   const [searchParams] = useSearchParams();
   const reference = searchParams.get("reference");
-  const { user } = useUser();
-  const orders = useQuery(api.orders.getUserOrders, user ? { userId: user.id } : "skip");
+  const currentOrder = useQuery(api.orders.getMyOrderByReference, reference ? { reference } : "skip");
   const allProducts = useQuery(api.products.getAll);
+  const storeInfo = useQuery(api.settings.getByKey, { key: "storeInfo" });
   const { activeCurrency, rates } = useCurrencyStore();
   
-  const currentOrder = reference ? orders?.find(o => o.paystackReference === reference) : null;
+  const waiting = Boolean(reference && !currentOrder);
+  const [showSupport, setShowSupport] = useState(false);
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = window.setTimeout(() => setShowSupport(true), 60_000);
+    return () => window.clearTimeout(timer);
+  }, [waiting]);
 
   const displayCurrency = (currentOrder?.displayCurrency as CurrencyCode) || activeCurrency;
   const displayRates = currentOrder?.rateAtOrderTime ? { [displayCurrency]: currentOrder.rateAtOrderTime } : rates;
@@ -74,7 +79,12 @@ export default function Success() {
           </p>
         </div>
 
-        {currentOrder && allProducts ? (
+        {waiting ? (
+          <div className="text-center text-on-surface-variant">
+            <p>Confirming your payment…</p>
+            {showSupport && <p className="mt-4 text-sm">Still waiting? Contact {String((storeInfo as any)?.value?.email || (storeInfo as any)?.value?.phone || "our support team")} and include your payment reference.</p>}
+          </div>
+        ) : currentOrder && allProducts ? (
           <div id="receipt-container" className="bg-surface-container border border-surface-variant p-8 md:p-12 shadow-sm relative">
             
             <button 
