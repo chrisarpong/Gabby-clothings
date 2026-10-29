@@ -44,4 +44,12 @@ describe('unsubscribe links', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     vi.unstubAllGlobals();
   });
+
+  it('reactivates an explicitly resubmitted email and audits the change', async () => {
+    const t = convexTest(schema);
+    const id = await t.run(ctx => ctx.db.insert('subscribers', { email: 'returning@example.com', status: 'unsubscribed' }));
+    await t.mutation(api.subscribers.subscribe, { email: ' returning@example.com ' });
+    expect(await t.run(ctx => ctx.db.get(id))).toMatchObject({ email: 'returning@example.com', status: 'active' });
+    expect(await t.run(ctx => ctx.db.query('adminLogs').filter(q => q.eq(q.field('action'), 'Subscriber Resubscribed')).first())).toMatchObject({ category: 'marketing', targetType: 'subscriber' });
+  });
 });

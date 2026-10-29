@@ -40,19 +40,35 @@ export const unsubscribe = mutation({
 export const subscribe = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    await checkRateLimit(ctx, "subscribe", 5, 60000, args.email); // 5 per minute per identity/email
+    const email = args.email.trim().toLowerCase();
+    await checkRateLimit(ctx, "subscribe", 5, 60000, email); // 5 per minute per identity/email
 
     const existing = await ctx.db
       .query("subscribers")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .withIndex("by_email", (q) => q.eq("email", email))
       .first();
-    if (existing) return existing._id;
+    if (existing) {
+      if (existing.status === "unsubscribed") {
+        await ctx.db.patch(existing._id, { status: "active" });
+        await ctx.db.insert("adminLogs", {
+          userId: null,
+          adminName: "System",
+          action: "Subscriber Resubscribed",
+          category: "marketing",
+          details: "Subscriber explicitly submitted the newsletter form again.",
+          targetId: existing._id,
+          targetType: "subscriber",
+          timestamp: Date.now(),
+        });
+      }
+      return existing._id;
+    }
     const subId = await ctx.db.insert("subscribers", {
-      email: args.email,
+      email,
       status: "active",
     });
     
-    await ctx.scheduler.runAfter(0, internal.email.sendSubscriptionConfirmation, { email: args.email });
+    await ctx.scheduler.runAfter(0, internal.email.sendSubscriptionConfirmation, { email });
     
     return subId;
   },
