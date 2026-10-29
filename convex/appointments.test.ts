@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 import { convexTest } from "convex-test";
 import schema from "./schema";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 function paystackSuccess(reference: string, amount = 5000) {
   return { ok: true, json: async () => ({ status: true, data: { status: "success", reference, amount, currency: "GHS" } }) };
@@ -73,5 +73,41 @@ describe("appointment rescheduling authorization", () => {
     const taken = await seed(t, "other", "14:00", "2026-11-12");
     await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-12", time: "14:00" })).rejects.toThrow();
     await expect(t.mutation(api.appointments.reschedule, { appointmentId: taken, date: "2020-01-01", time: "10:00" })).rejects.toThrow();
+  });
+});
+
+describe("expired appointment payment revival", () => {
+  async function expired(t: any, reference: string, time = "10:00") {
+    return await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Expired Client", email: "client@example.test", phone: "0240000000", date: "2099-11-01", time, status: "expired", paymentStatus: "expired", expectedAmountPesewas: 5000, paystackReference: reference, paymentExpiresAt: Date.now() - 1000 }));
+  }
+
+  it("revives an expired appointment when its slot remains free", async () => {
+    const t = convexTest(schema);
+    const appointmentId = await expired(t, "EXPIRED-FREE");
+    await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "EXPIRED-FREE", amountPesewas: 5000, currency: "GHS" });
+    const appointment: any = await t.run(async (ctx: any) => ctx.db.get(appointmentId));
+    expect(appointment.status).toBe("confirmed");
+    expect(appointment.paymentStatus).toBe("paid");
+  });
+
+  it("records paid_but_slot_taken instead of confirming a claimed slot", async () => {
+    const t = convexTest(schema);
+    const appointmentId = await expired(t, "EXPIRED-TAKEN", "10:00");
+    await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Other Client", email: "other@example.test", phone: "0240000001", date: "2099-11-01", time: "10:00", status: "confirmed", paymentStatus: "paid", expectedAmountPesewas: 5000 }));
+    const result = await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "EXPIRED-TAKEN", amountPesewas: 5000, currency: "GHS" });
+    expect(result).toBeNull();
+    const state: any = await t.run(async (ctx: any) => ({ appointment: await ctx.db.get(appointmentId), issues: await ctx.db.query("paymentIssues").collect() }));
+    expect(state.appointment.paymentStatus).toBe("expired");
+    expect(state.issues[0].kind).toBe("paid_but_slot_taken");
+  });
+
+  it("does not let an expired awaiting payment block availability before cron", async () => {
+    const t = convexTest(schema);
+    await t.run(async (ctx: any) => {
+      await ctx.db.insert("settings", { key: "availability", value: { workingDays: [0, 1, 2, 3, 4, 5, 6], startHour: "09:00", endHour: "17:00", lunchStart: "12:00", lunchEnd: "13:00", bufferTime: 30 } });
+      await ctx.db.insert("appointments", { name: "Waiting", email: "waiting@example.test", phone: "0240000000", date: "2099-11-01", time: "10:00", status: "pending", paymentStatus: "awaiting_payment", paymentExpiresAt: Date.now() - 1000 });
+    });
+    const slots = await t.query(api.appointments.getAvailableSlots, { date: "2099-11-01" });
+    expect(slots).toContain("10:00");
   });
 });

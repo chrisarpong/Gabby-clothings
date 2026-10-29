@@ -143,6 +143,21 @@ export const finalizeAppointmentPayment = internalMutation({
       await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "amount_mismatch", details: `Expected ${expectedAmountPesewas} pesewas but received ${args.amountPesewas}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
       return null;
     }
+    if (appointment.status === "expired") {
+      const availabilitySetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "availability")).first();
+      const bufferTime = availabilitySetting?.value?.bufferTime || 30;
+      const toMinutes = (value: string) => { const [h, m] = value.split(":").map(Number); return h * 60 + m; };
+      if (appointment.time) {
+        const start = toMinutes(appointment.time);
+        const end = start + 60 + bufferTime;
+        const existing = await ctx.db.query("appointments").withIndex("by_date", q => q.eq("date", appointment.date)).filter(q => q.and(q.neq(q.field("_id"), appointment._id), q.neq(q.field("status"), "cancelled"), q.neq(q.field("status"), "expired"), q.or(q.neq(q.field("paymentStatus"), "awaiting_payment"), q.gt(q.field("paymentExpiresAt"), Date.now())))).collect();
+        if (existing.some(other => other.time && start < toMinutes(other.time) + 60 + bufferTime && end > toMinutes(other.time))) {
+          await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "paid_but_slot_taken", details: "Payment arrived after the appointment expired and its slot was taken.", amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
+          return null;
+        }
+      }
+      await ctx.db.patch(appointment._id, { status: "pending", paymentStatus: "awaiting_payment" });
+    }
     await ctx.db.patch(appointment._id, { paymentStatus: "paid", status: "confirmed", paystackReference: args.reference, amountPaid: args.amountPesewas / 100 });
     if (appointment.time) await ctx.scheduler.runAfter(0, internal.email.sendAppointmentReminder, { appointmentId: appointment._id, email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, garmentType: appointment.garmentType });
     await ctx.scheduler.runAfter(0, internal.email.sendAppointmentUpdate, { email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, status: "confirmed" });
