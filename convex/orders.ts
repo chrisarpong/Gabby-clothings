@@ -1,7 +1,7 @@
 
-import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import { internal, api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { requireStaff } from "./staffAuth";
 import { nextOrderNumber } from "./lib/orderNumber";
@@ -14,7 +14,8 @@ export const shippingAddressValidator = v.object({
   country: v.string(),
 });
 
-export const verifyAndCreate = action({
+/* Removed legacy client-priced checkout action and internal creator in Phase 3 D2.
+const verifyAndCreate = ({
   args: {
     userId: v.string(),
     customerDetails: v.object({
@@ -309,6 +310,7 @@ export const create = internalMutation({
   },
 });
 
+*/
 export const getAll = query({
   args: {
       staffToken: v.string()

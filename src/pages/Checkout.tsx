@@ -45,6 +45,7 @@ export default function Checkout() {
   const convex = useConvex();
 
   const [isSuccess, setIsSuccess] = useState(false);
+  const [checkoutSession, setCheckoutSession] = useState<{ reference: string; amountPesewas: number; email: string } | null>(null);
 
   const softReserveItems = useMutation(api.inventory.softReserveItems);
 
@@ -156,7 +157,36 @@ export default function Checkout() {
     }
   };
 
-  const createOrder = useAction(api.orders.verifyAndCreate);
+  const createCheckoutSession = useMutation(api.checkout.createCheckoutSession);
+  const verifyCheckout = useAction(api.checkout.verifyCheckout);
+
+  const prepareCheckout = async () => {
+    if (!user) {
+      toast.error("Please sign in to complete checkout.");
+      return;
+    }
+    try {
+      const session = await createCheckoutSession({
+        items: cartItemsWithDetails.map(i => ({
+          productId: i.productId as any,
+          variantSku: i.variantSku,
+          quantity: i.quantity,
+          measurements: (!i.variantSku || i.variantSku === "custom") ? measurements : undefined,
+        })),
+        customerDetails: {
+          email: user.primaryEmailAddress?.emailAddress,
+          firstName: user.firstName || "Guest",
+          lastName: user.lastName || "User",
+        },
+        shippingAddress,
+        promoCode: appliedPromo?.code,
+        displayCurrency: activeCurrency,
+      });
+      setCheckoutSession(session);
+    } catch (error) {
+      toast.error(parseConvexError(error) || "Unable to prepare checkout. Please review your cart.");
+    }
+  };
 
   const handlePaystackSuccessAction = async (reference: any) => {
     if (!user) {
@@ -165,34 +195,12 @@ export default function Checkout() {
     }
     
     try {
-      await createOrder({
-        userId: user.id,
-        customerDetails: {
-          email: user.primaryEmailAddress?.emailAddress || "guest@gabby.com",
-          firstName: user.firstName || "Guest",
-          lastName: user.lastName || "User"
-        },
-        items: cartItemsWithDetails.map(i => ({
-          productId: i.productId as any,
-          variantSku: i.variantSku,
-          quantity: i.quantity,
-          productName: i.product?.name || i.productName || "Unknown Product",
-          measurements: (!i.variantSku || i.variantSku === "custom") ? measurements : undefined,
-        })),
-        shippingAmount,
-        paystackReference: reference.reference,
-        shippingAddress,
-        promoCode: appliedPromo?.code,
-        baseTotalAmount: totalAmount,
-        chargedCurrency: "GHS",
-        chargedAmount: totalAmount,
-        rateAtOrderTime: activeCurrency !== "GHS" && rates ? rates[activeCurrency] : undefined,
-        displayCurrency: activeCurrency,
-      });
+      const paymentReference = typeof reference === "string" ? reference : reference.reference;
+      const result = await verifyCheckout({ reference: paymentReference });
 
       setIsSuccess(true);
       clearCart();
-      navigate("/success");
+      navigate(`/success?reference=${encodeURIComponent(paymentReference)}&order=${encodeURIComponent(result.orderId)}`);
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong processing your order.");
@@ -205,7 +213,7 @@ export default function Checkout() {
 
   const componentProps = {
     email: user?.primaryEmailAddress?.emailAddress || "guest@gabby.com",
-    amount: Math.round(totalAmount * 100),
+    amount: checkoutSession?.amountPesewas ?? 0,
     currency: "GHS",
     metadata: {
       name: `${user?.firstName || 'Guest'} ${user?.lastName || ''}`,
@@ -482,10 +490,20 @@ export default function Checkout() {
                             </div>
                           </div>
                           
-                          <PaystackButton 
-                            {...componentProps} 
-                            className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-all duration-300 shadow-[0_4px_20px_rgba(74,60,49,0.1)] hover:shadow-[0_8px_30px_rgba(74,60,49,0.2)]" 
-                          />
+                          {!checkoutSession ? (
+                            <button
+                              type="button"
+                              onClick={prepareCheckout}
+                              className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-all duration-300 shadow-[0_4px_20px_rgba(74,60,49,0.1)] hover:shadow-[0_8px_30px_rgba(74,60,49,0.2)]"
+                            >
+                              CONTINUE TO SECURE PAYMENT
+                            </button>
+                          ) : (
+                            <PaystackButton
+                              {...componentProps}
+                              className="w-full bg-primary text-on-primary py-5 font-label text-[11px] tracking-[0.2em] uppercase hover:bg-surface-tint transition-all duration-300 shadow-[0_4px_20px_rgba(74,60,49,0.1)] hover:shadow-[0_8px_30px_rgba(74,60,49,0.2)]"
+                            />
+                          )}
                         </div>
                       )}
 
