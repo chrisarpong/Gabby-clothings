@@ -16,7 +16,7 @@ export default function Success() {
   const allProducts = useQuery(api.products.getAll);
   const { activeCurrency, rates } = useCurrencyStore();
   
-  const currentOrder = orders?.find(o => o.paystackReference === reference) || (orders && orders.length > 0 ? orders[0] : null);
+  const currentOrder = reference ? orders?.find(o => o.paystackReference === reference) : null;
 
   const displayCurrency = (currentOrder?.displayCurrency as CurrencyCode) || activeCurrency;
   const displayRates = currentOrder?.rateAtOrderTime ? { [displayCurrency]: currentOrder.rateAtOrderTime } : rates;
@@ -91,7 +91,7 @@ export default function Success() {
               </div>
               <div className="text-right mt-12 md:mt-0">
                 <p className="font-sans text-sm text-on-surface-variant mb-1">Date: {new Date(currentOrder._creationTime).toLocaleDateString()}</p>
-                <p className="font-sans text-sm text-on-surface-variant mb-1">Order #: {currentOrder._id.slice(-8).toUpperCase()}</p>
+                <p className="font-sans text-sm text-on-surface-variant mb-1">Order #: {currentOrder.orderId || currentOrder._id.slice(-8).toUpperCase()}</p>
                 <p className="font-sans text-sm text-on-surface-variant">Ref: {currentOrder.paystackReference || reference}</p>
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function Success() {
           </div>
         ) : (
            <div className="w-full h-64 bg-surface-container animate-pulse flex items-center justify-center font-sans text-on-surface-variant">
-             Retrieving order details...
+             {reference ? "Retrieving order details..." : "No verified payment reference was provided."}
            </div>
         )}
 
