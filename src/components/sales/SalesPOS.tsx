@@ -37,27 +37,41 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     sessionStorage.setItem(`pos_customerEmail_${profile?._id || 'staff'}`, customerEmail);
     sessionStorage.setItem(`pos_customerPhone_${profile?._id || 'staff'}`, customerPhone);
   }, [cart, customerName, customerEmail, customerPhone, profile?._id]);
+  const saleSignature = JSON.stringify({
+    cart: cart.map(item => ({ id: item.product?._id, sku: item.variantSku, quantity: item.quantity, price: item.price, override: item.unitPriceOverride, name: item.name, notes: item.notes })),
+    customerName, customerEmail, customerPhone, paymentMethod, payInFull, depositAmount,
+  });
+  const previousSaleSignatureRef = useRef(saleSignature);
   useEffect(() => {
-    idempotencyKeyRef.current = crypto.randomUUID();
-  }, [cart, customerName, customerEmail, customerPhone, paymentMethod, payInFull, depositAmount]);
+    if (previousSaleSignatureRef.current !== saleSignature) {
+      idempotencyKeyRef.current = crypto.randomUUID();
+      previousSaleSignatureRef.current = saleSignature;
+    }
+  }, [saleSignature]);
 
   useEffect(() => {
     if (!products?.length) return;
     let removed = 0;
     let changed = 0;
-    setCart(previous => previous.flatMap(item => {
+    let summary = '';
+    setCart(previous => {
+      let didChange = false;
+      const next = previous.flatMap(item => {
       if (item.isCustom) return [item];
       const live = products.find((p: any) => p._id === item.product?._id && p.status === 'active');
-      if (!live) { removed++; return []; }
-      if (live.variants?.length && (!item.variantSku || !live.variants.some((v: any) => v.sku === item.variantSku))) { removed++; return []; }
+      if (!live) { removed++; didChange = true; return []; }
+      if (live.variants?.length && (!item.variantSku || !live.variants.some((v: any) => v.sku === item.variantSku))) { removed++; didChange = true; return []; }
       const variant = item.variantSku ? live.variants?.find((v: any) => v.sku === item.variantSku) : undefined;
-      const available = variant?.stock ?? live.stock;
-      if (Number.isFinite(available) && available <= 0) { removed++; return []; }
+      const available: number = Number(variant?.stock ?? live.stock);
+      if (Number.isFinite(available) && available <= 0) { removed++; didChange = true; return []; }
       const quantity = Number.isFinite(available) ? Math.min(item.quantity, Math.max(1, available)) : item.quantity;
-      if (quantity !== item.quantity || item.price !== live.basePrice || item.product !== live) changed++;
+      if (quantity !== item.quantity || item.price !== (item.unitPriceOverride ?? live.basePrice) || item.product?._id !== live._id || item.product?.basePrice !== live.basePrice) { didChange = true; summary = 'Cart updated from current inventory'; }
       return [{ ...item, product: live, price: item.unitPriceOverride ?? live.basePrice, quantity }];
-    }));
-    if (removed || changed) toast.info(`${removed ? `${removed} unavailable item${removed === 1 ? '' : 's'} removed` : ''}${removed && changed ? '; ' : ''}${changed ? `${changed} cart item${changed === 1 ? '' : 's'} refreshed` : ''}`);
+      });
+      if (removed) summary = `${removed} unavailable item${removed === 1 ? '' : 's'} removed`;
+      return didChange ? next : previous;
+    });
+    if (summary) toast.info(summary);
   }, [products]);
   const [amountTendered, setAmountTendered] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
