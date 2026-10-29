@@ -12,9 +12,10 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   const createPOSOrder = useStaffMutation(api.orders.createPOSOrder);
   
   // POS State
-  const [cart, setCart] = useState<{product?: any, quantity: number, price: number, variantSku?: string, variantName?: string, isCustom?: boolean, name?: string, notes?: string, unitPriceOverride?: number, overrideReason?: string}[]>(() => {
+  const [cart, setCart] = useState<{id: string, product?: any, quantity: number, price: number, variantSku?: string, variantName?: string, isCustom?: boolean, name?: string, notes?: string, unitPriceOverride?: number, overrideReason?: string}[]>(() => {
     const saved = sessionStorage.getItem(`pos_cart_${profile?._id || 'staff'}`);
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+    return parsed.map((line: any) => ({ ...line, id: line.id || crypto.randomUUID() }));
   });
   const [customerName, setCustomerName] = useState(() => sessionStorage.getItem(`pos_customerName_${profile?._id || 'staff'}`) || '');
   const [customerEmail, setCustomerEmail] = useState(() => sessionStorage.getItem(`pos_customerEmail_${profile?._id || 'staff'}`) || '');
@@ -103,21 +104,21 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     if (product.variants?.length && !variantSku) { toast.error('Choose a variant first'); return; }
     const existing = cart.find(c => c.product._id === product._id && c.variantSku === variantSku);
     if (existing) {
-      setCart(cart.map(c => (c.product._id === product._id && c.variantSku === variantSku) ? { ...c, quantity: c.quantity + 1 } : c));
+      setCart(cart.map(c => (c.product?._id === product._id && c.variantSku === variantSku) ? { ...c, quantity: Math.min(50, c.quantity + 1) } : c));
     } else {
       let variantName = '';
       if (variantSku && product.variants) {
         const v = product.variants.find((v: any) => v.sku === variantSku);
         if (v) variantName = `${v.color} - ${v.size}`;
       }
-      setCart([...cart, { product, variantSku, variantName, quantity: 1, price: product.basePrice }]);
+      setCart([...cart, { id: crypto.randomUUID(), product, variantSku, variantName, quantity: 1, price: product.basePrice }]);
     }
     toast.success(`${product.name} added to cart`);
     setSelectedProduct(null);
   };
 
-  const removeFromCart = (productId: string | undefined, variantSku?: string, customName?: string) => {
-    setCart(cart.filter(c => !(c.product?._id === productId && c.variantSku === variantSku && c.name === customName)));
+  const removeFromCart = (lineId: string) => {
+    setCart(cart.filter(c => c.id !== lineId));
   };
 
   const updatePriceOverride = (index: number, value: string) => {
@@ -125,9 +126,9 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     setCart(previous => previous.map((item, i) => i === index ? { ...item, unitPriceOverride: parsed, price: parsed ?? item.product?.basePrice ?? item.price } : item));
   };
 
-  const updateQuantity = (productId: string, variantSku: string | undefined, delta: number) => {
+  const updateQuantity = (lineId: string, delta: number) => {
     setCart(cart.map(c => {
-      if (c.product?._id === productId && c.variantSku === variantSku) {
+      if (c.id === lineId) {
         const variant = c.variantSku ? c.product?.variants?.find((v: any) => v.sku === c.variantSku) : undefined;
         const max = Math.min(50, variant?.stock ?? c.product?.stock ?? 50);
         const newQ = Math.min(max, Math.max(1, c.quantity + delta));
@@ -146,7 +147,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     if (!customName.trim() || customName.trim().length > 100 || !Number.isFinite(price) || price < 0.01 || price > 1_000_000 || Math.round(price * 100) !== price * 100 || !Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
       toast.error('Custom job requires a name (1-100), price (0.01-1,000,000 with max 2 decimals), and quantity (1-50).'); return;
     }
-    setCart(previous => [...previous, { isCustom: true, name: customName.trim(), price, unitPriceOverride: price, quantity, notes: customNotes.trim() || undefined }]);
+    setCart(previous => [...previous, { id: crypto.randomUUID(), isCustom: true, name: customName.trim(), price, unitPriceOverride: price, quantity, notes: customNotes.trim() || undefined }]);
     setCustomName(''); setCustomPrice(''); setCustomQuantity('1'); setCustomNotes(''); setCustomJobOpen(false);
   };
 
@@ -352,7 +353,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
             ) : (
               <div className="space-y-4 mb-6 border border-outline-variant/30 p-3 bg-surface-container-lowest">
                 {cart.map((item, idx) => (
-                  <div key={`${item.product?._id || 'custom'}-${item.variantSku}-${idx}`} className="flex justify-between items-center border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
+                  <div key={item.id} className="flex justify-between items-center border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
                     <div className="flex-1">
                       <h4 className="text-xs font-bold uppercase text-primary truncate">{item.isCustom ? item.name : item.product?.name}</h4>
                       {item.isCustom && <span className="text-[10px] uppercase tracking-widest text-primary">Custom job</span>}
@@ -364,11 +365,11 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center border border-outline-variant bg-surface">
-                        <button onClick={() => updateQuantity(item.product._id, item.variantSku, -1)} className="px-2 py-1 text-primary hover:bg-surface-container">-</button>
+                        <button onClick={() => updateQuantity(item.id, -1)} className="px-2 py-1 text-primary hover:bg-surface-container">-</button>
                         <span className="px-2 text-sm">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.product._id, item.variantSku, 1)} className="px-2 py-1 text-primary hover:bg-surface-container">+</button>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="px-2 py-1 text-primary hover:bg-surface-container">+</button>
                       </div>
-                      <button onClick={() => removeFromCart(item.product?._id, item.variantSku, item.name)} className="text-error text-xs hover:underline">Remove</button>
+                      <button onClick={() => removeFromCart(item.id)} className="text-error text-xs hover:underline">Remove</button>
                     </div>
                   </div>
                 ))}
