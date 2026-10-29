@@ -183,6 +183,16 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_reference", ["reference"]).index("by_userId", ["userId"]).index("by_status_createdAt", ["status", "createdAt"]),
 
+  paymentIssues: defineTable({
+    reference: v.optional(v.string()),
+    kind: v.string(),
+    details: v.string(),
+    amountPesewas: v.optional(v.number()),
+    relatedId: v.optional(v.string()),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_resolved_createdAt", ["resolved", "createdAt"]).index("by_reference", ["reference"]),
+
   orderActivityLog: defineTable({
     orderId: v.id("orders"),
     stage: v.string(), // 'assigned', 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
