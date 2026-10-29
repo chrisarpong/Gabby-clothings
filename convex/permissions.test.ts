@@ -282,6 +282,30 @@ describe("Phase 2 permission matrix", () => {
       .rejects.toThrow("Role must be ceo, admin, designer, or sales.");
   });
 
+  it("normalizes every staff email and reports collisions without merging", async () => {
+    const t = convexTest(schema);
+    const ids = await t.run(async ctx => Promise.all([
+      ctx.db.insert("staff", {
+        name: "Legacy One", email: " Shared@Example.Test ", role: "designer", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      }),
+      ctx.db.insert("staff", {
+        name: "Legacy Two", email: "shared@example.test", role: "sales", passwordHash: "h", passwordSalt: "s",
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+      }),
+    ]));
+
+    const result = await t.mutation(internal.staffAuth.normalizeStaffEmails, {});
+    expect(result).toMatchObject({ scanned: 2, updated: 1 });
+    expect(result.collisions).toHaveLength(1);
+    expect(result.collisions[0].email).toBe("shared@example.test");
+    expect(result.collisions[0].staffIds).toHaveLength(2);
+    expect(result.collisions[0].staffIds).toEqual(expect.arrayContaining(ids));
+    const rows = await t.run(async ctx => Promise.all(ids.map(id => ctx.db.get(id))));
+    expect(rows).toHaveLength(2);
+    expect(rows.map(row => row?.email)).toEqual(["shared@example.test", "shared@example.test"]);
+  });
+
   it("CEO cannot deactivate or demote itself, and deactivation revokes target sessions", async () => {
     const t = convexTest(schema);
     const ceoToken = await seedStaff(t, "ceo");

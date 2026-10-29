@@ -369,8 +369,8 @@ export const createStaffInternal = internalMutation({
     }
     const email = args.email.trim().toLowerCase();
     if (!email) throw new Error("Email is required.");
-    const existingStaff = await ctx.db.query("staff").collect();
-    if (existingStaff.some((staff: any) => staff.email.trim().toLowerCase() === email)) {
+    const existingStaff = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", email)).first();
+    if (existingStaff) {
       throw new Error("A staff account with this email already exists.");
     }
     const staffId = await ctx.db.insert("staff", {
@@ -398,6 +398,34 @@ export const createStaffInternal = internalMutation({
       timestamp: Date.now(),
     });
   }
+});
+
+export const normalizeStaffEmails = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const staff = await ctx.db.query("staff").collect();
+    const grouped = new Map<string, typeof staff>();
+    for (const account of staff) {
+      const normalized = account.email.trim().toLowerCase();
+      const group = grouped.get(normalized) ?? [];
+      group.push(account);
+      grouped.set(normalized, group);
+    }
+
+    const collisions = [...grouped.entries()]
+      .filter(([, accounts]) => accounts.length > 1)
+      .map(([email, accounts]) => ({ email, staffIds: accounts.map(account => account._id) }));
+
+    let updated = 0;
+    for (const account of staff) {
+      const email = account.email.trim().toLowerCase();
+      if (account.email !== email) {
+        await ctx.db.patch(account._id, { email });
+        updated++;
+      }
+    }
+    return { scanned: staff.length, updated, collisions };
+  },
 });
 
 export const updateStaffPasswordInternal = internalMutation({
