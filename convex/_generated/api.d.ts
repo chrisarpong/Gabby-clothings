@@ -22,6 +22,7 @@ import type * as email from "../email.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as http from "../http.js";
 import type * as inventory from "../inventory.js";
+import type * as lib_paystack from "../lib/paystack.js";
 import type * as lib_pricing from "../lib/pricing.js";
 import type * as lib_staffCrypto from "../lib/staffCrypto.js";
 import type * as messages from "../messages.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   googleCalendar: typeof googleCalendar;
   http: typeof http;
   inventory: typeof inventory;
+  "lib/paystack": typeof lib_paystack;
   "lib/pricing": typeof lib_pricing;
   "lib/staffCrypto": typeof lib_staffCrypto;
   messages: typeof messages;
