@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Id } from "../../convex/_generated/dataModel";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
-import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
+import { flattenMeasurements, nestMeasurements, measurementFields } from "../utils/measurements";
 
 import ReviewSection from "../components/ReviewSection";
 
@@ -41,8 +41,8 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (convexMeasurements) {
       setMeasurements(flattenMeasurements(convexMeasurements) as any);
-      const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
-      if (required.every(field => (convexMeasurements as any)[field])) {
+      const flat = flattenMeasurements(convexMeasurements) as any;
+      if (measurementFields.every(field => flat[field])) {
         setHasValidMeasurements(true);
         setIsEditingMeasurements(false);
       } else {
@@ -53,8 +53,8 @@ export default function ProductDetailPage() {
       if (saved) {
         const parsed = JSON.parse(saved);
         setMeasurements(flattenMeasurements(parsed) as any);
-        const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
-        if (required.every(field => parsed[field])) {
+        const flat = flattenMeasurements(parsed) as any;
+        if (measurementFields.every(field => flat[field])) {
           setHasValidMeasurements(true);
           setIsEditingMeasurements(false);
         } else {

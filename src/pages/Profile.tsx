@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice, CurrencyCode } from "../utils/currency";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { nestMeasurements } from "../utils/measurements";
+import { nestMeasurements, invalidMeasurementFields } from "../utils/measurements";
 
 export default function Profile() {
   const { user } = useUser();
@@ -18,11 +18,12 @@ export default function Profile() {
 
   const [measurements, setMeasurements] = useState({
     top: { neck: "", chest: "", shoulder: "", sleeveLength: "", armhole: "", stomach: "", topLength: "" },
-    bottom: { trouserWaist: "", hips: "", thigh: "", kneeAnkle: "", trouserLength: "", crotch: "" },
+    bottom: { trouserWaist: "", hips: "", thigh: "", kneeAnkle: "", trouserLength: "", inseam: "", crotch: "" },
     outerwear: { agbadaLength: "", agbadaWidth: "" }
   });
 
   const [isSaved, setIsSaved] = useState(false);
+  const [measurementError, setMeasurementError] = useState("");
 
   const convexOrders = useQuery(api.orders.getUserOrders, user ? { userId: user.id } : "skip");
   const convexMeasurements = useQuery(api.users.getMeasurements);
@@ -87,7 +88,7 @@ export default function Profile() {
     if (convexMeasurements) {
       setMeasurements({
         top: convexMeasurements.top || { neck: "", chest: "", shoulder: "", sleeveLength: "", armhole: "", stomach: "", topLength: "" },
-        bottom: convexMeasurements.bottom || { trouserWaist: "", hips: "", thigh: "", kneeAnkle: "", trouserLength: "", crotch: "" },
+        bottom: convexMeasurements.bottom || { trouserWaist: "", hips: "", thigh: "", kneeAnkle: "", trouserLength: "", inseam: "", crotch: "" },
         outerwear: convexMeasurements.outerwear || { agbadaLength: "", agbadaWidth: "" }
       });
     }
@@ -181,6 +182,9 @@ export default function Profile() {
 
   const saveMeasurements = async () => {
     if (!user) return;
+    const invalid = invalidMeasurementFields(measurements);
+    if (invalid.length) { setMeasurementError(`Invalid measurements: ${invalid.join(", ")}. Use numbers between 1 and 300.`); return; }
+    setMeasurementError("");
     try {
       await updateMeasurements({
         clerkId: user.id,
@@ -308,6 +312,7 @@ export default function Profile() {
                             { label: "Armhole / Bicep", name: "armhole", placeholder: "e.g. 15\"" },
                             { label: "Stomach / Waist", name: "stomach", placeholder: "e.g. 36\"" },
                             { label: "Top Length", name: "topLength", placeholder: "e.g. 38\"" },
+                            { label: "Inseam", name: "inseam", placeholder: "e.g. 32\"" },
                           ].map((field) => (
                             <div key={field.name} className="flex flex-col gap-2">
                               <label htmlFor={`top-${field.name}`} className="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">
@@ -324,6 +329,7 @@ export default function Profile() {
                             </div>
                           ))}
                         </div>
+                        {measurementError && <p className="text-sm text-error mt-4" role="alert">{measurementError}</p>}
                       </div>
 
                       {/* BOTTOM SECTION */}

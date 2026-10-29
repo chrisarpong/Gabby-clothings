@@ -13,7 +13,7 @@ import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
 import { parseConvexError } from "../utils/errorParser";
 import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
-import { flattenMeasurements, nestMeasurements } from "../utils/measurements";
+import { flattenMeasurements, nestMeasurements, measurementFields } from "../utils/measurements";
 import { countryCodes } from "../utils/countries";
 import { getAvailableStock } from "../utils/stock";
 
@@ -81,8 +81,8 @@ export default function Checkout() {
       if (saved) {
         const parsed = JSON.parse(saved);
         setMeasurements(flattenMeasurements(parsed) as any);
-        const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
-        if (required.every(field => parsed[field])) {
+        const flat = flattenMeasurements(parsed) as any;
+        if (measurementFields.every(field => flat[field])) {
           setHasValidMeasurements(true);
         }
       }
@@ -93,8 +93,7 @@ export default function Checkout() {
     const newMeasurements = { ...measurements, [e.target.name]: e.target.value };
     setMeasurements(newMeasurements);
     setMeasurementsLinked(false); // If they manually change it, it's no longer the exact linked profile version
-    const required = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"];
-    if (required.every(field => newMeasurements[field as keyof typeof newMeasurements])) {
+    if (measurementFields.every(field => newMeasurements[field as keyof typeof newMeasurements])) {
       setHasValidMeasurements(true);
           localStorage.setItem("gabby_newluk_measurements", JSON.stringify(nestMeasurements(newMeasurements)));
     } else {
