@@ -11,6 +11,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useMutation } from "@/hooks/useConvex";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { getQuickAddAction } from "../utils/quickAdd";
 
 const RevealDiv: React.FC<{ children: React.ReactNode, className?: string, delay?: string }> = ({ children, className = "", delay = "" }) => {
   const { elementRef, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -100,7 +101,9 @@ export default function ShopPage() {
   const handleQuickAdd = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
     
-    let variantSku = undefined;
+    const action = getQuickAddAction(product);
+    if (action.kind === 'navigate') { navigate(`/product/${product._id}`); return; }
+    let variantSku = action.variantSku;
     if (product.variants && product.variants.length > 0) {
       // Find first variant with stock > 0
       const availableVariant = product.variants.find((v: any) => v.stock > 0);

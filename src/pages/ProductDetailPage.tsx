@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Id } from "../../convex/_generated/dataModel";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { getQuickAddAction } from "../utils/quickAdd";
 import { flattenMeasurements, nestMeasurements, measurementFields } from "../utils/measurements";
 
 import ReviewSection from "../components/ReviewSection";
@@ -420,10 +421,9 @@ export default function ProductDetailPage() {
                               <button 
                                 onClick={(e) => { 
                                   e.stopPropagation(); 
-                                  addItem({
-                                    productId: relProduct._id,
-                                    quantity: 1
-                                  });
+                                  const action = getQuickAddAction(relProduct);
+                                  if (action.kind === 'navigate') { navigate(`/product/${relProduct._id}`); return; }
+                                  addItem({ productId: relProduct._id, variantSku: action.variantSku, quantity: 1 });
                                   toast.success("Added to cart");
                                 }}
                                 className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"

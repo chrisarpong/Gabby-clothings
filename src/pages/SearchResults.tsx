@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { getQuickAddAction } from "../utils/quickAdd";
 
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
@@ -64,7 +65,8 @@ export default function SearchResults() {
                     <button 
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        addItem({ productId: product._id, quantity: 1 });
+                        const action = getQuickAddAction(product); if (action.kind === 'navigate') { navigate(`/product/${product._id}`); return; }
+                        addItem({ productId: product._id, variantSku: action.variantSku, quantity: 1 });
                         toast.success("Added to cart");
                         navigate('/cart'); 
                       }}

@@ -9,6 +9,7 @@ import { useCartStore } from "../store/cartStore";
 import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { getQuickAddAction } from "../utils/quickAdd";
 
 function ProductImage({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
@@ -46,7 +47,9 @@ export default function Featured() {
   const handleQuickAdd = (e: React.MouseEvent, product: Doc<"products">) => {
     e.stopPropagation();
     
-    let variantSku = undefined;
+    const action = getQuickAddAction(product);
+    if (action.kind === 'navigate') { navigate(`/product/${product._id}`); return; }
+    let variantSku = action.variantSku;
     if (product.variants && product.variants.length > 0) {
       variantSku = product.variants[0].sku;
     }

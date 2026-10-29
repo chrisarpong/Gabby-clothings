@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useCartStore } from "../store/cartStore";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { getQuickAddAction } from "../utils/quickAdd";
 
 const isSoldOut = (product: any) => {
   if (product.variants && product.variants.length > 0) {
@@ -88,7 +89,8 @@ export default function CategoryPage() {
                       <button 
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          addItem({ productId: product._id, quantity: 1 });
+                          const action = getQuickAddAction(product); if (action.kind === 'navigate') { navigate(`/product/${product._id}`); return; }
+                          addItem({ productId: product._id, variantSku: action.variantSku, quantity: 1 });
                           toast.success("Added to cart");
                         }}
                         className="w-full bg-surface/80 backdrop-blur-md text-primary font-label text-[11px] tracking-[0.2em] uppercase py-4 border border-outline-variant/50 hover:bg-primary hover:text-on-primary transition-colors"
