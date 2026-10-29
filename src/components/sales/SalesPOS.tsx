@@ -102,7 +102,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
 
   const addToCart = (product: any, variantSku?: string) => {
     if (product.variants?.length && !variantSku) { toast.error('Choose a variant first'); return; }
-    const existing = cart.find(c => c.product._id === product._id && c.variantSku === variantSku);
+    const existing = cart.find(c => c.product?._id === product._id && c.variantSku === variantSku);
     if (existing) {
       setCart(cart.map(c => (c.product?._id === product._id && c.variantSku === variantSku) ? { ...c, quantity: Math.min(50, c.quantity + 1) } : c));
     } else {

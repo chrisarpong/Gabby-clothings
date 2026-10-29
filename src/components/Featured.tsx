@@ -49,14 +49,9 @@ export default function Featured() {
     
     const action = getQuickAddAction(product);
     if (action.kind === 'navigate') { navigate(`/product/${product._id}`); return; }
-    let variantSku = action.variantSku;
-    if (product.variants && product.variants.length > 0) {
-      variantSku = product.variants[0].sku;
-    }
-
     addItem({
       productId: product._id,
-      variantSku,
+      variantSku: action.variantSku,
       quantity: 1
     });
 

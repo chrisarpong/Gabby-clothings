@@ -103,20 +103,9 @@ export default function ShopPage() {
     
     const action = getQuickAddAction(product);
     if (action.kind === 'navigate') { navigate(`/product/${product._id}`); return; }
-    let variantSku = action.variantSku;
-    if (product.variants && product.variants.length > 0) {
-      // Find first variant with stock > 0
-      const availableVariant = product.variants.find((v: any) => v.stock > 0);
-      if (!availableVariant) {
-        toast.error("Sold out", { description: "This item is currently out of stock." });
-        return;
-      }
-      variantSku = availableVariant.sku;
-    }
-
     addItem({
       productId: product._id,
-      variantSku,
+      variantSku: action.variantSku,
       quantity: 1
     });
 
