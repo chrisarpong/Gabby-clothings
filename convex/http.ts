@@ -95,9 +95,8 @@ http.route({
       return new Response("Invalid JSON", { status: 400 });
     }
 
-    if (event.event !== "charge.success" || !event.data || typeof event.data.reference !== "string") {
-      return new Response("Unsupported event", { status: 400 });
-    }
+    if (event.event !== "charge.success") return new Response("Ignored", { status: 200 });
+    if (!event.data || typeof event.data.reference !== "string") return new Response("Invalid payment payload", { status: 400 });
     const data = event.data;
     if (!Number.isSafeInteger(data.amount) || data.amount < 0 || typeof data.currency !== "string") {
       return new Response("Invalid payment payload", { status: 400 });

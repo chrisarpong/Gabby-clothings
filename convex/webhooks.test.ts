@@ -23,6 +23,25 @@ describe("Paystack webhook reconciliation", () => {
     expect(response.status).toBe(401);
   });
 
+  it("ignores a validly signed non-charge event", async () => {
+    process.env.PAYSTACK_SECRET_KEY = "sk_test_webhook_secret";
+    const t = convexTest(schema);
+    const body = JSON.stringify({ event: "subscription.create", data: {} });
+    const signature = createHmac("sha512", process.env.PAYSTACK_SECRET_KEY).update(body).digest("hex");
+    const response = await t.fetch("/webhooks/paystack", { method: "POST", headers: { "x-paystack-signature": signature }, body });
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("Ignored");
+  });
+
+  it("rejects a malformed charge success payload", async () => {
+    process.env.PAYSTACK_SECRET_KEY = "sk_test_webhook_secret";
+    const t = convexTest(schema);
+    const body = JSON.stringify({ event: "charge.success", data: {} });
+    const signature = createHmac("sha512", process.env.PAYSTACK_SECRET_KEY).update(body).digest("hex");
+    const response = await t.fetch("/webhooks/paystack", { method: "POST", headers: { "x-paystack-signature": signature }, body });
+    expect(response.status).toBe(400);
+  });
+
   it("dispatches a valid signed checkout webhook through the HTTP route", async () => {
     process.env.PAYSTACK_SECRET_KEY = "sk_test_webhook_secret";
     const t = convexTest(schema);

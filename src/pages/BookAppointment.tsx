@@ -30,7 +30,7 @@ export default function BookAppointment() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdAppointment, setCreatedAppointment] = useState<{ appointmentId: any; paymentReference?: string } | null>(null);
+  const [createdAppointment, setCreatedAppointment] = useState<{ appointmentId: any; paymentReference?: string; amountPesewas: number; email: string } | null>(null);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -86,13 +86,13 @@ export default function BookAppointment() {
   };
 
   const handlePaystackCloseAction = () => {
-    toast("Payment window closed.");
+    toast("Payment window closed. Your appointment is still awaiting payment; you can retry without booking again.");
   };
 
   const paystackProps = {
-    email: formData.email,
+    email: createdAppointment?.email || formData.email,
     reference: createdAppointment?.paymentReference,
-    amount: Math.round(bookingDepositAmount * 100),
+    amount: createdAppointment?.amountPesewas || 0,
     metadata: {
       name: formData.name,
       custom_fields: []
@@ -104,6 +104,10 @@ export default function BookAppointment() {
   };
 
   const handleSubmit = async () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(formData.time)) {
+      toast.error("Choose a valid appointment date and time before submitting.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const created = await bookAppointment({

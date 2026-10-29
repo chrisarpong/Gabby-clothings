@@ -145,7 +145,7 @@ export default function CustomTailoring() {
   };
 
   const handlePaystackCloseAction = () => {
-    toast("Payment window closed.");
+    toast("Payment window closed. Your appointment is still awaiting payment; you can retry without booking again.");
   };
 
   const paystackProps = {
@@ -170,6 +170,10 @@ export default function CustomTailoring() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.fittingDate) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(formData.time)) {
+      toast.error("Choose a valid fitting date and time before submitting.");
+      return;
+    }
     try {
       toast.loading("Uploading reference images...");
       const inspoStorageId = await uploadFile(designInspoFile);
@@ -180,7 +184,7 @@ export default function CustomTailoring() {
         name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
-        date: formData.fittingDate || new Date().toISOString(),
+        date: formData.fittingDate,
         garmentType: formData.garmentType,
         time: formData.time,
         notes: formData.details,
