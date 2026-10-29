@@ -154,6 +154,35 @@ export default defineSchema({
     productionStatus: v.optional(v.string()), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
   }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedDesigner", ["assignedDesignerId"]).index("by_createdByStaff", ["createdByStaffId"]),
 
+  checkoutSessions: defineTable({
+    reference: v.string(),
+    userId: v.string(), // Clerk identity subject
+    customerDetails: v.object({ email: v.string(), firstName: v.string(), lastName: v.string() }),
+    items: v.array(v.object({
+      productId: v.id("products"),
+      variantSku: v.optional(v.string()),
+      quantity: v.number(),
+      unitPesewas: v.number(),
+      productName: v.string(),
+      measurements: v.optional(v.any()),
+    })),
+    shippingAddress: v.object({
+      street: v.string(), city: v.string(), region: v.string(), postalCode: v.string(), country: v.string(),
+    }),
+    promoCode: v.optional(v.string()),
+    promoId: v.optional(v.id("promotions")),
+    subtotalPesewas: v.number(),
+    discountPesewas: v.number(),
+    shippingPesewas: v.number(),
+    expectedAmountPesewas: v.number(),
+    currency: v.literal("GHS"),
+    displayCurrency: v.optional(v.string()),
+    rateAtOrderTime: v.optional(v.number()),
+    status: v.union(v.literal("pending"), v.literal("paid"), v.literal("failed")),
+    orderId: v.optional(v.id("orders")),
+    createdAt: v.number(),
+  }).index("by_reference", ["reference"]).index("by_userId", ["userId"]).index("by_status_createdAt", ["status", "createdAt"]),
+
   orderActivityLog: defineTable({
     orderId: v.id("orders"),
     stage: v.string(), // 'assigned', 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
