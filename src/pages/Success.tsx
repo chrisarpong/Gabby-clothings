@@ -26,7 +26,8 @@ export default function Success() {
     return () => window.clearTimeout(timer);
   }, [waiting]);
   useEffect(() => {
-    if (currentOrder && reference && clearedReference.current !== reference) {
+    const paidReference = reference ? sessionStorage.getItem('gabby_last_paid_reference') : null;
+    if (currentOrder && reference && paidReference === reference && clearedReference.current !== reference) {
       clearCart();
       clearedReference.current = reference;
     }

@@ -196,6 +196,7 @@ export default function Checkout() {
     
     try {
       const paymentReference = typeof reference === "string" ? reference : reference.reference;
+      sessionStorage.setItem('gabby_last_paid_reference', paymentReference);
       const result = await verifyCheckout({ reference: paymentReference });
 
       setIsSuccess(true);
