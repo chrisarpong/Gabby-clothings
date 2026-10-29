@@ -105,6 +105,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
         console.error(e);
       }
     }
+    clearPosStorage();
     setToken(null);
     navigate('/staff/login');
   };
