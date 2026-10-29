@@ -2,6 +2,7 @@ import { internalAction, action } from "./_generated/server";
 import { v } from "convex/values";
 import { Resend } from "resend";
 import { api, internal } from "./_generated/api";
+import { unsubscribeToken } from './lib/unsubscribe';
 
 function getResendClient() {
   const key = process.env.RESEND_API_KEY;
@@ -249,6 +250,10 @@ export const sendPromoBroadcast = action({
     // Using Resend's batch send or loop. Looping to avoid batch limits for now.
     for (const user of emailsList) {
       try {
+        const secret = process.env.UNSUBSCRIBE_SECRET;
+        if (!secret) throw new Error('UNSUBSCRIBE_SECRET is not configured');
+        const token = await unsubscribeToken(user.email, secret);
+        const unsubscribeUrl = `${process.env.SITE_URL || 'https://gabbynewluk.com'}/unsubscribe?email=${encodeURIComponent(user.email)}&token=${token}`;
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
           to: user.email,
@@ -284,7 +289,7 @@ export const sendPromoBroadcast = action({
     <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p style="margin-top: 10px;">
       You are receiving this email because you subscribed to our newsletter or made a purchase.<br>
-      <a href="https://gabbynewluk.com/unsubscribe?email=${encodeURIComponent(user.email)}" style="color: #999; text-decoration: underline;">Unsubscribe</a> from marketing emails.
+      <a href="${unsubscribeUrl}" style="color: #999; text-decoration: underline;">Unsubscribe</a> from marketing emails.
     </p>
   </div>
 </div>

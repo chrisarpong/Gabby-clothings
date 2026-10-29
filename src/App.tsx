@@ -23,6 +23,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
 const Contact = lazy(() => import('./pages/Contact'));
 const BookAppointment = lazy(() => import('./pages/BookAppointment'));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 
 // Static Info Pages
 const SizeGuide = lazy(() => import('./pages/SizeGuide'));
@@ -128,6 +129,7 @@ export default function App() {
         className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
       }} />
       <Routes>
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         {/* Staff Auth Routes */}
         <Route path="/staff/login" element={
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
