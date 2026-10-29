@@ -293,7 +293,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Payment Reference (e.g. Paystack)</label>
+                <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Payment Reference</label>
                 <input 
                   type="text" 
                   value={paymentReference} 

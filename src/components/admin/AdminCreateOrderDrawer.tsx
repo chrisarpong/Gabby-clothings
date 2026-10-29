@@ -4,7 +4,6 @@ import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { X, User, ShoppingBag, CreditCard, ChevronRight, Ruler } from 'lucide-react';
-import { usePaystackPayment } from 'react-paystack';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
 interface AdminCreateOrderDrawerProps {
@@ -36,7 +35,7 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
     chest: '', waist: '', hips: '', shoulder: '', sleeve: '', inseam: '', neck: ''
   });
   
-  const [paymentMethod, setPaymentMethod] = useState('paystack');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStructure, setPaymentStructure] = useState('full'); // 'full' or 'deposit'
 
   // Reset state when opened
@@ -53,7 +52,7 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
       setCustomProductName('');
       setOverridePrice('');
       setMeasurements({ chest: '', waist: '', hips: '', shoulder: '', sleeve: '', inseam: '', neck: '' });
-      setPaymentMethod('paystack');
+      setPaymentMethod('cash');
       setPaymentStructure('full');
     }
   }, [isOpen]);
@@ -82,31 +81,6 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
     : Number(overridePrice);
   const amountToCharge = paymentStructure === 'deposit' ? finalPrice / 2 : finalPrice;
 
-  const handlePaystackSuccess = async (reference: string) => {
-    try {
-      setIsSubmitting(true);
-      await createOrder({
-        userId: selectedUser?._id,
-        customerDetails: { email, firstName, lastName, phone },
-        items: [{
-          productId: productType === 'catalog' ? (selectedProductId as any) : undefined,
-          quantity: 1,
-          measurements: Object.values(measurements).some(v => v) ? measurements : undefined,
-        }],
-        payInFull: paymentStructure === 'full',
-        amountPaid: amountToCharge,
-        paymentMethod: 'cash',
-        idempotencyKey: crypto.randomUUID(),
-      });
-      toast.success("Order created successfully!");
-      onClose();
-    } catch (e) {
-      toast.error("Failed to finalize order");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleManualPayment = async () => {
     try {
       setIsSubmitting(true);
@@ -132,26 +106,8 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
     }
   };
 
-  // Paystack Config
-  const paystackConfig = {
-    reference: `manual_${new Date().getTime()}`,
-    email: email || 'pos@gabby.com',
-    amount: amountToCharge * 100, // in pesewas
-    currency: 'GHS',
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '',
-  };
-
-  const initializePayment = usePaystackPayment(paystackConfig);
-
   const handleSubmitPayment = () => {
-    if (paymentMethod === 'paystack') {
-      initializePayment({
-        onSuccess: (ref: any) => handlePaystackSuccess(ref.reference),
-        onClose: () => toast.error("Payment window closed"),
-      });
-    } else {
-      handleManualPayment();
-    }
+    handleManualPayment();
   };
 
   return (
@@ -372,10 +328,10 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
                       <label className="block text-sm font-medium text-on-surface-variant mb-2">Payment Method</label>
                       <div className="space-y-2">
                         <label className="flex items-center p-3 bg-surface-container border border-outline-variant/50 rounded-xl cursor-pointer">
-                          <input type="radio" checked={paymentMethod === 'paystack'} onChange={() => setPaymentMethod('paystack')} className="mr-2" />
+                          <input type="radio" checked={paymentMethod === 'momo'} onChange={() => setPaymentMethod('momo')} className="mr-2" />
                           <div>
-                            <span className="text-sm font-medium block">Paystack (MoMo / Card)</span>
-                            <span className="text-xs text-on-surface-variant">Triggers online prompt for client</span>
+                            <span className="text-sm font-medium block">MoMo (manual)</span>
+                            <span className="text-xs text-on-surface-variant">Recorded by staff</span>
                           </div>
                         </label>
                         <label className="flex items-center p-3 bg-surface-container border border-outline-variant/50 rounded-xl cursor-pointer">

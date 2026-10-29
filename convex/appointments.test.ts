@@ -4,6 +4,8 @@ import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api, internal } from "./_generated/api";
 
+vi.spyOn(console, "log").mockImplementation(() => undefined);
+
 function paystackSuccess(reference: string, amount = 5000) {
   return { ok: true, json: async () => ({ status: true, data: { status: "success", reference, amount, currency: "GHS" } }) };
 }
