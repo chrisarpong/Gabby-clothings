@@ -22,7 +22,8 @@ export default function CartPage() {
   // Wait until products load
   const cartItemsWithDetails = allProducts === undefined ? [] : items.map((item: any) => {
     const product = allProducts.find((p: Doc<"products">) => p._id === item.productId);
-    let size = item.variantSku || "Custom Fit";
+    const selectedVariant = product?.variants?.find(variant => variant.sku === item.variantSku);
+    const size = selectedVariant?.size || (item.variantSku && item.variantSku === product?.sku ? "Ready Size" : "Custom Fit");
     return {
       ...item,
       product,

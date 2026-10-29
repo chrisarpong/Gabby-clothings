@@ -62,6 +62,7 @@ export const create = mutation({
   args: {
       staffToken: v.string(),
     name: v.string(),
+    sku: v.optional(v.string()),
     basePrice: v.number(),
     description: v.string(),
     images: v.array(v.string()),
@@ -98,6 +99,7 @@ export const update = mutation({
       staffToken: v.string(),
     id: v.id("products"),
     name: v.optional(v.string()),
+    sku: v.optional(v.string()),
     basePrice: v.optional(v.number()),
     description: v.optional(v.string()),
     images: v.optional(v.array(v.string())),

@@ -106,6 +106,12 @@ export default function ProductDetailPage() {
         }
         variantSku = variant.sku;
       }
+    } else if (product.type === "ready_to_wear") {
+      if (!product.sku) {
+        toast.error("This ready-to-wear item needs a product SKU before it can be purchased.");
+        return;
+      }
+      variantSku = product.sku;
     }
 
     addItem({

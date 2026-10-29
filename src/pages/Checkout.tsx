@@ -515,7 +515,10 @@ export default function Checkout() {
                           <h3 className="font-serif text-base text-primary leading-tight">{item.product?.name}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="font-sans text-[10px] text-on-surface-variant uppercase tracking-wider bg-surface-variant px-1.5 py-0.5">
-                              {item.variantSku === 'custom' || !item.variantSku ? 'Custom Fit' : item.variantSku}
+                              {item.variantSku === 'custom' || !item.variantSku
+                                ? 'Custom Fit'
+                                : item.product?.variants?.find(variant => variant.sku === item.variantSku)?.size
+                                  || (item.variantSku === item.product?.sku ? 'Ready Size' : item.variantSku)}
                             </span>
                             <span className="font-sans text-xs text-on-surface-variant">Qty: {item.quantity}</span>
                           </div>

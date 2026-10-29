@@ -38,6 +38,7 @@ export default function InventoryTab() {
   // --- Product Form State ---
   const [productForm, setProductForm] = useState({
     name: '',
+    sku: '',
     basePrice: 0,
     description: '',
     category: 'suits',
@@ -64,7 +65,7 @@ export default function InventoryTab() {
   const [catalogImageFile, setCatalogImageFile] = useState<File | null>(null);
 
   const resetProductForm = () => {
-    setProductForm({ name: '', basePrice: 0, description: '', category: 'suits', type: 'showcase_template', status: 'draft', catalogIds: [], seoMetaTitle: '', seoMetaDescription: '', images: '', stock: 0, fabricRequirement: '' });
+    setProductForm({ name: '', sku: '', basePrice: 0, description: '', category: 'suits', type: 'showcase_template', status: 'draft', catalogIds: [], seoMetaTitle: '', seoMetaDescription: '', images: '', stock: 0, fabricRequirement: '' });
     setProductImageFiles([]);
     setImagePreviews([]);
     setEditingProductId(null);
@@ -158,6 +159,7 @@ export default function InventoryTab() {
 
       const productData: any = {
         name: productForm.name,
+        sku: productForm.sku.trim() || undefined,
         basePrice: Number(productForm.basePrice),
         description: productForm.description,
         category: productForm.category,
@@ -258,6 +260,7 @@ export default function InventoryTab() {
   const editProduct = (product: Doc<"products">) => {
     setProductForm({
       name: product.name,
+      sku: product.sku || '',
       basePrice: product.basePrice ?? 0,
       description: product.description,
       category: product.category,
@@ -733,6 +736,12 @@ export default function InventoryTab() {
                   <label className="block text-xs uppercase tracking-widest text-on-surface mb-2">Product Name</label>
                   <input type="text" value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} className="w-full border p-3" required />
                </div>
+               {productForm.type === 'ready_to_wear' && (
+                 <div>
+                   <label className="block text-xs uppercase tracking-widest text-on-surface mb-2">Product SKU (for products without size variants)</label>
+                   <input type="text" value={productForm.sku} onChange={(e) => setProductForm({...productForm, sku: e.target.value})} className="w-full border p-3" placeholder="e.g. SHIRT-READY" />
+                 </div>
+               )}
                <div>
                   <label className="block text-xs uppercase tracking-widest text-on-surface mb-2">Description</label>
                   <textarea value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} className="w-full border p-3 h-24" required />

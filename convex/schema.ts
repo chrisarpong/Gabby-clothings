@@ -63,6 +63,7 @@ export default defineSchema({
 
   products: defineTable({
     name: v.string(),
+    sku: v.optional(v.string()),
     basePrice: v.number(),
     description: v.string(),
     images: v.array(v.string()),
