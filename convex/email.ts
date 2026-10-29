@@ -251,15 +251,15 @@ export const sendPromoBroadcast = action({
     if (!resend) throw new Error("Resend API key not configured");
 
     const emailsList = await ctx.runQuery(api.users.getAllEmails, { staffToken: args.staffToken });
+    const unsubscribed = new Set(await ctx.runQuery(internal.subscribers.getUnsubscribedEmails, {}));
+    const eligibleEmails = emailsList.filter(user => !unsubscribed.has(user.email.trim().toLowerCase()));
 
     let sentCount = 0;
     
     // Using Resend's batch send or loop. Looping to avoid batch limits for now.
-    for (const user of emailsList) {
+    for (const user of eligibleEmails) {
       try {
         const unsubscribeUrl = await marketingUnsubscribeUrl(user.email);
-        const subscribers = await ctx.runQuery(api.subscribers.getAll, { staffToken: args.staffToken });
-        if (subscribers.some((s: any) => s.email.toLowerCase() === user.email.toLowerCase() && s.status === 'unsubscribed')) continue;
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
           to: user.email,
@@ -358,7 +358,8 @@ export const sendNewsletterBroadcast = action({
     if (!resend) throw new Error("Resend API key not configured");
 
     const subscribers = await ctx.runQuery(api.subscribers.getAll, { staffToken: args.staffToken });
-    const activeSubscribers = subscribers.filter((s: any) => s.status === 'active');
+    const unsubscribed = new Set(await ctx.runQuery(internal.subscribers.getUnsubscribedEmails, {}));
+    const activeSubscribers = subscribers.filter((s: any) => s.status === 'active' && !unsubscribed.has(s.email.trim().toLowerCase()));
 
     let sentCount = 0;
     

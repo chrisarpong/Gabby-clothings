@@ -1,5 +1,5 @@
 import { requireStaff } from "./staffAuth";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { checkRateLimit } from "./authHelper";
 import { v, ConvexError } from "convex/values";
@@ -10,6 +10,14 @@ export const getAll = query({
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "marketing" });
     return await ctx.db.query("subscribers").order("desc").collect();
+  },
+});
+
+export const getUnsubscribedEmails = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("subscribers").collect();
+    return rows.filter(row => row.status === "unsubscribed").map(row => row.email.trim().toLowerCase());
   },
 });
 
