@@ -146,4 +146,12 @@ describe("POS money core", () => {
     const id = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ name: "Kaftan", unitPriceOverride: 80, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "appointment-custom" });
     expect((await t.run((ctx: any) => ctx.db.get(id)) as any).items[0].name).toBe("Kaftan");
   });
+
+  it("accepts the SalesPOS custom-job and base-SKU payloads", async () => {
+    const t = convexTest(schema); const token = await staff(t, "sales", "sales-ui-payload"); const productId = await product(t, 2);
+    const custom = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails: { firstName: "UI", lastName: "Customer", email: "ui@example.test", phone: "0240000000" }, items: [{ productId: undefined, name: "Custom hem", unitPriceOverride: 35, quantity: 2, notes: "shorten sleeves", variantSku: undefined }], payInFull: true, amountPaid: undefined, paymentMethod: "cash", idempotencyKey: "sales-ui-custom" });
+    expect((await t.run((ctx: any) => ctx.db.get(custom)) as any).items[0].isCustomJob).toBe(true);
+    await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails: { firstName: "UI", lastName: "Customer", email: "ui@example.test", phone: "0240000000" }, items: [{ productId, name: undefined, unitPriceOverride: undefined, quantity: 1, notes: undefined, variantSku: undefined }], payInFull: true, amountPaid: undefined, paymentMethod: "cash", idempotencyKey: "sales-ui-base" });
+    expect((await t.run((ctx: any) => ctx.db.get(productId)) as any).stock).toBe(1);
+  });
 });

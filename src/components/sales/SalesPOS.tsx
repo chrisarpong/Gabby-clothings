@@ -12,7 +12,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   const createPOSOrder = useStaffMutation(api.orders.createPOSOrder);
   
   // POS State
-  const [cart, setCart] = useState<{product: any, quantity: number, price: number, variantSku?: string, variantName?: string}[]>(() => {
+  const [cart, setCart] = useState<{product?: any, quantity: number, price: number, variantSku?: string, variantName?: string, isCustom?: boolean, name?: string, notes?: string, unitPriceOverride?: number, overrideReason?: string}[]>(() => {
     const saved = sessionStorage.getItem(`pos_cart_${profile?._id || 'staff'}`);
     return saved ? JSON.parse(saved) : [];
   });
@@ -22,6 +22,11 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [payInFull, setPayInFull] = useState(true);
   const [depositAmount, setDepositAmount] = useState('');
+  const [customJobOpen, setCustomJobOpen] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customPrice, setCustomPrice] = useState('');
+  const [customQuantity, setCustomQuantity] = useState('1');
+  const [customNotes, setCustomNotes] = useState('');
   const idempotencyKeyRef = useRef(crypto.randomUUID());
   const submitGuardRef = useRef(false);
 
@@ -35,6 +40,24 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   useEffect(() => {
     idempotencyKeyRef.current = crypto.randomUUID();
   }, [cart, customerName, customerEmail, customerPhone, paymentMethod, payInFull, depositAmount]);
+
+  useEffect(() => {
+    if (!products?.length) return;
+    let removed = 0;
+    let changed = 0;
+    setCart(previous => previous.flatMap(item => {
+      if (item.isCustom) return [item];
+      const live = products.find((p: any) => p._id === item.product?._id && p.status === 'active');
+      if (!live) { removed++; return []; }
+      if (live.variants?.length && (!item.variantSku || !live.variants.some((v: any) => v.sku === item.variantSku))) { removed++; return []; }
+      const variant = item.variantSku ? live.variants?.find((v: any) => v.sku === item.variantSku) : undefined;
+      const available = variant?.stock ?? live.stock;
+      const quantity = Number.isFinite(available) ? Math.min(item.quantity, Math.max(1, available)) : item.quantity;
+      if (quantity !== item.quantity || item.price !== live.basePrice || item.product !== live) changed++;
+      return [{ ...item, product: live, price: live.basePrice, quantity }];
+    }));
+    if (removed || changed) toast.info(`${removed ? `${removed} unavailable item${removed === 1 ? '' : 's'} removed` : ''}${removed && changed ? '; ' : ''}${changed ? `${changed} cart item${changed === 1 ? '' : 's'} refreshed` : ''}`);
+  }, [products]);
   const [amountTendered, setAmountTendered] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +85,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   };
 
   const addToCart = (product: any, variantSku?: string) => {
+    if (product.variants?.length && !variantSku) { toast.error('Choose a variant first'); return; }
     const existing = cart.find(c => c.product._id === product._id && c.variantSku === variantSku);
     if (existing) {
       setCart(cart.map(c => (c.product._id === product._id && c.variantSku === variantSku) ? { ...c, quantity: c.quantity + 1 } : c));
@@ -77,14 +101,21 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
     setSelectedProduct(null);
   };
 
-  const removeFromCart = (productId: string, variantSku?: string) => {
-    setCart(cart.filter(c => !(c.product._id === productId && c.variantSku === variantSku)));
+  const removeFromCart = (productId: string | undefined, variantSku?: string, customName?: string) => {
+    setCart(cart.filter(c => !(c.product?._id === productId && c.variantSku === variantSku && c.name === customName)));
+  };
+
+  const updatePriceOverride = (index: number, value: string) => {
+    const parsed = value === '' ? undefined : Number(value);
+    setCart(previous => previous.map((item, i) => i === index ? { ...item, unitPriceOverride: parsed, price: parsed ?? item.product?.basePrice ?? item.price } : item));
   };
 
   const updateQuantity = (productId: string, variantSku: string | undefined, delta: number) => {
     setCart(cart.map(c => {
-      if (c.product._id === productId && c.variantSku === variantSku) {
-        const newQ = Math.max(1, c.quantity + delta);
+      if (c.product?._id === productId && c.variantSku === variantSku) {
+        const variant = c.variantSku ? c.product?.variants?.find((v: any) => v.sku === c.variantSku) : undefined;
+        const max = Math.min(50, variant?.stock ?? c.product?.stock ?? 50);
+        const newQ = Math.min(max, Math.max(1, c.quantity + delta));
         return { ...c, quantity: newQ };
       }
       return c;
@@ -92,11 +123,29 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail);
+  const salesMin = (item: any) => (item.product?.basePrice || 0) * 0.8;
+
+  const addCustomJob = () => {
+    const price = Number(customPrice); const quantity = Number(customQuantity);
+    if (!customName.trim() || customName.trim().length > 100 || !Number.isFinite(price) || price < 0.01 || price > 1_000_000 || Math.round(price * 100) !== price * 100 || !Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
+      toast.error('Custom job requires a name (1-100), price (0.01-1,000,000 with max 2 decimals), and quantity (1-50).'); return;
+    }
+    setCart(previous => [...previous, { isCustom: true, name: customName.trim(), price, unitPriceOverride: price, quantity, notes: customNotes.trim() || undefined }]);
+    setCustomName(''); setCustomPrice(''); setCustomQuantity('1'); setCustomNotes(''); setCustomJobOpen(false);
+  };
 
   const handleCheckout = async () => {
     if (submitGuardRef.current) return;
     if (cart.length === 0) return toast.error("Cart is empty");
-    if (!customerName || !customerEmail) return toast.error("Customer name and email required");
+    if (!customerName.trim()) return toast.error("Customer name required");
+    if (!emailValid) return toast.error("Enter a valid customer email");
+    for (const item of cart) {
+      if (!item.isCustom && item.unitPriceOverride !== undefined) {
+        const minimum = profile?.role === 'sales' ? salesMin(item) : 0;
+        if (item.unitPriceOverride < minimum || item.unitPriceOverride > (item.product?.basePrice ?? 0) || Math.round(item.unitPriceOverride * 100) !== item.unitPriceOverride * 100) return toast.error(`Price for ${item.product?.name} must be between ₵${minimum.toFixed(2)} and ₵${item.product?.basePrice?.toFixed(2)}.`);
+      }
+    }
     if (!payInFull && !(Number(depositAmount) > 0 && Number(depositAmount) < cartTotal)) return toast.error("Deposit must be greater than zero and less than the total.");
     if (payInFull && paymentMethod === "cash" && amountTendered !== "" && Number(amountTendered) < cartTotal) return toast.error("Amount tendered is below the total.");
 
@@ -111,9 +160,13 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
           phone: customerPhone,
         },
         items: cart.map(c => ({
-          productId: c.product._id,
-          variantSku: c.variantSku || undefined,
+          productId: c.isCustom ? undefined : c.product?._id,
+          name: c.isCustom ? c.name : undefined,
+          unitPriceOverride: c.unitPriceOverride,
+          notes: c.notes,
+          variantSku: c.isCustom ? undefined : (c.variantSku || undefined),
           quantity: c.quantity,
+          overrideReason: c.overrideReason,
         })),
         payInFull,
         amountPaid: payInFull ? undefined : Number(depositAmount),
@@ -271,18 +324,28 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
           </div>
           
           <div className="p-4 space-y-4">
+              <button type="button" onClick={() => setCustomJobOpen(value => !value)} className="w-full border border-primary px-3 py-2 text-xs uppercase tracking-widest text-primary">{customJobOpen ? 'Close custom job' : 'Add custom job'}</button>
+              {customJobOpen && <div className="space-y-2 border border-outline-variant/30 p-3">
+                <input value={customName} onChange={e => setCustomName(e.target.value)} maxLength={100} placeholder="Job name" className="w-full border p-2 text-sm" />
+                <input value={customPrice} onChange={e => setCustomPrice(e.target.value)} type="number" min="0.01" step="0.01" placeholder="Price (GHS)" className="w-full border p-2 text-sm" />
+                <input value={customQuantity} onChange={e => setCustomQuantity(e.target.value)} type="number" min="1" max="50" placeholder="Quantity" className="w-full border p-2 text-sm" />
+                <input value={customNotes} onChange={e => setCustomNotes(e.target.value)} maxLength={200} placeholder="Notes" className="w-full border p-2 text-sm" />
+                <button type="button" onClick={addCustomJob} className="bg-primary text-surface px-3 py-2 text-xs uppercase tracking-widest">Add job</button>
+              </div>}
             {cart.length === 0 ? (
               <div className="text-center text-on-surface-variant py-6 text-sm bg-surface-container-lowest border border-outline-variant/20">Cart is empty</div>
             ) : (
               <div className="space-y-4 mb-6 border border-outline-variant/30 p-3 bg-surface-container-lowest">
                 {cart.map((item, idx) => (
-                  <div key={`${item.product._id}-${item.variantSku}-${idx}`} className="flex justify-between items-center border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
+                  <div key={`${item.product?._id || 'custom'}-${item.variantSku}-${idx}`} className="flex justify-between items-center border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
                     <div className="flex-1">
-                      <h4 className="text-xs font-bold uppercase text-primary truncate">{item.product.name}</h4>
+                      <h4 className="text-xs font-bold uppercase text-primary truncate">{item.isCustom ? item.name : item.product?.name}</h4>
+                      {item.isCustom && <span className="text-[10px] uppercase tracking-widest text-primary">Custom job</span>}
                       {item.variantName && (
                         <p className="text-[10px] uppercase text-on-surface-variant mt-0.5">{item.variantName}</p>
                       )}
                       <p className="text-on-surface-variant text-xs mt-1">₵{item.price.toLocaleString()}</p>
+                      {!item.isCustom && <div className="mt-1"><label className="text-[9px] uppercase text-on-surface-variant">Adjust price</label><input type="number" step="0.01" min={salesMin(item)} max={item.product?.basePrice} value={item.unitPriceOverride ?? ''} onChange={e => updatePriceOverride(idx, e.target.value)} className="ml-1 w-20 border p-1 text-xs" placeholder="Optional" /><input maxLength={200} value={item.overrideReason || ''} onChange={e => setCart(previous => previous.map((line, i) => i === idx ? { ...line, overrideReason: e.target.value } : line))} className="ml-1 w-24 border p-1 text-xs" placeholder="Reason" /><p className="text-[9px] text-on-surface-variant">Sales range ₵{salesMin(item).toFixed(2)}–₵{item.product?.basePrice?.toFixed(2)}</p></div>}
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center border border-outline-variant bg-surface">
@@ -290,7 +353,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
                         <span className="px-2 text-sm">{item.quantity}</span>
                         <button onClick={() => updateQuantity(item.product._id, item.variantSku, 1)} className="px-2 py-1 text-primary hover:bg-surface-container">+</button>
                       </div>
-                      <button onClick={() => removeFromCart(item.product._id, item.variantSku)} className="text-error text-xs hover:underline">Remove</button>
+                      <button onClick={() => removeFromCart(item.product?._id, item.variantSku, item.name)} className="text-error text-xs hover:underline">Remove</button>
                     </div>
                   </div>
                 ))}

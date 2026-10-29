@@ -43,13 +43,28 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   const verify2faAction = useAction(api.staffAuthNode.verify2FA);
   const logoutMutation = useMutation(api.staffAuth.logout);
 
+  const clearPosStorage = () => {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith('pos_')) sessionStorage.removeItem(key);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       sessionStorage.setItem('staffToken', token);
     } else {
       sessionStorage.removeItem('staffToken');
+      clearPosStorage();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (token && profile === null) {
+      clearPosStorage();
+      setToken(null);
+    }
+  }, [token, profile]);
 
   const login = async (email: string, pass: string) => {
     const res = await loginAction({ email, password: pass });
