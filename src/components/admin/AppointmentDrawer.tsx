@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
@@ -20,6 +20,8 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   const products = useStaffQuery(api.products.getAll);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
+  const submitGuardRef = useRef(false);
   const [adminNotes, setAdminNotes] = useState('');
   const [fabricSelection, setFabricSelection] = useState('');
   const [styleNotes, setStyleNotes] = useState('');
@@ -46,6 +48,10 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
       setMeetLink(appointment.meetLink || '');
     }
   }, [appointment]);
+
+  useEffect(() => {
+    if (appointment) idempotencyKeyRef.current = crypto.randomUUID();
+  }, [appointment, orderProductId, orderPrice, depositAmount]);
 
   if (!appointment) return null;
 
@@ -80,10 +86,12 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   };
 
   const handleCreateOrder = async () => {
+    if (submitGuardRef.current) return;
     if (!orderProductId || !orderPrice) {
       toast.error("Please select a product and enter an agreed price.");
       return;
     }
+    submitGuardRef.current = true;
     try {
       setIsSubmitting(true);
       const product = products?.find(p => p._id === orderProductId);
@@ -106,18 +114,20 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
         payInFull: paid >= price,
         amountPaid: paid,
         paymentMethod: 'cash',
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: idempotencyKeyRef.current,
       });
       
       // Update appointment status to completed
       await updateStatus({ id: appointment._id, status: 'completed' });
       toast.success("Order created successfully!");
       setShowOrderForm(false);
+      idempotencyKeyRef.current = crypto.randomUUID();
       onClose();
     } catch (e: any) {
       toast.error(e.message || "Failed to create order");
     } finally {
       setIsSubmitting(false);
+      submitGuardRef.current = false;
     }
   };
 

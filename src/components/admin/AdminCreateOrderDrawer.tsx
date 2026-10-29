@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
@@ -18,6 +18,8 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
+  const submitGuardRef = useRef(false);
 
   // Form State
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -57,6 +59,10 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) idempotencyKeyRef.current = crypto.randomUUID();
+  }, [isOpen, selectedUser, productType, selectedProductId, customProductName, overridePrice, paymentMethod, paymentStructure, firstName, lastName, email, phone]);
+
   const handleUserSelect = (userId: string) => {
     const user = users.find((u: any) => u._id === userId);
     if (user) {
@@ -82,6 +88,10 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
   const amountToCharge = paymentStructure === 'deposit' ? finalPrice / 2 : finalPrice;
 
   const handleManualPayment = async () => {
+    if (submitGuardRef.current) return;
+    if (productType === 'catalog' && !selectedProductId) { toast.error('Please select a product'); return; }
+    if (productType === 'custom' && (!customProductName.trim() || !overridePrice)) { toast.error('Enter custom job name and price'); return; }
+    submitGuardRef.current = true;
     try {
       setIsSubmitting(true);
       await createOrder({
@@ -97,14 +107,16 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
         payInFull: paymentStructure === 'full',
         amountPaid: amountToCharge,
         paymentMethod: paymentMethod === 'cash' || paymentMethod === 'momo' || paymentMethod === 'transfer' ? paymentMethod : 'cash',
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: idempotencyKeyRef.current,
       });
       toast.success(`Order created successfully via ${paymentMethod}!`);
+      idempotencyKeyRef.current = crypto.randomUUID();
       onClose();
     } catch (e) {
       toast.error("Failed to create order");
     } finally {
       setIsSubmitting(false);
+      submitGuardRef.current = false;
     }
   };
 
