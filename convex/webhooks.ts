@@ -1,90 +1,17 @@
-/* Deprecated email-matching reconciliation path removed in Phase 3 E2.
 import { internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
-/**
- * Idempotent payment reconciliation called by the Paystack webhook.
- *
- * This handles the critical case where a customer pays (especially via
- * Mobile Money / USSD) but their browser loses connectivity before
- * the frontend redirect can call our verify action.
- *
- * Logic:
- * 1. Check appointments for a matching paystackReference → mark as paid.
- * 2. Check orders for a matching paystackReference → mark as paid.
- * 3. If neither exists, check for a pending appointment by customer email
- *    that has paymentStatus "pending" → attach the reference and mark paid.
- * 4. If nothing matches, log and exit (the verify action will handle it
- *    when the user's browser eventually reconnects).
- * / (legacy documentation)
 export const reconcilePaystackPayment = internalMutation({
-  args: {
-    paystackReference: v.string(),
-    amountPaid: v.number(),
-    customerEmail: v.string(),
-    paidAt: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // ── 1. Check if an appointment already has this reference (idempotent) ──
-    const existingApt = await ctx.db
-      .query("appointments")
-      .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
-      .first();
-    if (existingApt) {
-      // Already reconciled — ensure it's marked paid (idempotent)
-      if (existingApt.paymentStatus !== "paid") {
-        await ctx.db.patch(existingApt._id, {
-          paymentStatus: "paid",
-          amountPaid: args.amountPaid,
-        });
-      }
-      return { reconciled: "appointment", id: existingApt._id, action: "updated" };
-    }
-
-    // ── 2. Check if an order already has this reference (idempotent) ──
-    const existingOrder = await ctx.db
-      .query("orders")
-      .withIndex("by_paystackReference", (q) => q.eq("paystackReference", args.paystackReference))
-      .first();
-    if (existingOrder) {
-      // Already reconciled — ensure it's marked paid
-      if (existingOrder.paymentStatus !== "paid") {
-        await ctx.db.patch(existingOrder._id, {
-          paymentStatus: "paid",
-        });
-      }
-      return { reconciled: "order", id: existingOrder._id, action: "updated" };
-    }
-
-    // ── 3. Find a pending appointment by email that hasn't been paid yet ──
-    // This covers the case where the appointment was created in step 1 of
-    // the two-step booking flow (paymentStatus: "pending") but the browser
-    // dropped before calling the verify action.
-    const pendingApt = await ctx.db
-      .query("appointments")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("email"), args.customerEmail),
-          q.eq(q.field("paymentStatus"), "pending")
-        )
-      )
-      .first();
-    if (pendingApt && !pendingApt.paystackReference) {
-      await ctx.db.patch(pendingApt._id, {
-        paymentStatus: "paid",
-        paystackReference: args.paystackReference,
-        amountPaid: args.amountPaid,
-      });
-      return { reconciled: "appointment", id: pendingApt._id, action: "matched_pending" };
-    }
-
-    // ── 4. Nothing matched — log for manual reconciliation ──
-    console.warn(
-      `[Paystack Webhook] No matching record found for reference ${args.paystackReference} ` +
-      `(email: ${args.customerEmail}, amount: GH₵${args.amountPaid}). ` +
-      `The verify action may handle this when the client reconnects.`
-    );
-    return { reconciled: "none", action: "logged" };
+  args: { reference: v.string(), amountPesewas: v.number(), currency: v.string(), paidAt: v.optional(v.string()) },
+  handler: async (ctx, args): Promise<any> => {
+    const checkout = await ctx.db.query("checkoutSessions").withIndex("by_reference", q => q.eq("reference", args.reference)).first();
+    if (checkout) return await ctx.runMutation(internal.checkout.finalizeCheckoutPaid, { reference: args.reference, amountPesewas: args.amountPesewas, currency: args.currency, paidAt: args.paidAt, source: "paystack_webhook" });
+    const appointment = await ctx.db.query("appointments").withIndex("by_paystackReference", q => q.eq("paystackReference", args.reference)).first();
+    if (appointment) return await ctx.runMutation(internal.appointments.finalizeAppointmentPayment, { appointmentId: appointment._id, reference: args.reference, amountPesewas: args.amountPesewas, currency: args.currency });
+    const order = await ctx.db.query("orders").withIndex("by_paystackReference", q => q.eq("paystackReference", args.reference)).first();
+    if (order) return order._id;
+    await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "unmatched_payment", details: "Verified Paystack payment did not match a checkout session, appointment, or order.", amountPesewas: args.amountPesewas, resolved: false, createdAt: Date.now() });
+    return null;
   },
 });
-*/

@@ -102,13 +102,17 @@ http.route({
     if (!Number.isSafeInteger(data.amount) || data.amount < 0 || typeof data.currency !== "string") {
       return new Response("Invalid payment payload", { status: 400 });
     }
-    await ctx.runMutation(internal.checkout.finalizeCheckoutPaid, {
-      reference: data.reference,
-      amountPesewas: data.amount,
-      currency: data.currency,
-      paidAt: typeof data.paid_at === "string" ? data.paid_at : new Date().toISOString(),
-      source: "paystack_webhook",
-    });
+    try {
+      await ctx.runMutation(internal.webhooks.reconcilePaystackPayment, {
+        reference: data.reference,
+        amountPesewas: data.amount,
+        currency: data.currency,
+        paidAt: typeof data.paid_at === "string" ? data.paid_at : new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Paystack reconciliation failed", error);
+      return new Response("Retryable reconciliation failure", { status: 500 });
+    }
 
     return new Response("OK", { status: 200 });
   }),

@@ -132,14 +132,18 @@ export const finalizeAppointmentPayment = internalMutation({
     const appointment = await ctx.db.get(args.appointmentId);
     if (!appointment) throw new ConvexError("Appointment not found.");
     if (appointment.paymentStatus === "paid") return appointment._id;
-    if (args.currency !== "GHS" || args.amountPesewas < (appointment.expectedAmountPesewas ?? 0)) {
-      throw new ConvexError("Appointment payment amount or currency does not match the expected deposit.");
+    const expectedAmountPesewas = appointment.expectedAmountPesewas ?? 0;
+    if (args.currency !== "GHS") {
+      await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "wrong_currency", details: `Expected GHS but verified ${args.currency}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
+      return null;
     }
-    if (appointment.paymentExpiresAt && appointment.paymentExpiresAt < Date.now()) {
-      await ctx.db.patch(appointment._id, { paymentStatus: "expired", status: "cancelled", cancelReason: "Deposit payment expired" });
-      throw new ConvexError("This appointment deposit has expired. Please book another slot.");
+    if (args.amountPesewas !== expectedAmountPesewas) {
+      await ctx.db.insert("paymentIssues", { reference: args.reference, kind: "amount_mismatch", details: `Expected ${expectedAmountPesewas} pesewas but received ${args.amountPesewas}.`, amountPesewas: args.amountPesewas, relatedId: appointment._id, resolved: false, createdAt: Date.now() });
+      return null;
     }
-    await ctx.db.patch(appointment._id, { paymentStatus: "paid", paystackReference: args.reference, amountPaid: args.amountPesewas / 100 });
+    await ctx.db.patch(appointment._id, { paymentStatus: "paid", status: "confirmed", paystackReference: args.reference, amountPaid: args.amountPesewas / 100 });
+    if (appointment.time) await ctx.scheduler.runAfter(0, internal.email.sendAppointmentReminder, { appointmentId: appointment._id, email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, garmentType: appointment.garmentType });
+    await ctx.scheduler.runAfter(0, internal.email.sendAppointmentUpdate, { email: appointment.email, name: appointment.name, date: appointment.date, time: appointment.time, status: "confirmed" });
     return appointment._id;
   },
 });
@@ -154,12 +158,14 @@ export const verifyAppointmentPayment = action({
     if (appointment.paymentStatus === "paid") return appointment._id;
     const verified = await verifyPaystackTransaction(args.reference);
     if (!verified.ok || verified.reference !== args.reference) throw new ConvexError("Deposit payment is not confirmed. Do not pay again.");
-    return await ctx.runMutation(internal.appointments.finalizeAppointmentPayment, {
+    const result = await ctx.runMutation(internal.appointments.finalizeAppointmentPayment, {
       appointmentId: args.appointmentId,
       reference: args.reference,
       amountPesewas: verified.amountPesewas,
       currency: verified.currency,
     });
+    if (!result) throw new ConvexError("Deposit payment requires review. Do not pay again.");
+    return result;
   },
 });
 
