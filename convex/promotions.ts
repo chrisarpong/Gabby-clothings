@@ -54,7 +54,7 @@ export const createPromoCode = mutation({
 export const applyPromoCode = mutation({
   args: { code: v.string(), subtotal: v.number() },
   handler: async (ctx, args) => {
-    await checkRateLimit(ctx, "applyPromoCode", 5, 60000);
+    await checkRateLimit(ctx, "applyPromoCode", 5, 60000, args.code);
     if (!Number.isFinite(args.subtotal) || args.subtotal < 0) return { valid: false, discountAmount: 0 };
     const now = Date.now();
     const code = args.code.trim().toUpperCase();

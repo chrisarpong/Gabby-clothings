@@ -15,7 +15,7 @@ export const getAll = query({
 export const subscribe = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    await checkRateLimit(ctx, "subscribe", 5, 60000); // 5 per minute
+    await checkRateLimit(ctx, "subscribe", 5, 60000, args.email); // 5 per minute per identity/email
 
     const existing = await ctx.db
       .query("subscribers")

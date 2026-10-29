@@ -21,7 +21,7 @@ export const book = mutation({
     landmarks: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await checkRateLimit(ctx, "bookAppointment", 5, 60000); // 5 per minute
+    await checkRateLimit(ctx, "bookAppointment", 5, 60000, args.email); // 5 per minute per identity/email
 
     // Optionally link to identity if available
     const identity = await ctx.auth.getUserIdentity();

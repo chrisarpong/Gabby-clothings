@@ -1,6 +1,11 @@
-export async function checkRateLimit(ctx: any, endpoint: string, maxAttempts: number = 5, windowMs: number = 60000) {
+export async function checkRateLimit(ctx: any, endpoint: string, maxAttempts: number = 5, windowMs: number = 60000, anonymousKey?: string) {
   const identity = await ctx.auth.getUserIdentity();
-  const identifier = identity ? identity.subject : "anonymous";
+  let identifier = identity?.subject;
+  if (!identifier) {
+    const key = anonymousKey?.trim().toLowerCase() || "anonymous";
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+    identifier = `anon:${Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("")}`;
+  }
   
   const limit = await ctx.db.query("rateLimits")
     .withIndex("by_identifier_endpoint", (q: any) => q.eq("identifier", identifier).eq("endpoint", endpoint))

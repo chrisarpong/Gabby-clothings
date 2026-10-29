@@ -13,7 +13,7 @@ export const submitMessage = mutation({
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    await checkRateLimit(ctx, "submitMessage", 5, 60000); // 5 per minute
+    await checkRateLimit(ctx, "submitMessage", 5, 60000, args.email); // 5 per minute per identity/email
     return await ctx.db.insert("messages", {
       ...args,
       status: "unread",
