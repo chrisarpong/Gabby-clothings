@@ -14,9 +14,12 @@ export const list = query({
 export const resolve = mutation({
   args: { staffToken: v.string(), issueId: v.id("paymentIssues") },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "financials" });
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "financials" });
     const issue = await ctx.db.get(args.issueId);
     if (!issue) throw new Error("Payment issue not found.");
-    if (!issue.resolved) await ctx.db.patch(issue._id, { resolved: true });
+    if (!issue.resolved) {
+      await ctx.db.patch(issue._id, { resolved: true });
+      await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Resolved Payment Issue", details: `${issue.kind}: ${issue.reference ?? issue._id}`, category: "financials", targetId: issue._id, targetType: "paymentIssues", timestamp: Date.now() });
+    }
   },
 });
