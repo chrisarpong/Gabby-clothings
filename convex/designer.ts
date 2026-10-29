@@ -54,8 +54,8 @@ export const getMyOrders = query({
       const activity = await ctx.db.query("orderActivityLog")
         .withIndex("by_order", q => q.eq("orderId", order._id))
         .order("desc")
-        .take(50);
-      const notes = activity.filter(row => row.stage === "note" || row.note).slice(0, 10).map(row => ({
+        .take(10);
+      const notes = activity.filter(row => row.stage === "note" || row.note).map(row => ({
         note: row.note,
         createdAt: row.timestamp,
       }));

@@ -155,6 +155,15 @@ describe("Phase 2 permission matrix", () => {
         orderId: "GB-DESIGN", userId: "client-clerk-id", customerDetails: { email: "private@example.test", firstName: "Private", lastName: "Client" },
         items: [{ quantity: 1, productName: "Suit", measurements: { chest: 40 } }], totalAmount: 999, paymentStatus: "paid", status: "processing", assignedDesignerId: assignedDesignerId,
       });
+      for (let i = 0; i < 12; i++) {
+        await ctx.db.insert("orderActivityLog", {
+          orderId,
+          stage: "note",
+          performedBy: assignedDesignerId,
+          note: `Activity note ${i}`,
+          timestamp: Date.now() + i,
+        });
+      }
       appointmentId = await ctx.db.insert("appointments", {
         userId: "client-clerk-id", name: "Private Client", email: "private@example.test", phone: "000", date: "2026-11-02", status: "pending", assignedStaffId: assignedDesignerId,
       });
@@ -165,6 +174,8 @@ describe("Phase 2 permission matrix", () => {
     expect(ownOrders[0]).not.toHaveProperty("customerDetails");
     expect(ownOrders[0]).not.toHaveProperty("paymentStatus");
     expect(ownOrders[0]).not.toHaveProperty("shippingAddress");
+    expect(ownOrders[0].notes).toHaveLength(10);
+    expect(ownOrders[0].notes[0].note).toBe("Activity note 11");
     expect(await t.query(api.designer.getMyOrders, { staffToken: designerToken })).toHaveLength(0);
     await expect(t.query(api.designer.getClientMeasurements, { staffToken: designerToken, orderId }))
       .rejects.toThrow("This order is not assigned to this designer.");
