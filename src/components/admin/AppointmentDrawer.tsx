@@ -27,6 +27,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
   const [styleNotes, setStyleNotes] = useState('');
   const [depositAmount, setDepositAmount] = useState<number | ''>('');
   const [paymentReference, setPaymentReference] = useState('');
+  const [depositMethod, setDepositMethod] = useState<'cash' | 'momo' | 'transfer'>('cash');
   const [measurementsCaptured, setMeasurementsCaptured] = useState(false);
   const [meetLink, setMeetLink] = useState('');
   
@@ -307,7 +308,7 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                 <input 
                   type="text" 
                   value={paymentReference} 
-                  onChange={(e) => setPaymentReference(e.target.value)}
+                  readOnly
                   className="w-full bg-surface-container border border-outline-variant/30 text-sm p-2 focus:outline-none focus:border-primary"
                 />
               </div>
@@ -320,18 +321,12 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                 </div>
               ) : (
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => {
-                      setPaymentReference('MANUAL_MOMO_OVERRIDE');
-                      setDepositAmount(depositAmount || 500);
-                    }}
-                    className="text-[10px] uppercase tracking-widest px-3 py-2 border border-outline-variant/30 text-primary hover:bg-primary hover:text-white transition-colors"
-                  >
-                    Mark Paid via Manual MoMo
-                  </button>
+                  <select value={depositMethod} onChange={e => setDepositMethod(e.target.value as any)} className="text-xs border p-2">
+                    <option value="cash">Cash</option><option value="momo">MoMo</option><option value="transfer">Transfer</option>
+                  </select>
                   {appointment.status === 'confirmed' && <button onClick={async () => {
                     try {
-                      await recordAptDeposit({ appointmentId: appointment._id, amountPaid: Number(depositAmount || 0), method: "cash" });
+                      await recordAptDeposit({ appointmentId: appointment._id, amountPaid: Number(depositAmount || 0), method: depositMethod });
                       toast.success("Manual deposit recorded");
                     } catch (error) { toast.error(String(error)); }
                   }} className="text-[10px] uppercase tracking-widest px-3 py-2 border border-outline-variant/30 text-primary hover:bg-primary hover:text-white transition-colors">Record cash deposit</button>}
