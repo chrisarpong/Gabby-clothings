@@ -142,3 +142,36 @@ describe("appointment input and staff payment controls", () => {
     await expect(t.mutation(api.appointments.recordDeposit, { staffToken: token, appointmentId, amountPaid: 51, method: "cash" })).rejects.toThrow();
   });
 });
+
+describe("appointment confirmation", () => {
+  const futureDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const input = { name: "Client", email: "client@example.test", phone: "0240000000", date: futureDate, time: "10:00", garmentType: "Suit" };
+
+  it("holds unpaid deposit appointments without reminder or calendar confirmation", async () => {
+    const t = convexTest(schema).withIdentity({ subject: "hold-user" });
+    await t.run(async (ctx: any) => ctx.db.insert("settings", { key: "bookingDepositAmount", value: 50 }));
+    const result = await t.mutation(api.appointments.book, input);
+    const state: any = await t.run(async (ctx: any) => ({ appointment: await ctx.db.get(result.appointmentId), reminders: await ctx.db.query("reminders").collect() }));
+    expect(state.appointment.paymentStatus).toBe("awaiting_payment");
+    expect(state.appointment.confirmedAt).toBeUndefined();
+    expect(state.reminders).toHaveLength(0);
+  });
+
+  it("confirms free bookings immediately and keeps confirmation idempotent", async () => {
+    const t = convexTest(schema).withIdentity({ subject: "free-user" });
+    const result = await t.mutation(api.appointments.book, input);
+    await t.mutation(internal.appointments.confirmAppointment, { appointmentId: result.appointmentId });
+    const state: any = await t.run(async (ctx: any) => ({ appointment: await ctx.db.get(result.appointmentId), reminders: await ctx.db.query("reminders").collect() }));
+    expect(state.appointment.status).toBe("confirmed");
+    expect(state.reminders).toHaveLength(1);
+  });
+
+  it("leaves one reminder after duplicate payment finalization", async () => {
+    const t = convexTest(schema);
+    const appointmentId = await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "0240000000", date: futureDate, time: "10:00", status: "pending", paymentStatus: "awaiting_payment", expectedAmountPesewas: 5000, paystackReference: "CONFIRM-ONCE" }));
+    await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "CONFIRM-ONCE", amountPesewas: 5000, currency: "GHS" });
+    await t.mutation(internal.appointments.finalizeAppointmentPayment, { appointmentId, reference: "CONFIRM-ONCE", amountPesewas: 5000, currency: "GHS" });
+    const reminders: any[] = await t.run(async (ctx: any) => ctx.db.query("reminders").collect());
+    expect(reminders).toHaveLength(1);
+  });
+});
