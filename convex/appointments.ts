@@ -3,7 +3,7 @@ import { mutation, query, action, internalMutation, internalQuery } from "./_gen
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { requireStaff } from "./staffAuth";
-import { verifyPaystackTransaction } from "./lib/paystack";
+import { constantTimeEqual, generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 
 export const book = mutation({
   args: {
@@ -83,6 +83,7 @@ export const book = mutation({
     const expectedDeposit = Number(depositSetting?.value ?? 0);
     if (!Number.isFinite(expectedDeposit) || expectedDeposit < 0) throw new Error("Configured booking deposit is invalid.");
     const expectedAmountPesewas = Math.round(expectedDeposit * 100);
+    const paymentReference = expectedAmountPesewas > 0 ? generatePaymentReference() : undefined;
     const appointmentId = await ctx.db.insert("appointments", {
       ...args,
       userId: identity ? identity.subject : undefined,
@@ -90,6 +91,7 @@ export const book = mutation({
       paymentStatus: expectedAmountPesewas > 0 ? "awaiting_payment" : "not_required",
       expectedAmountPesewas,
       paymentExpiresAt: expectedAmountPesewas > 0 ? Date.now() + 30 * 60 * 1000 : undefined,
+      paystackReference: paymentReference,
       referenceImages: args.referenceImages,
     });
 
@@ -122,7 +124,7 @@ export const book = mutation({
       notes: args.notes,
     });
 
-    return appointmentId;
+    return { appointmentId, paymentReference };
   },
 });
 
@@ -150,12 +152,19 @@ export const finalizeAppointmentPayment = internalMutation({
 
 export const verifyAppointmentPayment = action({
   args: { appointmentId: v.id("appointments"), reference: v.string() },
-  handler: async (ctx, args): Promise<string> => {
+  handler: async (ctx, args): Promise<{ status: string; appointmentId: string }> => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Please sign in to verify this deposit." });
     const appointment: any = await ctx.runQuery(internal.appointments.getByIdInternal, { appointmentId: args.appointmentId });
-    if (!appointment || appointment.userId !== identity.subject) throw new ConvexError({ code: "FORBIDDEN", message: "Appointment not found." });
-    if (appointment.paymentStatus === "paid") return appointment._id;
+    if (!appointment) throw new ConvexError({ code: "NOT_FOUND", message: "Appointment not found." });
+    if (identity) {
+      if (appointment.userId !== identity.subject) throw new ConvexError({ code: "FORBIDDEN", message: "Appointment not found." });
+    } else if (!appointment.paystackReference || !constantTimeEqual(appointment.paystackReference, args.reference)) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Appointment not found." });
+    }
+    if (appointment.paymentStatus === "paid") return { status: "success", appointmentId: appointment._id };
+    if (!appointment.paystackReference || !constantTimeEqual(appointment.paystackReference, args.reference)) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Invalid payment reference." });
+    }
     const verified = await verifyPaystackTransaction(args.reference);
     if (!verified.ok || verified.reference !== args.reference) throw new ConvexError("Deposit payment is not confirmed. Do not pay again.");
     const result = await ctx.runMutation(internal.appointments.finalizeAppointmentPayment, {
@@ -165,7 +174,7 @@ export const verifyAppointmentPayment = action({
       currency: verified.currency,
     });
     if (!result) throw new ConvexError("Deposit payment requires review. Do not pay again.");
-    return result;
+    return { status: "success", appointmentId: result };
   },
 });
 

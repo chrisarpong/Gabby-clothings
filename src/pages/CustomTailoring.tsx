@@ -113,7 +113,7 @@ export default function CustomTailoring() {
       const bodyStorageId = await uploadFile(bodyPhotoFile);
       const storageIds = [inspoStorageId, bodyStorageId].filter(Boolean) as string[];
 
-      const appointmentId = await bookAppointment({
+      const created = await bookAppointment({
         name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
@@ -123,7 +123,7 @@ export default function CustomTailoring() {
         notes: formData.details,
         referenceImages: storageIds.length > 0 ? (storageIds as any) : undefined,
       });
-      await verifyPayment({ appointmentId, reference: reference.reference });
+      await verifyPayment({ appointmentId: created.appointmentId, reference: reference.reference });
 
       toast.dismiss();
       toast.success("Appointment request received!", {

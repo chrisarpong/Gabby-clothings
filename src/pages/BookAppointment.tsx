@@ -30,7 +30,7 @@ export default function BookAppointment() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdAppointmentId, setCreatedAppointmentId] = useState<any>(null);
+  const [createdAppointment, setCreatedAppointment] = useState<{ appointmentId: any; paymentReference?: string } | null>(null);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -66,16 +66,17 @@ export default function BookAppointment() {
   };
 
   const handlePaystackSuccessAction = async (reference: { reference: string }) => {
+    if (!createdAppointment) return;
     setIsSubmitting(true);
     try {
       await verifyPayment({
-        appointmentId: createdAppointmentId,
+        appointmentId: createdAppointment.appointmentId,
         reference: reference.reference,
       });
       toast.success("Appointment Confirmed", {
         description: "We've received your request and deposit. A confirmation email has been sent."
       });
-      setCreatedAppointmentId(null);
+      setCreatedAppointment(null);
       setStep(5); // Success step
     } catch (error) {
        toast.error("Failed to confirm payment", { description: String(error) });
@@ -90,6 +91,7 @@ export default function BookAppointment() {
 
   const paystackProps = {
     email: formData.email,
+    reference: createdAppointment?.paymentReference,
     amount: Math.round(bookingDepositAmount * 100),
     metadata: {
       name: formData.name,
@@ -104,12 +106,12 @@ export default function BookAppointment() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const aptId = await bookAppointment({
+      const created = await bookAppointment({
         ...formData,
       });
 
       if (bookingDepositAmount > 0) {
-        setCreatedAppointmentId(aptId);
+        setCreatedAppointment(created);
         setStep(4);
       } else {
         toast.success("Appointment Confirmed", {
@@ -302,7 +304,7 @@ export default function BookAppointment() {
             {/* STEP 4: CONFIRMATION & PAYMENT */}
             {step === 4 && (
               <motion.div key="step4" variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="flex flex-col gap-8 text-center">
-                {!createdAppointmentId ? (
+                {!createdAppointment ? (
                   <>
                     <div className="mb-4">
                       <h2 className="font-serif text-3xl text-primary mb-2">Review & Confirm</h2>
@@ -361,7 +363,7 @@ export default function BookAppointment() {
               </button>
             </div>
           )}
-          {step === 4 && !createdAppointmentId && (
+          {step === 4 && !createdAppointment && (
             <div className="flex gap-4 mt-12 pt-8 border-t border-surface-variant">
               <button onClick={handleBack} className="flex-1 py-4 border border-outline-variant text-primary font-label text-[10px] tracking-[0.2em] uppercase flex items-center justify-center gap-2 hover:bg-surface-variant transition-colors">
                 <ChevronLeft className="w-4 h-4" /> Back
