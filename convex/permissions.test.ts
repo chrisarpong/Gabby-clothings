@@ -256,11 +256,9 @@ describe("Phase 2 permission matrix", () => {
       staffToken: salesOneToken,
       customerDetails: { email: "buyer@example.test", firstName: "Buyer", lastName: "One" },
       items: [{ productId: posProductId, quantity: 1 }],
-      shippingFee: 0,
-      amountPaid: 0,
-      amountDue: 100,
-      isDeposit: false,
+      payInFull: true,
       paymentMethod: "cash",
+      idempotencyKey: "permissions-pos",
     });
     const createdOrder: any = await t.run(async ctx => await ctx.db.get(createdOrderId));
     expect(createdOrder.createdByStaffId).toBeTruthy();

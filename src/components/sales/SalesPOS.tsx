@@ -104,11 +104,9 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
           variantSku: c.variantSku,
           quantity: c.quantity,
         })),
-        shippingFee: 0,
-        amountPaid: cartTotal,
-        amountDue: 0,
-        isDeposit: false,
-        paymentMethod,
+        payInFull: true,
+        paymentMethod: paymentMethod === 'cash' || paymentMethod === 'momo' || paymentMethod === 'transfer' ? paymentMethod : 'cash',
+        idempotencyKey: crypto.randomUUID(),
       });
 
       toast.success("Order recorded successfully!");

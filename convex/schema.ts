@@ -115,6 +115,8 @@ export default defineSchema({
         productName: v.optional(v.string()),
         name: v.optional(v.string()), // legacy field
         measurements: v.optional(v.any()), // Custom measurements for custom-fit at time of order
+        notes: v.optional(v.string()),
+        isCustomJob: v.optional(v.boolean()),
       })
     ),
     subtotal: v.optional(v.number()),
@@ -147,12 +149,13 @@ export default defineSchema({
     depositPaid: v.optional(v.boolean()),
     paymentMethod: v.optional(v.string()), // 'paystack', 'cash', 'transfer', 'momo'
     createdByStaffId: v.optional(v.id("staff")),
+    posIdempotencyKey: v.optional(v.string()),
     
     // Assignment & Production
     // TODO(tighten): loosened to fit mock dev data
     assignedDesignerId: v.optional(v.union(v.id("staff"), v.string())),
     productionStatus: v.optional(v.string()), // 'cutting', 'stitching', 'fitting', 'finishing', 'completed'
-  }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedDesigner", ["assignedDesignerId"]).index("by_createdByStaff", ["createdByStaffId"]),
+  }).index("by_user", ["userId"]).index("by_status", ["status"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedDesigner", ["assignedDesignerId"]).index("by_createdByStaff", ["createdByStaffId"]).index("by_posIdempotencyKey", ["posIdempotencyKey"]),
 
   checkoutSessions: defineTable({
     reference: v.string(),

@@ -1,0 +1,59 @@
+import { describe, expect, it } from "vitest";
+import { convexTest } from "convex-test";
+import { createHash } from "node:crypto";
+import schema from "./schema";
+import { api } from "./_generated/api";
+
+const hash = (value: string) => createHash("sha256").update(value).digest("hex");
+async function staff(t: any, role: string, name = role) {
+  const token = `${role}-${name}-token`;
+  await t.run(async (ctx: any) => {
+    const id = await ctx.db.insert("staff", { name, email: `${name}@test.local`, role, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now() });
+    await ctx.db.insert("staffSessions", { staffId: id, tokenHash: hash(token), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
+  });
+  return token;
+}
+async function product(t: any, stock = 10) {
+  return await t.run((ctx: any) => ctx.db.insert("products", { name: "POS Shirt", slug: `pos-${Math.random()}`, category: "shirts", description: "test", type: "ready_to_wear", status: "active", basePrice: 100, sku: "POS-SKU", stock, images: [] }));
+}
+const customerDetails = { firstName: "Buyer", lastName: "Test", email: "buyer@test.local" };
+
+describe("POS money core", () => {
+  it("enforces sales override bounds, allows CEO pricing, and logs custom jobs", async () => {
+    const t = convexTest(schema);
+    const sales = await staff(t, "sales", "sales-one");
+    const ceo = await staff(t, "ceo", "ceo-one");
+    const productId = await product(t);
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: sales, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1, unitPriceOverride: 110 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "raise" })).rejects.toThrow();
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: sales, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1, unitPriceOverride: 79 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "low" })).rejects.toThrow();
+    const ceoOrder = await t.mutation(api.orders.createPOSOrder, { staffToken: ceo, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1, unitPriceOverride: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "ceo-price" });
+    expect(ceoOrder).toBeTruthy();
+    const custom = await t.mutation(api.orders.createPOSOrder, { staffToken: sales, customerDetails, items: [{ name: "Alteration", unitPriceOverride: 25, quantity: 2, notes: "hem" }], payInFull: true, paymentMethod: "cash", idempotencyKey: "custom" });
+    const row: any = await t.run((ctx: any) => ctx.db.get(custom));
+    expect(row.items[0].isCustomJob).toBe(true);
+    const logs: any[] = await t.run((ctx: any) => ctx.db.query("adminLogs").collect());
+    expect(logs.some((log: any) => log.action === "Created POS custom job")).toBe(true);
+  });
+
+  it("rejects invalid custom quantities/prices and empty sales", async () => {
+    const t = convexTest(schema); const token = await staff(t, "ceo", "invalid");
+    for (const item of [{ name: "x", unitPriceOverride: 0, quantity: 1 }, { name: "x", unitPriceOverride: 1, quantity: 0 }, { name: "x", unitPriceOverride: 1, quantity: 1.5 }, { name: "x", unitPriceOverride: 1, quantity: 51 }, { name: "x" }]) {
+      await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [item as any], payInFull: true, paymentMethod: "cash", idempotencyKey: `invalid-${Math.random()}` })).rejects.toThrow();
+    }
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [], payInFull: true, paymentMethod: "cash", idempotencyKey: "empty" })).rejects.toThrow();
+  });
+
+  it("computes deposits, rejects overpay/fake users, and is idempotent without a second stock decrement", async () => {
+    const t = convexTest(schema); const token = await staff(t, "ceo", "idem"); const other = await staff(t, "ceo", "other"); const productId = await product(t, 3);
+    const args: any = { staffToken: token, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1 }], payInFull: false, amountPaid: 40, paymentMethod: "cash", idempotencyKey: "same-key" };
+    const first = await t.mutation(api.orders.createPOSOrder, args);
+    const second = await t.mutation(api.orders.createPOSOrder, args);
+    expect(second).toBe(first);
+    const row: any = await t.run((ctx: any) => ctx.db.get(first));
+    expect(row.paymentStatus).toBe("partial"); expect(row.amountDue).toBe(60);
+    expect((await t.run((ctx: any) => ctx.db.get(productId)) as any).stock).toBe(2);
+    await expect(t.mutation(api.orders.createPOSOrder, { ...args, staffToken: other })).rejects.toThrow();
+    await expect(t.mutation(api.orders.createPOSOrder, { ...args, idempotencyKey: "over", payInFull: false, amountPaid: 101 })).rejects.toThrow();
+    await expect(t.mutation(api.orders.createPOSOrder, { ...args, idempotencyKey: "fake", userId: "missing" })).rejects.toThrow();
+  });
+});

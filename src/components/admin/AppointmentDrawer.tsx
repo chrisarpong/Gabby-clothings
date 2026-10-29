@@ -103,11 +103,10 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
           variantSku: "custom",
           quantity: 1,
         }],
-        shippingFee: 0,
+        payInFull: paid >= price,
         amountPaid: paid,
-        amountDue: price - paid,
-        isDeposit: paid > 0 && paid < price,
         paymentMethod: 'cash',
+        idempotencyKey: crypto.randomUUID(),
       });
       
       // Update appointment status to completed

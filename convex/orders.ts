@@ -6,8 +6,8 @@ import { Id } from "./_generated/dataModel";
 import { requireStaff } from "./staffAuth";
 import { nextOrderNumber } from "./lib/orderNumber";
 import { checkAvailability, apply } from "./lib/stock";
-import { lineUnitPrice } from "./lib/pricing";
-import { verifyPaystackTransaction } from "./lib/paystack";
+import { lineUnitPrice, toPesewas } from "./lib/pricing";
+import { generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 
 export const shippingAddressValidator = v.object({
   street: v.string(),
@@ -396,8 +396,8 @@ export const getByIdInternal = internalQuery({
 
 export const createPOSOrder = mutation({
   args: {
-      staffToken: v.string(),
-    userId: v.optional(v.string()), // Optional clerkId if they have an account
+    staffToken: v.string(),
+    userId: v.optional(v.string()),
     customerDetails: v.object({
       email: v.string(),
       firstName: v.string(),
@@ -405,78 +405,84 @@ export const createPOSOrder = mutation({
       phone: v.optional(v.string()),
     }),
     items: v.array(v.object({
-      productId: v.id("products"),
+      productId: v.optional(v.id("products")),
       variantSku: v.optional(v.string()),
       quantity: v.number(),
-      measurements: v.optional(v.any()), // custom-fit measurements taken in shop
+      name: v.optional(v.string()),
+      unitPriceOverride: v.optional(v.number()),
+      overrideReason: v.optional(v.string()),
+      measurements: v.optional(v.any()),
+      notes: v.optional(v.string()),
     })),
-    shippingFee: v.number(),
-    amountPaid: v.number(),
-    amountDue: v.number(),
-    isDeposit: v.boolean(),
-    paymentMethod: v.string(), // 'cash', 'momo', 'transfer', 'paystack'
-    paystackReference: v.optional(v.string()), // Required if paymentMethod is 'paystack'
+    payInFull: v.boolean(),
+    amountPaid: v.optional(v.number()),
+    paymentMethod: v.union(v.literal("cash"), v.literal("momo"), v.literal("transfer")),
+    idempotencyKey: v.string(),
   },
   handler: async (ctx, args) => {
-      const staff = await requireStaff(ctx, args.staffToken, { permission: ["sales_portal", "orders"] });
-    if (args.paymentMethod === "paystack") throw new Error("Use the verified POS Paystack action for card or mobile-money payments.");
-    if (!["cash", "transfer", "momo"].includes(args.paymentMethod)) throw new Error("Unsupported POS payment method.");
-    if (!Number.isFinite(args.amountPaid) || args.amountPaid < 0) throw new Error("Payment amount must be non-negative.");
-    if (args.shippingFee !== 0) throw new Error("POS orders cannot set a client-controlled shipping fee.");
-    const shortages = await checkAvailability(ctx, args.items, {});
-    if (shortages.length > 0) throw new Error(`Insufficient stock for ${shortages.map(row => row.productName).join(", ")}.`);
-    let subtotal = 0;
-    const finalItems = [];
+    const staff = await requireStaff(ctx, args.staffToken, { permission: ["sales_portal", "orders"] });
+    if (!args.idempotencyKey.trim()) throw new Error("idempotencyKey is required.");
+    const existing = await ctx.db.query("orders").withIndex("by_posIdempotencyKey", q => q.eq("posIdempotencyKey", args.idempotencyKey)).first();
+    if (existing) {
+      if (existing.createdByStaffId !== staff._id) throw new Error("This sale key belongs to another staff member.");
+      return existing._id;
+    }
+    if (args.items.length < 1 || args.items.length > 30) throw new Error("A POS sale must contain 1 to 30 items.");
+    if (args.userId) {
+      const customer = await ctx.db.query("users").withIndex("by_clerkId", q => q.eq("clerkId", args.userId!)).first();
+      if (!customer) throw new Error("Customer account not found.");
+    }
+    const tracked: Array<{ productId: any; variantSku?: string; quantity: number }> = [];
+    const finalItems: any[] = [];
+    let totalPesewas = 0;
     for (const item of args.items) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 50) throw new Error("Quantity must be an integer from 1 to 50.");
+      if (item.overrideReason && item.overrideReason.length > 200) throw new Error("Override reason is too long.");
+      if (!item.productId) {
+        const name = item.name?.trim() || "";
+        if (name.length < 1 || name.length > 100) throw new Error("Custom job name must be 1 to 100 characters.");
+        if (item.unitPriceOverride === undefined || !Number.isFinite(item.unitPriceOverride) || item.unitPriceOverride < 0.01 || item.unitPriceOverride > 1_000_000) throw new Error("Custom job price must be between 0.01 and 1,000,000 GHS.");
+        const pricePesewas = toPesewas(item.unitPriceOverride);
+        totalPesewas += pricePesewas * item.quantity;
+        finalItems.push({ name, productName: name, quantity: item.quantity, priceAtPurchase: item.unitPriceOverride, measurements: item.measurements, notes: item.notes, isCustomJob: true });
+        await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Created POS custom job", details: JSON.stringify({ name, price: item.unitPriceOverride, quantity: item.quantity }), category: "orders", timestamp: Date.now() });
+        continue;
+      }
       const product = await ctx.db.get(item.productId);
       if (!product || product.status !== "active") throw new Error("A POS product is unavailable.");
-      const price = lineUnitPrice(product, item.variantSku);
-      subtotal += price * item.quantity;
-      finalItems.push({ productId: item.productId, variantSku: item.variantSku, quantity: item.quantity, priceAtPurchase: price, productName: product.name, measurements: item.measurements });
+      const basePesewas = lineUnitPrice(product, item.variantSku);
+      let pricePesewas = basePesewas;
+      if (item.unitPriceOverride !== undefined) {
+        if (!Number.isFinite(item.unitPriceOverride) || item.unitPriceOverride < 0 || item.unitPriceOverride > 1_000_000) throw new Error("Price override is outside the allowed range.");
+        pricePesewas = toPesewas(item.unitPriceOverride);
+        const minimum = staff.role === "sales" ? Math.ceil(basePesewas * 0.8) : 0;
+        if (pricePesewas < minimum || (staff.role === "sales" && pricePesewas > basePesewas)) throw new Error("Sales price overrides must be between 80% and 100% of catalogue price.");
+        await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "POS price override", details: JSON.stringify({ item: product.name, original: basePesewas / 100, price: pricePesewas / 100, reason: item.overrideReason }), category: "orders", timestamp: Date.now() });
+      }
+      const variantSku = item.variantSku?.trim() === "" ? undefined : item.variantSku;
+      if (variantSku !== undefined && variantSku !== "custom") tracked.push({ productId: item.productId, variantSku, quantity: item.quantity });
+      totalPesewas += pricePesewas * item.quantity;
+      finalItems.push({ productId: item.productId, variantSku, quantity: item.quantity, priceAtPurchase: pricePesewas / 100, productName: product.name, measurements: item.measurements, notes: item.notes });
     }
-    const totalAmount = subtotal;
-    if (args.amountPaid > totalAmount) throw new Error("Payment cannot exceed the server-calculated POS total.");
-    const amountDue = totalAmount - args.amountPaid;
-    const appliedShortages = await apply(ctx, args.items);
-    if (appliedShortages.length > 0) throw new Error("Stock changed while this POS order was being prepared. Please retry.");
-
-    const orderIdValue = await nextOrderNumber(ctx);
-
-    let paymentStatus = "pending";
-    if (args.amountPaid > 0) {
-      paymentStatus = args.isDeposit ? "partial" : "paid";
-    }
-
+    const shortages = await checkAvailability(ctx, tracked, {});
+    if (shortages.length > 0) throw new Error(`Insufficient stock for ${shortages.map(row => `${row.productName} (${row.variantSku})`).join(", ")}.`);
+    const totalAmount = totalPesewas / 100;
+    let amountPaid = args.payInFull ? totalAmount : (args.amountPaid ?? 0);
+    if (!Number.isFinite(amountPaid) || amountPaid < 0 || amountPaid > totalAmount) throw new Error("Payment amount must be between zero and the total.");
+    if (!args.payInFull && amountPaid === 0 && staff.role !== "ceo" && staff.role !== "admin") throw new Error("Sales must collect a positive deposit.");
+    if (args.payInFull) amountPaid = totalAmount;
+    if (!args.payInFull && amountPaid > 0 && amountPaid >= totalAmount) throw new Error("A deposit must be less than the total; use pay in full.");
+    const applied = await apply(ctx, tracked);
+    if (applied.length) throw new Error("Stock changed while this POS order was being prepared. Please retry.");
+    const amountDue = totalAmount - amountPaid;
     const orderId = await ctx.db.insert("orders", {
-      orderId: orderIdValue,
-      userId: args.userId || "guest",
-      createdByStaffId: staff._id,
-      customerDetails: args.customerDetails,
-      items: finalItems,
-      subtotal: subtotal,
-      shippingFee: args.shippingFee,
-      discountAmount: 0,
-      totalAmount: totalAmount,
-      status: "processing", // In POS, usually instantly in process
-      paymentStatus: paymentStatus,
-      paystackReference: args.paystackReference || `manual_${Date.now()}`,
-      amountPaid: args.amountPaid,
-      amountDue,
-      isDeposit: args.isDeposit,
-      paymentMethod: args.paymentMethod,
+      orderId: await nextOrderNumber(ctx), userId: args.userId || "guest", createdByStaffId: staff._id,
+      customerDetails: args.customerDetails, items: finalItems, subtotal: totalAmount, shippingFee: 0, discountAmount: 0,
+      totalAmount, status: "processing", paymentStatus: amountPaid === 0 ? "pending" : amountDue > 0 ? "partial" : "paid",
+      paystackReference: `manual_${generatePaymentReference()}`, amountPaid, amountDue, isDeposit: amountDue > 0,
+      paymentMethod: args.paymentMethod, posIdempotencyKey: args.idempotencyKey,
     });
-
-    if (args.amountPaid > 0) {
-      await ctx.db.insert("payments", {
-        orderId,
-        amount: args.amountPaid,
-        paymentMethod: args.paymentMethod,
-        recordedBy: staff._id,
-        notes: `Initial POS order payment`,
-        date: new Date().toISOString(),
-      });
-    }
-
+    if (amountPaid > 0) await ctx.db.insert("payments", { orderId, amount: amountPaid, paymentMethod: args.paymentMethod, recordedBy: staff._id, notes: "Initial POS order payment", date: new Date().toISOString() });
     return orderId;
   }
 });

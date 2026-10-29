@@ -93,12 +93,10 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
           quantity: 1,
           measurements: Object.values(measurements).some(v => v) ? measurements : undefined,
         }],
-        shippingFee: 0,
+        payInFull: paymentStructure === 'full',
         amountPaid: amountToCharge,
-        amountDue: finalPrice - amountToCharge,
-        isDeposit: paymentStructure === 'deposit',
-        paymentMethod: 'paystack',
-        paystackReference: reference
+        paymentMethod: 'cash',
+        idempotencyKey: crypto.randomUUID(),
       });
       toast.success("Order created successfully!");
       onClose();
@@ -120,11 +118,10 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
           quantity: 1,
           measurements: Object.values(measurements).some(v => v) ? measurements : undefined,
         }],
-        shippingFee: 0,
+        payInFull: paymentStructure === 'full',
         amountPaid: amountToCharge,
-        amountDue: finalPrice - amountToCharge,
-        isDeposit: paymentStructure === 'deposit',
-        paymentMethod: paymentMethod,
+        paymentMethod: paymentMethod === 'cash' || paymentMethod === 'momo' || paymentMethod === 'transfer' ? paymentMethod : 'cash',
+        idempotencyKey: crypto.randomUUID(),
       });
       toast.success(`Order created successfully via ${paymentMethod}!`);
       onClose();

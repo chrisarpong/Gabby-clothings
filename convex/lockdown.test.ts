@@ -648,11 +648,9 @@ describe("Phase 1 Security Tests", () => {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "1", email: "c1@test.com" },
       items: [{ productId: posProductId, quantity: 1 }],
-      shippingFee: 0,
-      amountPaid: 100,
-      amountDue: 0,
-      isDeposit: false,
+      payInFull: true,
       paymentMethod: "cash",
+      idempotencyKey: "lockdown-1",
     });
     const order1 = await t.run(async (ctx) => ctx.db.get(order1Id));
     expect(order1?.orderId).toBe("GB-001");
@@ -662,11 +660,9 @@ describe("Phase 1 Security Tests", () => {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "2", email: "c2@test.com" },
       items: [{ productId: posProductId, quantity: 1 }],
-      shippingFee: 0,
-      amountPaid: 100,
-      amountDue: 0,
-      isDeposit: false,
+      payInFull: true,
       paymentMethod: "cash",
+      idempotencyKey: "lockdown-2",
     });
     const order2 = await t.run(async (ctx) => ctx.db.get(order2Id));
     expect(order2?.orderId).toBe("GB-002");
@@ -676,11 +672,9 @@ describe("Phase 1 Security Tests", () => {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "3", email: "c3@test.com" },
       items: [{ productId: posProductId, quantity: 1 }],
-      shippingFee: 0,
-      amountPaid: 100,
-      amountDue: 0,
-      isDeposit: false,
+      payInFull: true,
       paymentMethod: "cash",
+      idempotencyKey: "lockdown-3",
     });
     const order3 = await t.run(async (ctx) => ctx.db.get(order3Id));
     expect(order3?.orderId).toBe("GB-003");
@@ -698,11 +692,9 @@ describe("Phase 1 Security Tests", () => {
       staffToken,
       customerDetails: { firstName: "Cust", lastName: "4", email: "c4@test.com" },
       items: [{ productId: posProductId, quantity: 1 }],
-      shippingFee: 0,
-      amountPaid: 100,
-      amountDue: 0,
-      isDeposit: false,
+      payInFull: true,
       paymentMethod: "cash",
+      idempotencyKey: "lockdown-4",
     });
     const order4 = await t.run(async (ctx) => ctx.db.get(order4Id));
     expect(order4?.orderId).toBe("GB-016"); // Parsed as 15 + 1 = 16, NOT "15" + 1 = "151"
@@ -721,11 +713,9 @@ describe("Phase 1 Security Tests", () => {
         staffToken,
         customerDetails: { firstName: "Cust", lastName: "5", email: "c5@test.com" },
         items: [{ productId: posProductId, quantity: 1 }],
-        shippingFee: 0,
-        amountPaid: 100,
-        amountDue: 0,
-        isDeposit: false,
+        payInFull: true,
         paymentMethod: "cash",
+        idempotencyKey: "lockdown-5",
       })
     ).rejects.toThrow("Invalid order counter stored in database");
   });
