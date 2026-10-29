@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { createHash } from "node:crypto";
 import schema from "./schema";
 import { api } from "./_generated/api";
+import { moneyToPesewas } from "./lib/pricing";
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 async function staff(t: any, role: string, name = role) {
@@ -19,6 +20,17 @@ async function product(t: any, stock = 10) {
 const customerDetails = { firstName: "Buyer", lastName: "Test", email: "buyer@test.local" };
 
 describe("POS money core", () => {
+  it("rounds safe pesewa values and rejects unsafe precision", () => {
+    expect(moneyToPesewas(0.07)).toBe(7);
+    expect(moneyToPesewas(1.15)).toBe(115);
+    expect(moneyToPesewas(8.20)).toBe(820);
+    expect(moneyToPesewas(19.99)).toBe(1999);
+    expect(moneyToPesewas(0.1 + 0.2)).toBe(30);
+    expect(() => moneyToPesewas(10.005)).toThrow();
+    expect(() => moneyToPesewas(Number.NaN)).toThrow();
+    expect(() => moneyToPesewas(Number.POSITIVE_INFINITY)).toThrow();
+    expect(() => moneyToPesewas(-1)).toThrow();
+  });
   it("enforces sales override bounds, allows CEO pricing, and logs custom jobs", async () => {
     const t = convexTest(schema);
     const sales = await staff(t, "sales", "sales-one");

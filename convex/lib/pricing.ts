@@ -21,6 +21,14 @@ export function toPesewas(amountGhs: number): number {
   return pesewas;
 }
 
+export function moneyToPesewas(value: number, label = "Money amount"): number {
+  if (!Number.isFinite(value) || value < 0) throw new Error(`${label} must be finite and non-negative.`);
+  const rounded = Math.round(value * 100);
+  if (Math.abs(value * 100 - rounded) >= 1e-6) throw new Error(`${label} must have at most 2 decimals.`);
+  if (!Number.isSafeInteger(rounded)) throw new Error(`${label} is outside the supported range.`);
+  return rounded;
+}
+
 export function fromPesewas(amountPesewas: number): number {
   if (!Number.isSafeInteger(amountPesewas)) throw new Error("Pesewas amount must be a safe integer.");
   return amountPesewas / 100;

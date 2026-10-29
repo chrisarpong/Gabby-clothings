@@ -5,6 +5,7 @@ import { v, ConvexError } from "convex/values";
 import { requireStaff } from "./staffAuth";
 import { constantTimeEqual, generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 import { recordPaymentIssue } from "./lib/paymentIssues";
+import { moneyToPesewas } from "./lib/pricing";
 
 export const getStorageMetadata = internalQuery({
   args: { storageId: v.id("_storage") },
@@ -608,12 +609,13 @@ export const recordDeposit = mutation({
       const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     const apt = await ctx.db.get(args.appointmentId);
     if (!apt) throw new Error("Appointment not found");
-    const expected = apt.expectedAmountPesewas ? apt.expectedAmountPesewas / 100 : 0;
-    const remaining = Math.max(0, expected - (apt.amountPaid || 0));
-    if (!Number.isFinite(args.amountPaid) || args.amountPaid <= 0 || args.amountPaid > remaining) throw new Error("Manual deposit must be positive and no more than the expected deposit.");
+    const paymentPesewas = moneyToPesewas(args.amountPaid, "Manual deposit");
+    const expected = apt.expectedAmountPesewas || 0;
+    const remaining = Math.max(0, expected - moneyToPesewas(apt.amountPaid || 0, "Existing payment"));
+    if (paymentPesewas <= 0 || paymentPesewas > remaining) throw new Error("Manual deposit must be positive and no more than the expected deposit.");
     await ctx.db.patch(args.appointmentId, {
-      amountPaid: (apt.amountPaid || 0) + args.amountPaid,
-      paymentStatus: (apt.amountPaid || 0) + args.amountPaid >= expected ? "paid" : "partial",
+      amountPaid: (moneyToPesewas(apt.amountPaid || 0, "Existing payment") + paymentPesewas) / 100,
+      paymentStatus: moneyToPesewas(apt.amountPaid || 0, "Existing payment") + paymentPesewas >= expected ? "paid" : "partial",
     });
     await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Recorded Appointment Deposit", details: `${args.method}: GH₵${args.amountPaid}`, category: "appointments", targetId: args.appointmentId, targetType: "appointment", timestamp: Date.now() });
   }

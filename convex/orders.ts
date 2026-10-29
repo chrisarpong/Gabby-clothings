@@ -6,13 +6,10 @@ import { Id } from "./_generated/dataModel";
 import { requireStaff } from "./staffAuth";
 import { nextOrderNumber } from "./lib/orderNumber";
 import { checkAvailability, apply } from "./lib/stock";
-import { lineUnitPrice, toPesewas } from "./lib/pricing";
+import { lineUnitPrice, toPesewas, moneyToPesewas } from "./lib/pricing";
 import { generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 
-function moneyPesewas(value: number, label: string): number {
-  if (!Number.isFinite(value) || Math.round(value * 100) !== value * 100) throw new Error(`${label} must have at most 2 decimals.`);
-  return toPesewas(value);
-}
+const moneyPesewas = moneyToPesewas;
 
 export const shippingAddressValidator = v.object({
   street: v.string(),
