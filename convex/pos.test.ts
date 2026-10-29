@@ -130,6 +130,12 @@ describe("POS money core", () => {
     await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: baseId, variantSku: "custom", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "custom-fit" });
     expect((await t.run((ctx: any) => ctx.db.get(baseId)) as any).stock).toBe(before);
     await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: baseId, unitPriceOverride: 1.001, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "three-decimal" })).rejects.toThrow();
+    const showcaseId: any = await t.run((ctx: any) => ctx.db.insert("products", { name: "Showcase", slug: "showcase", category: "custom", description: "x", type: "showcase_template", status: "active", basePrice: 50, images: [] }));
+    await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: showcaseId, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "showcase-untracked" });
+    expect((await t.run((ctx: any) => ctx.db.get(showcaseId)) as any).stock).toBeUndefined();
+    const noSkuId: any = await t.run((ctx: any) => ctx.db.insert("products", { name: "No SKU", slug: "no-sku", category: "shirts", description: "x", type: "ready_to_wear", status: "active", basePrice: 50, images: [] }));
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: noSkuId, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "ready-no-sku" })).rejects.toThrow("needs a product SKU");
+    await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ name: "Precise custom", unitPriceOverride: 10.005, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "custom-three-decimal" })).rejects.toThrow();
   });
 
   it("accepts the Admin drawer catalogue/custom payloads and clerkId customer", async () => {

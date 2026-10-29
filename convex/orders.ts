@@ -154,7 +154,7 @@ export const createPOSOrder = mutation({
         const name = item.name?.trim() || "";
         if (name.length < 1 || name.length > 100) throw new Error("Custom job name must be 1 to 100 characters.");
         if (item.unitPriceOverride === undefined || !Number.isFinite(item.unitPriceOverride) || item.unitPriceOverride < 0.01 || item.unitPriceOverride > 1_000_000) throw new Error("Custom job price must be between 0.01 and 1,000,000 GHS.");
-        const pricePesewas = toPesewas(item.unitPriceOverride);
+        const pricePesewas = moneyPesewas(item.unitPriceOverride, "Custom job price");
         totalPesewas += pricePesewas * item.quantity;
         finalItems.push({ name, productName: name, quantity: item.quantity, priceAtPurchase: item.unitPriceOverride, measurements: item.measurements, notes: item.notes, isCustomJob: true });
         if (staff.role === "sales") hasPriceAdjustment = true;
@@ -164,8 +164,9 @@ export const createPOSOrder = mutation({
       const product = await ctx.db.get(item.productId);
       if (!product || product.status !== "active") throw new Error("A POS product is unavailable.");
       const requestedSku = item.variantSku?.trim() === "" ? undefined : item.variantSku;
-      if (product.variants?.length && requestedSku === undefined) throw new Error(`Please choose a size for ${product.name}.`);
-      const effectiveSku = product.variants?.length ? requestedSku : (requestedSku === "custom" ? "custom" : product.sku);
+      const madeToMeasure = product.type === "showcase_template" || requestedSku === "custom";
+      if (product.variants?.length && requestedSku === undefined && !madeToMeasure) throw new Error(`Please choose a size for ${product.name}.`);
+      const effectiveSku = madeToMeasure ? "custom" : (product.variants?.length ? requestedSku : product.sku);
       if (!product.variants?.length && effectiveSku === undefined) throw new Error(`${product.name} needs a product SKU.`);
       const basePesewas = lineUnitPrice(product, effectiveSku);
       let pricePesewas = basePesewas;
@@ -178,7 +179,7 @@ export const createPOSOrder = mutation({
         await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "POS price override", details: JSON.stringify({ item: product.name, original: basePesewas / 100, price: pricePesewas / 100, reason: item.overrideReason }), category: "orders", timestamp: Date.now() });
       }
       const variantSku = effectiveSku;
-      if (variantSku !== undefined && variantSku !== "custom") tracked.push({ productId: item.productId, variantSku, quantity: item.quantity });
+      if (!madeToMeasure && variantSku !== undefined) tracked.push({ productId: item.productId, variantSku, quantity: item.quantity });
       totalPesewas += pricePesewas * item.quantity;
       finalItems.push({ productId: item.productId, variantSku, quantity: item.quantity, priceAtPurchase: pricePesewas / 100, productName: product.name, measurements: item.measurements, notes: item.notes });
     }
