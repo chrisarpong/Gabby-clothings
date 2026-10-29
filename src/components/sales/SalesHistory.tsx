@@ -9,6 +9,7 @@ export default function SalesHistory() {
   const recordManualPayment = useStaffMutation(api.orders.recordManualPayment);
   const [search, setSearch] = useState('');
   const [payment, setPayment] = useState<Record<string, { amount: string; method: string; notes: string }>>({});
+  const [paymentState, setPaymentState] = useState<Record<string, { busy?: boolean; error?: string; success?: string }>>({});
   const posOrders = useMemo(() => (orders || []).filter(order =>
     order.orderId?.startsWith('GB-') && `${order.orderId} ${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''} ${order.status}`.toLowerCase().includes(search.toLowerCase())
   ), [orders, search]);
@@ -50,6 +51,8 @@ export default function SalesHistory() {
                   <th className="p-4 font-bold border-b border-surface-variant">Customer</th>
                   <th className="p-4 font-bold border-b border-surface-variant">Items</th>
                   <th className="p-4 font-bold border-b border-surface-variant">Total</th>
+                  <th className="p-4 font-bold border-b border-surface-variant">Paid</th>
+                  <th className="p-4 font-bold border-b border-surface-variant">Balance Due</th>
                   <th className="p-4 font-bold border-b border-surface-variant">Status</th>
                 </tr>
               </thead>
@@ -60,14 +63,19 @@ export default function SalesHistory() {
                     <td className="p-4 text-on-surface-variant">{order.customerDetails?.firstName} {order.customerDetails?.lastName}</td>
                     <td className="p-4 text-on-surface-variant">{order.items.length} items</td>
                     <td className="p-4 text-primary font-serif">₵{(order.totalAmount || 0).toLocaleString()}</td>
+                    <td className="p-4 text-primary">₵{(order.amountPaid || 0).toFixed(2)}</td>
+                    <td className="p-4 text-primary">₵{(order.amountDue || 0).toFixed(2)}</td>
                     <td className="p-4">
                       <span className="bg-primary/10 text-primary px-2 py-1 text-[10px] uppercase tracking-widest font-bold">
                         {order.status}
                       </span>
-                      {(order.amountDue || 0) > 0 && <div className="mt-2 flex flex-wrap gap-1">
+                      {(order.amountDue || 0) > 0 && order.status !== 'cancelled' && <div className="mt-2 flex flex-wrap gap-1">
                         <input aria-label="Balance amount" className="w-20 border p-1 text-xs" type="number" value={payment[order._id]?.amount || ''} onChange={e => setPayment(prev => ({ ...prev, [order._id]: { amount: e.target.value, method: prev[order._id]?.method || 'cash', notes: prev[order._id]?.notes || '' } }))} placeholder="Amount" />
                         <select aria-label="Balance method" className="border p-1 text-xs" value={payment[order._id]?.method || 'cash'} onChange={e => setPayment(prev => ({ ...prev, [order._id]: { amount: prev[order._id]?.amount || '', method: e.target.value, notes: prev[order._id]?.notes || '' } }))}><option value="cash">Cash</option><option value="momo">MoMo</option><option value="transfer">Transfer</option></select>
-                        <button className="border px-2 py-1 text-xs" onClick={async () => { try { const value = payment[order._id]; await recordManualPayment({ orderId: order._id, amount: Number(value?.amount), paymentMethod: value?.method || 'cash', notes: value?.notes }); setPayment(prev => ({ ...prev, [order._id]: { ...prev[order._id], amount: '' } })); } catch (error: any) { window.alert(error.message || 'Payment failed'); } }}>Record balance</button>
+                        <input aria-label="Balance notes" className="w-28 border p-1 text-xs" value={payment[order._id]?.notes || ''} onChange={e => setPayment(prev => ({ ...prev, [order._id]: { amount: prev[order._id]?.amount || '', method: prev[order._id]?.method || 'cash', notes: e.target.value } }))} placeholder="Notes" />
+                        <button disabled={paymentState[order._id]?.busy} className="border px-2 py-1 text-xs disabled:opacity-50" onClick={async () => { const key = order._id; setPaymentState(prev => ({ ...prev, [key]: { busy: true } })); try { const value = payment[key]; await recordManualPayment({ orderId: order._id, amount: Number(value?.amount), paymentMethod: value?.method || 'cash', notes: value?.notes }); setPayment(prev => ({ ...prev, [key]: { ...prev[key], amount: '' } })); setPaymentState(prev => ({ ...prev, [key]: { success: 'Payment recorded' } })); } catch (error: any) { setPaymentState(prev => ({ ...prev, [key]: { error: error.message || 'Payment failed' } })); } }}>Record balance</button>
+                        {paymentState[order._id]?.error && <span className="text-error text-xs basis-full">{paymentState[order._id]?.error}</span>}
+                        {paymentState[order._id]?.success && <span className="text-green-700 text-xs basis-full">{paymentState[order._id]?.success}</span>}
                       </div>}
                     </td>
                   </tr>
