@@ -31,6 +31,8 @@ crons.interval(
   { hours: 1 },
   internal.inventory.cleanupExpiredReserves
 );
+crons.interval("cleanup-old-checkout-sessions", { hours: 1 }, internal.maintenance.cleanupPendingCheckoutSessions);
+crons.interval("cleanup-old-rate-limits", { hours: 1 }, internal.maintenance.cleanupRateLimits);
 crons.interval("expire-appointment-payments", { minutes: 10 }, internal.appointments.expireAwaitingPayments);
 
 export default crons;
