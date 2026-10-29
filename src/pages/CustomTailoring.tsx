@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { useMutation, useQuery } from '@/hooks/useConvex';
+import { useMutation, useQuery, useAction } from '@/hooks/useConvex';
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PaystackButton } from "react-paystack";
@@ -14,6 +14,7 @@ export default function CustomTailoring() {
   const productTitle = searchParams.get("title");
   
   const bookAppointment = useMutation(api.appointments.book);
+  const verifyPayment = useAction(api.appointments.verifyAppointmentPayment);
   const generateUploadUrl = useMutation(api.appointments.generateUploadUrl);
 
   const [measurements, setMeasurements] = useState({
@@ -112,7 +113,7 @@ export default function CustomTailoring() {
       const bodyStorageId = await uploadFile(bodyPhotoFile);
       const storageIds = [inspoStorageId, bodyStorageId].filter(Boolean) as string[];
 
-      await bookAppointment({
+      const appointmentId = await bookAppointment({
         name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
@@ -120,10 +121,9 @@ export default function CustomTailoring() {
         garmentType: formData.garmentType,
         time: formData.time,
         notes: formData.details,
-        paystackReference: reference.reference,
-        amountPaid: bookingDepositAmount,
         referenceImages: storageIds.length > 0 ? (storageIds as any) : undefined,
       });
+      await verifyPayment({ appointmentId, reference: reference.reference });
 
       toast.dismiss();
       toast.success("Appointment request received!", {

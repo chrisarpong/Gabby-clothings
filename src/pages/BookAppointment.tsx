@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMutation, useQuery } from "@/hooks/useConvex";
+import { useMutation, useQuery, useAction } from "@/hooks/useConvex";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Calendar, Clock, User, Mail, Phone, MessageSquare, MapPin, ChevronRight, ChevronLeft, CheckCircle2, Scissors } from "lucide-react";
@@ -11,7 +11,7 @@ import { formatPrice } from "../utils/currency";
 
 export default function BookAppointment() {
   const bookAppointment = useMutation(api.appointments.book);
-  const confirmPayment = useMutation(api.appointments.confirmCustomerPayment);
+  const verifyPayment = useAction(api.appointments.verifyAppointmentPayment);
   const { activeCurrency, rates } = useCurrencyStore();
 
   const [step, setStep] = useState(1);
@@ -68,9 +68,9 @@ export default function BookAppointment() {
   const handlePaystackSuccessAction = async (reference: { reference: string }) => {
     setIsSubmitting(true);
     try {
-      await confirmPayment({
+      await verifyPayment({
         appointmentId: createdAppointmentId,
-        paystackReference: reference.reference,
+        reference: reference.reference,
       });
       toast.success("Appointment Confirmed", {
         description: "We've received your request and deposit. A confirmation email has been sent."
@@ -106,7 +106,6 @@ export default function BookAppointment() {
     try {
       const aptId = await bookAppointment({
         ...formData,
-        paymentStatus: bookingDepositAmount > 0 ? "pending" : undefined,
       });
 
       if (bookingDepositAmount > 0) {
