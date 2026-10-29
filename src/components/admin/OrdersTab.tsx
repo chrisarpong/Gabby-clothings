@@ -21,6 +21,7 @@ const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   dispatched: { bg: 'bg-surface-variant/30', text: 'text-primary' },
   completed: { bg: 'bg-primary', text: 'text-white' },
   cancelled: { bg: 'bg-transparent border border-outline-variant/30', text: 'text-on-surface-variant' }
+  ,on_hold: { bg: 'bg-amber-100', text: 'text-amber-900' }
 };
 
 const formatStatus = (status: string) => {
@@ -172,6 +173,7 @@ export default function OrdersTab() {
               <option value="fabric_sourced">Fabric Sourced</option>
               <option value="cutting_phase">Cutting Phase</option>
               <option value="ready_for_pickup">Ready for Pickup</option>
+                <option value="on_hold">On Hold</option>
               <option value="dispatched">Dispatched</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
@@ -250,6 +252,7 @@ export default function OrdersTab() {
                           <option value="first_fitting_ready">First Fitting Ready</option>
                           <option value="final_adjustments">Final Adjustments</option>
                           <option value="ready_for_pickup">Ready for Pickup</option>
+                          <option value="on_hold">On Hold</option>
                           <option value="dispatched">Dispatched</option>
                           <option value="completed">Completed</option>
                           <option value="cancelled">Cancelled</option>

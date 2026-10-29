@@ -68,4 +68,13 @@ describe("POS money core", () => {
     await t.run((ctx: any) => ctx.db.patch(orderId, { status: "cancelled" }));
     await expect(t.mutation(api.payments.recordCashPayment, { staffToken: token, orderId, amount: 1, paymentMethod: "cash" })).rejects.toThrow();
   });
+
+  it("accepts on_hold and rejects invented statuses without touching stock", async () => {
+    const t = convexTest(schema); const token = await staff(t, "ceo", "statuses"); const productId = await product(t, 2);
+    const orderId = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId, variantSku: "POS-SKU", quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "status-order" });
+    await t.mutation(api.orders.updateStatus, { staffToken: token, orderId, status: "on_hold" });
+    await t.mutation(api.orders.updateStatus, { staffToken: token, orderId, status: "processing" });
+    await expect(t.mutation(api.orders.updateStatus, { staffToken: token, orderId, status: "invented" })).rejects.toThrow();
+    expect((await t.run((ctx: any) => ctx.db.get(productId)) as any).stock).toBe(1);
+  });
 });

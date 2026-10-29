@@ -363,6 +363,8 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
+    const allowed = ["pending", "processing", "fabric_sourced", "cutting_phase", "first_fitting_ready", "final_adjustments", "ready_for_pickup", "dispatched", "shipped", "completed", "delivered", "on_hold", "cancelled"];
+    if (!allowed.includes(args.status)) throw new Error("Invalid order status.");
     await ctx.db.patch(args.orderId, {
       status: args.status,
     });
