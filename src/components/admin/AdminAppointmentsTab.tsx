@@ -305,12 +305,12 @@ export default function AdminAppointmentsTab() {
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-2 items-start">
-                        <span className={`text-[10px] uppercase tracking-widest px-2 py-1 ${apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' : apt.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'text-on-surface-variant bg-brand-bone'}`}>
+                        <span className={`text-[10px] uppercase tracking-widest px-2 py-1 ${apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' : apt.status === 'cancelled' || apt.status === 'expired' ? 'bg-red-100 text-red-800' : 'text-on-surface-variant bg-brand-bone'}`}>
                           {apt.status}
                         </span>
-                        {apt.paymentStatus === 'paid' && (
+                        {apt.paymentStatus && apt.paymentStatus !== 'not_required' && (
                           <span className="text-[10px] uppercase tracking-widest px-2 py-1 bg-blue-100 text-blue-800 flex flex-col">
-                            PAID {apt.amountPaid ? `(GH₵${apt.amountPaid})` : ''}
+                            {apt.paymentStatus.replace('_', ' ')} {apt.amountPaid ? `(GH₵${apt.amountPaid})` : ''}
                             {apt.paystackReference && <span className="text-[8px] opacity-70">Ref: {apt.paystackReference}</span>}
                           </span>
                         )}

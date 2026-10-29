@@ -523,10 +523,20 @@ export const reschedule = mutation({
     if (!args.staffToken && apt.userId !== identity?.subject) throw new Error("Unauthorized");
     if (["cancelled", "expired", "completed"].includes(apt.status)) throw new Error("Appointment cannot be rescheduled in its current state");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(args.date) || (args.time !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(args.time))) throw new Error("Invalid appointment date or time.");
-    const target = new Date(`${args.date}T${args.time || "00:00"}:00Z`);
+    const target = new Date(`${args.date}T${args.time || "23:59"}:00Z`);
     const now = new Date();
     const max = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
     if (Number.isNaN(target.getTime()) || target < now || target > max) throw new Error("Appointment must be within the next 180 days.");
+    if (!args.staffToken) {
+      const availability = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "availability")).first();
+      const rules = availability?.value;
+      if (rules) {
+        const day = new Date(`${args.date}T12:00:00Z`).getUTCDay();
+        if (rules.workingDays && !rules.workingDays.includes(day)) throw new Error("We are not open on this day.");
+        if (args.time && rules.startHour && rules.endHour && (args.time < rules.startHour || args.time > rules.endHour)) throw new Error("Selected time is outside working hours.");
+        if (args.time && rules.lunchStart && rules.lunchEnd && args.time >= rules.lunchStart && args.time < rules.lunchEnd) throw new Error("Selected time overlaps lunch hours.");
+      }
+    }
     if (args.time) {
       const availabilitySetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "availability")).first();
       const bufferTime = availabilitySetting?.value?.bufferTime || 30;
@@ -540,8 +550,8 @@ export const reschedule = mutation({
         if (start < otherStart + 60 + bufferTime && end > otherStart) throw new Error("This time slot is no longer available.");
       }
     }
-    const oldReminders = await ctx.db.query("reminders").withIndex("by_status", q => q.eq("status", "pending")).collect();
-    for (const reminder of oldReminders.filter(row => row.appointmentId === apt._id)) await ctx.db.delete(reminder._id);
+    const oldReminders = await ctx.db.query("reminders").withIndex("by_appointmentId", q => q.eq("appointmentId", apt._id)).filter(q => q.eq(q.field("status"), "pending")).collect();
+    for (const reminder of oldReminders) await ctx.db.delete(reminder._id);
     await ctx.db.patch(args.appointmentId, {
       date: args.date,
       time: args.time,

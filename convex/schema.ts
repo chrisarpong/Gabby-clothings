@@ -294,7 +294,7 @@ export default defineSchema({
     scheduledFor: v.string(), // ISO date
     status: v.string(), // 'pending', 'sent'
     type: v.string(), // '24h_reminder'
-  }).index("by_status", ["status"]),
+  }).index("by_status", ["status"]).index("by_appointmentId", ["appointmentId"]),
 
   contentBlocks: defineTable({
     key: v.string(), // e.g., "home_hero", "faq_items", "legal_privacy"

@@ -74,6 +74,23 @@ describe("appointment rescheduling authorization", () => {
     await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-12", time: "14:00" })).rejects.toThrow();
     await expect(t.mutation(api.appointments.reschedule, { appointmentId: taken, date: "2020-01-01", time: "10:00" })).rejects.toThrow();
   });
+
+  it("enforces owner working-day and lunch rules while allowing staff override", async () => {
+    const t = convexTest(schema).withIdentity({ subject: "user_owner" });
+    await t.run(async (ctx: any) => ctx.db.insert("settings", { key: "availability", value: { workingDays: [1, 2, 3, 4, 5], startHour: "09:00", endHour: "17:00", lunchStart: "12:00", lunchEnd: "13:00" } }));
+    const appointmentId = await seed(t);
+    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-08", time: "10:00" })).rejects.toThrow();
+    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-11", time: "12:30" })).rejects.toThrow();
+    const token = await staffToken(t);
+    await t.mutation(api.appointments.reschedule, { appointmentId, staffToken: token, date: "2026-11-08", time: "10:00" });
+  });
+
+  it("allows an owner date-only reschedule to today", async () => {
+    const t = convexTest(schema).withIdentity({ subject: "user_owner" });
+    const appointmentId = await seed(t);
+    const today = new Date().toISOString().slice(0, 10);
+    await t.mutation(api.appointments.reschedule, { appointmentId, date: today });
+  });
 });
 
 describe("expired appointment payment revival", () => {

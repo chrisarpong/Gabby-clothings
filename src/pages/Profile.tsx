@@ -717,7 +717,7 @@ export default function Profile() {
                             </div>
                             <span className={`text-[10px] tracking-widest uppercase inline-block px-3 py-1 mt-2 w-max ${
                               apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
-                              apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              apt.status === 'cancelled' || apt.status === 'expired' ? 'bg-red-100 text-red-800' :
                               'bg-surface-variant text-primary'
                             }`}>
                               {apt.status}
@@ -757,13 +757,13 @@ export default function Profile() {
                         <div className="flex flex-col gap-6">
                           {appointments.filter(apt => {
                             const aptDate = new Date(`${apt.date}T${apt.time || '00:00'}`);
-                            return aptDate < new Date() || apt.status === 'completed' || apt.status === 'cancelled';
+                            return aptDate < new Date() || apt.status === 'completed' || apt.status === 'cancelled' || apt.status === 'expired';
                           }).length === 0 ? (
                             <p className="text-sm font-sans text-outline">No past appointments.</p>
                           ) : (
                             appointments.filter(apt => {
                               const aptDate = new Date(`${apt.date}T${apt.time || '00:00'}`);
-                              return aptDate < new Date() || apt.status === 'completed' || apt.status === 'cancelled';
+                              return aptDate < new Date() || apt.status === 'completed' || apt.status === 'cancelled' || apt.status === 'expired';
                             }).map((apt) => (
                               <div key={apt._id} className="border border-surface-variant p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 opacity-60 hover:opacity-100 transition-opacity">
                                 <div className="flex flex-col gap-2">
@@ -774,7 +774,7 @@ export default function Profile() {
                                   </div>
                                   <span className={`text-[10px] tracking-widest uppercase inline-block px-3 py-1 mt-2 w-max ${
                                     apt.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
-                                    apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                    apt.status === 'cancelled' || apt.status === 'expired' ? 'bg-red-100 text-red-800' :
                                     'bg-surface-variant text-primary'
                                   }`}>
                                     {apt.status}
