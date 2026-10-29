@@ -3,30 +3,7 @@ import { useMutation, useQuery } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { X, Calendar, Video, Edit2, DollarSign, Tag, ClipboardList, CheckCircle, MessageCircle, MapPin, AlertCircle, ShoppingBag } from 'lucide-react';
-import { usePaystackPayment } from 'react-paystack';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
-
-const PaystackDepositButton = ({ appointment, amount, onSuccess }: { appointment: any, amount: number, onSuccess: (ref: any) => void }) => {
-  const config = {
-    reference: (new Date()).getTime().toString(),
-    email: appointment.email || 'guest@gabbynewluk.com',
-    amount: amount * 100, // Paystack amount is in pesewas
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder', // Ensure this is set in .env
-    currency: 'GHS',
-  };
-  
-  const initializePayment = usePaystackPayment(config);
-  
-  return (
-    <button 
-      onClick={() => initializePayment({ onSuccess, onClose: () => {} })}
-      className="text-[10px] uppercase tracking-widest px-3 py-2 bg-primary text-surface hover:bg-tertiary transition-colors flex items-center gap-2"
-    >
-      <DollarSign className="w-3 h-3" />
-      Pay Deposit (Paystack)
-    </button>
-  );
-};
 
 interface AppointmentDrawerProps {
   appointment: any | null;
@@ -93,8 +70,6 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
         appointmentId: appointment._id,
         adminNotes,
         fabricAndStyling: { fabric: fabricSelection, styleNotes },
-        depositAmount: depositAmount ? Number(depositAmount) : undefined,
-        paystackReference: paymentReference,
         measurementsCaptured,
       });
       toast.success("Details updated successfully");
@@ -345,28 +320,12 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
                   >
                     Mark Paid via Manual MoMo
                   </button>
-                  {appointment.status === 'confirmed' && (
-                    <PaystackDepositButton 
-                      appointment={appointment} 
-                      amount={depositAmount || 500}
-                      onSuccess={async (reference: any) => {
-                        setPaymentReference(reference.reference);
-                        await recordAptDeposit({
-                          appointmentId: appointment._id,
-                          amountPaid: Number(depositAmount || 500),
-                          paystackReference: reference.reference
-                        });
-                        if (appointment.linkedOrderId) {
-                          await recordOrderDeposit({
-                            orderId: appointment.linkedOrderId,
-                            amountPaid: Number(depositAmount || 500),
-                            paystackReference: reference.reference
-                          });
-                        }
-                        toast.success("Deposit processed successfully!");
-                      }}
-                    />
-                  )}
+                  {appointment.status === 'confirmed' && <button onClick={async () => {
+                    try {
+                      await recordAptDeposit({ appointmentId: appointment._id, amountPaid: Number(depositAmount || 0), method: "cash" });
+                      toast.success("Manual deposit recorded");
+                    } catch (error) { toast.error(String(error)); }
+                  }} className="text-[10px] uppercase tracking-widest px-3 py-2 border border-outline-variant/30 text-primary hover:bg-primary hover:text-white transition-colors">Record cash deposit</button>}
                 </div>
               )}
             </div>

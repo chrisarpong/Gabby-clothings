@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { PaystackButton } from "react-paystack";
 import PhoneInputCustom from '../components/PhoneInputCustom';
 import { parseConvexError } from "../utils/errorParser";
+import { SignInButton, useUser } from "@clerk/clerk-react";
 
 export default function CustomTailoring() {
+  const { isLoaded, isSignedIn } = useUser();
   const [searchParams] = useSearchParams();
   const productSource = searchParams.get("product");
   const productTitle = searchParams.get("title");
@@ -93,6 +95,10 @@ export default function CustomTailoring() {
   const bookingDepositAmount = Number(depositSetting?.value ?? 0);
 
   const isFormValid = formData.fullName && formData.email && formData.garmentType && designInspoPreview && bodyPhotoPreview;
+
+  if (isLoaded && !isSignedIn) {
+    return <main className="min-h-screen flex items-center justify-center p-8"><div className="text-center"><h1 className="font-serif text-3xl text-primary mb-4">Sign in to request custom tailoring</h1><SignInButton mode="modal"><button className="bg-primary text-on-primary px-6 py-3">Sign in</button></SignInButton></div></main>;
+  }
 
   const uploadFile = async (file: File | null) => {
     if (!file) return null;

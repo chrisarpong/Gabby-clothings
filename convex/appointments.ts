@@ -5,6 +5,11 @@ import { v, ConvexError } from "convex/values";
 import { requireStaff } from "./staffAuth";
 import { constantTimeEqual, generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 
+export const getStorageMetadata = internalQuery({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => await ctx.storage.getMetadata(args.storageId),
+});
+
 export const book = mutation({
   args: {
     name: v.string(),
@@ -22,6 +27,22 @@ export const book = mutation({
   },
   handler: async (ctx, args) => {
     await checkRateLimit(ctx, "bookAppointment", 5, 60000, args.email); // 5 per minute per identity/email
+
+    if (args.name.trim().length < 1 || args.name.length > 100) throw new ConvexError("Name must be between 1 and 100 characters.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.email.trim()) || args.email.length > 254) throw new ConvexError("Enter a valid email address.");
+    if (args.phone.trim().length < 5 || args.phone.length > 30) throw new ConvexError("Phone must be between 5 and 30 characters.");
+    if (args.notes && args.notes.length > 2000) throw new ConvexError("Notes must be 2000 characters or fewer.");
+    if (args.garmentType.length > 100) throw new ConvexError("Garment type must be 100 characters or fewer.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(args.date)) throw new ConvexError("Date must use YYYY-MM-DD format.");
+    const appointmentDate = new Date(`${args.date}T23:59:59Z`);
+    const now = Date.now();
+    if (Number.isNaN(appointmentDate.getTime()) || appointmentDate.getTime() < now || appointmentDate.getTime() > now + 180 * 24 * 60 * 60 * 1000) throw new ConvexError("Appointment date must be today through 180 days from now.");
+    if (args.time !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(args.time)) throw new ConvexError("Time must use HH:MM format.");
+    if (args.referenceImages && args.referenceImages.length > 5) throw new ConvexError("You may upload at most 5 reference images.");
+    for (const storageId of args.referenceImages ?? []) {
+      const metadata = await ctx.runQuery(internal.appointments.getStorageMetadata, { storageId });
+      if (!metadata || !metadata.contentType?.startsWith("image/") || metadata.size > 10 * 1024 * 1024) throw new ConvexError("Each reference image must be an image under 10MB.");
+    }
 
     // Optionally link to identity if available
     const identity = await ctx.auth.getUserIdentity();
@@ -569,9 +590,6 @@ export const updateDetails = mutation({
     assignedTo: v.optional(v.string()),
     fabricAndStyling: v.optional(v.any()),
     adminNotes: v.optional(v.string()),
-    depositAmount: v.optional(v.number()),
-    paystackReference: v.optional(v.string()),
-    paymentStatus: v.optional(v.string()),
     measurementsCaptured: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -586,18 +604,20 @@ export const recordDeposit = mutation({
       staffToken: v.string(),
     appointmentId: v.id("appointments"),
     amountPaid: v.number(),
-    paystackReference: v.string(),
+    method: v.union(v.literal("cash"), v.literal("momo"), v.literal("transfer")),
   },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     const apt = await ctx.db.get(args.appointmentId);
     if (!apt) throw new Error("Appointment not found");
-
+    const expected = apt.expectedAmountPesewas ? apt.expectedAmountPesewas / 100 : 0;
+    const remaining = Math.max(0, expected - (apt.amountPaid || 0));
+    if (!Number.isFinite(args.amountPaid) || args.amountPaid <= 0 || args.amountPaid > remaining) throw new Error("Manual deposit must be positive and no more than the expected deposit.");
     await ctx.db.patch(args.appointmentId, {
       amountPaid: (apt.amountPaid || 0) + args.amountPaid,
-      paymentStatus: "paid", // For appointments, the deposit usually means paid
-      paystackReference: args.paystackReference,
+      paymentStatus: (apt.amountPaid || 0) + args.amountPaid >= expected ? "paid" : "partial",
     });
+    await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Recorded Appointment Deposit", details: `${args.method}: GH₵${args.amountPaid}`, category: "appointments", targetId: args.appointmentId, targetType: "appointment", timestamp: Date.now() });
   }
 });
 

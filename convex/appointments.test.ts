@@ -111,3 +111,34 @@ describe("expired appointment payment revival", () => {
     expect(slots).toContain("10:00");
   });
 });
+
+describe("appointment input and staff payment controls", () => {
+  const validDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  async function staff(t: any) {
+    return await t.run(async (ctx: any) => {
+      const staffId = await ctx.db.insert("staff", { name: "Admin", email: `admin-${Date.now()}@example.test`, role: "admin", isActive: true, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, totpEnabled: false, failedAttempts: 0, createdAt: Date.now() });
+      const token = `staff-${Date.now()}`;
+      await ctx.db.insert("staffSessions", { staffId, tokenHash: createHash("sha256").update(token).digest("hex"), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
+      return token;
+    });
+  }
+
+  it("rejects oversized notes", async () => {
+    const t = convexTest(schema).withIdentity({ subject: "book-user" });
+    await expect(t.mutation(api.appointments.book, { name: "Client", email: "client@example.test", phone: "0240000000", date: validDate, time: "10:00", garmentType: "Suit", notes: "x".repeat(2001) })).rejects.toThrow();
+  });
+
+  it("does not accept typed Paystack references in staff detail updates", async () => {
+    const t = convexTest(schema);
+    const token = await staff(t);
+    const appointmentId = await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "0240000000", date: validDate, status: "pending" }));
+    await expect(t.mutation(api.appointments.updateDetails, { staffToken: token, appointmentId, paymentStatus: "paid", paystackReference: "TYPED" } as any)).rejects.toThrow();
+  });
+
+  it("rejects a manual deposit above the expected amount", async () => {
+    const t = convexTest(schema);
+    const token = await staff(t);
+    const appointmentId = await t.run(async (ctx: any) => ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "0240000000", date: validDate, status: "pending", expectedAmountPesewas: 5000, amountPaid: 0 }));
+    await expect(t.mutation(api.appointments.recordDeposit, { staffToken: token, appointmentId, amountPaid: 51, method: "cash" })).rejects.toThrow();
+  });
+});
