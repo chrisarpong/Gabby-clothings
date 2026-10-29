@@ -9,6 +9,7 @@ import { useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
+import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -30,9 +31,18 @@ export default function CartPage() {
   }).filter((i: any) => i.product);
 
   const standardShippingRateObj = useQuery(api.settings.getByKey, { key: "standardShippingRate" });
-  const subtotal = cartItemsWithDetails.reduce((sum: number, item: any) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
-  const shippingAmount = Number(standardShippingRateObj?.value ?? 50.00);
-  const totalAmount = subtotal + shippingAmount;
+  const freeShippingThresholdObj = useQuery(api.settings.getByKey, { key: "freeShippingThreshold" });
+  const pricingTotalsPesewas = computeTotals({
+    lines: cartItemsWithDetails.map((item: any) => ({
+      unitPesewas: lineUnitPrice(item.product, item.variantSku),
+      quantity: item.quantity,
+    })),
+    shippingRatePesewas: toPesewas(Number(standardShippingRateObj?.value ?? 50)),
+    freeShippingThresholdPesewas: toPesewas(Number(freeShippingThresholdObj?.value ?? 0)),
+  });
+  const subtotal = fromPesewas(pricingTotalsPesewas.subtotal);
+  const shippingAmount = fromPesewas(pricingTotalsPesewas.shipping);
+  const totalAmount = fromPesewas(pricingTotalsPesewas.total);
 
   const getAvailableStock = (item: any) => {
     if (!item.variantSku || item.variantSku === 'custom') return 99; // Custom fit doesn't have strict stock

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
 import { parseConvexError } from "../utils/errorParser";
+import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function Checkout() {
   
   const allProducts = useQuery(api.products.getAll);
   const standardShippingRateObj = useQuery(api.settings.getByKey, { key: "standardShippingRate" });
+  const freeShippingThresholdObj = useQuery(api.settings.getByKey, { key: "freeShippingThreshold" });
   const convexMeasurements = useQuery(api.users.getMeasurements);
 
   const [shippingAddress, setShippingAddress] = useState({
@@ -116,10 +118,19 @@ export default function Checkout() {
 
   const hasOutOfStockItems = cartItemsWithDetails.some((item: any) => item.quantity > getAvailableStock(item));
 
-  const subtotal = cartItemsWithDetails.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.quantity, 0);
-  let discountAmount = appliedPromo?.discountAmount || 0;
-  const shippingAmount = Number(standardShippingRateObj?.value ?? 50.00);
-  const totalAmount = subtotal - discountAmount + shippingAmount;
+  const pricingTotalsPesewas = computeTotals({
+    lines: cartItemsWithDetails.map(item => ({
+      unitPesewas: lineUnitPrice(item.product!, item.variantSku),
+      quantity: item.quantity,
+    })),
+    shippingRatePesewas: toPesewas(Number(standardShippingRateObj?.value ?? 50)),
+    freeShippingThresholdPesewas: toPesewas(Number(freeShippingThresholdObj?.value ?? 0)),
+    promo: appliedPromo ? { discountType: "fixed", discountValue: appliedPromo.discountAmount } : undefined,
+  });
+  const subtotal = fromPesewas(pricingTotalsPesewas.subtotal);
+  const discountAmount = fromPesewas(pricingTotalsPesewas.discount);
+  const shippingAmount = fromPesewas(pricingTotalsPesewas.shipping);
+  const totalAmount = fromPesewas(pricingTotalsPesewas.total);
 
   const handleApplyPromo = async () => {
     if (!promoCodeInput.trim()) return;
@@ -510,7 +521,7 @@ export default function Checkout() {
                           </div>
                         </div>
                         <span className="font-label text-[11px] tracking-widest text-primary">
-                          {formatPrice(item.product?.basePrice ?? 0, activeCurrency, rates)}
+                          {formatPrice(fromPesewas(lineUnitPrice(item.product!, item.variantSku)), activeCurrency, rates)}
                         </span>
                       </div>
                     </div>
