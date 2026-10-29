@@ -365,10 +365,12 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Customer Name *</label>
                 <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors" />
+                {!customerName.trim() && <p className="text-[10px] text-error mt-1">Customer name is required.</p>}
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Customer Email *</label>
                 <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary text-sm p-3 focus:outline-none transition-colors" />
+                {customerEmail.length > 0 && !emailValid && <p className="text-[10px] text-error mt-1">Enter a valid email address.</p>}
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Customer Phone</label>
@@ -421,7 +423,7 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
               
               <button 
                 onClick={handleCheckout}
-                disabled={isProcessing || cart.length === 0 || (payInFull && paymentMethod === 'cash' && amountTendered !== '' && Number(amountTendered) < cartTotal) || (!payInFull && !(Number(depositAmount) > 0 && Number(depositAmount) < cartTotal))}
+                disabled={isProcessing || cart.length === 0 || !customerName.trim() || !emailValid || (payInFull && paymentMethod === 'cash' && amountTendered !== '' && Number(amountTendered) < cartTotal) || (!payInFull && !(Number(depositAmount) > 0 && Number(depositAmount) < cartTotal))}
                 className="w-full py-4 bg-primary text-surface font-sans text-xs tracking-widest uppercase hover:bg-tertiary transition-colors disabled:opacity-50"
               >
                 {isProcessing ? 'Processing...' : 'Complete Sale'}
