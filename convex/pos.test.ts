@@ -90,4 +90,19 @@ describe("POS money core", () => {
     expect((await t.run((ctx: any) => ctx.db.get(baseId)) as any).stock).toBe(before);
     await expect(t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ productId: baseId, unitPriceOverride: 1.001, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "three-decimal" })).rejects.toThrow();
   });
+
+  it("accepts the Admin drawer catalogue/custom payloads and clerkId customer", async () => {
+    const t = convexTest(schema); const token = await staff(t, "admin", "drawer"); const productId = await product(t);
+    await t.run((ctx: any) => ctx.db.insert("users", { clerkId: "clerk-drawer", email: "drawer@test.local", role: "client" }));
+    const catalogue = await t.mutation(api.orders.createPOSOrder, { staffToken: token, userId: "clerk-drawer", customerDetails, items: [{ productId, quantity: 1, unitPriceOverride: 90 }], payInFull: true, paymentMethod: "transfer", idempotencyKey: "drawer-catalogue" });
+    expect(catalogue).toBeTruthy();
+    const custom = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ name: "Custom appointment garment", unitPriceOverride: 120, quantity: 1, measurements: { chest: "40" } }], payInFull: false, amountPaid: 50, paymentMethod: "cash", idempotencyKey: "drawer-custom" });
+    expect((await t.run((ctx: any) => ctx.db.get(custom)) as any).items[0].isCustomJob).toBe(true);
+  });
+
+  it("accepts the Appointment drawer custom-job payload", async () => {
+    const t = convexTest(schema); const token = await staff(t, "admin", "appointment-drawer");
+    const id = await t.mutation(api.orders.createPOSOrder, { staffToken: token, customerDetails, items: [{ name: "Kaftan", unitPriceOverride: 80, quantity: 1 }], payInFull: true, paymentMethod: "cash", idempotencyKey: "appointment-custom" });
+    expect((await t.run((ctx: any) => ctx.db.get(id)) as any).items[0].name).toBe("Kaftan");
+  });
 });

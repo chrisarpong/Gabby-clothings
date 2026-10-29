@@ -99,8 +99,9 @@ export default function AppointmentDrawer({ appointment, onClose }: AppointmentD
           phone: appointment.phone || appointment.clientPhone,
         },
         items: [{
-          productId: orderProductId as any,
-          variantSku: "custom",
+          productId: product?._id as any,
+          name: product ? undefined : (appointment.garmentType || "Appointment custom job"),
+          unitPriceOverride: price,
           quantity: 1,
         }],
         payInFull: paid >= price,

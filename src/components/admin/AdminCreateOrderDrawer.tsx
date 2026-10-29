@@ -85,10 +85,12 @@ export default function AdminCreateOrderDrawer({ isOpen, onClose }: AdminCreateO
     try {
       setIsSubmitting(true);
       await createOrder({
-        userId: selectedUser?._id,
+        userId: selectedUser?.clerkId,
         customerDetails: { email, firstName, lastName, phone },
         items: [{
           productId: productType === 'catalog' ? (selectedProductId as any) : undefined,
+          name: productType === 'custom' ? customProductName : undefined,
+          unitPriceOverride: overridePrice ? Number(overridePrice) : undefined,
           quantity: 1,
           measurements: Object.values(measurements).some(v => v) ? measurements : undefined,
         }],
