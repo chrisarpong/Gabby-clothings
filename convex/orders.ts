@@ -228,19 +228,20 @@ export const getMyClients = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
     const staff = await requireStaff(ctx, args.staffToken, { permission: "sales_portal" });
-    const orders = await ctx.db.query("orders").order("desc").take(500);
-    const scoped = staff.role === "sales" ? orders.filter(order => order.createdByStaffId === staff._id) : orders;
-    const clients = new Map<string, { name: string; email: string; phone?: string; orderCount: number; totalSpent: number; outstandingBalance: number; lastOrderDate: number; orders: Array<{ orderId?: string; date: number; total: number; balance: number }> }>();
+    const scoped = staff.role === "sales"
+      ? await ctx.db.query("orders").withIndex("by_createdByStaff", q => q.eq("createdByStaffId", staff._id)).order("desc").take(500)
+      : await ctx.db.query("orders").order("desc").take(500);
+    const clients = new Map<string, { name: string; email: string; phone?: string; orderCount: number; totalSpent: number; outstandingBalance: number; lastOrderDate: number; orders: Array<{ orderId?: string; date: number; total: number; balance: number; status?: string }> }>();
     for (const order of scoped) {
       const email = order.customerDetails?.email?.trim().toLowerCase();
       if (!email) continue;
       const current = clients.get(email) || { name: [order.customerDetails?.firstName, order.customerDetails?.lastName].filter(Boolean).join(" ") || "Customer", email, phone: order.customerDetails?.phone, orderCount: 0, totalSpent: 0, outstandingBalance: 0, lastOrderDate: order._creationTime, orders: [] };
       current.orderCount += 1;
       current.totalSpent += order.amountPaid ?? 0;
-      current.outstandingBalance += order.amountDue ?? Math.max(0, (order.totalAmount ?? 0) - (order.amountPaid ?? 0));
+      if (order.status !== "cancelled") current.outstandingBalance += order.amountDue ?? Math.max(0, (order.totalAmount ?? 0) - (order.amountPaid ?? 0));
       current.lastOrderDate = Math.max(current.lastOrderDate, order._creationTime);
       if (!current.phone && order.customerDetails?.phone) current.phone = order.customerDetails.phone;
-      current.orders.push({ orderId: order.orderId, date: order._creationTime, total: order.totalAmount ?? 0, balance: order.amountDue ?? 0 });
+      current.orders.push({ orderId: order.orderId, date: order._creationTime, total: order.totalAmount ?? 0, balance: order.status === "cancelled" ? 0 : (order.amountDue ?? 0), status: order.status });
       clients.set(email, current);
     }
     return Array.from(clients.values()).map(({ orders: clientOrders, ...client }) => ({ ...client, orders: clientOrders.slice(0, 50) }));

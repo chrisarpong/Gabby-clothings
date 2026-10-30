@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useQuery, useMutation } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
+import { loadPosCustomer, posSessionKey } from '../../utils/posSession';
 import { ShoppingBag, Search, Plus, CreditCard, LogOut, Calendar } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -13,13 +14,13 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
   
   // POS State
   const [cart, setCart] = useState<{id: string, product?: any, quantity: number, price: number, variantSku?: string, variantName?: string, isCustom?: boolean, name?: string, notes?: string, unitPriceOverride?: number, overrideReason?: string}[]>(() => {
-    const saved = sessionStorage.getItem(`pos_cart_${profile?._id || 'staff'}`);
+    const saved = sessionStorage.getItem(posSessionKey(profile?._id || 'staff', 'cart'));
     const parsed = saved ? JSON.parse(saved) : [];
     return parsed.map((line: any) => ({ ...line, id: line.id || crypto.randomUUID() }));
   });
-  const [customerName, setCustomerName] = useState(() => sessionStorage.getItem(`pos_customerName_${profile?._id || 'staff'}`) || '');
-  const [customerEmail, setCustomerEmail] = useState(() => sessionStorage.getItem(`pos_customerEmail_${profile?._id || 'staff'}`) || '');
-  const [customerPhone, setCustomerPhone] = useState(() => sessionStorage.getItem(`pos_customerPhone_${profile?._id || 'staff'}`) || '');
+  const [customerName, setCustomerName] = useState(() => loadPosCustomer(profile?._id || 'staff').name);
+  const [customerEmail, setCustomerEmail] = useState(() => loadPosCustomer(profile?._id || 'staff').email);
+  const [customerPhone, setCustomerPhone] = useState(() => loadPosCustomer(profile?._id || 'staff').phone);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [payInFull, setPayInFull] = useState(true);
   const [depositAmount, setDepositAmount] = useState('');
@@ -33,10 +34,11 @@ export default function SalesPOS({ products, setActiveTab }: { products: any, se
 
   // Persist state
   React.useEffect(() => {
-    sessionStorage.setItem(`pos_cart_${profile?._id || 'staff'}`, JSON.stringify(cart));
-    sessionStorage.setItem(`pos_customerName_${profile?._id || 'staff'}`, customerName);
-    sessionStorage.setItem(`pos_customerEmail_${profile?._id || 'staff'}`, customerEmail);
-    sessionStorage.setItem(`pos_customerPhone_${profile?._id || 'staff'}`, customerPhone);
+    const staffId = profile?._id || 'staff';
+    sessionStorage.setItem(posSessionKey(staffId, 'cart'), JSON.stringify(cart));
+    sessionStorage.setItem(posSessionKey(staffId, 'customerName'), customerName);
+    sessionStorage.setItem(posSessionKey(staffId, 'customerEmail'), customerEmail);
+    sessionStorage.setItem(posSessionKey(staffId, 'customerPhone'), customerPhone);
   }, [cart, customerName, customerEmail, customerPhone, profile?._id]);
   const saleSignature = JSON.stringify({
     cart: cart.map(item => ({ id: item.product?._id, sku: item.variantSku, quantity: item.quantity, price: item.price, override: item.unitPriceOverride, name: item.name, notes: item.notes })),

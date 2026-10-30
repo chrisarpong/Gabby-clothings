@@ -33,4 +33,15 @@ describe("sales CRM scoping", () => {
     expect((await t.query(api.orders.getMyClients, { staffToken: other })).map(client => client.email)).toEqual(["b@example.test"]);
     expect((await t.query(api.orders.getMyClients, { staffToken: admin })).map(client => client.email).sort()).toEqual(["a@example.test", "b@example.test"]);
   });
+
+  it("keeps a sales user's clients visible beyond other staff's first 500 orders", async () => {
+    const t = convexTest(schema);
+    const sales = await seed(t, "sales", "indexed");
+    const salesId = await t.run(async ctx => (await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", "sales-indexed@test")).first())!._id);
+    await t.run(async ctx => {
+      for (let i = 0; i < 600; i++) await ctx.db.insert("orders", { createdByStaffId: salesId, customerDetails: { firstName: "Target", lastName: "Client", email: "target@example.test" }, items: [], totalAmount: 10, amountPaid: 10, amountDue: 0, status: "processing" });
+    });
+    const clients = await t.query(api.orders.getMyClients, { staffToken: sales });
+    expect(clients.some(client => client.email === "target@example.test")).toBe(true);
+  });
 });
