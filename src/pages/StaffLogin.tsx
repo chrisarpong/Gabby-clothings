@@ -41,7 +41,10 @@ export default function StaffLogin() {
   return (
     <div className="min-h-screen bg-[#17110f] text-[#f4e9e2] flex items-center justify-center p-4 md:p-8">
       <div className="w-full max-w-5xl min-h-[620px] grid md:grid-cols-[1.05fr_0.95fr] overflow-hidden border border-[#6f554a]/40 bg-[#241916] shadow-2xl">
-        <section className="relative hidden md:flex flex-col justify-between p-12 bg-[#1d1412] overflow-hidden">
+        <section
+          className="relative hidden md:flex flex-col justify-between p-12 bg-[#1d1412] bg-cover bg-center overflow-hidden"
+          style={{ backgroundImage: "linear-gradient(135deg, rgba(29,20,18,0.94), rgba(29,20,18,0.72)), url('/assets/parallax-bg.jpg')" }}
+        >
           <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-[#ad8774]/20" />
           <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full border border-[#ad8774]/20" />
           <div className="relative z-10">
