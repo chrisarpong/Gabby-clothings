@@ -1,4 +1,5 @@
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
 import { StaffPermission, StaffRole, hasPermission } from "./staffPermissions";
@@ -319,36 +320,22 @@ export const heartbeat = mutation({
 export const cleanupSessions = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const sessions = await ctx.db.query("staffSessions").withIndex("by_expiresAt").order("asc").take(500);
     const now = Date.now();
+    const sessions = await ctx.db.query("staffSessions").withIndex("by_expiresAt", q => q.lt("expiresAt", now)).order("asc").take(500);
     for (const session of sessions) {
-      if (session.revokedAt) continue;
-      
       const staff = await ctx.db.get(session.staffId);
-      if (!staff) continue;
-      
-      const role = staff.role as StaffRole;
-      const idleTimeout = IDLE_TIMEOUT_MAP[role] || 15 * 60 * 1000;
-      
-      const isIdleExpired = now - session.lastActivityAt > idleTimeout + 90 * 1000;
-      const isAbsExpired = now > session.expiresAt;
-      
-      if (isIdleExpired || isAbsExpired) {
-        await ctx.db.patch(session._id, { revokedAt: now });
+      if (staff && !session.revokedAt) {
         await ctx.db.insert("adminLogs", {
           userId: staff._id,
           adminName: staff.name,
-          action: isIdleExpired ? "Idle Logout" : "Session Expired",
+          action: "Session Expired",
           category: "auth",
           timestamp: now,
         });
       }
-      
-      // Delete older than 30 days
-      if (now - session.createdAt > 30 * 24 * 60 * 60 * 1000) {
-        await ctx.db.delete(session._id);
-      }
+      await ctx.db.delete(session._id);
     }
+    if (sessions.length === 500) await ctx.scheduler.runAfter(0, internal.staffAuth.cleanupSessions, {});
   }
 });
 
