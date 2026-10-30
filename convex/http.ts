@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { verifyPaystackWebhookSignature } from "./lib/paystack";
+import { verifyFileLink } from "./lib/fileLinks";
 
 const http = httpRouter();
 
@@ -20,20 +21,12 @@ http.route({
     // 1. Determine if the file is private
     const ownership = await ctx.runQuery(internal.appointments.getFileOwner, { storageId });
     if (ownership.isPrivate) {
-      // Check for staffToken first
-      const staffToken = searchParams.get("staffToken");
       let isStaffAuthorized = false;
-      
-      if (staffToken) {
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(staffToken));
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const tokenHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        
-        const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
-        if (staff) {
-          isStaffAuthorized = true;
-        }
+      const sig = searchParams.get("sig");
+      const exp = Number(searchParams.get("exp"));
+      const secret = process.env.FILE_LINK_SECRET;
+      if (sig && secret) {
+        isStaffAuthorized = await verifyFileLink(storageId, exp, sig, secret);
       }
 
       if (!isStaffAuthorized) {

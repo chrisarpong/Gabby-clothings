@@ -6,6 +6,7 @@ import { requireStaff } from "./staffAuth";
 import { constantTimeEqual, generatePaymentReference, verifyPaystackTransaction } from "./lib/paystack";
 import { recordPaymentIssue } from "./lib/paymentIssues";
 import { moneyToPesewas } from "./lib/pricing";
+import { signFileLink } from "./lib/fileLinks";
 
 export const getStorageMetadata = internalQuery({
   args: { storageId: v.id("_storage") },
@@ -340,6 +341,21 @@ export const getFileOwner = internalQuery({
     for (const appt of appointments) if (appt.referenceImages?.includes(args.storageId)) return { isPrivate: true, ownerId: appt.userId };
     return { isPrivate: false };
   }
+});
+
+export const staffFileLink = query({
+  args: { staffToken: v.string(), storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.staffToken, { permission: "appointments" });
+    const ownership = await ctx.runQuery(internal.appointments.getFileOwner, { storageId: args.storageId });
+    const siteUrl = process.env.SITE_URL || process.env.CONVEX_SITE_URL || "";
+    if (!ownership.isPrivate) return `${siteUrl}/getFile?storageId=${encodeURIComponent(args.storageId)}`;
+    const secret = process.env.FILE_LINK_SECRET;
+    if (!secret) throw new ConvexError("Private staff file links are not configured.");
+    const exp = Date.now() + 60_000;
+    const sig = await signFileLink(args.storageId, exp, secret);
+    return `${siteUrl}/getFile?storageId=${encodeURIComponent(args.storageId)}&sig=${sig}&exp=${exp}`;
+  },
 });
 
 export const backfillAppointmentFiles = internalMutation({
