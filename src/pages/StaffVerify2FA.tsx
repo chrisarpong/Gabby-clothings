@@ -13,12 +13,17 @@ export default function StaffVerify2FA() {
   const [loading, setLoading] = useState(false);
   const [useRecovery, setUseRecovery] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
+  const submitGuardRef = useRef(false);
   const { verify2FA } = useStaffAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const challengeToken = location.state?.challengeToken;
+  const storedChallenge = (() => {
+    try { return JSON.parse(sessionStorage.getItem('staff2faChallenge') || 'null'); } catch { return null; }
+  })();
+  const challengeToken = location.state?.challengeToken || storedChallenge?.token;
+  const nextPath = location.state?.next || storedChallenge?.next;
 
   // Auto-focus first input on mount
   useEffect(() => {
@@ -77,6 +82,7 @@ export default function StaffVerify2FA() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitGuardRef.current || loading) return;
     const code = useRecovery ? recoveryCode.trim() : getCode();
 
     if (!useRecovery && code.length !== CODE_LENGTH) {
@@ -88,13 +94,22 @@ export default function StaffVerify2FA() {
       return;
     }
 
+    submitGuardRef.current = true;
     setLoading(true);
     try {
       await verify2FA(challengeToken, code, useRecovery);
-      const from = sanitizeStaffNext(location.state?.next) || sanitizeStaffNext(location.state?.from?.pathname);
+      sessionStorage.removeItem('staff2faChallenge');
+      const from = sanitizeStaffNext(nextPath) || sanitizeStaffNext(location.state?.from?.pathname);
       navigate(from || '/admin', { replace: true });
     } catch (err: any) {
-      toast.error(err.message || "Invalid code");
+      const message = err.message || "Invalid code";
+      if (/Invalid or expired challenge|Invalid session|Session expired/i.test(message)) {
+        sessionStorage.removeItem('staff2faChallenge');
+        toast.error("Your verification window expired. Please sign in again.");
+        navigate('/staff/login', { replace: true });
+        return;
+      }
+      toast.error(message);
       if (!useRecovery) {
         // Clear digits and refocus first input on failure
         setDigits(Array(CODE_LENGTH).fill(''));
@@ -102,6 +117,7 @@ export default function StaffVerify2FA() {
       }
     } finally {
       setLoading(false);
+      submitGuardRef.current = false;
     }
   };
 

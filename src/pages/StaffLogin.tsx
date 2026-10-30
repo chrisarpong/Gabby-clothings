@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
@@ -11,6 +11,7 @@ export default function StaffLogin() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const submitGuardRef = useRef(false);
   const { login } = useStaffAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,10 +19,14 @@ export default function StaffLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitGuardRef.current || loading) return;
+    submitGuardRef.current = true;
+    sessionStorage.removeItem('staff2faChallenge');
     setLoading(true);
     try {
       const res = await login(email, password);
       if (res.status === '2fa_required') {
+        sessionStorage.setItem('staff2faChallenge', JSON.stringify({ token: res.token, next }));
         navigate('/staff/2fa-verify', { state: { challengeToken: res.token, next } });
       } else {
         const from = next || sanitizeStaffNext(location.state?.from?.pathname);
@@ -38,6 +43,7 @@ export default function StaffLogin() {
       toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
+      submitGuardRef.current = false;
     }
   };
 

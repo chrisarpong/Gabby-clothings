@@ -2,12 +2,30 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api, internal } from "./_generated/api";
-import { hashPassword } from "./lib/staffCrypto";
+import { hashPassword, encryptTotpSecret } from "./lib/staffCrypto";
+import { authenticator } from "otplib";
 import * as crypto from "crypto";
 
 describe("staff authentication integration", () => {
   beforeAll(() => {
     process.env.STAFF_2FA_ENC_KEY = crypto.randomBytes(32).toString("base64");
+  });
+
+  it("creates a durable challenge and accepts the current authenticator code", async () => {
+    const t = convexTest(schema);
+    const secret = authenticator.generateSecret();
+    const password = "ChallengePassword2026!";
+    const salt = crypto.randomBytes(16).toString("hex");
+    const passwordHash = await hashPassword(password, salt, { N: 1024, r: 8, p: 1, keylen: 64, maxmem: 64 * 1024 * 1024 });
+    await t.run(async (ctx) => ctx.db.insert("staff", {
+      name: "Challenge Admin", email: "challenge@gabbytest.com", role: "admin", passwordHash, passwordSalt: salt,
+      mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true,
+      totpSecret: encryptTotpSecret(secret, process.env.STAFF_2FA_ENC_KEY!), createdAt: Date.now(),
+    }));
+    const login = await t.action(api.staffAuthNode.loginAction, { email: "challenge@gabbytest.com", password });
+    expect(login.status).toBe("2fa_required");
+    const verified = await t.action(api.staffAuthNode.verify2FA, { token: login.token!, code: authenticator.generate(secret) });
+    expect(verified.status).toBe("success");
   });
 
   it("login -> authenticated query -> logout -> unauthenticated", async () => {
