@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
-import { ArrowRight, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import logo from '../assets/logo_transparent.png';
 
 export default function StaffLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useStaffAuth();
   const navigate = useNavigate();
@@ -88,14 +89,25 @@ export default function StaffLogin() {
               <label className="block text-[10px] uppercase tracking-[0.2em] text-[#c7a99c] font-bold">Password</label>
               <span className="text-[10px] uppercase tracking-wider text-[#806b62]">Protected account</span>
             </div>
-            <input 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-[#76594d] bg-[#17110f] px-4 py-3.5 text-sm text-[#f4e9e2] outline-none transition-colors placeholder:text-[#806b62] focus:border-[#d1aa96]"
-              placeholder="••••••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-[#76594d] bg-[#17110f] px-4 py-3.5 pr-14 text-sm text-[#f4e9e2] outline-none transition-colors placeholder:text-[#806b62] focus:border-[#d1aa96]"
+                placeholder="••••••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[#a98b7e] transition-colors hover:text-[#f4e9e2] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#d1aa96]"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <button 
             type="submit" 
