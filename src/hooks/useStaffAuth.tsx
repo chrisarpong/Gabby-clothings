@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { FunctionReference, FunctionReturnType } from 'convex/server';
 import { api } from '../../convex/_generated/api';
@@ -43,12 +43,12 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   const verify2faAction = useAction(api.staffAuthNode.verify2FA);
   const logoutMutation = useMutation(api.staffAuth.logout);
 
-  const clearPosStorage = () => {
+  const clearPosStorage = useCallback(() => {
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
       const key = sessionStorage.key(i);
       if (key?.startsWith('pos_')) sessionStorage.removeItem(key);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -66,15 +66,15 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token, profile]);
 
-  const login = async (email: string, pass: string) => {
+  const login = useCallback(async (email: string, pass: string) => {
     const res = await loginAction({ email, password: pass });
     if (res.status === 'success') {
       setToken(res.token);
     }
     return res;
-  };
+  }, [loginAction]);
 
-  const changePassword = async (pass: string) => {
+  const changePassword = useCallback(async (pass: string) => {
     if (!token) throw new Error("No session");
     const res = await changePassAction({ staffToken: token, newPassword: pass });
     // We already have the token in state, but the server also returns it
@@ -82,22 +82,22 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       setToken(res.token);
     }
     return res;
-  };
+  }, [changePassAction, token]);
 
-  const setup2FA = async () => {
+  const setup2FA = useCallback(async () => {
     if (!token) throw new Error("No session");
     return await setup2faAction({ staffToken: token });
-  };
+  }, [setup2faAction, token]);
 
-  const verify2FA = async (challengeTokenOrSessionToken: string, code: string, isSetup?: boolean) => {
+  const verify2FA = useCallback(async (challengeTokenOrSessionToken: string, code: string, isSetup?: boolean) => {
     const res = await verify2faAction({ token: challengeTokenOrSessionToken, code, isSetup });
     if (res && res.status === 'success') {
       setToken(res.token);
     }
     return res;
-  };
+  }, [verify2faAction]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     if (token) {
       try {
         await logoutMutation({ staffToken: token });
@@ -108,10 +108,20 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     clearPosStorage();
     setToken(null);
     navigate('/staff/login');
-  };
+  }, [clearPosStorage, logoutMutation, navigate, token]);
+
+  const contextValue = useMemo(() => ({
+    token,
+    profile,
+    login,
+    changePassword,
+    setup2FA,
+    verify2FA,
+    logout,
+  }), [token, profile, login, changePassword, setup2FA, verify2FA, logout]);
 
   return (
-    <StaffAuthContext.Provider value={{ token, profile, login, changePassword, setup2FA, verify2FA, logout }}>
+    <StaffAuthContext.Provider value={contextValue}>
       {children}
     </StaffAuthContext.Provider>
   );
