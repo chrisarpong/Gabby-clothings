@@ -9,7 +9,7 @@ import { getFileUrl } from '../utils/fileUrl';
 
 export default function NewsArticlePage() {
   const { slug } = useParams<{ slug: string }>();
-  const posts = useQuery(api.posts.getAll);
+  const posts = useQuery(api.posts.getAll, {});
 
   if (posts === undefined) {
     return (

@@ -12,7 +12,7 @@ export default function Success() {
   const [searchParams] = useSearchParams();
   const reference = searchParams.get("reference");
   const currentOrder = useQuery(api.orders.getMyOrderByReference, reference ? { reference } : "skip");
-  const allProducts = useQuery(api.products.getAll);
+  const allProducts = useQuery(api.products.getAll, {});
   const storeInfo = useQuery(api.settings.getByKey, { key: "storeInfo" });
   const { activeCurrency, rates } = useCurrencyStore();
   const clearCart = useCartStore(state => state.clearCart);

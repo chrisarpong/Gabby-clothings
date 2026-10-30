@@ -59,7 +59,7 @@ export const updateLiveRates = internalMutation({
 });
 
 export const getRates = query({
-  args: {},
+  args: { staffToken: v.optional(v.string()) },
   handler: async (ctx) => {
     const rates = await ctx.db.query("exchangeRates").collect();
     const result: Record<string, number> = { GHS: 1 };

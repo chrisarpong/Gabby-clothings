@@ -4,7 +4,7 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { requireStaff } from "./staffAuth";
 
 export const getAll = query({
-  args: { includeArchived: v.optional(v.boolean()) },
+  args: { includeArchived: v.optional(v.boolean()), staffToken: v.optional(v.string()) },
   handler: async (ctx, args) => {
     let catalogs = await ctx.db.query("catalogs").collect();
     if (!args.includeArchived) {

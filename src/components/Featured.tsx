@@ -41,7 +41,7 @@ export default function Featured() {
   const addItem = useCartStore(state => state.addItem);
   const { activeCurrency, rates } = useCurrencyStore();
 
-  const allProducts = useQuery(api.products.getAll);
+  const allProducts = useQuery(api.products.getAll, {});
   const featuredProducts = allProducts ? allProducts.slice(0, 4) : [];
 
   const handleQuickAdd = (e: React.MouseEvent, product: Doc<"products">) => {

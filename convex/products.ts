@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { requireStaff } from "./staffAuth";
 
 export const getAll = query({
-  args: {},
+  args: { staffToken: v.optional(v.string()) },
   handler: async (ctx) => {
     return await ctx.db.query("products").collect();
   },
@@ -172,7 +172,7 @@ export const updateVariantStock = mutation({
 });
 
 export const getFileUrl = query({
-  args: { storageId: v.id("_storage") },
+  args: { storageId: v.id("_storage"), staffToken: v.optional(v.string()) },
   handler: async (ctx, args) => {
     return await ctx.storage.getUrl(args.storageId);
   },

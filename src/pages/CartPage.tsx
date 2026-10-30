@@ -18,7 +18,7 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity } = useCartStore();
   const { activeCurrency, rates } = useCurrencyStore();
   
-  const allProducts = useQuery(api.products.getAll);
+  const allProducts = useQuery(api.products.getAll, {});
 
   // Wait until products load
   const cartItemsWithDetails = allProducts === undefined ? [] : items.map((item: any) => {

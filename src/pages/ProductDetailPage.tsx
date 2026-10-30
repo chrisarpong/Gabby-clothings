@@ -21,7 +21,7 @@ export default function ProductDetailPage() {
   const { activeCurrency, rates } = useCurrencyStore();
   
   const product = useQuery(api.products.getById, { id: id as Id<"products"> });
-  const allProducts = useQuery(api.products.getAll);
+  const allProducts = useQuery(api.products.getAll, {});
   const reviews = useQuery(api.reviews.getByProduct, id ? { productId: id as Id<"products"> } : "skip");
   const convexMeasurements = useQuery(api.users.getMeasurements);
   

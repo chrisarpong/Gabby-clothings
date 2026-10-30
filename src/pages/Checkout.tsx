@@ -23,7 +23,7 @@ export default function Checkout() {
   const { items, clearCart } = useCartStore();
   const { activeCurrency, rates } = useCurrencyStore();
   
-  const allProducts = useQuery(api.products.getAll);
+  const allProducts = useQuery(api.products.getAll, {});
   const standardShippingRateObj = useQuery(api.settings.getByKey, { key: "standardShippingRate" });
   const freeShippingThresholdObj = useQuery(api.settings.getByKey, { key: "freeShippingThreshold" });
   const convexMeasurements = useQuery(api.users.getMeasurements);

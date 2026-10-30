@@ -96,7 +96,7 @@ function CartSync() {
 import { useCurrencyStore } from './store/currencyStore';
 
 function CurrencySync() {
-  const dbRates = useQuery(api.currency.getRates);
+  const dbRates = useQuery(api.currency.getRates, {});
   const setRates = useCurrencyStore(state => state.setRates);
   const hasSynced = React.useRef(false);
 

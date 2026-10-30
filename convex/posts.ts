@@ -17,7 +17,7 @@ export const getNewsFlash = query({
 });
 
 export const getAll = query({
-  args: {},
+  args: { staffToken: v.optional(v.string()) },
   handler: async (ctx) => {
     return await ctx.db.query("posts").order("desc").collect();
   },
