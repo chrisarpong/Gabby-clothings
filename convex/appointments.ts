@@ -227,6 +227,7 @@ export const expireAwaitingPayments = internalMutation({
 export const generateUploadUrl = mutation(async (ctx) => {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated: You must be signed in to upload files.");
+  await checkRateLimit(ctx, "appointmentUpload", 20, 60 * 60 * 1000);
   return await ctx.storage.generateUploadUrl();
 });
 

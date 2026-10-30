@@ -16,6 +16,14 @@ async function seedAppointment(t: any, userId?: string) {
 }
 
 describe("appointment payment authorization", () => {
+  it("limits appointment upload URLs to 20 per identity per hour", async () => {
+    const t = convexTest(schema).withIdentity({ subject: "upload-user" });
+    for (let i = 0; i < 20; i++) {
+      await t.mutation(api.appointments.generateUploadUrl, {});
+    }
+    await expect(t.mutation(api.appointments.generateUploadUrl, {})).rejects.toThrow("Too many attempts");
+  });
+
   it("allows the signed-in owner and returns only status and appointmentId", async () => {
     process.env.PAYSTACK_SECRET_KEY = "sk_test_appointment";
     vi.stubGlobal("fetch", vi.fn(async () => paystackSuccess("APT-SERVER-REF")));
