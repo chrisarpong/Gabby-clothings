@@ -4,12 +4,14 @@ import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, CheckCircle2, Globe, FileText } from 'lucide-react';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useConfirm } from '../../hooks/useConfirm';
 
 export default function NewsTab() {
   const posts = useStaffQuery(api.posts.getAll);
   const createPost = useStaffMutation(api.posts.createPost);
   const updatePost = useStaffMutation(api.posts.updatePost);
   const deletePost = useStaffMutation(api.posts.deletePost);
+  const { confirm, dialog } = useConfirm();
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentPost, setCurrentPost] = useState<any>(null);
@@ -64,7 +66,7 @@ export default function NewsTab() {
   };
 
   const handleDelete = async (id: any) => {
-    if (confirm("Are you sure you want to delete this post?")) {
+    if (await confirm("Delete post?", "This permanently removes the news post and its public URL.", "Delete post")) {
       try {
         await deletePost({ id });
         toast.success("Post deleted successfully");
@@ -77,7 +79,7 @@ export default function NewsTab() {
   if (posts === undefined) return <div className="p-8">Loading posts...</div>;
 
   return (
-    <div className="p-8 font-sans text-on-surface h-full flex flex-col">
+    <div className="p-8 font-sans text-on-surface h-full flex flex-col">{dialog}
       {!isEditing ? (
         <>
           <div className="flex justify-between items-end mb-8 border-b border-outline-variant/30 pb-4">

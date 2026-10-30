@@ -5,6 +5,7 @@ import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Ch
 import { toast } from 'sonner';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useConfirm } from '../../hooks/useConfirm';
 
 export default function TeamManagementTab() {
   const { token } = useStaffAuth();
@@ -28,6 +29,7 @@ export default function TeamManagementTab() {
   
   const [selectedStaffLogins, setSelectedStaffLogins] = useState<any[] | null>(null);
   const [isViewingLogins, setIsViewingLogins] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const getLogins = useStaffQuery(api.staffAuth.getStaffLogins, 
     isViewingLogins ? {  targetStaffId: isViewingLogins as any } : "skip"
@@ -58,7 +60,7 @@ export default function TeamManagementTab() {
   };
 
   const handleResetPassword = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to reset the password for ${name}? This will revoke all their active sessions immediately.`)) return;
+    if (!await confirm(`Reset ${name}'s password?`, 'This revokes all of their active sessions immediately.', 'Reset password')) return;
     
     try {
       const otp = await resetPassword({
@@ -73,7 +75,7 @@ export default function TeamManagementTab() {
   };
 
   const handleReset2FA = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to reset 2FA for ${name}? They will be forced to re-enroll on their next login.`)) return;
+    if (!await confirm(`Reset ${name}'s 2FA?`, 'They will be forced to re-enroll on their next login.', 'Reset 2FA')) return;
     try {
       await reset2FA({
         
@@ -99,7 +101,7 @@ export default function TeamManagementTab() {
   };
 
   const handleRevokeSessions = async (id: string) => {
-    if (!confirm("Are you sure you want to log this user out of all devices?")) return;
+    if (!await confirm('Revoke all sessions?', 'This logs the staff member out of every device.', 'Revoke sessions')) return;
     try {
       await revokeSessions({
         
@@ -133,7 +135,7 @@ export default function TeamManagementTab() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">{dialog}
       
       {/* Generated Password Modal/Banner */}
       {generatedPassword && (

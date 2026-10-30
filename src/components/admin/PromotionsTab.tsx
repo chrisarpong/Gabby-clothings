@@ -3,6 +3,7 @@ import { api } from '../../../convex/_generated/api';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useStaffQuery, useStaffMutation, useStaffAction } from '../../hooks/useStaffAuth';
+import { useConfirm } from '../../hooks/useConfirm';
 
 type PromoForm = { discountValue: number; validUntil: string; maxRedemptions: string; minOrderAmount: string; isActive: boolean };
 const emptyForm: PromoForm = { discountValue: 10, validUntil: '', maxRedemptions: '', minOrderAmount: '', isActive: true };
@@ -28,6 +29,7 @@ export default function PromotionsTab() {
   const [editing, setEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<PromoForm>(emptyForm);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,20 +51,20 @@ export default function PromotionsTab() {
   };
 
   const handleDelete = async (promo: Doc<'promotions'>) => {
-    if (!window.confirm(`Delete ${promo.code}? This permanently removes the code; redeemed codes must be deactivated instead.`)) return;
+    if (!await confirm(`Delete ${promo.code}?`, 'This permanently removes the code; redeemed codes must be deactivated instead.', 'Delete code')) return;
     try { await deletePromo({ id: promo._id }); toast.success('Promo code deleted'); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to delete promo code'); }
   };
 
   const handleBroadcast = async (promoCode: string, discountValue: number) => {
-    if (!window.confirm(`Email all eligible subscribers about ${promoCode}?`)) return;
+    if (!await confirm(`Broadcast ${promoCode}?`, 'This sends a marketing email to all eligible subscribers.', 'Send broadcast')) return;
     setIsBroadcasting(true);
     try { toast.success(await sendBroadcast({ promoCode, discountValue })); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to send broadcast'); }
     finally { setIsBroadcasting(false); }
   };
 
-  return <div className="p-8 font-sans text-on-surface h-full flex flex-col overflow-y-auto">
+  return <div className="p-8 font-sans text-on-surface h-full flex flex-col overflow-y-auto">{dialog}
     <div className="flex justify-between items-end mb-8 border-b border-outline-variant/30 pb-4"><div><h2 className="font-serif text-3xl text-primary mb-1">Promotions</h2><p className="text-sm text-on-surface/70">Manage seasonal discounts and VIP codes.</p></div></div>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2"><table className="w-full text-left border-collapse bg-surface-container border border-outline-variant/30"><thead><tr className="bg-brand-bone border-b border-outline-variant/30"><th className="p-4 text-[10px] uppercase">Code</th><th className="p-4 text-[10px] uppercase">Discount</th><th className="p-4 text-[10px] uppercase">Redemptions</th><th className="p-4 text-[10px] uppercase">Status</th><th className="p-4" /></tr></thead><tbody>{promos.length === 0 && <tr><td colSpan={5} className="p-8 text-center italic">No promo codes active.</td></tr>}{promos.map((promo: Doc<'promotions'>) => <React.Fragment key={promo._id}><tr className="border-b border-primary/5"><td className="p-4 text-sm font-mono text-primary">{promo.code}</td><td className="p-4 text-sm">{promo.discountType === 'percentage' ? `${promo.discountValue}%` : `GH₵${promo.discountValue}`}</td><td className="p-4 text-sm">{promo.redemptions || 0}{promo.maxRedemptions ? ` / ${promo.maxRedemptions}` : ' / ∞'}</td><td className="p-4"><span className={`text-[10px] uppercase px-2 py-1 ${promo.isActive ? 'bg-green-500/20 text-green-500' : 'bg-red-100 text-red-800'}`}>{promo.isActive ? 'Active' : 'Inactive'}</span></td><td className="p-4"><div className="flex gap-2 justify-end"><button onClick={() => startEdit(promo)} className="text-xs underline">Edit</button><button onClick={() => setPromoActive({ id: promo._id, isActive: !promo.isActive }).catch(e => toast.error(e instanceof Error ? e.message : 'Failed to toggle'))} className="text-xs underline">{promo.isActive ? 'Deactivate' : 'Activate'}</button><button onClick={() => handleDelete(promo)} className="text-xs text-error underline">Delete</button>{promo.isActive && <button disabled={isBroadcasting} onClick={() => handleBroadcast(promo.code, promo.discountValue)} className="text-xs underline">Broadcast</button>}</div></td></tr>{editing === String(promo._id) && <tr><td colSpan={5} className="p-4 bg-brand-bone"><div className="grid grid-cols-2 gap-3"><label>Discount<input type="number" min="0.01" value={editForm.discountValue} onChange={e => setEditForm({ ...editForm, discountValue: Number(e.target.value) })} className="w-full p-2 border" /></label><label>Valid until<input type="datetime-local" value={editForm.validUntil} onChange={e => setEditForm({ ...editForm, validUntil: e.target.value })} className="w-full p-2 border" /></label><label>Max redemptions<input type="number" min="1" value={editForm.maxRedemptions} onChange={e => setEditForm({ ...editForm, maxRedemptions: e.target.value })} className="w-full p-2 border" /></label><label>Minimum order<input type="number" min="0" value={editForm.minOrderAmount} onChange={e => setEditForm({ ...editForm, minOrderAmount: e.target.value })} className="w-full p-2 border" /></label></div><label className="block mt-3"><input type="checkbox" checked={editForm.isActive} onChange={e => setEditForm({ ...editForm, isActive: e.target.checked })} /> Active</label><div className="mt-3 flex gap-3"><button onClick={() => saveEdit(promo)} className="bg-primary text-white px-3 py-2 text-xs">Save</button><button onClick={() => setEditing(null)} className="text-xs underline">Cancel</button></div></td></tr>}</React.Fragment>)}</tbody></table></div>

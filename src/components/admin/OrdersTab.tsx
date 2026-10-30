@@ -10,6 +10,7 @@ import AdminCreateOrderDrawer from './AdminCreateOrderDrawer';
 import { getDeviceInfo } from '../../utils/deviceInfo';
 import { useStaffAuth, useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 import { hasPermission, StaffRole } from "../../../convex/staffPermissions";
+import { useConfirm } from '../../hooks/useConfirm';
 
 const STATUS_COLORS: Record<string, { bg: string, text: string }> = {
   pending: { bg: 'bg-surface-variant/30', text: 'text-primary' },
@@ -58,6 +59,7 @@ export default function OrdersTab() {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [clientMessage, setClientMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   const handleRecordPayment = async () => {
     if (!selectedOrder || !paymentAmount) return;
@@ -107,7 +109,7 @@ export default function OrdersTab() {
   }, [orders, searchQuery, statusFilter]);
 
   const handleStatusChange = async (orderId: Id<"orders">, newStatus: string) => {
-    if (newStatus === "cancelled" && !window.confirm("Cancelling does not refund the customer or return stock. Handle refunds in Paystack and update inventory manually.")) return;
+    if (newStatus === "cancelled" && !await confirm("Cancel order?", "Cancelling does not refund the customer or return stock. Handle refunds in Paystack and update inventory manually.", "Cancel order")) return;
     try {
       await updateStatus({ orderId, status: newStatus });
       getDeviceInfo().then(info => logAction({
@@ -135,7 +137,7 @@ export default function OrdersTab() {
   );
 
   return (
-    <div className="p-6 md:p-10 font-sans text-on-surface h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">
+    <div className="p-6 md:p-10 font-sans text-on-surface h-full flex flex-col bg-surface-container-lowest relative overflow-hidden">{dialog}
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>

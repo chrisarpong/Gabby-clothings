@@ -5,12 +5,14 @@ import { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Star, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useConfirm } from '../../hooks/useConfirm';
 
 export default function ReviewsTab() {
   const reviews = useStaffQuery(api.reviews.getAll);
   const products = useStaffQuery(api.products.getAll);
   const updateStatus = useStaffMutation(api.reviews.updateStatus);
   const deleteReview = useStaffMutation(api.reviews.deleteReview);
+  const { confirm, dialog } = useConfirm();
 
   if (reviews === undefined || products === undefined) {
     return (
@@ -48,6 +50,7 @@ export default function ReviewsTab() {
   };
 
   const handleDelete = async (reviewId: Id<"reviews">) => {
+    if (!await confirm('Delete review?', 'This permanently removes the customer review.', 'Delete review')) return;
     try {
       await deleteReview({ reviewId });
       toast.success("Review deleted");
@@ -55,7 +58,7 @@ export default function ReviewsTab() {
   };
 
   return (
-    <div className="p-8 font-sans text-on-surface h-full bg-surface overflow-y-auto">
+    <div className="p-8 font-sans text-on-surface h-full bg-surface overflow-y-auto">{dialog}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-outline-variant/30 pb-4">
         <div>
           <h2 className="font-serif text-3xl text-primary mb-1 tracking-tight">Customer Reviews</h2>

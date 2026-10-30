@@ -5,12 +5,14 @@ import { Plus, Trash2, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDeviceInfo } from '../../utils/deviceInfo';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
+import { useConfirm } from '../../hooks/useConfirm';
 
 export default function TailorsSection() {
   const tailors = useStaffQuery(api.tailors.getAll);
   const addTailor = useStaffMutation(api.tailors.addTailor);
   const removeTailor = useStaffMutation(api.tailors.removeTailor);
   const logAction = useStaffMutation(api.adminLogs.logAction);
+  const { confirm, dialog } = useConfirm();
 
   const [newTailor, setNewTailor] = useState({ name: '', phone: '', specialty: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export default function TailorsSection() {
   };
 
   const handleRemove = async (id: any) => {
-    if (confirm("Are you sure you want to remove this tailor?")) {
+    if (await confirm("Remove legacy tailor?", "This removes the legacy tailor record. Existing staff designer accounts are unaffected.", "Remove tailor")) {
       try {
         await removeTailor({ id });
         getDeviceInfo().then(info => logAction({
@@ -67,7 +69,7 @@ export default function TailorsSection() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">{dialog}
       <div className="bg-surface border border-surface-variant rounded-none p-6 sm:p-8 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/[0.04] transition-colors duration-700" />
         
