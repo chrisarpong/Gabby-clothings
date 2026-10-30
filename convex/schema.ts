@@ -43,7 +43,7 @@ export default defineSchema({
     createdBy: v.optional(v.id("staff")),
     createdAt: v.number(),
     lastLoginAt: v.optional(v.number()),
-  }).index("by_email", ["email"]).index("by_role", ["role"]),
+  }).index("by_email", ["email"]).index("by_role", ["role"]).index("by_phone", ["phone"]),
 
   staffSessions: defineTable({
     staffId: v.id("staff"),

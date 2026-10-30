@@ -394,6 +394,7 @@ export const createStaffInternal = internalMutation({
     name: v.string(),
     email: v.string(),
     role: v.string(),
+    phone: v.optional(v.string()),
     passwordHash: v.string(),
     passwordSalt: v.string(),
     createdBy: v.id("staff"),
@@ -409,10 +410,18 @@ export const createStaffInternal = internalMutation({
     if (existingStaff) {
       throw new Error("A staff account with this email already exists.");
     }
+    if (args.phone) {
+      const existingPhone = await ctx.db.query("staff").withIndex("by_phone", q => q.eq("phone", args.phone)).first();
+      if (existingPhone) {
+        throw new Error("A staff account with this phone number already exists.");
+      }
+    }
     const staffId = await ctx.db.insert("staff", {
       name: args.name,
       email,
       role: args.role,
+      phone: args.phone,
+      phoneUpdatedAt: args.phone ? Date.now() : undefined,
       passwordHash: args.passwordHash,
       passwordSalt: args.passwordSalt,
       mustChangePassword: true,
@@ -427,7 +436,7 @@ export const createStaffInternal = internalMutation({
       userId: args.createdBy,
       adminName: args.callerName,
       action: "Created Staff User",
-      details: `Email: ${email}, Role: ${args.role}`,
+      details: `Email: ${email}, Role: ${args.role}${args.phone ? `, Phone: ${maskPhone(args.phone)}` : ""}`,
       category: "team",
       targetId: staffId,
       targetType: "staff",
@@ -929,6 +938,188 @@ export const failPasswordResetSend = internalMutation({
       maskedPhone: args.maskedPhone,
       outcome: "send_failed",
       via: "self_service",
+      createdAt: Date.now(),
+    });
+  },
+});
+
+async function hashEmailKey(email: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(email.trim().toLowerCase()));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+export const prepareCeoPasswordReset = internalMutation({
+  args: {
+    staffToken: v.string(),
+    targetStaffId: v.id("staff"),
+    tempPasswordHash: v.string(),
+    tempPasswordSalt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    if (caller.role !== "ceo") {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Only the CEO may send temporary passwords by SMS." });
+    }
+
+    const target = await ctx.db.get(args.targetStaffId);
+    if (!target) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
+    }
+    if (!target.isActive) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "Cannot send temporary password to an inactive staff member." });
+    }
+
+    const settingsDoc = await ctx.db.query("staffSecuritySettings").first();
+    const config = settingsDoc || DEFAULT_SMS_SETTINGS;
+
+    if (!config.smsResetEnabled) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "SMS password reset is disabled in security settings." });
+    }
+
+    if (!target.phone) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "Staff member has no phone number registered." });
+    }
+
+    if (!config.smsResetAllowedRoles.includes(target.role)) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: `SMS reset is not enabled for role "${target.role}".` });
+    }
+
+    const now = Date.now();
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    const globalDailyLogs = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_createdAt", q => q.gte("createdAt", oneDayAgo))
+      .collect();
+    const globalDailySent = globalDailyLogs.filter(l => l.outcome === "sent").length;
+
+    const emailKey = await hashEmailKey(target.email);
+    const masked = maskPhone(target.phone);
+
+    if (globalDailySent >= config.smsDailyCap) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey,
+        staffId: target._id,
+        maskedPhone: masked,
+        outcome: "blocked_daily_cap",
+        via: "ceo",
+        createdAt: now,
+      });
+      throw new ConvexError({ code: "BAD_REQUEST", message: "Daily SMS cap reached." });
+    }
+
+    // Per-target limits: 60s cooldown, max 5 per hour
+    const oneHourAgo = now - 60 * 60 * 1000;
+    const targetHourlyLogs = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_staffId_createdAt", q => q.eq("staffId", target._id).gte("createdAt", oneHourAgo))
+      .collect();
+
+    const latestLog = targetHourlyLogs[targetHourlyLogs.length - 1];
+    if (latestLog && now - latestLog.createdAt < 60 * 1000) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey,
+        staffId: target._id,
+        maskedPhone: masked,
+        outcome: "blocked_rate_limit",
+        via: "ceo",
+        createdAt: now,
+      });
+      throw new ConvexError({ code: "RATE_LIMITED", message: "Please wait 60 seconds before sending another SMS to this staff member." });
+    }
+
+    if (targetHourlyLogs.length >= 5) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey,
+        staffId: target._id,
+        maskedPhone: masked,
+        outcome: "blocked_rate_limit",
+        via: "ceo",
+        createdAt: now,
+      });
+      throw new ConvexError({ code: "RATE_LIMITED", message: "Hourly SMS limit for this staff member reached (max 5 per hour)." });
+    }
+
+    // Void earlier resets
+    const earlierResets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", target._id))
+      .collect();
+    for (const r of earlierResets) {
+      if (!r.usedAt && !r.voidedAt) {
+        await ctx.db.patch(r._id, { voidedAt: now });
+      }
+    }
+
+    const resetId = await ctx.db.insert("staffPasswordResets", {
+      staffId: target._id,
+      tempPasswordHash: args.tempPasswordHash,
+      tempPasswordSalt: args.tempPasswordSalt,
+      expiresAt: now + TEMP_PASSWORD_EXPIRES_MS,
+      attempts: 0,
+      createdAt: now,
+      via: "ceo",
+    });
+
+    await ctx.db.insert("adminLogs", {
+      userId: caller._id,
+      adminName: caller.name,
+      action: "CEO Sent SMS Password Reset",
+      details: `Staff: ${target.name}; Phone: ${masked}`,
+      category: "team",
+      targetId: target._id,
+      targetType: "staff",
+      timestamp: now,
+    });
+
+    return {
+      staffId: target._id,
+      phone: target.phone,
+      maskedPhone: masked,
+      resetId,
+    };
+  },
+});
+
+export const completeCeoPasswordResetSend = internalMutation({
+  args: {
+    staffId: v.id("staff"),
+    maskedPhone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const staff = await ctx.db.get(args.staffId);
+    const emailKey = staff ? await hashEmailKey(staff.email) : "unknown";
+    await ctx.db.insert("staffSmsLog", {
+      purpose: "password_reset",
+      emailKey,
+      staffId: args.staffId,
+      maskedPhone: args.maskedPhone,
+      outcome: "sent",
+      via: "ceo",
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const failCeoPasswordResetSend = internalMutation({
+  args: {
+    resetId: v.id("staffPasswordResets"),
+    staffId: v.id("staff"),
+    maskedPhone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const staff = await ctx.db.get(args.staffId);
+    const emailKey = staff ? await hashEmailKey(staff.email) : "unknown";
+    await ctx.db.patch(args.resetId, { voidedAt: Date.now() });
+    await ctx.db.insert("staffSmsLog", {
+      purpose: "password_reset",
+      emailKey,
+      staffId: args.staffId,
+      maskedPhone: args.maskedPhone,
+      outcome: "send_failed",
+      via: "ceo",
       createdAt: Date.now(),
     });
   },

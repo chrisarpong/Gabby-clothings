@@ -1,34 +1,45 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
-import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Check } from 'lucide-react';
+import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Check, Smartphone, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 import { useConfirm } from '../../hooks/useConfirm';
 
 export default function TeamManagementTab() {
-  const { token } = useStaffAuth();
+  const { profile } = useStaffAuth();
+  const isCeo = profile?.role === "ceo";
   const staff = useStaffQuery(api.staffAuth.listStaff, {}) || [];
   
   const createStaff = useStaffAction(api.staffAuthNode.createStaffUser);
   const resetPassword = useStaffAction(api.staffAuthNode.resetStaffPassword);
+  const sendCeoSms = useStaffAction(api.staffAuthNode.ceoSendStaffPasswordSms);
   
   const toggleActive = useStaffMutation(api.staffAuth.toggleStaffActive);
   const updateRole = useStaffMutation(api.staffAuth.updateStaffRole);
   const revokeSessions = useStaffMutation(api.staffAuth.revokeStaffSessions);
   const reset2FA = useStaffMutation(api.staffAuth.resetStaff2FA);
+  const updateStaffPhone = useStaffMutation(api.staffAuth.updateStaffPhone);
+
+  const smsSettings = useStaffQuery(api.staffSecurity.getSmsSettings, isCeo ? {} : "skip");
+  const updateSmsSettings = useStaffMutation(api.staffSecurity.updateSmsSettings);
 
   const [newStaffName, setNewStaffName] = useState('');
   const [newStaffEmail, setNewStaffEmail] = useState('');
+  const [newStaffPhone, setNewStaffPhone] = useState('');
   const [newStaffRole, setNewStaffRole] = useState('designer');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [generatedPassword, setGeneratedPassword] = useState<{email: string, password: string} | null>(null);
   const [copied, setCopied] = useState(false);
   
-  const [selectedStaffLogins, setSelectedStaffLogins] = useState<any[] | null>(null);
   const [isViewingLogins, setIsViewingLogins] = useState<string | null>(null);
+  const [editingPhoneStaffId, setEditingPhoneStaffId] = useState<string | null>(null);
+  const [editingPhoneValue, setEditingPhoneValue] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [isSendingSms, setIsSendingSms] = useState<string | null>(null);
+
   const { confirm, dialog } = useConfirm();
 
   const getLogins = useStaffQuery(api.staffAuth.getStaffLogins, 
@@ -37,19 +48,20 @@ export default function TeamManagementTab() {
 
   const handleAddStaff = async () => {
     if (!newStaffName || !newStaffEmail || !newStaffRole) {
-      return toast.error("All fields are required");
+      return toast.error("Name, email, and role are required");
     }
     setIsSubmitting(true);
     try {
       const otp = await createStaff({
-        
         name: newStaffName,
         email: newStaffEmail,
-        role: newStaffRole
+        role: newStaffRole,
+        phone: newStaffPhone.trim() ? newStaffPhone.trim() : undefined,
       });
       setGeneratedPassword({ email: newStaffEmail, password: otp });
       setNewStaffName('');
       setNewStaffEmail('');
+      setNewStaffPhone('');
       setNewStaffRole('designer');
       toast.success("Staff member created successfully");
     } catch (err: any) {
@@ -64,7 +76,6 @@ export default function TeamManagementTab() {
     
     try {
       const otp = await resetPassword({
-        
         targetStaffId: id as any,
       });
       setGeneratedPassword({ email: name, password: otp });
@@ -74,11 +85,104 @@ export default function TeamManagementTab() {
     }
   };
 
+  const handleSendCeoSms = async (id: string, name: string, phone?: string) => {
+    if (!phone) return;
+    const ok = await confirm(
+      `Send temporary password to ${name}?`,
+      `A one-time temporary password will be sent via SMS to ${phone}. It will expire in 15 minutes.`,
+      'Send SMS'
+    );
+    if (!ok) return;
+    setIsSendingSms(id);
+    try {
+      const res = await sendCeoSms({ targetStaffId: id as any });
+      toast.success(`Sent to ${res.maskedPhone}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send SMS reset");
+    } finally {
+      setIsSendingSms(null);
+    }
+  };
+
+  const handleSavePhone = async (staffId: string) => {
+    if (!editingPhoneValue.trim()) {
+      return toast.error("Phone number is required");
+    }
+    setIsSavingPhone(true);
+    try {
+      const res = await updateStaffPhone({
+        targetStaffId: staffId as any,
+        phone: editingPhoneValue.trim(),
+      });
+      toast.success(`Phone updated to ${res.phone}`);
+      setEditingPhoneStaffId(null);
+      setEditingPhoneValue('');
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update phone number");
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
+  const handleToggleSmsEnabled = async () => {
+    if (!smsSettings) return;
+    try {
+      await updateSmsSettings({
+        smsResetEnabled: !smsSettings.smsResetEnabled,
+        smsResetAllowedRoles: smsSettings.smsResetAllowedRoles,
+        smsDailyCap: smsSettings.smsDailyCap,
+      });
+      toast.success(smsSettings.smsResetEnabled ? "SMS reset disabled" : "SMS reset enabled");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update SMS settings");
+    }
+  };
+
+  const handleToggleRole = async (role: string) => {
+    if (!smsSettings) return;
+    const currentRoles = smsSettings.smsResetAllowedRoles;
+    const isEnabling = !currentRoles.includes(role);
+    if (isEnabling && (role === "admin" || role === "ceo")) {
+      const warning = role === "ceo"
+        ? "CEO recovery normally uses the operator command. Are you sure you want to enable SMS reset for the CEO?"
+        : "Are you sure you want to allow SMS reset for administrators?";
+      const ok = await confirm(`Enable SMS reset for ${role.toUpperCase()}?`, warning, "Enable");
+      if (!ok) return;
+    }
+    const newRoles = isEnabling
+      ? [...currentRoles, role]
+      : currentRoles.filter(r => r !== role);
+    try {
+      await updateSmsSettings({
+        smsResetEnabled: smsSettings.smsResetEnabled,
+        smsResetAllowedRoles: newRoles,
+        smsDailyCap: smsSettings.smsDailyCap,
+      });
+      toast.success("Updated allowed roles");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update roles");
+    }
+  };
+
+  const handleUpdateDailyCap = async (val: number) => {
+    if (!smsSettings) return;
+    const clamped = Math.min(200, Math.max(5, Math.round(val)));
+    try {
+      await updateSmsSettings({
+        smsResetEnabled: smsSettings.smsResetEnabled,
+        smsResetAllowedRoles: smsSettings.smsResetAllowedRoles,
+        smsDailyCap: clamped,
+      });
+      toast.success(`Daily cap updated to ${clamped}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update daily cap");
+    }
+  };
+
   const handleReset2FA = async (id: string, name: string) => {
     if (!await confirm(`Reset ${name}'s 2FA?`, 'They will be forced to re-enroll on their next login.', 'Reset 2FA')) return;
     try {
       await reset2FA({
-        
         targetStaffId: id as any,
       });
       toast.success(`2FA reset for ${name}`);
@@ -91,7 +195,6 @@ export default function TeamManagementTab() {
     if (currentlyActive && !await confirm('Deactivate staff member?', 'This immediately blocks login and revokes access to the staff account.', 'Deactivate')) return;
     try {
       await toggleActive({
-        
         targetStaffId: id as any,
         isActive: !currentlyActive
       });
@@ -105,7 +208,6 @@ export default function TeamManagementTab() {
     if (!await confirm('Revoke all sessions?', 'This logs the staff member out of every device.', 'Revoke sessions')) return;
     try {
       await revokeSessions({
-        
         targetStaffId: id as any,
       });
       toast.success("All sessions revoked");
@@ -117,7 +219,6 @@ export default function TeamManagementTab() {
   const handleRoleChange = async (id: string, newRole: string) => {
     try {
       await updateRole({
-        
         targetStaffId: id as any,
         role: newRole,
       });
@@ -168,6 +269,100 @@ export default function TeamManagementTab() {
         </div>
       )}
 
+      {/* CEO Password Reset by SMS Settings Card */}
+      {isCeo && (
+        <div className="bg-surface border border-surface-variant p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="font-serif text-2xl text-primary flex items-center gap-3">
+                <Smartphone className="w-5 h-5 text-on-surface-variant" />
+                Password Reset by SMS
+              </h2>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Allow staff members to receive temporary one-time passwords via SMS.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs uppercase tracking-widest font-bold text-on-surface-variant">
+                {smsSettings?.smsResetEnabled ? "Enabled" : "Disabled"}
+              </span>
+              <button
+                onClick={handleToggleSmsEnabled}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  smsSettings?.smsResetEnabled ? 'bg-primary' : 'bg-surface-variant'
+                }`}
+                title="Toggle SMS password reset"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                    smsSettings?.smsResetEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-surface-variant">
+            {/* Allowed Roles */}
+            <div className="md:col-span-2 space-y-3">
+              <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant">
+                Allowed Roles
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(["designer", "sales", "admin", "ceo"] as const).map(role => {
+                  const isChecked = smsSettings?.smsResetAllowedRoles?.includes(role) ?? false;
+                  return (
+                    <div key={role} className="flex flex-col p-3 bg-surface-container-lowest border border-surface-variant">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleToggleRole(role)}
+                          className="accent-primary w-4 h-4"
+                        />
+                        <span className="text-sm font-medium text-primary capitalize">{role}</span>
+                      </label>
+                      {role === "ceo" && (
+                        <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-7">
+                          CEO recovery normally uses the operator command
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Daily Cap & Stats */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">
+                  Daily Cap (5 - 200)
+                </label>
+                <input
+                  type="number"
+                  min={5}
+                  max={200}
+                  defaultValue={smsSettings?.smsDailyCap ?? 30}
+                  key={smsSettings?.smsDailyCap}
+                  onBlur={e => handleUpdateDailyCap(Number(e.target.value))}
+                  className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-primary text-primary"
+                />
+              </div>
+              <div className="p-3 bg-surface-container-lowest border border-surface-variant space-y-1">
+                <div className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Usage</div>
+                <div className="text-xs text-primary font-mono">
+                  Sent today: <span className="font-bold">{smsSettings?.sentToday ?? 0}</span> / {smsSettings?.smsDailyCap ?? 30}
+                </div>
+                <div className="text-xs text-primary font-mono">
+                  Last 7 days: <span className="font-bold">{smsSettings?.last7Days ?? 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Staff */}
       <div className="bg-surface border border-surface-variant p-6 sm:p-8">
         <h2 className="font-serif text-2xl text-primary mb-2 flex items-center gap-3">
@@ -188,6 +383,15 @@ export default function TeamManagementTab() {
             <input 
               type="email" 
               value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)}
+              className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Phone (optional)</label>
+            <input 
+              type="tel" 
+              placeholder="024 123 4567"
+              value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)}
               className="w-full bg-surface-container-lowest border border-surface-variant px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors text-primary"
             />
           </div>
@@ -216,12 +420,13 @@ export default function TeamManagementTab() {
 
       {/* Staff List */}
       <div className="border border-surface-variant bg-surface-container-lowest overflow-x-auto">
-        <table className="w-full text-left text-sm min-w-[800px]">
+        <table className="w-full text-left text-sm min-w-[850px]">
           <thead className="bg-surface border-b border-surface-variant">
             <tr>
               <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Status</th>
               <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Name & Email</th>
               <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Role</th>
+              <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider">Phone</th>
               <th className="px-6 py-4 font-medium text-on-surface-variant uppercase text-[10px] tracking-wider text-right">Actions</th>
             </tr>
           </thead>
@@ -252,6 +457,55 @@ export default function TeamManagementTab() {
                       <option value="ceo">CEO</option>
                     </select>
                   </td>
+                  <td className="px-6 py-4">
+                    {editingPhoneStaffId === member._id ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="tel"
+                          value={editingPhoneValue}
+                          onChange={e => setEditingPhoneValue(e.target.value)}
+                          placeholder="024 123 4567"
+                          className="w-32 bg-surface border border-surface-variant px-2 py-1 text-xs font-mono text-primary focus:outline-none focus:border-primary"
+                        />
+                        <button
+                          onClick={() => handleSavePhone(member._id)}
+                          disabled={isSavingPhone}
+                          title="Save phone"
+                          className="p-1 text-green-600 hover:bg-green-500/10 disabled:opacity-50"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingPhoneStaffId(null);
+                            setEditingPhoneValue('');
+                          }}
+                          title="Cancel"
+                          className="p-1 text-outline hover:text-error"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={member.phone ? "font-mono text-xs text-primary" : "text-xs text-outline italic"}>
+                          {member.phone || "No phone"}
+                        </span>
+                        {isCeo && (
+                          <button
+                            onClick={() => {
+                              setEditingPhoneStaffId(member._id);
+                              setEditingPhoneValue('');
+                            }}
+                            title={member.phone ? "Change phone number" : "Add phone number"}
+                            className="text-[10px] uppercase tracking-wider text-outline hover:text-primary underline underline-offset-2 ml-1"
+                          >
+                            {member.phone ? "Edit" : "Add"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button 
@@ -261,10 +515,38 @@ export default function TeamManagementTab() {
                       >
                         <Activity className="w-4 h-4" />
                       </button>
+                      {isCeo && (
+                        <button
+                          onClick={() => handleSendCeoSms(member._id, member.name, member.phone)}
+                          disabled={
+                            !smsSettings?.smsResetEnabled ||
+                            !member.phone ||
+                            !smsSettings?.smsResetAllowedRoles?.includes(member.role) ||
+                            !member.isActive ||
+                            isSendingSms === member._id
+                          }
+                          title={
+                            !smsSettings?.smsResetEnabled
+                              ? "SMS reset is disabled in security settings"
+                              : !member.phone
+                              ? "Staff member has no phone number"
+                              : !smsSettings?.smsResetAllowedRoles?.includes(member.role)
+                              ? `SMS reset is not enabled for role ${member.role}`
+                              : !member.isActive
+                              ? "Staff member is inactive"
+                              : isSendingSms === member._id
+                              ? "Sending SMS..."
+                              : "Send temp password by SMS"
+                          }
+                          className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <Smartphone className="w-4 h-4" />
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleResetPassword(member._id, member.name)}
                         disabled={!member.isActive}
-                        title="Reset Password"
+                        title="Reset Password (show on screen)"
                         className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors disabled:opacity-50"
                       >
                         <Key className="w-4 h-4" />
@@ -296,7 +578,7 @@ export default function TeamManagementTab() {
                 </tr>
                 {isViewingLogins === member._id && (
                   <tr className="bg-surface-container-high/50">
-                    <td colSpan={4} className="p-4 sm:p-6 border-b border-surface-variant">
+                    <td colSpan={5} className="p-4 sm:p-6 border-b border-surface-variant">
                       <h4 className="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-4">Recent Activity for {member.name}</h4>
                       {getLogins === undefined ? (
                         <div className="text-sm text-outline animate-pulse">Loading...</div>
@@ -324,7 +606,7 @@ export default function TeamManagementTab() {
               </React.Fragment>
             ))}
             {staff.length === 0 && (
-              <tr><td colSpan={4} className="p-8 text-center text-on-surface-variant">No staff found.</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-on-surface-variant">No staff found.</td></tr>
             )}
           </tbody>
         </table>

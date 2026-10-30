@@ -17,6 +17,7 @@ import { authenticator } from 'otplib';
 import { UNAMBIGUOUS_ALPHABET, MIN_ACTION_DELAY_MS } from "./lib/smsLimits";
 import { getTempPasswordSms, getPasswordChangedSms } from "./lib/smsTemplates";
 import { sendSms } from "./lib/sms";
+import { normalizeGhanaPhone, maskPhone } from "./lib/phone";
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -354,6 +355,7 @@ export const createStaffUser = action({
     name: v.string(),
     email: v.string(),
     role: v.string(),
+    phone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // 1. Validate session & permissions
@@ -367,6 +369,11 @@ export const createStaffUser = action({
     const email = args.email.trim().toLowerCase();
     if (!email) throw new ConvexError({ code: "BAD_REQUEST", message: "Email is required." });
 
+    let normalizedPhone: string | undefined = undefined;
+    if (args.phone && args.phone.trim()) {
+      normalizedPhone = normalizeGhanaPhone(args.phone.trim());
+    }
+
     // 2. Generate strong OTP
     const tempPassword = generateTempPassword();
 
@@ -379,6 +386,7 @@ export const createStaffUser = action({
       name: args.name,
       email,
       role: args.role,
+      phone: normalizedPhone,
       passwordHash: hash,
       passwordSalt: salt,
       createdBy: staff._id,
@@ -387,6 +395,56 @@ export const createStaffUser = action({
 
     return tempPassword;
   }
+});
+
+export const ceoSendStaffPasswordSms = action({
+  args: {
+    staffToken: v.string(),
+    targetStaffId: v.id("staff"),
+  },
+  handler: async (ctx, args) => {
+    let tempPassword = "";
+    for (let i = 0; i < 10; i++) {
+      const idx = crypto.randomInt(0, UNAMBIGUOUS_ALPHABET.length);
+      tempPassword += UNAMBIGUOUS_ALPHABET[idx];
+    }
+    const salt = crypto.randomBytes(16).toString("hex");
+    const tempPasswordHash = await hashPassword(tempPassword, salt);
+
+    const prep: any = await ctx.runMutation(internal.staffAuth.prepareCeoPasswordReset, {
+      staffToken: args.staffToken,
+      targetStaffId: args.targetStaffId,
+      tempPasswordHash,
+      tempPasswordSalt: salt,
+    });
+
+    const siteUrl = process.env.SITE_URL || "https://gabbynewluk.com";
+    const smsMessage = getTempPasswordSms(tempPassword, siteUrl);
+
+    const sendRes = await sendSms({
+      to: prep.phone,
+      message: smsMessage,
+      kind: "otp",
+    }, ctx);
+
+    if (sendRes.ok) {
+      await ctx.runMutation(internal.staffAuth.completeCeoPasswordResetSend, {
+        staffId: prep.staffId,
+        maskedPhone: prep.maskedPhone,
+      });
+      return { ok: true, maskedPhone: prep.maskedPhone };
+    } else {
+      await ctx.runMutation(internal.staffAuth.failCeoPasswordResetSend, {
+        resetId: prep.resetId,
+        staffId: prep.staffId,
+        maskedPhone: prep.maskedPhone,
+      });
+      throw new ConvexError({
+        code: "SEND_FAILED",
+        message: "Failed to deliver SMS. Please check SMS provider configuration.",
+      });
+    }
+  },
 });
 
 export const resetStaffPassword = action({
