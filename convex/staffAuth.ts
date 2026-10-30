@@ -12,6 +12,7 @@ const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
 
 const MAX_SESSION_LENGTH = 12 * 60 * 60 * 1000; // 12 hours
 const VALID_STAFF_ROLES = ["ceo", "admin", "designer", "sales"] as const;
+const DEV_TEAM_ROLES = ["admin", "designer", "sales"] as const;
 
 async function getActiveCeoCount(ctx: any) {
   const ceos = await ctx.db.query("staff").withIndex("by_role", (q: any) => q.eq("role", "ceo")).collect();
@@ -435,6 +436,9 @@ export const seedDevTeamInternal = internalMutation({
   handler: async (ctx, args) => {
     const createdRoles: string[] = [];
     for (const candidate of args.candidates) {
+      if (!(DEV_TEAM_ROLES as readonly string[]).includes(candidate.role)) {
+        throw new Error("Development seed contains an invalid staff role.");
+      }
       const email = candidate.email.trim().toLowerCase();
       const existing = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", email)).first();
       if (existing) continue;
