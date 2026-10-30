@@ -19,7 +19,6 @@ export default function StaffChangePassword() {
     const lower = password.toLowerCase();
     return [
       { label: 'At least 12 characters', valid: password.length >= 12 },
-      { label: 'Different from your current password', valid: password.length > 0 },
       { label: 'Does not contain your email', valid: !emailLocal || !lower.includes(emailLocal) },
       { label: 'Does not contain your name', valid: nameParts.every((part) => !lower.includes(part)) },
       { label: 'Not a commonly used password', valid: !['password123', 'qwerty', 'admin123', 'gabbynewluk'].some((blocked) => lower.includes(blocked)) },
@@ -91,7 +90,7 @@ export default function StaffChangePassword() {
               {confirm && <p className={`mt-2 text-xs ${passwordsMatch ? 'text-[#a8d5b0]' : 'text-[#e59b8f]'}`}>{passwordsMatch ? 'Passwords match.' : 'Passwords do not match.'}</p>}
             </div>
 
-            <div className="border border-[#6f554a]/50 bg-[#1d1412] p-5"><p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#eadbd3]">Password checklist</p><ul className="space-y-2">{checks.map((check) => <li key={check.label} className={`flex items-center gap-2 text-xs ${check.valid ? 'text-[#a8d5b0]' : 'text-[#bfa9a0]'}`}>{check.valid ? <Check size={15} /> : <X size={15} />}<span>{check.label}</span></li>)}</ul></div>
+            <div className="border border-[#6f554a]/50 bg-[#1d1412] p-5"><p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#eadbd3]">Password checklist</p><ul className="space-y-2">{checks.map((check) => <li key={check.label} className={`flex items-center gap-2 text-xs ${check.valid ? 'text-[#a8d5b0]' : 'text-[#bfa9a0]'}`}>{check.valid ? <Check size={15} /> : <X size={15} />}<span>{check.label}</span></li>)}</ul><p className="mt-4 border-t border-[#6f554a]/40 pt-3 text-xs leading-5 text-[#a98b7e]">Your new password must also be different from the temporary password. This is checked securely when you submit.</p></div>
 
             <button type="submit" disabled={loading || !passwordValid || !passwordsMatch} className="group flex h-13 w-full items-center justify-center gap-3 bg-[#eadbd3] py-4 text-sm font-bold uppercase tracking-[0.18em] text-[#241916] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <Loader2 className="animate-spin" size={20} /> : <>Set password <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" /></>}</button>
           </form>
