@@ -6,3 +6,4 @@ export function getTempPasswordSms(password: string, siteUrl: string): string {
 export function getPasswordChangedSms(): string {
   return "Gabby Newluk: your staff password was just changed. Not you? Tell your manager now.";
 }
+

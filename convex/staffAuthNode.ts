@@ -15,7 +15,7 @@ import {
 import * as crypto from 'crypto';
 import { authenticator } from 'otplib';
 import { UNAMBIGUOUS_ALPHABET, MIN_ACTION_DELAY_MS } from "./lib/smsLimits";
-import { getTempPasswordSms } from "./lib/smsTemplates";
+import { getTempPasswordSms, getPasswordChangedSms } from "./lib/smsTemplates";
 import { sendSms } from "./lib/sms";
 
 function hashToken(token: string): string {
@@ -65,7 +65,25 @@ export const loginAction = action({
     }
 
     // 2. Verify password
-    const isValid = await verifyPassword(args.password, staff.passwordHash);
+    let isValid = await verifyPassword(args.password, staff.passwordHash);
+
+    if (!isValid) {
+      const activeTempReset = await ctx.runQuery(internal.staffAuth.getActiveTempReset, { staffId: staff._id });
+      if (activeTempReset) {
+        const isTempValid = await verifyPassword(args.password, activeTempReset.tempPasswordHash);
+        if (isTempValid) {
+          isValid = true;
+          await ctx.runMutation(internal.staffAuth.consumeTempPassword, {
+            resetId: activeTempReset._id,
+            staffId: staff._id,
+          });
+        } else {
+          await ctx.runMutation(internal.staffAuth.recordTempPasswordFailure, {
+            resetId: activeTempReset._id,
+          });
+        }
+      }
+    }
 
     if (!isValid) {
       // Record failed attempt
@@ -116,30 +134,46 @@ export const changePasswordAction = action({
     if (await verifyPassword(args.newPassword, staff.passwordHash)) {
       throw new ConvexError({ code: "BAD_REQUEST", message: "New password cannot be the same as the current password" });
     }
+
+    const recentTempHashes = await ctx.runQuery(internal.staffAuth.getRecentTempPasswordHashes, { staffId: staff._id });
+    for (const tempHash of recentTempHashes) {
+      if (await verifyPassword(args.newPassword, tempHash)) {
+        throw new ConvexError({ code: "BAD_REQUEST", message: "New password cannot be the same as your temporary password." });
+      }
+    }
+
     validatePasswordPolicy(args.newPassword, staff.email, staff.name);
 
     // 3. Hash new password
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = await hashPassword(args.newPassword, salt);
 
-    // 4. Update password and revoke old sessions
+    // 4. Update password, void remaining temp resets, and revoke all OTHER sessions (keep current one)
     await ctx.runMutation(internal.staffAuth.updatePassword, {
       staffId: staff._id,
       passwordHash: hash,
       passwordSalt: salt,
+      keepSessionTokenHash: tokenHash,
     });
 
-    // 5. Create a new session so staff remains logged in
-    const newToken = crypto.randomBytes(32).toString('hex');
-    const newTokenHash = hashToken(newToken);
-    await ctx.runMutation(internal.staffAuth.createSession, {
-      staffId: staff._id,
-      tokenHash: newTokenHash,
-      ip: "unknown",
-      userAgent: "unknown"
-    });
+    // 5. Fire-and-forget CHANGED notice SMS if phone and feature available
+    if (staff.phone) {
+      try {
+        const settings = await ctx.runQuery(internal.staffSecurity.getInternalSmsConfig);
+        if (settings.smsResetEnabled) {
+          const smsMessage = getPasswordChangedSms();
+          await sendSms({
+            to: staff.phone,
+            message: smsMessage,
+            kind: "notice",
+          }, ctx);
+        }
+      } catch {
+        // Ignore failure
+      }
+    }
 
-    return { status: "success", token: newToken };
+    return { status: "success", token: args.staffToken };
   }
 });
 

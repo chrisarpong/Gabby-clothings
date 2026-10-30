@@ -111,3 +111,4 @@ describe("staff security settings (Task 5)", () => {
     expect(log.details).toContain("cap=5");
   });
 });
+

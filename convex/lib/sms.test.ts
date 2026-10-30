@@ -208,3 +208,4 @@ describe("SMS provider (mock & BMS)", () => {
     expect(mockCtx.runMutation).toHaveBeenCalledWith(expect.anything(), { creditLeft: 15 });
   });
 });
+

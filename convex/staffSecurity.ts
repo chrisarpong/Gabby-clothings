@@ -111,3 +111,4 @@ export const getInternalSmsConfig = internalQuery({
     return settings || DEFAULT_SMS_SETTINGS;
   },
 });
+

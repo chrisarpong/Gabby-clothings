@@ -288,20 +288,50 @@ export const updatePassword = internalMutation({
     staffId: v.id("staff"),
     passwordHash: v.string(),
     passwordSalt: v.string(),
+    keepSessionTokenHash: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const staff = await ctx.db.get(args.staffId);
+    if (!staff) throw new Error("Staff account not found.");
+
     await ctx.db.patch(args.staffId, {
       passwordHash: args.passwordHash,
       passwordSalt: args.passwordSalt,
       mustChangePassword: false,
+      failedAttempts: 0,
+      lockedUntil: undefined,
     });
     
-    // Revoke all existing sessions for this staff member
+    // Void every remaining staffPasswordResets row for that staff
+    const resets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", args.staffId))
+      .collect();
+    const hadSmsReset = resets.length > 0;
+    for (const r of resets) {
+      if (!r.voidedAt && !r.usedAt) {
+        await ctx.db.patch(r._id, { voidedAt: Date.now() });
+      }
+    }
+
+    // Revoke all OTHER sessions for this staff member (keep the current one)
     const sessions = await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", args.staffId)).collect();
     for (const session of sessions) {
-      if (!session.revokedAt) {
+      if (!session.revokedAt && session.tokenHash !== args.keepSessionTokenHash) {
         await ctx.db.patch(session._id, { revokedAt: Date.now() });
       }
+    }
+
+    if (hadSmsReset) {
+      await ctx.db.insert("adminLogs", {
+        userId: args.staffId,
+        adminName: staff.name,
+        action: "Staff completed password change after SMS reset",
+        category: "auth",
+        targetId: args.staffId,
+        targetType: "staff",
+        timestamp: Date.now(),
+      });
     }
   }
 });
@@ -553,6 +583,17 @@ export const updateStaffPasswordInternal = internalMutation({
       failedAttempts: 0,
       lockedUntil: undefined,
     });
+
+    // Void any pending temp resets
+    const resets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", args.targetStaffId))
+      .collect();
+    for (const r of resets) {
+      if (!r.usedAt && !r.voidedAt) {
+        await ctx.db.patch(r._id, { voidedAt: Date.now() });
+      }
+    }
 
     // Revoke all sessions for target staff
     const sessions = await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", args.targetStaffId)).collect();
@@ -928,6 +969,17 @@ export const toggleStaffActive = mutation({
           await ctx.db.patch(session._id, { revokedAt: Date.now() });
         }
       }
+
+      // Void any pending temp resets
+      const resets = await ctx.db
+        .query("staffPasswordResets")
+        .withIndex("by_staffId", q => q.eq("staffId", args.targetStaffId))
+        .collect();
+      for (const r of resets) {
+        if (!r.usedAt && !r.voidedAt) {
+          await ctx.db.patch(r._id, { voidedAt: Date.now() });
+        }
+      }
     }
 
     await ctx.db.insert("adminLogs", {
@@ -962,6 +1014,17 @@ export const updateStaffRole = mutation({
       throw new Error("The system must keep at least one active CEO.");
     }
     await ctx.db.patch(args.targetStaffId, { role: args.role });
+
+    // Void pending temp resets on role change
+    const resets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", args.targetStaffId))
+      .collect();
+    for (const r of resets) {
+      if (!r.usedAt && !r.voidedAt) {
+        await ctx.db.patch(r._id, { voidedAt: Date.now() });
+      }
+    }
 
     await ctx.db.insert("adminLogs", {
       userId: caller._id,
@@ -1151,5 +1214,55 @@ export const consumeChallenge = internalMutation({
     await ctx.db.patch(args.challengeId, { usedAt: Date.now() });
   }
 });
+
+export const getActiveTempReset = internalQuery({
+  args: { staffId: v.id("staff") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const resets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", args.staffId))
+      .collect();
+
+    return resets.find(
+      r => !r.usedAt && !r.voidedAt && r.expiresAt > now && r.attempts < 5
+    ) || null;
+  },
+});
+
+export const consumeTempPassword = internalMutation({
+  args: { resetId: v.id("staffPasswordResets"), staffId: v.id("staff") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.resetId, { usedAt: Date.now() });
+    await ctx.db.patch(args.staffId, { mustChangePassword: true, failedAttempts: 0, lockedUntil: undefined });
+  },
+});
+
+export const recordTempPasswordFailure = internalMutation({
+  args: { resetId: v.id("staffPasswordResets") },
+  handler: async (ctx, args) => {
+    const reset = await ctx.db.get(args.resetId);
+    if (!reset) return;
+    const newAttempts = reset.attempts + 1;
+    const updates: Record<string, any> = { attempts: newAttempts };
+    if (newAttempts >= 5) {
+      updates.voidedAt = Date.now();
+    }
+    await ctx.db.patch(reset._id, updates);
+  },
+});
+
+export const getRecentTempPasswordHashes = internalQuery({
+  args: { staffId: v.id("staff") },
+  handler: async (ctx, args) => {
+    const resets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", args.staffId))
+      .order("desc")
+      .take(10);
+    return resets.map(r => r.tempPasswordHash);
+  },
+});
+
 
 
