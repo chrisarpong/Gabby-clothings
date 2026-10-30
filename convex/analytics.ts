@@ -10,30 +10,28 @@ export const getDashboardStats = query({
     const orders = await ctx.db.query("orders").order("desc").take(2000);
     const users = await ctx.db.query("users").order("desc").take(500);
     const appointments = await ctx.db.query("appointments").withIndex("by_date").order("desc").take(1000);
-    const payments = await ctx.db.query("payments").order("desc").take(5000);
-    
+    const orderPayments = await Promise.all(orders.map(order => ctx.db.query("payments").withIndex("by_orderId", q => q.eq("orderId", order._id)).collect()));
     let totalRevenue = 0;
     let activeOrders = 0;
     let cashCollectedPesewas = 0;
-    const paymentOrderIds = new Set(payments.map(payment => String(payment.orderId)));
+    let cancelledCashPesewas = 0;
     
     const statusCounts: Record<string, number> = {};
 
     for (const o of orders) {
+      const paymentTotalPesewas = orderPayments[orders.indexOf(o)].reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0);
+      const receivedPesewas = Math.max(Math.round((o.amountPaid || 0) * 100), paymentTotalPesewas);
       if (o.status !== "cancelled") {
         totalRevenue += o.totalAmount || 0;
-        if (!paymentOrderIds.has(String(o._id)) && o.status !== "on_hold") cashCollectedPesewas += Math.round((o.amountPaid || 0) * 100);
+        cashCollectedPesewas += receivedPesewas;
+      } else {
+        cancelledCashPesewas += receivedPesewas;
       }
       if (o.status === "pending" || o.status === "processing") {
         activeOrders++;
       }
       statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
     }
-    for (const payment of payments) {
-      const order = await ctx.db.get(payment.orderId);
-      if (order && order.status !== "cancelled" && order.status !== "on_hold") cashCollectedPesewas += Math.round(payment.amount * 100);
-    }
-    
     const orderStatusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
       name: name.charAt(0).toUpperCase() + name.slice(1),
       value
@@ -77,6 +75,7 @@ export const getDashboardStats = query({
     return {
       totalRevenue,
       cashCollected: cashCollectedPesewas / 100,
+      cancelledCashCollected: cancelledCashPesewas / 100,
       totalOrders: orders.length,
       activeOrders,
       totalClients: users.length,

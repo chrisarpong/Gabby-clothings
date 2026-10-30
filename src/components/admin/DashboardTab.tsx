@@ -179,6 +179,7 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
   const kpis = [
     { label: "Order value (gross)", value: `GH₵${(stats.totalRevenue ?? 0).toLocaleString()}`, icon: TrendingUp, trend: revGrowth },
     { label: "Cash collected", value: `GH₵${(stats.cashCollected ?? 0).toLocaleString()}`, icon: CreditCard, trend: null },
+    { label: "Cash on cancelled orders (refund pending)", value: `GH₵${(stats.cancelledCashCollected ?? 0).toLocaleString()}`, icon: CreditCard, trend: null },
     { label: "Total Orders", value: String(stats.totalOrders ?? 0), icon: ShoppingBag, trend: ordGrowth },
     { label: "Active Clients", value: String(stats.totalClients ?? 0), icon: Users, trend: null },
     { label: "Pending Appointments", value: String(stats.upcomingAppointments ?? 0), icon: Calendar, trend: null },
