@@ -418,6 +418,50 @@ export const bootstrapCeoInternal = internalMutation({
   },
 });
 
+export const operatorResetStaffAccessInternal = internalMutation({
+  args: {
+    email: v.string(),
+    passwordHash: v.string(),
+    passwordSalt: v.string(),
+    resetTwoFactor: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.email.trim().toLowerCase();
+    const staff = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", email)).first();
+    if (!staff) throw new Error("Staff account not found.");
+
+    await ctx.db.patch(staff._id, {
+      passwordHash: args.passwordHash,
+      passwordSalt: args.passwordSalt,
+      mustChangePassword: true,
+      failedAttempts: 0,
+      lockedUntil: undefined,
+      ...(args.resetTwoFactor ? { totpSecret: undefined, recoveryCodes: undefined, totpEnabled: false } : {}),
+    });
+
+    const sessions = await ctx.db.query("staffSessions")
+      .withIndex("by_staffId", q => q.eq("staffId", staff._id))
+      .collect();
+    const now = Date.now();
+    for (const session of sessions) {
+      if (!session.revokedAt) await ctx.db.patch(session._id, { revokedAt: now });
+    }
+
+    await ctx.db.insert("adminLogs", {
+      userId: null,
+      adminName: "operator",
+      action: args.resetTwoFactor ? "Operator Reset Staff Access and 2FA" : "Operator Reset Staff Access",
+      details: `Email: ${email}`,
+      category: "auth",
+      targetId: staff._id,
+      targetType: "staff",
+      timestamp: now,
+    });
+
+    return staff._id;
+  },
+});
+
 export const seedDevTeamInternal = internalMutation({
   args: { candidates: v.array(v.object({ role: v.string(), name: v.string(), email: v.string(), passwordHash: v.string(), passwordSalt: v.string() })) },
   handler: async (ctx, args) => {

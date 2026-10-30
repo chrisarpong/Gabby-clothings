@@ -251,6 +251,30 @@ function generateTempPassword() {
   return generateOneTimePassword(16);
 }
 
+export const operatorResetStaffAccess = internalAction({
+  args: {
+    email: v.string(),
+    resetTwoFactor: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<{ email: string; password: string }> => {
+    const email = args.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "A valid staff email is required." });
+    }
+
+    const password = generateOneTimePassword(20);
+    const passwordSalt = crypto.randomBytes(16).toString("hex");
+    const passwordHash = await hashPassword(password, passwordSalt);
+    await ctx.runMutation(internal.staffAuth.operatorResetStaffAccessInternal, {
+      email,
+      passwordHash,
+      passwordSalt,
+      resetTwoFactor: args.resetTwoFactor === true,
+    });
+    return { email, password };
+  },
+});
+
 export const bootstrapCeo = internalAction({
   args: { name: v.string(), email: v.string() },
   handler: async (ctx, args): Promise<{ email: string; password: string }> => {
