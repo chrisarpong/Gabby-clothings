@@ -400,6 +400,62 @@ export const createStaffInternal = internalMutation({
   }
 });
 
+export const bootstrapCeoInternal = internalMutation({
+  args: { name: v.string(), email: v.string(), passwordHash: v.string(), passwordSalt: v.string() },
+  handler: async (ctx, args) => {
+    const existingCeo = await ctx.db.query("staff").withIndex("by_role", q => q.eq("role", "ceo")).first();
+    if (existingCeo) throw new Error("A CEO account already exists; bootstrap is disabled.");
+    const staffId = await ctx.db.insert("staff", {
+      name: args.name,
+      email: args.email.trim().toLowerCase(),
+      role: "ceo",
+      passwordHash: args.passwordHash,
+      passwordSalt: args.passwordSalt,
+      mustChangePassword: true,
+      isActive: true,
+      failedAttempts: 0,
+      totpEnabled: false,
+      createdAt: Date.now(),
+    });
+    await ctx.db.insert("adminLogs", {
+      userId: null,
+      adminName: args.name,
+      action: "Bootstrapped first CEO",
+      category: "team",
+      targetId: staffId,
+      targetType: "staff",
+      timestamp: Date.now(),
+    });
+    return staffId;
+  },
+});
+
+export const seedDevTeamInternal = internalMutation({
+  args: { candidates: v.array(v.object({ role: v.string(), name: v.string(), email: v.string(), passwordHash: v.string(), passwordSalt: v.string() })) },
+  handler: async (ctx, args) => {
+    const createdRoles: string[] = [];
+    for (const candidate of args.candidates) {
+      const email = candidate.email.trim().toLowerCase();
+      const existing = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", email)).first();
+      if (existing) continue;
+      await ctx.db.insert("staff", {
+        name: candidate.name,
+        email,
+        role: candidate.role,
+        passwordHash: candidate.passwordHash,
+        passwordSalt: candidate.passwordSalt,
+        mustChangePassword: true,
+        isActive: true,
+        failedAttempts: 0,
+        totpEnabled: false,
+        createdAt: Date.now(),
+      });
+      createdRoles.push(candidate.role);
+    }
+    return createdRoles;
+  },
+});
+
 export const normalizeStaffEmails = internalMutation({
   args: {},
   handler: async (ctx) => {

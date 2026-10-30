@@ -1,5 +1,5 @@
 "use node";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { 
@@ -239,14 +239,50 @@ export const verify2FA = action({
   }
 });
 
-function generateTempPassword() {
+function generateOneTimePassword(length = 16) {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let temp = "";
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < length; i++) {
     temp += chars[crypto.randomInt(chars.length)];
   }
   return temp;
 }
+function generateTempPassword() {
+  return generateOneTimePassword(16);
+}
+
+export const bootstrapCeo = internalAction({
+  args: { name: v.string(), email: v.string() },
+  handler: async (ctx, args): Promise<{ email: string; password: string }> => {
+    const name = args.name.trim();
+    const email = args.email.trim().toLowerCase();
+    if (!name) throw new ConvexError({ code: "BAD_REQUEST", message: "CEO name is required." });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ConvexError({ code: "BAD_REQUEST", message: "A valid CEO email is required." });
+    const password = generateOneTimePassword(20);
+    const salt = crypto.randomBytes(16).toString("hex");
+    const passwordHash = await hashPassword(password, salt);
+    await ctx.runMutation(internal.staffAuth.bootstrapCeoInternal, { name, email, passwordHash, passwordSalt: salt });
+    return { email, password };
+  },
+});
+
+export const seedDevTeam = internalAction({
+  args: {},
+  handler: async (ctx): Promise<Array<{ role: string; email: string; password: string }>> => {
+    if (process.env.ALLOW_DEV_SEED !== "true") {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Development seed is disabled." });
+    }
+    const candidates = await Promise.all((['admin', 'designer', 'sales'] as const).map(async role => {
+      const password = generateOneTimePassword(20);
+      const salt = crypto.randomBytes(16).toString("hex");
+      return { role, name: `Dev ${role[0].toUpperCase()}${role.slice(1)}`, email: `dev-${role}@example.test`, password, passwordHash: await hashPassword(password, salt), passwordSalt: salt };
+    }));
+    const createdRoles = await ctx.runMutation(internal.staffAuth.seedDevTeamInternal, {
+      candidates: candidates.map(({ password, ...candidate }) => candidate),
+    });
+    return candidates.filter(candidate => createdRoles.includes(candidate.role)).map(({ role, email, password }) => ({ role, email, password }));
+  },
+});
 
 export const createStaffUser = action({
   args: {
