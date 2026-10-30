@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { QrCode, Loader2 } from 'lucide-react';
@@ -7,22 +7,28 @@ import { QRCodeSVG } from 'qrcode.react';
 
 export default function StaffSetup2FA() {
   const [setupData, setSetupData] = useState<{ secret: string; uri: string } | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const setupStarted = useRef(false);
   const { setup2FA, verify2FA, profile, token } = useStaffAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (setupStarted.current || !token) return;
+    setupStarted.current = true;
     async function load() {
       try {
         const data = await setup2FA();
         setSetupData(data);
       } catch (err: any) {
-        toast.error(err.message || "Failed to load 2FA setup");
+        const message = err.message || "Failed to load 2FA setup";
+        setSetupError(message);
+        toast.error(message);
       }
     }
     load();
-  }, [setup2FA]);
+  }, [setup2FA, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +64,19 @@ export default function StaffSetup2FA() {
           </p>
         </div>
 
-        {!setupData ? (
+        {setupError ? (
+          <div className="space-y-4 border border-error/30 bg-error/5 p-5 text-sm text-on-surface-variant">
+            <p className="font-semibold text-error">We could not start 2FA setup.</p>
+            <p>{setupError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary py-3 text-sm font-bold uppercase tracking-widest text-surface"
+            >
+              Try again
+            </button>
+          </div>
+        ) : !setupData ? (
           <div className="flex justify-center p-8">
             <Loader2 className="animate-spin text-primary" size={32} />
           </div>
