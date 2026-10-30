@@ -56,12 +56,22 @@ export const addReview = mutation({
       throw new Error("You have already reviewed this product.");
     }
 
+    const orders = await ctx.db.query("orders")
+      .withIndex("by_user", q => q.eq("userId", userId))
+      .collect();
+    const isVerifiedPurchase = orders.some(order =>
+      order.status !== "cancelled" &&
+      (order.paymentStatus === "paid" || order.paymentStatus === "partial") &&
+      order.items.some(item => item.productId === args.productId)
+    );
+
     await ctx.db.insert("reviews", {
       productId: args.productId,
       userId,
       rating: args.rating,
       comment: args.comment,
       status: "pending", // Reviews need approval
+      isVerifiedPurchase,
     });
   },
 });
