@@ -1,5 +1,5 @@
 import { checkRateLimit } from "./authHelper";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { requireStaff } from "./staffAuth";
@@ -88,7 +88,7 @@ export const applyPromoCode = mutation({
 });
 
 // Used by verifyAndCreate action to recalculate expected discount server-side
-export const getPromoByCode = query({
+export const getPromoByCode = internalQuery({
   args: { code: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
