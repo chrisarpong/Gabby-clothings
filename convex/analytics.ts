@@ -18,8 +18,9 @@ export const getDashboardStats = query({
     
     const statusCounts: Record<string, number> = {};
 
-    for (const o of orders) {
-      const paymentTotalPesewas = orderPayments[orders.indexOf(o)].reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0);
+    for (let orderIndex = 0; orderIndex < orders.length; orderIndex++) {
+      const o = orders[orderIndex];
+      const paymentTotalPesewas = orderPayments[orderIndex].reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0);
       const receivedPesewas = Math.max(Math.round((o.amountPaid || 0) * 100), paymentTotalPesewas);
       if (o.status !== "cancelled") {
         totalRevenue += o.totalAmount || 0;
