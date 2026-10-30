@@ -127,19 +127,19 @@ import { StaffRoute } from './components/auth/StaffRoute';
 
 export default function App() {
   return (
-    <StaffAuthProvider>
     <BrowserRouter>
-      <ScrollToTop />
-      <RouteTitle />
-      <UserSync />
-      <CartSync />
-      <CurrencySync />
-      <CookieBanner />
-      <NewsFlashModal />
-      <Toaster position="top-right" toastOptions={{
-        className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
-      }} />
-      <Routes>
+      <StaffAuthProvider>
+        <ScrollToTop />
+        <RouteTitle />
+        <UserSync />
+        <CartSync />
+        <CurrencySync />
+        <CookieBanner />
+        <NewsFlashModal />
+        <Toaster position="top-right" toastOptions={{
+          className: 'font-sans text-sm rounded-none border border-outline-variant/30 shadow-none bg-surface text-primary',
+        }} />
+        <Routes>
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         {/* Staff Auth Routes */}
         <Route path="/staff/login" element={
@@ -231,8 +231,8 @@ export default function App() {
           <Route path="/news/:slug" element={<NewsArticlePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
-      </Routes>
+        </Routes>
+      </StaffAuthProvider>
     </BrowserRouter>
-    </StaffAuthProvider>
   );
 }
