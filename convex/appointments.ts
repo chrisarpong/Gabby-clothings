@@ -343,12 +343,13 @@ export const getFileOwner = internalQuery({
   }
 });
 
-export const staffFileLink = query({
+export const createStaffFileLink = mutation({
   args: { staffToken: v.string(), storageId: v.id("_storage") },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "appointments" });
     const ownership = await ctx.runQuery(internal.appointments.getFileOwner, { storageId: args.storageId });
-    const siteUrl = process.env.SITE_URL || process.env.CONVEX_SITE_URL || "";
+    const siteUrl = process.env.CONVEX_SITE_URL;
+    if (!siteUrl) throw new ConvexError("Convex file host is not configured.");
     if (!ownership.isPrivate) return `${siteUrl}/getFile?storageId=${encodeURIComponent(args.storageId)}`;
     const secret = process.env.FILE_LINK_SECRET;
     if (!secret) throw new ConvexError("Private staff file links are not configured.");
