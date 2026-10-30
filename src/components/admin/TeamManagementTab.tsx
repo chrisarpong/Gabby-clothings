@@ -279,7 +279,7 @@ export default function TeamManagementTab() {
             <input type="text" value={deleteConfirmation} onChange={e => setDeleteConfirmation(e.target.value)} className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 font-mono text-primary" />
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" onClick={() => { setDeleteTarget(null); setDeletePassword(''); setDeleteConfirmation(''); }} className="border border-surface-variant px-4 py-3 text-sm text-primary">Cancel</button>
-              <button type="button" onClick={handleDeleteStaff} disabled={isDeleting || !deletePassword || deleteConfirmation !== `DELETE ${deleteTarget.email}`} className="bg-error px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{isDeleting ? "Deleting…" : "Permanently delete"}</button>
+              <button type="button" onClick={handleDeleteStaff} disabled={isDeleting || !deletePassword || deleteConfirmation.trim().toLowerCase() !== `delete ${deleteTarget.email.toLowerCase()}`} className="bg-error px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-surface-variant disabled:text-on-surface-variant">{isDeleting ? "Deleting…" : "Permanently delete"}</button>
             </div>
           </div>
         </div>

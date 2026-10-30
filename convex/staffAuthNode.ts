@@ -493,7 +493,7 @@ export const deleteStaffUser = action({
     if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
     if (target._id === caller._id) throw new ConvexError({ code: "FORBIDDEN", message: "You cannot delete your own account." });
     if (target.role === "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "CEO accounts cannot be deleted here." });
-    if (args.confirmation !== `DELETE ${target.email}`) {
+    if (args.confirmation.trim().toLowerCase() !== `delete ${target.email.toLowerCase()}`) {
       throw new ConvexError({ code: "BAD_REQUEST", message: `Type DELETE ${target.email} to confirm.` });
     }
     if (!(await verifyPassword(args.currentPassword, caller.passwordHash))) {
