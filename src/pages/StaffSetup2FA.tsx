@@ -10,19 +10,23 @@ export default function StaffSetup2FA() {
   const [setupError, setSetupError] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [verificationComplete, setVerificationComplete] = useState(false);
+  const { setup2FA, verify2FA, profile, token } = useStaffAuth();
   const setupStarted = useRef(false);
   const navigationStarted = useRef(false);
-  const { setup2FA, verify2FA, profile, token } = useStaffAuth();
+  const setupActionRef = useRef(setup2FA);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    setupActionRef.current = setup2FA;
+  }, [setup2FA]);
 
   useEffect(() => {
     if (setupStarted.current || !token) return;
     setupStarted.current = true;
     async function load() {
       try {
-        const data = await setup2FA();
+        const data = await setupActionRef.current();
         setSetupData(data);
       } catch (err: any) {
         const message = err.message || "Failed to load 2FA setup";
@@ -31,14 +35,14 @@ export default function StaffSetup2FA() {
       }
     }
     load();
-  }, [setup2FA, token]);
+  }, [token]);
 
   useEffect(() => {
-    if ((verificationComplete || profile?.totpEnabled) && !navigationStarted.current && location.pathname !== '/admin') {
+    if (profile?.totpEnabled && !navigationStarted.current && location.pathname !== '/admin') {
       navigationStarted.current = true;
       navigate('/admin', { replace: true });
     }
-  }, [location.pathname, navigate, profile?.totpEnabled, verificationComplete]);
+  }, [location.pathname, navigate, profile?.totpEnabled]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +55,7 @@ export default function StaffSetup2FA() {
     try {
       const res = await verify2FA(token || "", code, true);
       toast.success("2FA enabled successfully");
-      if (res.status === 'success') setVerificationComplete(true);
+      if (res.status !== 'success') throw new Error('2FA verification did not complete');
     } catch (err: any) {
       toast.error(err.message || "Invalid code");
     } finally {
@@ -59,6 +63,13 @@ export default function StaffSetup2FA() {
     }
   };
 
+  if (profile === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
   if (!profile) return null;
 
   return (
