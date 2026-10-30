@@ -240,7 +240,7 @@ export const getUpcoming = query({
 },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "appointments" });
-    return await ctx.db.query("appointments").collect();
+    return await ctx.db.query("appointments").withIndex("by_date").order("desc").take(500);
   },
 });
 

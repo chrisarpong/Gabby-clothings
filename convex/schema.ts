@@ -52,7 +52,7 @@ export default defineSchema({
     ip: v.optional(v.string()),
     userAgent: v.optional(v.string()),
     revokedAt: v.optional(v.number()),
-  }).index("by_tokenHash", ["tokenHash"]).index("by_staffId", ["staffId"]),
+  }).index("by_tokenHash", ["tokenHash"]).index("by_staffId", ["staffId"]).index("by_expiresAt", ["expiresAt"]),
 
   roles: defineTable({
     name: v.string(),

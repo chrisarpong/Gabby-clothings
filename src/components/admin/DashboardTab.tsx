@@ -193,6 +193,7 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
           <h2 className="font-serif text-3xl md:text-4xl text-primary tracking-tight">
             {greeting}, {adminName || 'Admin'}
           </h2>
+          {stats.truncated && <p className="mt-2 text-xs text-amber-700">Showing recent records only; older data is omitted from these dashboard totals.</p>}
         </div>
         
         {/* Dynamic Clock Widget */}

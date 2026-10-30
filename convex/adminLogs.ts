@@ -63,7 +63,7 @@ export const getRecentLogs = query({
   },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "audit_logs" });
-    const limit = args.limit || 50;
+    const limit = Math.min(Math.max(args.limit || 50, 1), 500);
 
     let query = ctx.db.query("adminLogs").order("desc");
     
@@ -88,7 +88,7 @@ export const getActiveSessions = query({
         q.gt(q.field("expiresAt"), now),
         q.eq(q.field("revokedAt"), undefined)
       ))
-      .collect();
+      .take(500);
 
     const activeList = [];
     for (const session of sessions) {

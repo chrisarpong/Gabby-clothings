@@ -319,7 +319,7 @@ export const heartbeat = mutation({
 export const cleanupSessions = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const sessions = await ctx.db.query("staffSessions").collect();
+    const sessions = await ctx.db.query("staffSessions").withIndex("by_expiresAt").order("asc").take(500);
     const now = Date.now();
     for (const session of sessions) {
       if (session.revokedAt) continue;

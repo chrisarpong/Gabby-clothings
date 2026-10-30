@@ -26,7 +26,7 @@ export const getAll = query({
 },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
-    return await ctx.db.query("orders").collect();
+    return await ctx.db.query("orders").order("desc").take(500);
   },
 });
 

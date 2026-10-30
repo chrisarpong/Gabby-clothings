@@ -6,7 +6,7 @@ export const getAll = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "clients" });
-    return await ctx.db.query("users").collect();
+    return await ctx.db.query("users").order("desc").take(500);
   },
 });
 

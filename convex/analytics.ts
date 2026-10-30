@@ -7,9 +7,9 @@ export const getDashboardStats = query({
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.staffToken, { permission: "dashboard" });
 
-    const orders = await ctx.db.query("orders").collect();
-    const users = await ctx.db.query("users").collect();
-    const appointments = await ctx.db.query("appointments").collect();
+    const orders = await ctx.db.query("orders").order("desc").take(2000);
+    const users = await ctx.db.query("users").order("desc").take(500);
+    const appointments = await ctx.db.query("appointments").withIndex("by_date").order("desc").take(1000);
     
     let totalRevenue = 0;
     let activeOrders = 0;
@@ -75,6 +75,7 @@ export const getDashboardStats = query({
       monthlyRevenue,
       recentActivity,
       orderStatusDistribution,
+      truncated: orders.length >= 2000 || appointments.length >= 1000 || users.length >= 500,
     };
   }
 });

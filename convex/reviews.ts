@@ -11,7 +11,7 @@ export const getByProduct = query({
       .query("reviews")
       .withIndex("by_product", (q) => q.eq("productId", args.productId))
       .filter((q) => q.eq(q.field("status"), "approved"))
-      .collect();
+      .take(500);
 
     // Map through reviews to include user info
     return Promise.all(
@@ -58,7 +58,7 @@ export const addReview = mutation({
 
     const orders = await ctx.db.query("orders")
       .withIndex("by_user", q => q.eq("userId", userId))
-      .collect();
+      .take(500);
     const isVerifiedPurchase = orders.some(order =>
       order.status !== "cancelled" &&
       (order.paymentStatus === "paid" || order.paymentStatus === "partial") &&

@@ -27,7 +27,7 @@ export const getMessages = query({
 },
   handler: async (ctx, args) => {
       await requireStaff(ctx, args.staffToken, { permission: "messages" });
-    return await ctx.db.query("messages").order("desc").collect();
+    return await ctx.db.query("messages").order("desc").take(200);
   }
 });
 
