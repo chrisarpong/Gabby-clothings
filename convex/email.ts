@@ -140,13 +140,6 @@ export const sendOrderConfirmation = internalAction({
     const resend = getResendClient();
     if (!resend) return;
 
-    let unsubscribeUrl = "";
-    try {
-      unsubscribeUrl = await marketingUnsubscribeUrl(args.email);
-    } catch (error) {
-      console.warn("Subscription confirmation sent without unsubscribe link:", error instanceof Error ? error.message : error);
-    }
-
     try {
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -172,7 +165,6 @@ export const sendOrderConfirmation = internalAction({
   <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
     <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p>contact@gabbynewluk.com</p>
-    ${unsubscribeUrl ? `<p><a href="${unsubscribeUrl}">Unsubscribe</a> from marketing emails.</p>` : ''}
   </div>
 </div>
         `,
@@ -260,7 +252,7 @@ export const sendPromoBroadcast = action({
 
     const emailsList = await ctx.runQuery(api.users.getAllEmails, { staffToken: args.staffToken });
     const unsubscribed = new Set(await ctx.runQuery(internal.subscribers.getUnsubscribedEmails, {}));
-    const eligibleEmails = emailsList.filter(user => !unsubscribed.has(user.email.trim().toLowerCase()));
+    const eligibleEmails = emailsList.filter((user: { email: string }) => !unsubscribed.has(user.email.trim().toLowerCase()));
 
     let sentCount = 0;
     
@@ -326,6 +318,13 @@ export const sendSubscriptionConfirmation = internalAction({
     const resend = getResendClient();
     if (!resend) return;
 
+    let unsubscribeUrl = "";
+    try {
+      unsubscribeUrl = await marketingUnsubscribeUrl(args.email);
+    } catch (error) {
+      console.warn("Subscription confirmation sent without unsubscribe link:", error instanceof Error ? error.message : error);
+    }
+
     try {
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -345,6 +344,7 @@ export const sendSubscriptionConfirmation = internalAction({
   <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
     <p>Gabby Newluk | Premium custom-fit Fashion</p>
     <p>contact@gabbynewluk.com</p>
+    ${unsubscribeUrl ? `<p><a href="${unsubscribeUrl}">Unsubscribe</a> from marketing emails.</p>` : ''}
   </div>
 </div>
         `,

@@ -56,14 +56,32 @@ describe('unsubscribe links', () => {
   it('puts a signed unsubscribe link in the subscription confirmation', async () => {
     process.env.UNSUBSCRIBE_SECRET = 'test-unsubscribe-secret';
     process.env.RESEND_API_KEY = 're_test';
+    let requestBody = '';
     const fetchMock = vi.fn(async (_url: string, options: any) => {
-      expect(options.body).toContain('unsubscribe?email=welcome%40example.test&token=');
+      requestBody = options.body;
       return new Response(JSON.stringify({ id: 'welcome-email' }), { status: 200, headers: { 'content-type': 'application/json' } });
     });
     vi.stubGlobal('fetch', fetchMock);
     const t = convexTest(schema);
     await t.action(internal.email.sendSubscriptionConfirmation, { email: 'welcome@example.test' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(requestBody).toContain('unsubscribe?email=welcome%40example.test&token=');
+    vi.unstubAllGlobals();
+  });
+
+  it('does not put unsubscribe links in transactional order confirmation', async () => {
+    process.env.UNSUBSCRIBE_SECRET = 'test-unsubscribe-secret';
+    process.env.RESEND_API_KEY = 're_test';
+    let requestBody = '';
+    const fetchMock = vi.fn(async (_url: string, options: any) => {
+      requestBody = options.body;
+      return new Response(JSON.stringify({ id: 'order-email' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const t = convexTest(schema);
+    const orderId = await t.run(ctx => ctx.db.insert('orders', { items: [], totalAmount: 10, status: 'processing' }));
+    await t.action(internal.email.sendOrderConfirmation, { orderId, email: 'buyer@example.test', name: 'Buyer', amount: 10 });
+    expect(requestBody).not.toContain('unsubscribe');
     vi.unstubAllGlobals();
   });
 });
