@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
 import { StaffPermission, StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
+import { normalizeGhanaPhone, maskPhone } from "./lib/phone";
 
 const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
   sales: 5 * 60 * 1000,
@@ -299,8 +300,11 @@ export const getStaffProfile = query({
   handler: async (ctx, args) => {
     try {
       const staff = await requireStaff(ctx, args.staffToken, { allowIncomplete: true });
-      const { passwordHash, passwordSalt, totpSecret, recoveryCodes, ...safeProfile } = staff;
-      return safeProfile;
+      const { passwordHash, passwordSalt, totpSecret, recoveryCodes, phone, ...safeProfile } = staff;
+      return {
+        ...safeProfile,
+        phone: staff.role === "ceo" ? (phone ? maskPhone(phone) : undefined) : undefined,
+      };
     } catch (e: any) {
       if (e instanceof ConvexError && (e.data as any)?.code === "UNAUTHENTICATED") return null;
       throw e;
@@ -562,10 +566,24 @@ export const updateStaffPasswordInternal = internalMutation({
 export const listStaff = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
-    await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    const caller = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
     const staff = await ctx.db.query("staff").order("desc").take(500);
-    return staff.map(({ passwordHash, passwordSalt, totpSecret, recoveryCodes, ...safeProfile }) => safeProfile);
+    return staff.map(({ passwordHash, passwordSalt, totpSecret, recoveryCodes, phone, ...safeProfile }) => ({ ...safeProfile, phone: caller.role === "ceo" ? (phone ? maskPhone(phone) : undefined) : undefined }));
   }
+});
+
+export const updateStaffPhone = mutation({
+  args: { staffToken: v.string(), targetStaffId: v.id("staff"), phone: v.string() },
+  handler: async (ctx, args) => {
+    const caller = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    if (caller.role !== "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "Only the CEO may manage staff phone numbers." });
+    const target = await ctx.db.get(args.targetStaffId);
+    if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
+    const phone = normalizeGhanaPhone(args.phone);
+    await ctx.db.patch(target._id, { phone, phoneUpdatedAt: Date.now() });
+    await ctx.db.insert("adminLogs", { userId: caller._id, adminName: caller.name, action: "Updated Staff Phone", details: `Staff: ${target.name}; old: ${target.phone ? maskPhone(target.phone) : "none"}; new: ${maskPhone(phone)}`, category: "team", targetId: target._id, targetType: "staff", timestamp: Date.now() });
+    return { phone: maskPhone(phone) };
+  },
 });
 
 export const listAssignableDesigners = query({

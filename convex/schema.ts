@@ -38,6 +38,8 @@ export default defineSchema({
     totpSecret: v.optional(v.string()),
     totpEnabled: v.boolean(),
     recoveryCodes: v.optional(v.string()), // hashed
+    phone: v.optional(v.string()),
+    phoneUpdatedAt: v.optional(v.number()),
     createdBy: v.optional(v.id("staff")),
     createdAt: v.number(),
     lastLoginAt: v.optional(v.number()),
