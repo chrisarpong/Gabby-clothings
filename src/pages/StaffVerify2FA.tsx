@@ -1,81 +1,238 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
-import { QrCode, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import logo from '../assets/logo_transparent.png';
 import { sanitizeStaffNext } from '../components/auth/staffAuthState';
 
+const CODE_LENGTH = 6;
+
 export default function StaffVerify2FA() {
-  const [code, setCode] = useState('');
+  const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
+  const [useRecovery, setUseRecovery] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
   const { verify2FA } = useStaffAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const challengeToken = location.state?.challengeToken;
 
-  if (!challengeToken) {
-    return <Navigate to="/staff/login" replace />;
-  }
+  // Auto-focus first input on mount
+  useEffect(() => {
+    if (!useRecovery) {
+      inputRefs.current[0]?.focus();
+    }
+  }, [useRecovery]);
+
+  const getCode = useCallback(() => digits.join(''), [digits]);
+
+  const handleDigitChange = useCallback((index: number, value: string) => {
+    // Only allow digits
+    const digit = value.replace(/\D/g, '').slice(-1);
+
+    setDigits((prev) => {
+      const next = [...prev];
+      next[index] = digit;
+      return next;
+    });
+
+    // Auto-advance to next input
+    if (digit && index < CODE_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  }, []);
+
+  const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      // Move back on backspace when current is empty
+      inputRefs.current[index - 1]?.focus();
+      setDigits((prev) => {
+        const next = [...prev];
+        next[index - 1] = '';
+        return next;
+      });
+    }
+  }, [digits]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH);
+    if (!pasted) return;
+
+    setDigits((prev) => {
+      const next = [...prev];
+      for (let i = 0; i < CODE_LENGTH; i++) {
+        next[i] = pasted[i] || '';
+      }
+      return next;
+    });
+
+    // Focus the input after the last pasted digit
+    const focusIdx = Math.min(pasted.length, CODE_LENGTH - 1);
+    inputRefs.current[focusIdx]?.focus();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.length !== 6) {
-      toast.error("Please enter a 6-digit code");
+    const code = useRecovery ? recoveryCode.trim() : getCode();
+
+    if (!useRecovery && code.length !== CODE_LENGTH) {
+      toast.error("Please enter all 6 digits");
+      return;
+    }
+    if (useRecovery && !code) {
+      toast.error("Please enter a recovery code");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await verify2FA(challengeToken, code, false);
+      await verify2FA(challengeToken, code, useRecovery);
       const from = sanitizeStaffNext(location.state?.next) || sanitizeStaffNext(location.state?.from?.pathname);
-      if (from) {
-        navigate(from, { replace: true });
-      } else {
-        navigate('/admin', { replace: true });
-      }
+      navigate(from || '/admin', { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Invalid code");
+      if (!useRecovery) {
+        // Clear digits and refocus first input on failure
+        setDigits(Array(CODE_LENGTH).fill(''));
+        inputRefs.current[0]?.focus();
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-surface p-4">
-      <div className="max-w-md w-full bg-surface-container border border-outline-variant/30 p-8 shadow-lg">
-        <div className="flex flex-col items-center mb-6 text-center">
-          <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
-            <QrCode size={32} />
-          </div>
-          <h1 className="text-2xl font-bold uppercase tracking-widest text-on-surface">Two-Factor Auth</h1>
-          <p className="text-on-surface-variant text-sm mt-2">
-            Enter the 6-digit code from your authenticator app.
-          </p>
-        </div>
+  if (!challengeToken) {
+    return <Navigate to="/staff/login" replace />;
+  }
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-2">Authenticator Code</label>
-            <input 
-              type="text" 
-              maxLength={6}
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full bg-surface border border-outline-variant/50 p-3 text-center text-lg tracking-[0.5em] font-mono focus:outline-none focus:border-primary transition-colors"
-              placeholder="000000"
-            />
+  return (
+    <div className="min-h-screen bg-[#17110f] text-[#f4e9e2] flex items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-5xl min-h-[620px] grid md:grid-cols-[1.05fr_0.95fr] overflow-hidden border border-[#6f554a]/40 bg-[#241916] shadow-2xl">
+        {/* Left panel — decorative */}
+        <section
+          className="relative hidden md:flex flex-col justify-between p-12 bg-[#1d1412] bg-cover bg-center overflow-hidden"
+          style={{ backgroundImage: "linear-gradient(135deg, rgba(29,20,18,0.94), rgba(29,20,18,0.72)), url('/assets/parallax-bg.jpg')" }}
+        >
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-[#ad8774]/20" />
+          <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full border border-[#ad8774]/20" />
+          <div className="relative z-10">
+            <img src={logo} alt="Gabby Newluk" className="h-20 w-20 object-contain" />
+            <p className="mt-10 text-[11px] uppercase tracking-[0.35em] text-[#c7a99c]">Gabby Newluk Atelier</p>
+            <h2 className="mt-4 max-w-sm font-serif text-5xl leading-[1.05] text-[#f4e9e2]">One more step.</h2>
+            <p className="mt-6 max-w-sm text-sm leading-7 text-[#bfa9a0]">
+              Two-factor authentication keeps your workspace secure. Enter the code from your authenticator app to continue.
+            </p>
           </div>
-          
-          <button 
-            type="submit" 
-            disabled={loading || code.length !== 6}
-            className="w-full bg-primary text-surface py-4 text-sm font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-50 flex justify-center items-center h-12"
-          >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : "Verify"}
-          </button>
-        </form>
+          <div className="relative z-10 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-[#a98b7e]">
+            <LockKeyhole size={15} /> Protected by 2FA
+          </div>
+        </section>
+
+        {/* Right panel — form */}
+        <section className="flex items-center p-7 sm:p-12">
+          <div className="w-full max-w-md mx-auto">
+            <div className="mb-9 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#eadbd3] text-[#241916]">
+                <ShieldCheck size={25} />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-[#b99687]">Verification</p>
+                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#f4e9e2]">Two-factor auth</h1>
+                <p className="mt-2 text-sm text-[#bfa9a0]">
+                  {useRecovery
+                    ? "Enter one of your saved recovery codes."
+                    : "Enter the 6-digit code from your authenticator app."}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {!useRecovery ? (
+                <div>
+                  <label className="mb-3 block text-[10px] uppercase tracking-[0.2em] text-[#c7a99c] font-bold">
+                    Authenticator code
+                  </label>
+                  <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
+                    {digits.map((digit, i) => (
+                      <input
+                        key={i}
+                        ref={(el) => { inputRefs.current[i] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleDigitChange(i, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(i, e)}
+                        className="w-12 h-14 border border-[#76594d] bg-[#17110f] text-center text-xl font-mono text-[#f4e9e2] outline-none transition-all focus:border-[#d1aa96] focus:ring-1 focus:ring-[#d1aa96]/40 placeholder:text-[#806b62]/40"
+                        placeholder="·"
+                      />
+                    ))}
+                  </div>
+                  <p className="mt-3 text-center text-xs text-[#a98b7e]">
+                    Open your authenticator app (e.g. Google Authenticator) to get your code.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-2 block text-[10px] uppercase tracking-[0.2em] text-[#c7a99c] font-bold">
+                    Recovery code
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={recoveryCode}
+                    onChange={(e) => setRecoveryCode(e.target.value)}
+                    className="w-full border border-[#76594d] bg-[#17110f] px-4 py-3.5 text-sm font-mono text-[#f4e9e2] outline-none transition-colors placeholder:text-[#806b62] focus:border-[#d1aa96]"
+                    placeholder="XXXXX-XXXXX"
+                    autoFocus
+                  />
+                  <p className="mt-2 text-xs text-[#a98b7e]">
+                    Each recovery code can only be used once.
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || (!useRecovery && getCode().length !== CODE_LENGTH) || (useRecovery && !recoveryCode.trim())}
+                className="group flex h-13 w-full items-center justify-center gap-3 bg-[#eadbd3] py-4 text-sm font-bold uppercase tracking-[0.18em] text-[#241916] transition-colors hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>Verify <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" /></>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-8 border-t border-[#6f554a]/40 pt-5 space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseRecovery((prev) => !prev);
+                  setRecoveryCode('');
+                  setDigits(Array(CODE_LENGTH).fill(''));
+                }}
+                className="text-xs uppercase tracking-wider text-[#d1aa96] hover:text-[#f4e9e2] transition-colors underline underline-offset-4"
+              >
+                {useRecovery ? "Use authenticator code instead" : "Use a recovery code"}
+              </button>
+              <div>
+                <Link
+                  to="/staff/login"
+                  className="text-xs uppercase tracking-wider text-[#a98b7e] hover:text-[#f4e9e2] transition-colors flex items-center gap-2"
+                >
+                  <ArrowLeft size={14} /> Back to login
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
