@@ -10,20 +10,28 @@ export const getDashboardStats = query({
     const orders = await ctx.db.query("orders").order("desc").take(2000);
     const users = await ctx.db.query("users").order("desc").take(500);
     const appointments = await ctx.db.query("appointments").withIndex("by_date").order("desc").take(1000);
+    const payments = await ctx.db.query("payments").order("desc").take(5000);
     
     let totalRevenue = 0;
     let activeOrders = 0;
+    let cashCollectedPesewas = 0;
+    const paymentOrderIds = new Set(payments.map(payment => String(payment.orderId)));
     
     const statusCounts: Record<string, number> = {};
 
     for (const o of orders) {
       if (o.status !== "cancelled") {
         totalRevenue += o.totalAmount || 0;
+        if (!paymentOrderIds.has(String(o._id)) && o.status !== "on_hold") cashCollectedPesewas += Math.round((o.amountPaid || 0) * 100);
       }
       if (o.status === "pending" || o.status === "processing") {
         activeOrders++;
       }
       statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+    }
+    for (const payment of payments) {
+      const order = await ctx.db.get(payment.orderId);
+      if (order && order.status !== "cancelled" && order.status !== "on_hold") cashCollectedPesewas += Math.round(payment.amount * 100);
     }
     
     const orderStatusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
@@ -68,6 +76,7 @@ export const getDashboardStats = query({
 
     return {
       totalRevenue,
+      cashCollected: cashCollectedPesewas / 100,
       totalOrders: orders.length,
       activeOrders,
       totalClients: users.length,

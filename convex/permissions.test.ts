@@ -91,6 +91,26 @@ describe("Phase 2 permission matrix", () => {
     expect(stats).toBeTruthy();
   });
 
+  it("dashboard cash collected counts receipts once and keeps gross separate", async () => {
+    const t = convexTest(schema);
+    const token = await seedStaff(t, "ceo", "cash-collected");
+    await t.run(async ctx => {
+      const staff = await ctx.db.query("staff").withIndex("by_email", q => q.eq("email", "ceo-permission-test@example.test")).first();
+      const online = await ctx.db.insert("orders", { items: [], totalAmount: 100, amountPaid: 100, amountDue: 0, status: "processing", paymentStatus: "paid" });
+      const deposit = await ctx.db.insert("orders", { items: [], totalAmount: 200, amountPaid: 50, amountDue: 150, status: "processing", paymentStatus: "partial" });
+      const balance = await ctx.db.insert("orders", { items: [], totalAmount: 300, amountPaid: 300, amountDue: 0, status: "processing", paymentStatus: "paid" });
+      await ctx.db.insert("payments", { orderId: deposit, amount: 50, paymentMethod: "cash", recordedBy: staff!._id, date: "2026-10-30" });
+      await ctx.db.insert("payments", { orderId: balance, amount: 100, paymentMethod: "cash", recordedBy: staff!._id, date: "2026-10-30" });
+      await ctx.db.insert("payments", { orderId: balance, amount: 200, paymentMethod: "cash", recordedBy: staff!._id, date: "2026-10-30" });
+      await ctx.db.insert("orders", { items: [], totalAmount: 400, amountPaid: 100, amountDue: 300, status: "cancelled", paymentStatus: "partial" });
+      await ctx.db.insert("orders", { items: [], totalAmount: 500, amountPaid: 0, amountDue: 500, status: "on_hold", paymentStatus: "pending" });
+      void online;
+    });
+    const stats = await t.query(api.analytics.getDashboardStats, { staffToken: token });
+    expect(stats.cashCollected).toBe(450);
+    expect(stats.totalRevenue).toBe(1100);
+  });
+
   it("dashboard analytics throws for an invalid staff session", async () => {
     const t = convexTest(schema);
     await expect(t.query(api.analytics.getDashboardStats, { staffToken: "invalid-dashboard-token" }))

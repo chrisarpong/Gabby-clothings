@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
-import { TrendingUp, Users, ShoppingBag, Calendar, Activity, AlertTriangle, Plus, Tag, Settings, ChevronRight, UserPlus, CheckCircle, XCircle, Clock, ShieldCheck, Printer, X, Search, Monitor, Smartphone, Globe } from 'lucide-react';
+import { TrendingUp, Users, ShoppingBag, Calendar, Activity, AlertTriangle, Plus, Tag, Settings, ChevronRight, UserPlus, CheckCircle, XCircle, Clock, ShieldCheck, Printer, X, Search, Monitor, Smartphone, Globe, CreditCard } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useStaffAuth, useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 
@@ -177,7 +177,8 @@ function DashboardContent({ setActiveTab, adminName }: { setActiveTab?: (tab: Ta
   const ordGrowth = calculateGrowth(thisMonth.orders, lastMonth.orders);
 
   const kpis = [
-    { label: "Total Revenue", value: `GH₵${(stats.totalRevenue ?? 0).toLocaleString()}`, icon: TrendingUp, trend: revGrowth },
+    { label: "Order value (gross)", value: `GH₵${(stats.totalRevenue ?? 0).toLocaleString()}`, icon: TrendingUp, trend: revGrowth },
+    { label: "Cash collected", value: `GH₵${(stats.cashCollected ?? 0).toLocaleString()}`, icon: CreditCard, trend: null },
     { label: "Total Orders", value: String(stats.totalOrders ?? 0), icon: ShoppingBag, trend: ordGrowth },
     { label: "Active Clients", value: String(stats.totalClients ?? 0), icon: Users, trend: null },
     { label: "Pending Appointments", value: String(stats.upcomingAppointments ?? 0), icon: Calendar, trend: null },
