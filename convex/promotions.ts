@@ -48,7 +48,7 @@ export const createPromoCode = mutation({
     validatePromoFields(args);
     const existing = await ctx.db.query("promotions").withIndex("by_code", q => q.eq("code", code)).first();
     if (existing) throw new ConvexError("A promo code with this name already exists.");
-    return await ctx.db.insert("promotions", {
+    const id = await ctx.db.insert("promotions", {
       code,
       discountType: args.discountType,
       discountValue: args.discountValue,
@@ -58,6 +58,8 @@ export const createPromoCode = mutation({
       minOrderAmount: args.minOrderAmount,
       redemptions: 0,
     });
+    await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Created promo code", details: JSON.stringify({ code }), category: "promotions", targetId: id, targetType: "promotion", timestamp: Date.now() });
+    return id;
   }
 });
 
@@ -75,7 +77,8 @@ export const updatePromoCode = mutation({
     const staff = await requireStaff(ctx, args.staffToken, { permission: "promotions" });
     const promo = await ctx.db.get(args.id);
     if (!promo) throw new ConvexError("Promo code not found.");
-    validatePromoFields({ ...args, discountType: promo.discountType });
+    validatePromoFields({ ...args, discountType: promo.discountType, validUntil: args.validUntil !== promo.validUntil ? args.validUntil : undefined });
+    if (args.maxRedemptions !== undefined && args.maxRedemptions < (promo.redemptions || 0)) throw new ConvexError("Maximum redemptions cannot be below current redemptions.");
     const oldValues = { discountValue: promo.discountValue, validUntil: promo.validUntil, maxRedemptions: promo.maxRedemptions, minOrderAmount: promo.minOrderAmount, isActive: promo.isActive };
     const newValues = { discountValue: args.discountValue, validUntil: args.validUntil, maxRedemptions: args.maxRedemptions, minOrderAmount: args.minOrderAmount, isActive: args.isActive };
     await ctx.db.patch(args.id, newValues);

@@ -1,8 +1,9 @@
-import { internalAction, action } from "./_generated/server";
+import { internalAction, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Resend } from "resend";
 import { api, internal } from "./_generated/api";
 import { unsubscribeToken } from './lib/unsubscribe';
+import { requireStaff } from './staffAuth';
 
 async function marketingUnsubscribeUrl(email: string) {
   const secret = process.env.UNSUBSCRIBE_SECRET;
@@ -306,8 +307,17 @@ export const sendPromoBroadcast = action({
         console.error("Failed to send promo to", user.email, err);
       }
     }
+    await ctx.runMutation(internal.email.logPromoBroadcast, { staffToken: args.staffToken, code: args.promoCode, sentCount });
     return `Broadcast sent to ${sentCount} users.`;
   }
+});
+
+export const logPromoBroadcast = internalMutation({
+  args: { staffToken: v.string(), code: v.string(), sentCount: v.number() },
+  handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "promotions" });
+    await ctx.db.insert("adminLogs", { userId: staff._id, adminName: staff.name, action: "Promo broadcast sent", details: JSON.stringify({ code: args.code, sentCount: args.sentCount }), category: "promotions", timestamp: Date.now() });
+  },
 });
 
 export const sendSubscriptionConfirmation = internalAction({

@@ -23,7 +23,7 @@ describe("promotion lifecycle", () => {
     await t.mutation(api.promotions.setPromoActive, { staffToken: token, id, isActive: true });
     await expect(t.mutation(api.promotions.updatePromoCode, { staffToken: token, id, discountValue: 101, isActive: true })).rejects.toThrow("outside the allowed range");
     const logs = await t.run(ctx => ctx.db.query("adminLogs").collect());
-    expect(logs.filter(log => log.category === "promotions")).toHaveLength(2);
+    expect(logs.filter(log => log.category === "promotions")).toHaveLength(3);
     await t.mutation(api.promotions.deletePromoCode, { staffToken: token, id });
   });
 
