@@ -23,11 +23,13 @@ export const submitMessage = mutation({
 
 export const getMessages = query({
   args: {
-      staffToken: v.string()
+      staffToken: v.string(),
+      limit: v.optional(v.number()),
 },
   handler: async (ctx, args) => {
       await requireStaff(ctx, args.staffToken, { permission: "messages" });
-    return await ctx.db.query("messages").order("desc").take(200);
+    const limit = Math.min(1000, Math.max(50, Math.floor(args.limit ?? 200)));
+    return await ctx.db.query("messages").order("desc").take(limit);
   }
 });
 

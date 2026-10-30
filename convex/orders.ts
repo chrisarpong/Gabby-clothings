@@ -22,11 +22,13 @@ export const shippingAddressValidator = v.object({
 
 export const getAll = query({
   args: {
-      staffToken: v.string()
+      staffToken: v.string(),
+      limit: v.optional(v.number()),
 },
   handler: async (ctx, args) => {
       const staff = await requireStaff(ctx, args.staffToken, { permission: "orders" });
-    return await ctx.db.query("orders").order("desc").take(500);
+    const limit = Math.min(3000, Math.max(100, Math.floor(args.limit ?? 500)));
+    return await ctx.db.query("orders").order("desc").take(limit);
   },
 });
 

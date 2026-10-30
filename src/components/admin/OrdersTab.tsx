@@ -32,7 +32,8 @@ const formatStatus = (status: string) => {
 export default function OrdersTab() {
   const { profile } = useStaffAuth();
   const canRecordPayments = profile ? ['ceo', 'admin', 'sales'].includes(profile.role) : false;
-  const orders = useStaffQuery(api.orders.getAll) || [];
+  const [ordersLimit, setOrdersLimit] = useState(500);
+  const orders = useStaffQuery(api.orders.getAll, { limit: ordersLimit }) || [];
   const updateStatus = useStaffMutation(api.orders.updateStatus);
   const recordManualPayment = useStaffMutation(api.orders.recordManualPayment);
   const logAction = useStaffMutation(api.adminLogs.logAction);
@@ -649,6 +650,11 @@ export default function OrdersTab() {
           </>
         )}
       </AnimatePresence>
+      {orders.length === ordersLimit && (
+        <div className="p-4 text-center">
+          {ordersLimit < 3000 ? <button onClick={() => setOrdersLimit(value => Math.min(3000, value + 500))} className="text-primary underline">Load older</button> : <span className="text-xs text-on-surface-variant">Showing newest {ordersLimit}; older items are not displayed.</span>}
+        </div>
+      )}
 
       {/* Invoice Modal */}
       {isInvoiceOpen && selectedOrder && (

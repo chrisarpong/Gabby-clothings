@@ -6,7 +6,8 @@ import { MessageSquare, Send, Eye, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MessagesTab() {
-  const messages = useStaffQuery(api.messages.getMessages);
+  const [messagesLimit, setMessagesLimit] = useState(200);
+  const messages = useStaffQuery(api.messages.getMessages, { limit: messagesLimit });
   const markAsRead = useStaffMutation(api.messages.markAsRead);
   const replyToMessage = useStaffAction(api.email.replyToMessage);
   const [replyingTo, setReplyingTo] = useState<Doc<'messages'> | null>(null);
@@ -50,6 +51,11 @@ export default function MessagesTab() {
           </article>
         ))}
       </div>
+      {messages.length === messagesLimit && (
+        <div className="p-4 text-center">
+          {messagesLimit < 1000 ? <button onClick={() => setMessagesLimit(value => Math.min(1000, value + 200))} className="text-primary underline">Load older</button> : <span className="text-xs text-on-surface-variant">Showing newest {messagesLimit}; older items are not displayed.</span>}
+        </div>
+      )}
 
       {replyingTo && (
         <div className="fixed inset-0 bg-primary/50 z-50 flex items-center justify-center p-4">
