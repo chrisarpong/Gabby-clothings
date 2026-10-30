@@ -4,6 +4,7 @@ import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import logo from '../assets/logo_transparent.png';
+import { sanitizeStaffNext } from '../components/auth/staffAuthState';
 
 export default function StaffLogin() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ export default function StaffLogin() {
   const { login } = useStaffAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const next = sanitizeStaffNext(new URLSearchParams(location.search).get('next'));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,10 +22,10 @@ export default function StaffLogin() {
     try {
       const res = await login(email, password);
       if (res.status === '2fa_required') {
-        navigate('/staff/2fa-verify', { state: { challengeToken: res.token } });
+        navigate('/staff/2fa-verify', { state: { challengeToken: res.token, next } });
       } else {
-        const from = location.state?.from?.pathname;
-        if (from && from.startsWith('/admin') || from?.startsWith('/designer') || from?.startsWith('/sales')) {
+        const from = next || sanitizeStaffNext(location.state?.from?.pathname);
+        if (from) {
           navigate(from, { replace: true });
         } else {
           // Note: The actual redirect should depend on the role. But since we just got the token,

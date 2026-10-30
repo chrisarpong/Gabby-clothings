@@ -24,6 +24,7 @@ interface StaffAuthContextType {
   setup2FA: () => Promise<{ secret: string; uri: string }>;
   verify2FA: (token: string, code: string, isSetup?: boolean) => Promise<{ status: string; token: string; recoveryCodes?: string[] }>;
   logout: () => Promise<void>;
+  clearSession: () => void;
 }
 
 const StaffAuthContext = createContext<StaffAuthContextType | undefined>(undefined);
@@ -50,6 +51,11 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const clearSession = useCallback(() => {
+    clearPosStorage();
+    setToken(null);
+  }, [clearPosStorage]);
+
   useEffect(() => {
     if (token) {
       sessionStorage.setItem('staffToken', token);
@@ -61,10 +67,9 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (token && profile === null) {
-      clearPosStorage();
-      setToken(null);
+      clearSession();
     }
-  }, [token, profile]);
+  }, [token, profile, clearSession]);
 
   const login = useCallback(async (email: string, pass: string) => {
     const res = await loginAction({ email, password: pass });
@@ -105,10 +110,9 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
         console.error(e);
       }
     }
-    clearPosStorage();
-    setToken(null);
+    clearSession();
     navigate('/staff/login');
-  }, [clearPosStorage, logoutMutation, navigate, token]);
+  }, [clearSession, logoutMutation, navigate, token]);
 
   const contextValue = useMemo(() => ({
     token,
@@ -118,7 +122,8 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     setup2FA,
     verify2FA,
     logout,
-  }), [token, profile, login, changePassword, setup2FA, verify2FA, logout]);
+    clearSession,
+  }), [token, profile, login, changePassword, setup2FA, verify2FA, logout, clearSession]);
 
   return (
     <StaffAuthContext.Provider value={contextValue}>

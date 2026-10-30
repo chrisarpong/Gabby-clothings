@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { QrCode, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { sanitizeStaffNext } from '../components/auth/staffAuthState';
 
 export default function StaffVerify2FA() {
   const [code, setCode] = useState('');
@@ -27,8 +28,8 @@ export default function StaffVerify2FA() {
     setLoading(true);
     try {
       const res = await verify2FA(challengeToken, code, false);
-      const from = location.state?.from?.pathname;
-      if (from && (from.startsWith('/admin') || from.startsWith('/designer') || from.startsWith('/sales'))) {
+      const from = sanitizeStaffNext(location.state?.next) || sanitizeStaffNext(location.state?.from?.pathname);
+      if (from) {
         navigate(from, { replace: true });
       } else {
         navigate('/admin', { replace: true });

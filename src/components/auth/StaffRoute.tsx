@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { AlertCircle } from 'lucide-react';
 import IdleLogout from './IdleLogout';
 import { getStaffRouteStep } from './staffRouteDecision';
+import { getStaffAuthState } from './staffAuthState';
 
 interface StaffRouteProps {
   children: React.ReactNode;
@@ -11,10 +12,28 @@ interface StaffRouteProps {
 }
 
 export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }) => {
-  const { token, profile } = useStaffAuth();
+  const { token, profile, clearSession } = useStaffAuth();
   const location = useLocation();
+  const [timedOut, setTimedOut] = useState(false);
 
-  if (profile === undefined) {
+  useEffect(() => {
+    if (!token || profile !== undefined) return;
+    const timer = window.setTimeout(() => setTimedOut(true), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [token, profile]);
+
+  useEffect(() => {
+    if (token && profile === null) clearSession();
+  }, [token, profile, clearSession]);
+
+  const next = `${location.pathname}${location.search}`;
+  const loginUrl = `/staff/login?next=${encodeURIComponent(next)}`;
+  const authState = getStaffAuthState(token, profile, timedOut);
+
+  if (authState === 'loading' && timedOut) {
+    return <div className="min-h-screen flex items-center justify-center bg-surface p-6"><div className="max-w-md text-center"><h1 className="text-xl font-semibold text-primary">Could not reach the server</h1><p className="mt-3 text-sm text-on-surface-variant">Your staff session could not be loaded. Check the dev server and try again.</p><div className="mt-6 flex gap-3"><button onClick={() => window.location.reload()} className="flex-1 bg-primary px-4 py-3 text-sm font-bold text-surface">Reload</button><button onClick={clearSession} className="flex-1 border border-outline-variant px-4 py-3 text-sm font-bold text-primary">Back to login</button></div></div></div>;
+  }
+  if (authState === 'loading') {
     // Loading state
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
@@ -23,10 +42,12 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
     );
   }
 
-  if (!token || profile === null) {
+  if (authState === 'anonymous') {
     // Not logged in
-    return <Navigate to="/staff/login" state={{ from: location }} replace />;
+    return <Navigate to={loginUrl} state={{ from: location }} replace />;
   }
+
+  if (!profile) return null;
 
   const requiredStep = getStaffRouteStep(token, profile, location.pathname);
 
