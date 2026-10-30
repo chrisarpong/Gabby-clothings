@@ -18,3 +18,16 @@ export function sanitizeStaffNext(value: string | null | undefined): string | nu
   if (!(value.startsWith("/staff") || value.startsWith("/admin") || value.startsWith("/designer") || value.startsWith("/sales"))) return null;
   return value;
 }
+
+export function getDefaultRouteForRole(role?: string | null): string {
+  switch (role) {
+    case "designer":
+      return "/designer";
+    case "sales":
+      return "/sales";
+    case "ceo":
+    case "admin":
+    default:
+      return "/admin";
+  }
+}

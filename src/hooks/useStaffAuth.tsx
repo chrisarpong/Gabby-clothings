@@ -19,10 +19,10 @@ interface StaffProfile {
 interface StaffAuthContextType {
   token: string | null;
   profile: StaffProfile | null | undefined; // undefined = loading, null = unauthenticated
-  login: (email: string, pass: string) => Promise<{ status: string; token: string }>;
-  changePassword: (pass: string) => Promise<{ status: string; token: string }>;
+  login: (email: string, pass: string) => Promise<{ status: string; token: string; role?: StaffRole }>;
+  changePassword: (pass: string) => Promise<{ status: string; token: string; role?: StaffRole }>;
   setup2FA: () => Promise<{ secret: string; uri: string }>;
-  verify2FA: (token: string, code: string, isSetup?: boolean) => Promise<{ status: string; token: string; recoveryCodes?: string[] }>;
+  verify2FA: (token: string, code: string, isSetup?: boolean) => Promise<{ status: string; token: string; recoveryCodes?: string[]; role?: StaffRole }>;
   logout: () => Promise<void>;
   clearSession: () => void;
 }

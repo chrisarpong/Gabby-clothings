@@ -50,3 +50,4 @@ Uncaught Error: Out of stock for item Agbada Deluxe
     expect(parseConvexError({ data: { code: 'FORBIDDEN' } })).toContain('You do not have permission');
   });
 });
+

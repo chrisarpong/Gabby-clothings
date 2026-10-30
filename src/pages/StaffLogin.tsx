@@ -4,7 +4,7 @@ import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import logo from '../assets/logo_transparent.png';
-import { sanitizeStaffNext } from '../components/auth/staffAuthState';
+import { getDefaultRouteForRole, sanitizeStaffNext } from '../components/auth/staffAuthState';
 import { parseConvexError } from '../utils/errorParser';
 
 export default function StaffLogin() {
@@ -13,7 +13,7 @@ export default function StaffLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const submitGuardRef = useRef(false);
-  const { login } = useStaffAuth();
+  const { login, profile } = useStaffAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const next = sanitizeStaffNext(new URLSearchParams(location.search).get('next'));
@@ -27,18 +27,12 @@ export default function StaffLogin() {
     try {
       const res = await login(email, password);
       if (res.status === '2fa_required') {
-        sessionStorage.setItem('staff2faChallenge', JSON.stringify({ token: res.token, next }));
-        navigate('/staff/2fa-verify', { state: { challengeToken: res.token, next } });
+        sessionStorage.setItem('staff2faChallenge', JSON.stringify({ token: res.token, next, role: res.role }));
+        navigate('/staff/2fa-verify', { state: { challengeToken: res.token, next, role: res.role } });
       } else {
         const from = next || sanitizeStaffNext(location.state?.from?.pathname);
-        if (from) {
-          navigate(from, { replace: true });
-        } else {
-          // Note: The actual redirect should depend on the role. But since we just got the token,
-          // the profile might not be fully loaded in the next tick. However, useStaffAuth's profile
-          // will load shortly. We can just redirect to /staff and let StaffRoute handle it or go to admin.
-          navigate('/admin', { replace: true }); // Admin route will redirect if needed, or we can just go to admin.
-        }
+        const destination = from || getDefaultRouteForRole(res.role || profile?.role);
+        navigate(destination, { replace: true });
       }
     } catch (err: any) {
       toast.error(parseConvexError(err, "Login failed. Please check your credentials."));

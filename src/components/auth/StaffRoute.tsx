@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { AlertCircle } from 'lucide-react';
 import IdleLogout from './IdleLogout';
 import { getStaffRouteStep } from './staffRouteDecision';
-import { getStaffAuthState } from './staffAuthState';
+import { getDefaultRouteForRole, getStaffAuthState } from './staffAuthState';
 
 interface StaffRouteProps {
   children: React.ReactNode;
@@ -60,6 +60,14 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
   }
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
+    // If a designer or salesperson visits the root /admin URL, seamlessly route them to their portal
+    if (location.pathname === '/admin' || location.pathname === '/admin/') {
+      return <Navigate to={getDefaultRouteForRole(profile.role)} replace />;
+    }
+
+    const homeRoute = getDefaultRouteForRole(profile.role);
+    const portalName = profile.role === 'designer' ? 'Designer Portal' : profile.role === 'sales' ? 'Sales Portal' : 'Workspace';
+
     // 403 Forbidden
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface p-4">
@@ -69,12 +77,20 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
           <p className="text-on-surface-variant mb-6">
             You do not have the required permissions to view this page. Your current role is <span className="font-bold">{profile.role}</span>.
           </p>
-          <button 
-            onClick={() => window.history.back()}
-            className="bg-primary text-surface px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
-          >
-            Go Back
-          </button>
+          <div className="flex flex-col gap-3 w-full">
+            <Link
+              to={homeRoute}
+              className="bg-primary text-surface px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
+            >
+              Go to {portalName}
+            </Link>
+            <button 
+              onClick={() => window.history.back()}
+              className="border border-outline-variant/40 text-on-surface px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-surface-variant/20 transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );

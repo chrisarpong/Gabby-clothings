@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getStaffAuthState, sanitizeStaffNext } from "./staffAuthState";
+import { getDefaultRouteForRole, getStaffAuthState, sanitizeStaffNext } from "./staffAuthState";
 
 describe("staff auth state", () => {
   it("treats no token as anonymous immediately", () => expect(getStaffAuthState(null, undefined)).toBe("anonymous"));
@@ -14,4 +14,17 @@ describe("staff next-path sanitizing", () => {
     expect(sanitizeStaffNext(value)).toBeNull();
   });
   it("allows internal staff destinations", () => expect(sanitizeStaffNext("/designer?tab=tasks")).toBe("/designer?tab=tasks"));
+});
+
+describe("staff default role route", () => {
+  it("routes designer to /designer", () => expect(getDefaultRouteForRole("designer")).toBe("/designer"));
+  it("routes sales to /sales", () => expect(getDefaultRouteForRole("sales")).toBe("/sales"));
+  it("routes ceo and admin to /admin", () => {
+    expect(getDefaultRouteForRole("ceo")).toBe("/admin");
+    expect(getDefaultRouteForRole("admin")).toBe("/admin");
+  });
+  it("defaults to /admin for unknown or empty role", () => {
+    expect(getDefaultRouteForRole(null)).toBe("/admin");
+    expect(getDefaultRouteForRole(undefined)).toBe("/admin");
+  });
 });

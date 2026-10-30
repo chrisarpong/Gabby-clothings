@@ -119,7 +119,7 @@ export const loginAction = action({
         tokenHash: challengeHash,
         purpose: "verify_2fa"
       });
-      return { status: "2fa_required", token: challengeToken };
+      return { status: "2fa_required", token: challengeToken, role: staff.role };
     }
 
     // 4. Generate session token
@@ -133,7 +133,7 @@ export const loginAction = action({
       userAgent: "unknown"
     });
 
-    return { status: "success", token };
+    return { status: "success", token, role: staff.role };
   }
 });
 
@@ -191,7 +191,7 @@ export const changePasswordAction = action({
       }
     }
 
-    return { status: "success", token: args.staffToken };
+    return { status: "success", token: args.staffToken, role: staff.role };
   }
 });
 
@@ -225,7 +225,7 @@ export const verify2FA = action({
     code: v.string(),
     isSetup: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{ status: string; token: string; recoveryCodes?: string[] }> => {
+  handler: async (ctx, args): Promise<{ status: string; token: string; recoveryCodes?: string[]; role?: string }> => {
     const envKey = requireStaff2FAKey();
 
     if (args.isSetup) {
@@ -248,7 +248,7 @@ export const verify2FA = action({
         recoveryCodes: hashedCodes,
       });
 
-      return { status: "success", token: args.token, recoveryCodes };
+      return { status: "success", token: args.token, recoveryCodes, role: staff.role };
     } else {
       const tokenHash = hashToken(args.token);
       const challenge = await ctx.runQuery(internal.staffAuth.getChallenge, { tokenHash, purpose: "verify_2fa" });
@@ -292,7 +292,7 @@ export const verify2FA = action({
         userAgent: "unknown"
       });
 
-      return { status: "success", token: sessionToken };
+      return { status: "success", token: sessionToken, role: staff.role };
     }
   }
 });

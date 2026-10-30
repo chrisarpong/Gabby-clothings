@@ -4,7 +4,7 @@ import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowLeft, ArrowRight, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import logo from '../assets/logo_transparent.png';
-import { sanitizeStaffNext } from '../components/auth/staffAuthState';
+import { getDefaultRouteForRole, sanitizeStaffNext } from '../components/auth/staffAuthState';
 import { parseConvexError } from '../utils/errorParser';
 
 const CODE_LENGTH = 6;
@@ -15,7 +15,7 @@ export default function StaffVerify2FA() {
   const [useRecovery, setUseRecovery] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
   const submitGuardRef = useRef(false);
-  const { verify2FA } = useStaffAuth();
+  const { verify2FA, profile } = useStaffAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -98,10 +98,11 @@ export default function StaffVerify2FA() {
     submitGuardRef.current = true;
     setLoading(true);
     try {
-      await verify2FA(challengeToken, code, useRecovery);
+      const res = await verify2FA(challengeToken, code, useRecovery);
       sessionStorage.removeItem('staff2faChallenge');
       const from = sanitizeStaffNext(nextPath) || sanitizeStaffNext(location.state?.from?.pathname);
-      navigate(from || '/admin', { replace: true });
+      const targetRole = res?.role || location.state?.role || storedChallenge?.role || profile?.role;
+      navigate(from || getDefaultRouteForRole(targetRole), { replace: true });
     } catch (err: any) {
       const message = parseConvexError(err, "Invalid code");
       if (/Invalid or expired challenge|Invalid session|Session expired/i.test(message)) {

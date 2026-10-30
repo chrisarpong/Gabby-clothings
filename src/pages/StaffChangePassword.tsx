@@ -4,6 +4,7 @@ import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Check, Eye, EyeOff, KeyRound, Loader2, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseConvexError } from '../utils/errorParser';
+import { getDefaultRouteForRole } from '../components/auth/staffAuthState';
 
 export default function StaffChangePassword() {
   const [password, setPassword] = useState('');
@@ -44,7 +45,7 @@ export default function StaffChangePassword() {
       // So we use our session token as the challenge token.
       const res = await changePassword(password);
       toast.success("Password changed successfully");
-      navigate('/admin', { replace: true });
+      navigate(getDefaultRouteForRole(res?.role || profile?.role), { replace: true });
     } catch (err: any) {
       toast.error(parseConvexError(err, "Failed to change password. Please ensure it meets all requirements."));
     } finally {

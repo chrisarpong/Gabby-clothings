@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import logo from '../assets/logo_transparent.png';
 import { parseConvexError } from '../utils/errorParser';
+import { getDefaultRouteForRole } from '../components/auth/staffAuthState';
 
 export default function StaffSetup2FA() {
   const [setupData, setSetupData] = useState<{ secret: string; uri: string } | null>(null);
@@ -43,11 +44,12 @@ export default function StaffSetup2FA() {
   }, [token]);
 
   useEffect(() => {
-    if (profile?.totpEnabled && setupComplete && codesSaved && !navigationStarted.current && location.pathname !== '/admin') {
+    const targetRoute = getDefaultRouteForRole(profile?.role);
+    if (profile?.totpEnabled && setupComplete && codesSaved && !navigationStarted.current && location.pathname !== targetRoute) {
       navigationStarted.current = true;
-      navigate('/admin', { replace: true });
+      navigate(targetRoute, { replace: true });
     }
-  }, [location.pathname, navigate, profile?.totpEnabled, setupComplete, codesSaved]);
+  }, [location.pathname, navigate, profile?.totpEnabled, profile?.role, setupComplete, codesSaved]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +101,7 @@ export default function StaffSetup2FA() {
           ) : (
             <div className="space-y-6">
               <div className="border border-[#6f554a]/50 bg-[#17110f] p-6"><p className="mb-5 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-[#c7a99c]">1. Scan this QR code</p><p className="mb-4 text-center text-sm font-semibold text-[#fff1e9]">Do not reload this page; scan the code now.</p><div className="flex justify-center"><QRCodeSVG value={setupData.uri} size={210} includeMargin className="rounded bg-white p-2" /></div><p className="mt-5 text-center text-xs leading-5 text-[#bfa9a0]">If you cannot scan it, enter the setup key manually in your authenticator app.</p><div className="mt-3 rounded border border-[#6f554a]/50 bg-[#2c201d] px-4 py-3 text-center"><code className="select-all break-all font-mono text-sm font-semibold tracking-wider text-[#fff1e9]">{setupData.secret}</code></div></div>
-              {recoveryCodes ? <div className="space-y-4 border border-[#6f554a]/50 bg-[#2c201d] p-6"><h2 className="text-lg font-semibold text-[#fff1e9]">Save your recovery codes</h2><p className="text-sm text-[#e8c9bf]">Store these codes somewhere safe. Each can be used once if you lose your authenticator.</p><div className="grid grid-cols-2 gap-2 rounded bg-[#17110f] p-4 font-mono text-sm text-[#fff1e9]">{recoveryCodes.map((item) => <code key={item}>{item}</code>)}</div><label className="flex items-center gap-3 text-sm text-[#fff1e9]"><input type="checkbox" checked={codesSaved} onChange={(e) => setCodesSaved(e.target.checked)} /> I saved my recovery codes</label><button type="button" disabled={!codesSaved} onClick={() => navigate('/admin', { replace: true })} className="w-full bg-[#eadbd3] py-3 text-sm font-bold uppercase tracking-widest text-[#241916] disabled:opacity-40">Continue</button></div> : <form onSubmit={handleSubmit} className="space-y-4"><div><label htmlFor="authenticator-code" className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-[#c7a99c]">2. Enter your 6-digit code</label><input id="authenticator-code" type="text" inputMode="numeric" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="w-full border border-[#76594d] bg-[#17110f] p-4 text-center font-mono text-2xl font-semibold tracking-[0.5em] text-[#fff1e9] outline-none placeholder:text-[#806b62] focus:border-[#eadbd3]" placeholder="000000" autoComplete="one-time-code" /></div><button type="submit" disabled={loading || code.length !== 6} className="flex h-13 w-full items-center justify-center bg-[#eadbd3] py-4 text-sm font-bold uppercase tracking-[0.18em] text-[#241916] hover:bg-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <Loader2 className="animate-spin" size={20} /> : 'Verify & enable'}</button></form>}
+              {recoveryCodes ? <div className="space-y-4 border border-[#6f554a]/50 bg-[#2c201d] p-6"><h2 className="text-lg font-semibold text-[#fff1e9]">Save your recovery codes</h2><p className="text-sm text-[#e8c9bf]">Store these codes somewhere safe. Each can be used once if you lose your authenticator.</p><div className="grid grid-cols-2 gap-2 rounded bg-[#17110f] p-4 font-mono text-sm text-[#fff1e9]">{recoveryCodes.map((item) => <code key={item}>{item}</code>)}</div><label className="flex items-center gap-3 text-sm text-[#fff1e9]"><input type="checkbox" checked={codesSaved} onChange={(e) => setCodesSaved(e.target.checked)} /> I saved my recovery codes</label><button type="button" disabled={!codesSaved} onClick={() => { navigationStarted.current = true; navigate(getDefaultRouteForRole(profile?.role), { replace: true }); }} className="w-full bg-[#eadbd3] py-3 text-sm font-bold uppercase tracking-widest text-[#241916] disabled:opacity-40">Continue</button></div> : <form onSubmit={handleSubmit} className="space-y-4"><div><label htmlFor="authenticator-code" className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-[#c7a99c]">2. Enter your 6-digit code</label><input id="authenticator-code" type="text" inputMode="numeric" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="w-full border border-[#76594d] bg-[#17110f] p-4 text-center font-mono text-2xl font-semibold tracking-[0.5em] text-[#fff1e9] outline-none placeholder:text-[#806b62] focus:border-[#eadbd3]" placeholder="000000" autoComplete="one-time-code" /></div><button type="submit" disabled={loading || code.length !== 6} className="flex h-13 w-full items-center justify-center bg-[#eadbd3] py-4 text-sm font-bold uppercase tracking-[0.18em] text-[#241916] hover:bg-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <Loader2 className="animate-spin" size={20} /> : 'Verify & enable'}</button></form>}
             </div>
           )}
         </section>
