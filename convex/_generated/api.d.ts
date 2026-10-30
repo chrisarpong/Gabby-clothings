@@ -49,6 +49,7 @@ import type * as reviews from "../reviews.js";
 import type * as settings from "../settings.js";
 import type * as sms from "../sms.js";
 import type * as smsAdmin from "../smsAdmin.js";
+import type * as smsCleanup from "../smsCleanup.js";
 import type * as smsDev from "../smsDev.js";
 import type * as staffAuth from "../staffAuth.js";
 import type * as staffAuthNode from "../staffAuthNode.js";
@@ -110,6 +111,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   sms: typeof sms;
   smsAdmin: typeof smsAdmin;
+  smsCleanup: typeof smsCleanup;
   smsDev: typeof smsDev;
   staffAuth: typeof staffAuth;
   staffAuthNode: typeof staffAuthNode;
