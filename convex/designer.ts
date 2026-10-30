@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireStaff } from "./staffAuth";
+import { signFileLink } from "./lib/fileLinks";
 
 const PRODUCTION_STAGES = ["pending", "cutting", "stitching", "fitting", "finishing", "completed", "ready_for_pickup"] as const;
 
@@ -157,5 +158,24 @@ export const updateMyOrderProduction = mutation({
       note: args.note,
       timestamp: Date.now(),
     });
+  },
+});
+
+export const createFileLink = mutation({
+  args: { staffToken: v.string(), storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.staffToken, { permission: "designer_portal" });
+    const file = await ctx.db.query("appointmentFiles").withIndex("by_storageId", q => q.eq("storageId", args.storageId)).first();
+    if (!file) throw new ConvexError({ code: "FORBIDDEN", message: "File is not assigned to a designer." });
+    const appointment = await ctx.db.get(file.appointmentId);
+    if (!appointment || (staff.role !== "ceo" && appointment.assignedStaffId !== staff._id)) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "File is not assigned to this designer." });
+    }
+    const base = process.env.CONVEX_SITE_URL;
+    const secret = process.env.FILE_LINK_SECRET;
+    if (!base || !secret) throw new ConvexError("Designer file links are not configured.");
+    const exp = Date.now() + 60_000;
+    const sig = await signFileLink(args.storageId, exp, secret);
+    return `${base}/getFile?storageId=${encodeURIComponent(args.storageId)}&sig=${sig}&exp=${exp}`;
   },
 });
