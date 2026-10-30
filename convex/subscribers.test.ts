@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { convexTest } from 'convex-test';
 import schema from './schema';
-import { api } from './_generated/api';
+import { api, internal } from './_generated/api';
 import * as crypto from 'crypto';
 import { unsubscribeToken } from './lib/unsubscribe';
 
@@ -51,5 +51,19 @@ describe('unsubscribe links', () => {
     await t.mutation(api.subscribers.subscribe, { email: ' returning@example.com ' });
     expect(await t.run(ctx => ctx.db.get(id))).toMatchObject({ email: 'returning@example.com', status: 'active' });
     expect(await t.run(ctx => ctx.db.query('adminLogs').filter(q => q.eq(q.field('action'), 'Subscriber Resubscribed')).first())).toMatchObject({ category: 'marketing', targetType: 'subscriber' });
+  });
+
+  it('puts a signed unsubscribe link in the subscription confirmation', async () => {
+    process.env.UNSUBSCRIBE_SECRET = 'test-unsubscribe-secret';
+    process.env.RESEND_API_KEY = 're_test';
+    const fetchMock = vi.fn(async (_url: string, options: any) => {
+      expect(options.body).toContain('unsubscribe?email=welcome%40example.test&token=');
+      return new Response(JSON.stringify({ id: 'welcome-email' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const t = convexTest(schema);
+    await t.action(internal.email.sendSubscriptionConfirmation, { email: 'welcome@example.test' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
   });
 });
