@@ -56,6 +56,22 @@ export default defineSchema({
     revokedAt: v.optional(v.number()),
   }).index("by_tokenHash", ["tokenHash"]).index("by_staffId", ["staffId"]).index("by_expiresAt", ["expiresAt"]),
 
+  devSmsOutbox: defineTable({
+    phone: v.string(),
+    message: v.string(),
+    kind: v.string(),
+    createdAt: v.number(),
+  }).index("by_phone", ["phone"]).index("by_createdAt", ["createdAt"]),
+
+  staffNotifications: defineTable({
+    title: v.string(),
+    type: v.string(),
+    recipientRole: v.optional(v.string()),
+    details: v.optional(v.string()),
+    createdAt: v.number(),
+    read: v.boolean(),
+  }).index("by_type_createdAt", ["type", "createdAt"]).index("by_createdAt", ["createdAt"]),
+
   roles: defineTable({
     name: v.string(),
     label: v.string(),
