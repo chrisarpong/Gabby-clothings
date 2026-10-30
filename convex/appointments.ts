@@ -337,8 +337,6 @@ export const getFileOwner = internalQuery({
   handler: async (ctx, args) => {
     const indexed = await ctx.db.query("appointmentFiles").withIndex("by_storageId", q => q.eq("storageId", args.storageId)).first();
     if (indexed) return { isPrivate: true, ownerId: indexed.ownerId };
-    const appointments = await ctx.db.query("appointments").take(500);
-    for (const appt of appointments) if (appt.referenceImages?.includes(args.storageId)) return { isPrivate: true, ownerId: appt.userId };
     return { isPrivate: false };
   }
 });
@@ -367,6 +365,9 @@ export const backfillAppointmentFiles = internalMutation({
     for (const appointment of page.page) for (const storageId of appointment.referenceImages ?? []) {
       const exists = await ctx.db.query("appointmentFiles").withIndex("by_storageId", q => q.eq("storageId", storageId)).first();
       if (!exists) { await ctx.db.insert("appointmentFiles", { storageId, appointmentId: appointment._id, ownerId: appointment.userId }); inserted++; }
+    }
+    if (!page.isDone) {
+      await ctx.scheduler.runAfter(0, internal.appointments.backfillAppointmentFiles, { cursor: page.continueCursor });
     }
     return { inserted, continueCursor: page.isDone ? undefined : page.continueCursor };
   },
