@@ -67,6 +67,7 @@ export default function TailorsSection() {
   if (tailors === undefined) {
     return <div className="p-8 text-on-surface-variant text-xs uppercase tracking-widest animate-pulse">Loading tailors...</div>;
   }
+  if (tailors.length === 0) return null;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">{dialog}
@@ -80,7 +81,7 @@ export default function TailorsSection() {
           </h2>
           <p className="text-sm text-on-surface-variant mb-6">These legacy records are kept for older data. Create and manage designer staff accounts under Team &amp; Roles, then assign designers from appointments or orders.</p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {false && <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant mb-2">Name *</label>
               <input 
@@ -120,7 +121,7 @@ export default function TailorsSection() {
                 </button>
               </div>
             </div>
-          </div>
+          </div>}
 
           <div className="mt-8 border border-surface-variant bg-surface-container-lowest">
             {tailors.length === 0 ? (
@@ -138,13 +139,6 @@ export default function TailorsSection() {
                         {tailor.phone || 'No phone'}
                       </p>
                     </div>
-                    <button 
-                      onClick={() => handleRemove(tailor._id)}
-                      className="text-error hover:bg-error/10 p-2 transition-colors"
-                      title="Remove Tailor"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </li>
                 ))}
               </ul>

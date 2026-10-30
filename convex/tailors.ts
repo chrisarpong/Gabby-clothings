@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { requireStaff } from "./staffAuth";
 
@@ -8,6 +8,11 @@ export const getAll = query({
     await requireStaff(ctx, args.staffToken, { permission: "settings" });
     return await ctx.db.query("tailors").collect();
   },
+});
+
+export const listLegacyTailors = internalQuery({
+  args: {},
+  handler: async (ctx) => await ctx.db.query("tailors").order("desc").take(500),
 });
 
 export const listActiveTailors = query({
