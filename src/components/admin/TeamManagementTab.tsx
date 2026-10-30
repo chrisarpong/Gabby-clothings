@@ -88,6 +88,7 @@ export default function TeamManagementTab() {
   };
 
   const handleToggleActive = async (id: string, currentlyActive: boolean) => {
+    if (currentlyActive && !await confirm('Deactivate staff member?', 'This immediately blocks login and revokes access to the staff account.', 'Deactivate')) return;
     try {
       await toggleActive({
         
