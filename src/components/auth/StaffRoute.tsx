@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { AlertCircle } from 'lucide-react';
 import IdleLogout from './IdleLogout';
+import { getStaffRouteStep } from './staffRouteDecision';
 
 interface StaffRouteProps {
   children: React.ReactNode;
@@ -27,14 +28,13 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
     return <Navigate to="/staff/login" state={{ from: location }} replace />;
   }
 
-  if (profile.mustChangePassword && location.pathname !== '/staff/change-password') {
-    // Force password change
+  const requiredStep = getStaffRouteStep(token, profile, location.pathname);
+
+  if (requiredStep === 'change-password') {
     return <Navigate to="/staff/change-password" replace />;
   }
 
-  const requires2FA = profile.role === 'ceo' || profile.role === 'admin';
-  if (requires2FA && !profile.totpEnabled && location.pathname !== '/staff/setup-2fa') {
-    // Force 2FA setup for admins and CEOs
+  if (requiredStep === 'setup-2fa') {
     return <Navigate to="/staff/setup-2fa" replace />;
   }
 

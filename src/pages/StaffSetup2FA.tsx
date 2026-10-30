@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { QrCode, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,9 +10,12 @@ export default function StaffSetup2FA() {
   const [setupError, setSetupError] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verificationComplete, setVerificationComplete] = useState(false);
   const setupStarted = useRef(false);
+  const navigationStarted = useRef(false);
   const { setup2FA, verify2FA, profile, token } = useStaffAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (setupStarted.current || !token) return;
@@ -30,6 +33,13 @@ export default function StaffSetup2FA() {
     load();
   }, [setup2FA, token]);
 
+  useEffect(() => {
+    if ((verificationComplete || profile?.totpEnabled) && !navigationStarted.current && location.pathname !== '/admin') {
+      navigationStarted.current = true;
+      navigate('/admin', { replace: true });
+    }
+  }, [location.pathname, navigate, profile?.totpEnabled, verificationComplete]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length !== 6) {
@@ -41,7 +51,7 @@ export default function StaffSetup2FA() {
     try {
       const res = await verify2FA(token || "", code, true);
       toast.success("2FA enabled successfully");
-      navigate('/admin', { replace: true });
+      if (res.status === 'success') setVerificationComplete(true);
     } catch (err: any) {
       toast.error(err.message || "Invalid code");
     } finally {
