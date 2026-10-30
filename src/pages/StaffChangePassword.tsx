@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Check, Eye, EyeOff, KeyRound, Loader2, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +12,8 @@ export default function StaffChangePassword() {
   const [loading, setLoading] = useState(false);
   const { changePassword, profile } = useStaffAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const arrivedWithTempPassword = Boolean(location.state?.tempPassword || profile?.mustChangePassword);
 
   const checks = useMemo(() => {
     const emailLocal = profile?.email?.split('@')[0]?.toLowerCase() || '';
@@ -72,7 +74,15 @@ export default function StaffChangePassword() {
         <section className="p-6 sm:p-10 lg:p-14">
           <div className="mb-8 flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#eadbd3] text-[#241916]"><KeyRound size={23} /></div>
-            <div><p className="text-[10px] uppercase tracking-[0.3em] text-[#b99687]">Account security</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Create your password</h1><p className="mt-2 text-sm text-[#bfa9a0]">A new password is required before you enter the workspace.</p></div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#b99687]">Account security</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight">Create your password</h1>
+              <p className="mt-2 text-sm text-[#bfa9a0]">
+                {arrivedWithTempPassword
+                  ? "You signed in with a temporary password. Choose a new password."
+                  : "A new password is required before you enter the workspace."}
+              </p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

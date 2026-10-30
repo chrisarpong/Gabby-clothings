@@ -52,7 +52,7 @@ export const StaffRoute: React.FC<StaffRouteProps> = ({ children, allowedRoles }
   const requiredStep = getStaffRouteStep(token, profile, location.pathname);
 
   if (requiredStep === 'change-password') {
-    return <Navigate to="/staff/change-password" replace />;
+    return <Navigate to="/staff/change-password" state={location.state} replace />;
   }
 
   if (requiredStep === 'setup-2fa') {

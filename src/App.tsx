@@ -36,6 +36,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const DesignerPortal = lazy(() => import('./pages/DesignerPortal'));
 const SalesPortal = lazy(() => import('./pages/SalesPortal'));
 const StaffLogin = lazy(() => import('./pages/StaffLogin'));
+const StaffForgotPassword = lazy(() => import('./pages/StaffForgotPassword'));
 const StaffChangePassword = lazy(() => import('./pages/StaffChangePassword'));
 const StaffSetup2FA = lazy(() => import('./pages/StaffSetup2FA'));
 const StaffVerify2FA = lazy(() => import('./pages/StaffVerify2FA'));
@@ -147,6 +148,13 @@ export default function App() {
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
             <StaffLogin />
           </Suspense>
+        } />
+        <Route path="/staff/forgot-password" element={
+          <StaffErrorBoundary>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+              <StaffForgotPassword />
+            </Suspense>
+          </StaffErrorBoundary>
         } />
         <Route path="/staff/change-password" element={
           <StaffErrorBoundary>

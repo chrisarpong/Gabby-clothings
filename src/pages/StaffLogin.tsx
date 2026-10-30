@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -89,7 +89,9 @@ export default function StaffLogin() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="block text-[10px] uppercase tracking-[0.2em] text-[#c7a99c] font-bold">Password</label>
-              <span className="text-[10px] uppercase tracking-wider text-[#806b62]">Protected account</span>
+              <Link to="/staff/forgot-password" className="text-[10px] uppercase tracking-wider text-[#d1aa96] hover:text-[#f4e9e2] transition-colors underline underline-offset-2">
+                Forgot password?
+              </Link>
             </div>
             <div className="relative">
               <input
