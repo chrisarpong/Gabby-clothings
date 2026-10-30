@@ -14,6 +14,9 @@ import {
 } from "./lib/staffCrypto";
 import * as crypto from 'crypto';
 import { authenticator } from 'otplib';
+import { UNAMBIGUOUS_ALPHABET, MIN_ACTION_DELAY_MS } from "./lib/smsLimits";
+import { getTempPasswordSms } from "./lib/smsTemplates";
+import { sendSms } from "./lib/sms";
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -377,4 +380,85 @@ export const resetStaffPassword = action({
 
     return tempPassword;
   }
+});
+
+export const requestStaffPasswordSms = action({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ ok: boolean; message: string }> => {
+    const start = Date.now();
+    const rawEmail = String(args.email ?? "").trim();
+    const normalizedEmail = rawEmail.toLowerCase();
+
+    const finishWithDelay = async (result: { ok: boolean; message: string }) => {
+      const elapsed = Date.now() - start;
+      if (elapsed < MIN_ACTION_DELAY_MS) {
+        await new Promise(r => setTimeout(r, MIN_ACTION_DELAY_MS - elapsed));
+      }
+      return result;
+    };
+
+    const genericSuccess = {
+      ok: true,
+      message: "If this account can use SMS reset, a temporary password has been sent.",
+    };
+
+    if (!rawEmail || rawEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return await finishWithDelay(genericSuccess);
+    }
+
+    const emailKey = crypto.createHash("sha256").update(normalizedEmail).digest("hex");
+
+    let tempPassword = "";
+    for (let i = 0; i < 10; i++) {
+      const idx = crypto.randomInt(0, UNAMBIGUOUS_ALPHABET.length);
+      tempPassword += UNAMBIGUOUS_ALPHABET[idx];
+    }
+    const salt = crypto.randomBytes(16).toString("hex");
+    const tempPasswordHash = await hashPassword(tempPassword, salt);
+
+    const checkResult: any = await ctx.runMutation(internal.staffAuth.preparePasswordResetRequest, {
+      emailKey,
+      normalizedEmail,
+      tempPasswordHash,
+      tempPasswordSalt: salt,
+    });
+
+    if (!checkResult.allowed) {
+      if (checkResult.reason === "disabled") {
+        return await finishWithDelay({
+          ok: true,
+          message: "Password reset by SMS is not available. Please contact your manager.",
+        });
+      }
+      return await finishWithDelay(genericSuccess);
+    }
+
+    const siteUrl = process.env.SITE_URL || "https://gabbynewluk.com";
+    const smsMessage = getTempPasswordSms(tempPassword, siteUrl);
+
+    const sendRes = await sendSms({
+      to: checkResult.phone,
+      message: smsMessage,
+      kind: "otp",
+    }, ctx);
+
+    if (sendRes.ok) {
+      await ctx.runMutation(internal.staffAuth.completePasswordResetSend, {
+        emailKey,
+        staffId: checkResult.staffId,
+        maskedPhone: checkResult.maskedPhone,
+      });
+    } else {
+      await ctx.runMutation(internal.staffAuth.failPasswordResetSend, {
+        resetId: checkResult.resetId,
+        emailKey,
+        staffId: checkResult.staffId,
+        maskedPhone: checkResult.maskedPhone,
+      });
+    }
+
+    return await finishWithDelay(genericSuccess);
+  },
 });

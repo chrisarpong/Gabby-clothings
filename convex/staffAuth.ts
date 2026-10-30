@@ -4,6 +4,17 @@ import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
 import { StaffPermission, StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
 import { normalizeGhanaPhone, maskPhone } from "./lib/phone";
+import { DEFAULT_SMS_SETTINGS } from "./staffSecurity";
+import {
+  GLOBAL_ROLLING_10M_MAX,
+  GLOBAL_ANY_OUTCOME_1H_MAX,
+  ACCOUNT_COOLDOWN_SECONDS,
+  ACCOUNT_HOURLY_MAX,
+  ACCOUNT_DAILY_MAX,
+  PHONE_HOURLY_MAX,
+  PHONE_DAILY_MAX,
+  TEMP_PASSWORD_EXPIRES_MS,
+} from "./lib/smsLimits";
 
 const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
   sales: 5 * 60 * 1000,
@@ -581,8 +592,304 @@ export const updateStaffPhone = mutation({
     if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
     const phone = normalizeGhanaPhone(args.phone);
     await ctx.db.patch(target._id, { phone, phoneUpdatedAt: Date.now() });
+
+    // Void any pending temp passwords when phone changes
+    const earlierResets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", target._id))
+      .collect();
+    for (const r of earlierResets) {
+      if (!r.usedAt && !r.voidedAt) {
+        await ctx.db.patch(r._id, { voidedAt: Date.now() });
+      }
+    }
+
     await ctx.db.insert("adminLogs", { userId: caller._id, adminName: caller.name, action: "Updated Staff Phone", details: `Staff: ${target.name}; old: ${target.phone ? maskPhone(target.phone) : "none"}; new: ${maskPhone(phone)}`, category: "team", targetId: target._id, targetType: "staff", timestamp: Date.now() });
     return { phone: maskPhone(phone) };
+  },
+});
+
+export const preparePasswordResetRequest = internalMutation({
+  args: {
+    emailKey: v.string(),
+    normalizedEmail: v.string(),
+    tempPasswordHash: v.string(),
+    tempPasswordSalt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const settingsDoc = await ctx.db.query("staffSecuritySettings").first();
+    const config = settingsDoc || DEFAULT_SMS_SETTINGS;
+
+    if (!config.smsResetEnabled) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "disabled",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "disabled" as const };
+    }
+
+    const oneHourAgo = now - 60 * 60 * 1000;
+    const globalHourlyLogs = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_createdAt", q => q.gte("createdAt", oneHourAgo))
+      .collect();
+
+    if (globalHourlyLogs.length >= GLOBAL_ANY_OUTCOME_1H_MAX) {
+      return { allowed: false, reason: "global_rate_limited" as const };
+    }
+
+    const tenMinAgo = now - 10 * 60 * 1000;
+    const global10mSent = globalHourlyLogs.filter(l => l.createdAt >= tenMinAgo && l.outcome === "sent").length;
+    if (global10mSent >= GLOBAL_ROLLING_10M_MAX) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "blocked_rate_limit",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "global_burst" as const };
+    }
+
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    const globalDailyLogs = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_createdAt", q => q.gte("createdAt", oneDayAgo))
+      .collect();
+    const globalDailySent = globalDailyLogs.filter(l => l.outcome === "sent").length;
+
+    if (globalDailySent >= config.smsDailyCap) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "blocked_daily_cap",
+        via: "self_service",
+        createdAt: now,
+      });
+
+      const existingCapNotification = await ctx.db
+        .query("staffNotifications")
+        .withIndex("by_type_createdAt", q => q.eq("type", "sms_daily_cap").gte("createdAt", oneDayAgo))
+        .first();
+
+      if (!existingCapNotification) {
+        await ctx.db.insert("adminLogs", {
+          userId: null,
+          adminName: "System",
+          action: "SMS Daily Cap Reached",
+          details: `Global daily SMS cap reached (${config.smsDailyCap})`,
+          category: "team",
+          targetType: "system",
+          timestamp: now,
+        });
+
+        await ctx.db.insert("staffNotifications", {
+          title: "SMS reset limit reached today",
+          type: "sms_daily_cap",
+          recipientRole: "ceo",
+          createdAt: now,
+          read: false,
+        });
+      }
+
+      return { allowed: false, reason: "daily_cap_reached" as const };
+    }
+
+    const emailLogsPastHour = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_emailKey_createdAt", q => q.eq("emailKey", args.emailKey).gte("createdAt", oneHourAgo))
+      .collect();
+
+    const latestEmailLog = emailLogsPastHour[emailLogsPastHour.length - 1];
+    if (latestEmailLog && now - latestEmailLog.createdAt < ACCOUNT_COOLDOWN_SECONDS * 1000) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "blocked_rate_limit",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "cooldown" as const };
+    }
+
+    if (emailLogsPastHour.length >= ACCOUNT_HOURLY_MAX) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "blocked_rate_limit",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "account_hourly_limit" as const };
+    }
+
+    const emailLogsPastDay = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_emailKey_createdAt", q => q.eq("emailKey", args.emailKey).gte("createdAt", oneDayAgo))
+      .collect();
+
+    if (emailLogsPastDay.length >= ACCOUNT_DAILY_MAX) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "blocked_daily_cap",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "account_daily_limit" as const };
+    }
+
+    const staff = await ctx.db
+      .query("staff")
+      .withIndex("by_email", q => q.eq("email", args.normalizedEmail))
+      .first();
+
+    if (!staff || !staff.isActive) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        outcome: "no_account",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "silent_skip" as const };
+    }
+
+    if (!staff.phone) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        staffId: staff._id,
+        outcome: "no_phone",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "silent_skip" as const };
+    }
+
+    const masked = maskPhone(staff.phone);
+
+    if (!config.smsResetAllowedRoles.includes(staff.role)) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        staffId: staff._id,
+        maskedPhone: masked,
+        outcome: "role_not_allowed",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "silent_skip" as const };
+    }
+
+    const phoneLogsPastHour = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_maskedPhone_createdAt", q => q.eq("maskedPhone", masked).gte("createdAt", oneHourAgo))
+      .collect();
+
+    if (phoneLogsPastHour.length >= PHONE_HOURLY_MAX) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        staffId: staff._id,
+        maskedPhone: masked,
+        outcome: "blocked_rate_limit",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "phone_hourly_limit" as const };
+    }
+
+    const phoneLogsPastDay = await ctx.db
+      .query("staffSmsLog")
+      .withIndex("by_maskedPhone_createdAt", q => q.eq("maskedPhone", masked).gte("createdAt", oneDayAgo))
+      .collect();
+
+    if (phoneLogsPastDay.length >= PHONE_DAILY_MAX) {
+      await ctx.db.insert("staffSmsLog", {
+        purpose: "password_reset",
+        emailKey: args.emailKey,
+        staffId: staff._id,
+        maskedPhone: masked,
+        outcome: "blocked_daily_cap",
+        via: "self_service",
+        createdAt: now,
+      });
+      return { allowed: false, reason: "phone_daily_limit" as const };
+    }
+
+    const earlierResets = await ctx.db
+      .query("staffPasswordResets")
+      .withIndex("by_staffId", q => q.eq("staffId", staff._id))
+      .collect();
+
+    for (const r of earlierResets) {
+      if (!r.usedAt && !r.voidedAt) {
+        await ctx.db.patch(r._id, { voidedAt: now });
+      }
+    }
+
+    const resetId = await ctx.db.insert("staffPasswordResets", {
+      staffId: staff._id,
+      tempPasswordHash: args.tempPasswordHash,
+      tempPasswordSalt: args.tempPasswordSalt,
+      expiresAt: now + TEMP_PASSWORD_EXPIRES_MS,
+      attempts: 0,
+      createdAt: now,
+      via: "self_service",
+    });
+
+    return {
+      allowed: true as const,
+      staffId: staff._id,
+      phone: staff.phone,
+      maskedPhone: masked,
+      resetId,
+    };
+  },
+});
+
+export const completePasswordResetSend = internalMutation({
+  args: {
+    emailKey: v.string(),
+    staffId: v.id("staff"),
+    maskedPhone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("staffSmsLog", {
+      purpose: "password_reset",
+      emailKey: args.emailKey,
+      staffId: args.staffId,
+      maskedPhone: args.maskedPhone,
+      outcome: "sent",
+      via: "self_service",
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const failPasswordResetSend = internalMutation({
+  args: {
+    resetId: v.id("staffPasswordResets"),
+    emailKey: v.string(),
+    staffId: v.id("staff"),
+    maskedPhone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.resetId, { voidedAt: Date.now() });
+    await ctx.db.insert("staffSmsLog", {
+      purpose: "password_reset",
+      emailKey: args.emailKey,
+      staffId: args.staffId,
+      maskedPhone: args.maskedPhone,
+      outcome: "send_failed",
+      via: "self_service",
+      createdAt: Date.now(),
+    });
   },
 });
 
