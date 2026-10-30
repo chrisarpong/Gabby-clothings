@@ -273,14 +273,46 @@ export default function TeamManagementTab() {
                 <p className="mt-3 text-sm leading-6 text-on-surface-variant">This permanently removes the staff login, sessions, and pending password resets. It cannot be undone. Historical orders and audit records are retained, but this account will no longer be recoverable.</p>
               </div>
             </div>
-            <label className="mt-5 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Your current CEO password</label>
-            <input type="password" autoFocus value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 text-primary" autoComplete="current-password" />
-            <label className="mt-4 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Type DELETE {deleteTarget.email} to confirm</label>
-            <input type="text" value={deleteConfirmation} onChange={e => setDeleteConfirmation(e.target.value)} className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 font-mono text-primary" />
-            <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => { setDeleteTarget(null); setDeletePassword(''); setDeleteConfirmation(''); }} className="border border-surface-variant px-4 py-3 text-sm text-primary">Cancel</button>
-              <button type="button" onClick={handleDeleteStaff} disabled={isDeleting || !deletePassword || deleteConfirmation.trim().toLowerCase() !== `delete ${deleteTarget.email.toLowerCase()}`} className="bg-error px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-surface-variant disabled:text-on-surface-variant">{isDeleting ? "Deleting…" : "Permanently delete"}</button>
-            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const norm = deleteConfirmation.trim().replace(/\s+/g, ' ').toLowerCase();
+              const email = deleteTarget.email.trim().toLowerCase();
+              const isValid = norm === `delete ${email}` || norm === 'delete' || norm === email;
+              if (!isDeleting && deletePassword && isValid) {
+                handleDeleteStaff();
+              }
+            }}>
+              <label className="mt-5 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Your current CEO password</label>
+              <input type="password" autoFocus value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 text-primary" autoComplete="current-password" />
+              <label className="mt-4 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                Type <span className="font-mono text-error font-semibold">DELETE</span> or <span className="font-mono text-error font-semibold">{deleteTarget.email}</span> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={e => setDeleteConfirmation(e.target.value)}
+                placeholder="DELETE"
+                className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 font-mono text-primary"
+              />
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => { setDeleteTarget(null); setDeletePassword(''); setDeleteConfirmation(''); }} className="border border-surface-variant px-4 py-3 text-sm text-primary hover:bg-surface-variant/20 transition-colors">Cancel</button>
+                <button
+                  type="submit"
+                  disabled={
+                    isDeleting ||
+                    !deletePassword ||
+                    (() => {
+                      const norm = deleteConfirmation.trim().replace(/\s+/g, ' ').toLowerCase();
+                      const email = deleteTarget.email.trim().toLowerCase();
+                      return !(norm === `delete ${email}` || norm === 'delete' || norm === email);
+                    })()
+                  }
+                  className="bg-red-600 px-5 py-3 text-sm font-bold text-white transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-600/40 disabled:text-white/60"
+                >
+                  {isDeleting ? "Deleting…" : "Permanently delete"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

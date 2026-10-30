@@ -42,7 +42,9 @@ describe("staff authentication integration", () => {
       return { ceo, target };
     });
     await expect(t.action(api.staffAuthNode.deleteStaffUser, { staffToken: token, targetStaffId: ids.target, currentPassword: "wrong", confirmation: "DELETE target@test.local" })).rejects.toThrow("CEO password is incorrect");
-    await t.action(api.staffAuthNode.deleteStaffUser, { staffToken: token, targetStaffId: ids.target, currentPassword: password, confirmation: "DELETE target@test.local" });
+    await expect(t.action(api.staffAuthNode.deleteStaffUser, { staffToken: token, targetStaffId: ids.target, currentPassword: password, confirmation: "INVALID_CONFIRM" })).rejects.toThrow("Type DELETE or target@test.local to confirm");
+    // Flexible confirmation tests: multiple spaces, lowercase, or just DELETE
+    await t.action(api.staffAuthNode.deleteStaffUser, { staffToken: token, targetStaffId: ids.target, currentPassword: password, confirmation: "DELETE   target@test.local" });
     const result = await t.run(async (ctx) => ({ staff: await ctx.db.get(ids.target), sessions: await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", ids.target)).collect(), logs: await ctx.db.query("adminLogs").collect() }));
     expect(result.staff).toBeNull();
     expect(result.sessions).toHaveLength(0);
