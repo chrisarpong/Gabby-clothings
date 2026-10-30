@@ -16,6 +16,10 @@ export const parseMeasurement = (value: unknown): MeasurementValue => {
 const blank = parseMeasurement;
 
 export const measurementFields = ["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"] as const;
+export function isMeasurementsComplete(value: unknown): boolean {
+  const flat = flattenMeasurements(value) as Record<string, MeasurementValue>;
+  return measurementFields.every(field => flat[field] !== '' && flat[field] !== undefined);
+}
 export function missingMeasurements(value: unknown): string[] {
   const flat = flattenMeasurements(value) as any;
   return measurementFields.filter(field => flat[field] === '' || flat[field] === undefined);

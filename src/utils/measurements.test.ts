@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flattenMeasurements, nestMeasurements, parseMeasurement, missingMeasurements } from './measurements';
+import { flattenMeasurements, nestMeasurements, parseMeasurement, missingMeasurements, isMeasurementsComplete } from './measurements';
 
 describe('measurements mapping', () => {
   it('flattens canonical fields and supports legacy flat data', () => {
@@ -21,5 +21,12 @@ describe('measurements mapping', () => {
   it('marks a complete nested profile complete after flattening', () => {
     const flat = flattenMeasurements({ top: { chest: 40, shoulder: 18, sleeveLength: 25, topLength: 30 }, bottom: { trouserWaist: 34, hips: 42, inseam: 32 } });
     expect(["chest", "waist", "hips", "shoulder", "sleeve", "inseam", "length"].every(field => (flat as any)[field] !== '')).toBe(true);
+  });
+  it('checks completeness for nested, partial, empty, and legacy flat data', () => {
+    const complete = { top: { chest: 40, shoulder: 18, sleeveLength: 25, topLength: 30 }, bottom: { trouserWaist: 34, hips: 42, inseam: 32 } };
+    expect(isMeasurementsComplete(complete)).toBe(true);
+    expect(isMeasurementsComplete({ top: { chest: 40 }, bottom: { trouserWaist: 34 } })).toBe(false);
+    expect(isMeasurementsComplete({})).toBe(false);
+    expect(isMeasurementsComplete({ chest: 40, waist: 34, hips: 42, shoulder: 18, sleeve: 25, inseam: 32, length: 30 })).toBe(true);
   });
 });

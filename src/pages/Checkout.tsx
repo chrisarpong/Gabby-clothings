@@ -13,7 +13,7 @@ import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice } from "../utils/currency";
 import { parseConvexError } from "../utils/errorParser";
 import { computeTotals, fromPesewas, lineUnitPrice, toPesewas } from "../../convex/lib/pricing";
-import { flattenMeasurements, nestMeasurements, measurementFields } from "../utils/measurements";
+import { flattenMeasurements, nestMeasurements, measurementFields, isMeasurementsComplete } from "../utils/measurements";
 import { countryCodes } from "../utils/countries";
 import { getAvailableStock } from "../utils/stock";
 
@@ -73,9 +73,11 @@ export default function Checkout() {
   React.useEffect(() => {
     // Smart Measurement Detection
     if (convexMeasurements) {
-      setMeasurements(flattenMeasurements(convexMeasurements) as any);
-      setHasValidMeasurements(true);
-      setMeasurementsLinked(true);
+      const flat = flattenMeasurements(convexMeasurements) as any;
+      const complete = isMeasurementsComplete(convexMeasurements);
+      setMeasurements(flat);
+      setHasValidMeasurements(complete);
+      setMeasurementsLinked(complete);
     } else {
       const saved = localStorage.getItem("gabby_newluk_measurements");
       if (saved) {
