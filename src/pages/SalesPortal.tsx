@@ -26,7 +26,7 @@ export default function SalesPortal() {
       case 'history':
         return <SalesHistory />;
       case 'crm':
-        return <SalesCRM />;
+        return <SalesCRM onStartSale={() => setActiveTab('pos')} />;
       case 'dashboard':
         return <SalesDashboard />;
       default:
