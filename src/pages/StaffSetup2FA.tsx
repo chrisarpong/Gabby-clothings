@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { QrCode, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function StaffSetup2FA() {
   const [setupData, setSetupData] = useState<{ secret: string; uri: string } | null>(null);
@@ -64,10 +65,10 @@ export default function StaffSetup2FA() {
         ) : (
           <div className="space-y-6">
             <div className="bg-surface p-4 border border-outline-variant/30 flex justify-center">
-              {/* Note: we should render a real QR code using a library like qrcode.react, but for now we'll just show the URI/Secret */}
               <div className="text-center">
-                <p className="text-xs uppercase tracking-widest text-on-surface-variant mb-2">Manual Entry Code:</p>
-                <code className="text-lg font-mono bg-surface-container px-2 py-1 select-all">{setupData.secret}</code>
+                <QRCodeSVG value={setupData.uri} size={184} includeMargin className="mx-auto rounded bg-white p-2" />
+                <p className="text-xs uppercase tracking-widest text-on-surface-variant mb-2 mt-4">Or enter this key manually:</p>
+                <code className="text-sm font-mono bg-surface-container px-2 py-1 select-all break-all">{setupData.secret}</code>
               </div>
             </div>
 
