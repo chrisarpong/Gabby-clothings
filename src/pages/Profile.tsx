@@ -10,11 +10,13 @@ import { useCurrencyStore } from "../store/currencyStore";
 import { formatPrice, CurrencyCode } from "../utils/currency";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { nestMeasurements, invalidMeasurementFields } from "../utils/measurements";
+import { useConfirm } from "../hooks/useConfirm";
 
 export default function Profile() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState("profile");
   const { activeCurrency, rates } = useCurrencyStore();
+  const { confirm, dialog } = useConfirm();
 
   const [measurements, setMeasurements] = useState({
     top: { neck: "", chest: "", shoulder: "", sleeveLength: "", armhole: "", stomach: "", topLength: "" },
@@ -59,7 +61,7 @@ export default function Profile() {
   const availableSlots = useQuery(api.appointments.getAvailableSlots, rescheduleData?.date ? { date: rescheduleData.date, ignoreAppointmentId: rescheduleData.id } : "skip");
 
   const handleCancelAppointment = async (id: any) => {
-    if (confirm("Are you sure you want to cancel this appointment?")) {
+    if (await confirm("Cancel appointment?", "This will cancel the appointment and release its slot.", "Cancel appointment")) {
       try {
         await cancelOwnAppointment({ appointmentId: id });
         toast.success("Appointment cancelled successfully.");
@@ -217,7 +219,7 @@ export default function Profile() {
   };
 
   return (
-    <main className="min-h-screen bg-surface text-on-surface pt-32 pb-32">
+    <main className="min-h-screen bg-surface text-on-surface pt-32 pb-32">{dialog}
       <div className="max-w-[1536px] mx-auto px-5 md:px-20 w-full">
         
         {/* Header */}

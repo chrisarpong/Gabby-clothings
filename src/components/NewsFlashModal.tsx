@@ -39,7 +39,7 @@ export default function NewsFlashModal() {
             className="bg-brand-bone border border-outline-variant/30 w-full max-w-md shadow-2xl overflow-hidden relative"
           >
             {/* Header pattern */}
-            <div className="h-2 w-full bg-[url('/pattern.png')] bg-repeat-x opacity-20"></div>
+            <div className="h-2 w-full bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20 opacity-50"></div>
             
             <button 
               onClick={handleDismiss}

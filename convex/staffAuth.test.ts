@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api, internal } from "./_generated/api";
@@ -160,5 +160,23 @@ describe("staff authentication integration", () => {
     const staff = await t.run(async (ctx) => ctx.db.get(staffId));
     expect(staff?.lockedUntil).toBeDefined();
     expect(staff?.lockedUntil).toBeGreaterThan(Date.now());
+  });
+
+  it("cleanup removes expired and revoked sessions while preserving active sessions", async () => {
+    vi.useFakeTimers();
+    const t = convexTest(schema);
+    const now = Date.now();
+    await t.run(async ctx => {
+      const staffId = await ctx.db.insert("staff", { name: "Cleanup", email: "cleanup@test", role: "admin", passwordHash: "h", passwordSalt: "s", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: now });
+      for (let i = 0; i < 600; i++) await ctx.db.insert("staffSessions", { staffId, tokenHash: `revoked-${i}`, createdAt: now, lastActivityAt: now, expiresAt: now - 1000, revokedAt: now - 500 });
+      for (let i = 0; i < 10; i++) await ctx.db.insert("staffSessions", { staffId, tokenHash: `expired-${i}`, createdAt: now, lastActivityAt: now, expiresAt: now - 1000 });
+      for (let i = 0; i < 5; i++) await ctx.db.insert("staffSessions", { staffId, tokenHash: `active-${i}`, createdAt: now, lastActivityAt: now, expiresAt: now + 3600000 });
+    });
+    await t.mutation(internal.staffAuth.cleanupSessions, {});
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    const sessions = await t.run(ctx => ctx.db.query("staffSessions").collect());
+    expect(sessions).toHaveLength(5);
+    expect(sessions.every(session => session.tokenHash.startsWith("active-"))).toBe(true);
+    vi.useRealTimers();
   });
 });
