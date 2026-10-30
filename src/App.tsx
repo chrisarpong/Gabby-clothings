@@ -124,6 +124,7 @@ import CookieBanner from './components/CookieBanner';
 import NewsFlashModal from './components/NewsFlashModal';
 import { StaffAuthProvider } from './hooks/useStaffAuth';
 import { StaffRoute } from './components/auth/StaffRoute';
+import StaffErrorBoundary from './components/auth/StaffErrorBoundary';
 
 export default function App() {
   return (
@@ -148,62 +149,74 @@ export default function App() {
           </Suspense>
         } />
         <Route path="/staff/change-password" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
-            <StaffRoute>
-              <StaffChangePassword />
-            </StaffRoute>
-          </Suspense>
+          <StaffErrorBoundary>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+              <StaffRoute>
+                <StaffChangePassword />
+              </StaffRoute>
+            </Suspense>
+          </StaffErrorBoundary>
         } />
         <Route path="/staff/setup-2fa" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
-            <StaffRoute>
-              <StaffSetup2FA />
-            </StaffRoute>
-          </Suspense>
+          <StaffErrorBoundary>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+              <StaffRoute>
+                <StaffSetup2FA />
+              </StaffRoute>
+            </Suspense>
+          </StaffErrorBoundary>
         } />
         <Route path="/staff/2fa-verify" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
-            <StaffVerify2FA />
-          </Suspense>
+          <StaffErrorBoundary>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" /></div>}>
+              <StaffVerify2FA />
+            </Suspense>
+          </StaffErrorBoundary>
         } />
 
         {/* Admin Route - Custom State based tabs */}
         <Route path="/admin/*" element={
-          <Suspense fallback={
-            <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            </div>
-          }>
-            <StaffRoute allowedRoles={["ceo", "admin"]}>
-              <Admin />
-            </StaffRoute>
-          </Suspense>
+          <StaffErrorBoundary>
+            <Suspense fallback={
+              <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              </div>
+            }>
+              <StaffRoute allowedRoles={["ceo", "admin"]}>
+                <Admin />
+              </StaffRoute>
+            </Suspense>
+          </StaffErrorBoundary>
         } />
         
         {/* Designer Route */}
         <Route path="/designer/*" element={
-          <Suspense fallback={
-            <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            </div>
-          }>
-            <StaffRoute allowedRoles={["designer", "ceo", "admin"]}>
-              <DesignerPortal />
-            </StaffRoute>
-          </Suspense>
+          <StaffErrorBoundary>
+            <Suspense fallback={
+              <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              </div>
+            }>
+              <StaffRoute allowedRoles={["designer", "ceo", "admin"]}>
+                <DesignerPortal />
+              </StaffRoute>
+            </Suspense>
+          </StaffErrorBoundary>
         } />
 
         {/* Sales Route */}
         <Route path="/sales/*" element={
-          <Suspense fallback={
-            <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            </div>
-          }>
-            <StaffRoute allowedRoles={["sales", "ceo", "admin"]}>
-              <SalesPortal />
-            </StaffRoute>
-          </Suspense>
+          <StaffErrorBoundary>
+            <Suspense fallback={
+              <div className="min-h-screen bg-surface-container/30 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              </div>
+            }>
+              <StaffRoute allowedRoles={["sales", "ceo", "admin"]}>
+                <SalesPortal />
+              </StaffRoute>
+            </Suspense>
+          </StaffErrorBoundary>
         } />
 
         {/* Public Routes - with standard Header/Footer */}
