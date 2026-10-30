@@ -117,6 +117,9 @@ export const book = mutation({
       paystackReference: paymentReference,
       referenceImages: args.referenceImages,
     });
+    for (const storageId of args.referenceImages ?? []) {
+      await ctx.db.insert("appointmentFiles", { storageId, appointmentId, ownerId: identity?.subject });
+    }
 
     if (expectedAmountPesewas === 0) await ctx.runMutation(internal.appointments.confirmAppointment, { appointmentId });
     return { appointmentId, paymentReference, amountPesewas: expectedAmountPesewas, email: args.email };
@@ -331,14 +334,25 @@ export const sendReminders = internalMutation({
 export const getFileOwner = internalQuery({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
-    const appointments = await ctx.db.query("appointments").collect();
-    for (const appt of appointments) {
-      if (appt.referenceImages && appt.referenceImages.includes(args.storageId)) {
-        return { isPrivate: true, ownerId: appt.userId };
-      }
-    }
+    const indexed = await ctx.db.query("appointmentFiles").withIndex("by_storageId", q => q.eq("storageId", args.storageId)).first();
+    if (indexed) return { isPrivate: true, ownerId: indexed.ownerId };
+    const appointments = await ctx.db.query("appointments").take(500);
+    for (const appt of appointments) if (appt.referenceImages?.includes(args.storageId)) return { isPrivate: true, ownerId: appt.userId };
     return { isPrivate: false };
   }
+});
+
+export const backfillAppointmentFiles = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.query("appointments").order("asc").paginate({ numItems: 200, cursor: args.cursor ?? null });
+    let inserted = 0;
+    for (const appointment of page.page) for (const storageId of appointment.referenceImages ?? []) {
+      const exists = await ctx.db.query("appointmentFiles").withIndex("by_storageId", q => q.eq("storageId", storageId)).first();
+      if (!exists) { await ctx.db.insert("appointmentFiles", { storageId, appointmentId: appointment._id, ownerId: appointment.userId }); inserted++; }
+    }
+    return { inserted, continueCursor: page.isDone ? undefined : page.continueCursor };
+  },
 });
 
 export const getAvailableSlots = query({
@@ -634,6 +648,8 @@ export const linkToUser = mutation({
     await ctx.db.patch(args.appointmentId, {
       userId: args.userId,
     });
+    const files = await ctx.db.query("appointmentFiles").withIndex("by_appointmentId", q => q.eq("appointmentId", args.appointmentId)).take(200);
+    for (const file of files) await ctx.db.patch(file._id, { ownerId: args.userId });
   }
 });
 

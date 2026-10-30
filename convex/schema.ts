@@ -254,6 +254,12 @@ export default defineSchema({
     landmarks: v.optional(v.string()),
   }).index("by_userId", ["userId"]).index("by_status", ["status"]).index("by_date", ["date"]).index("by_paystackReference", ["paystackReference"]).index("by_assignedStaff", ["assignedStaffId"]).index("by_paymentStatus_expiry", ["paymentStatus", "paymentExpiresAt"]),
 
+  appointmentFiles: defineTable({
+    storageId: v.id("_storage"),
+    appointmentId: v.id("appointments"),
+    ownerId: v.optional(v.string()),
+  }).index("by_storageId", ["storageId"]).index("by_appointmentId", ["appointmentId"]),
+
   reviews: defineTable({
     productId: v.id("products"),
     userId: v.string(),
