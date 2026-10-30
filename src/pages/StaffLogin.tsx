@@ -5,6 +5,7 @@ import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'luci
 import { toast } from 'sonner';
 import logo from '../assets/logo_transparent.png';
 import { sanitizeStaffNext } from '../components/auth/staffAuthState';
+import { parseConvexError } from '../utils/errorParser';
 
 export default function StaffLogin() {
   const [email, setEmail] = useState('');
@@ -40,7 +41,7 @@ export default function StaffLogin() {
         }
       }
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      toast.error(parseConvexError(err, "Login failed. Please check your credentials."));
     } finally {
       setLoading(false);
       submitGuardRef.current = false;

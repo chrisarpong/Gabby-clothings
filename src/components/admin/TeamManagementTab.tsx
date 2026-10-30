@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
 import { useConfirm } from '../../hooks/useConfirm';
+import { parseConvexError } from '../../utils/errorParser';
 
 export default function TeamManagementTab() {
   const { profile } = useStaffAuth();
@@ -70,23 +71,23 @@ export default function TeamManagementTab() {
       setNewStaffRole('designer');
       toast.success("Staff member created successfully");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(parseConvexError(err, "Failed to create staff member"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleResetPassword = async (id: string, name: string) => {
-    if (!await confirm(`Reset ${name}'s password?`, 'This revokes all of their active sessions immediately.', 'Reset password')) return;
+  const handleResetPassword = async (id: string, name: string, email: string) => {
+    if (!await confirm(`Reset password for ${name}?`, 'This revokes all of their active sessions immediately and generates a new one-time temporary password.', 'Reset password')) return;
     
     try {
       const otp = await resetPassword({
         targetStaffId: id as any,
       });
-      setGeneratedPassword({ email: name, password: otp });
-      toast.success(`Password reset for ${name}`);
+      setGeneratedPassword({ email: `${name} (${email})`, password: otp });
+      toast.success(`Temporary password generated for ${name}`);
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(parseConvexError(err, "Failed to reset password"));
     }
   };
 
@@ -103,7 +104,7 @@ export default function TeamManagementTab() {
       const res = await sendCeoSms({ targetStaffId: id as any });
       toast.success(`Sent to ${res.maskedPhone}`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to send SMS reset");
+      toast.error(parseConvexError(err, "Failed to send SMS reset"));
     } finally {
       setIsSendingSms(null);
     }
@@ -123,7 +124,7 @@ export default function TeamManagementTab() {
       setEditingPhoneStaffId(null);
       setEditingPhoneValue('');
     } catch (err: any) {
-      toast.error(err.message || "Failed to update phone number");
+      toast.error(parseConvexError(err, "Failed to update phone number"));
     } finally {
       setIsSavingPhone(false);
     }
@@ -139,7 +140,7 @@ export default function TeamManagementTab() {
       });
       toast.success(smsSettings.smsResetEnabled ? "SMS reset disabled" : "SMS reset enabled");
     } catch (err: any) {
-      toast.error(err.message || "Failed to update SMS settings");
+      toast.error(parseConvexError(err, "Failed to update SMS settings"));
     }
   };
 
@@ -165,7 +166,7 @@ export default function TeamManagementTab() {
       });
       toast.success("Updated allowed roles");
     } catch (err: any) {
-      toast.error(err.message || "Failed to update roles");
+      toast.error(parseConvexError(err, "Failed to update roles"));
     }
   };
 
@@ -180,7 +181,7 @@ export default function TeamManagementTab() {
       });
       toast.success(`Daily cap updated to ${clamped}`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to update daily cap");
+      toast.error(parseConvexError(err, "Failed to update daily cap"));
     }
   };
 
@@ -192,7 +193,7 @@ export default function TeamManagementTab() {
       });
       toast.success(`2FA reset for ${name}`);
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(parseConvexError(err, "Failed to reset 2FA"));
     }
   };
 
@@ -205,7 +206,7 @@ export default function TeamManagementTab() {
       });
       toast.success(currentlyActive ? "Staff member deactivated" : "Staff member activated");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(parseConvexError(err, "Failed to change staff status"));
     }
   };
 
@@ -217,7 +218,7 @@ export default function TeamManagementTab() {
       });
       toast.success("All sessions revoked");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(parseConvexError(err, "Failed to revoke sessions"));
     }
   };
 
@@ -235,7 +236,7 @@ export default function TeamManagementTab() {
       setDeletePassword('');
       setDeleteConfirmation('');
     } catch (err: any) {
-      toast.error(err.message || "Staff deletion failed");
+      toast.error(parseConvexError(err, "Staff deletion failed"));
     } finally {
       setIsDeleting(false);
     }
@@ -249,7 +250,7 @@ export default function TeamManagementTab() {
       });
       toast.success("Role updated");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(parseConvexError(err, "Failed to update role"));
     }
   };
 
@@ -622,7 +623,7 @@ export default function TeamManagementTab() {
                         </button>
                       )}
                       <button 
-                        onClick={() => handleResetPassword(member._id, member.name)}
+                        onClick={() => handleResetPassword(member._id, member.name, member.email)}
                         disabled={!member.isActive}
                         title="Reset Password (show on screen)"
                         className="p-2 text-outline hover:text-primary hover:bg-surface-variant transition-colors disabled:opacity-50"

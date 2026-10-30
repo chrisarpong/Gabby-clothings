@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Loader2, LockKeyhole, ShieldCheck } from 'lucide
 import { toast } from 'sonner';
 import logo from '../assets/logo_transparent.png';
 import { sanitizeStaffNext } from '../components/auth/staffAuthState';
+import { parseConvexError } from '../utils/errorParser';
 
 const CODE_LENGTH = 6;
 
@@ -102,7 +103,7 @@ export default function StaffVerify2FA() {
       const from = sanitizeStaffNext(nextPath) || sanitizeStaffNext(location.state?.from?.pathname);
       navigate(from || '/admin', { replace: true });
     } catch (err: any) {
-      const message = err.message || "Invalid code";
+      const message = parseConvexError(err, "Invalid code");
       if (/Invalid or expired challenge|Invalid session|Session expired/i.test(message)) {
         sessionStorage.removeItem('staff2faChallenge');
         toast.error("Your verification window expired. Please sign in again.");

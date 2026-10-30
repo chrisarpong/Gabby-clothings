@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../hooks/useStaffAuth';
 import { ArrowRight, Check, Eye, EyeOff, KeyRound, Loader2, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseConvexError } from '../utils/errorParser';
 
 export default function StaffChangePassword() {
   const [password, setPassword] = useState('');
@@ -45,7 +46,7 @@ export default function StaffChangePassword() {
       toast.success("Password changed successfully");
       navigate('/admin', { replace: true });
     } catch (err: any) {
-      toast.error(err.message || "Failed to change password");
+      toast.error(parseConvexError(err, "Failed to change password. Please ensure it meets all requirements."));
     } finally {
       setLoading(false);
     }

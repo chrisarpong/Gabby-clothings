@@ -65,13 +65,30 @@ export const loginAction = action({
       throw new ConvexError({ code: "UNAUTHENTICATED", message: "Account is locked" });
     }
 
-    // 2. Verify password
-    let isValid = await verifyPassword(args.password, staff.passwordHash);
+    // 2. Verify password (test raw, and test trimmed if different to prevent accidental copy/paste spaces)
+    const passwordsToTry = [args.password];
+    if (args.password.trim() !== args.password && args.password.trim().length > 0) {
+      passwordsToTry.push(args.password.trim());
+    }
+
+    let isValid = false;
+    for (const p of passwordsToTry) {
+      if (await verifyPassword(p, staff.passwordHash)) {
+        isValid = true;
+        break;
+      }
+    }
 
     if (!isValid) {
       const activeTempReset = await ctx.runQuery(internal.staffAuth.getActiveTempReset, { staffId: staff._id });
       if (activeTempReset) {
-        const isTempValid = await verifyPassword(args.password, activeTempReset.tempPasswordHash);
+        let isTempValid = false;
+        for (const p of passwordsToTry) {
+          if (await verifyPassword(p, activeTempReset.tempPasswordHash)) {
+            isTempValid = true;
+            break;
+          }
+        }
         if (isTempValid) {
           isValid = true;
           await ctx.runMutation(internal.staffAuth.consumeTempPassword, {

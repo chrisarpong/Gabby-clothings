@@ -5,6 +5,7 @@ import { QrCode, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import logo from '../assets/logo_transparent.png';
+import { parseConvexError } from '../utils/errorParser';
 
 export default function StaffSetup2FA() {
   const [setupData, setSetupData] = useState<{ secret: string; uri: string } | null>(null);
@@ -63,7 +64,7 @@ export default function StaffSetup2FA() {
       setSetupComplete(true);
       toast.success("2FA enabled successfully");
     } catch (err: any) {
-      toast.error(err.message || "Invalid code");
+      toast.error(parseConvexError(err, "Invalid code"));
     } finally {
       setLoading(false);
     }
