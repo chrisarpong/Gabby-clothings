@@ -1260,6 +1260,33 @@ export const revokeStaffSessions = mutation({
   }
 });
 
+export const deleteStaffInternal = internalMutation({
+  args: {
+    targetStaffId: v.id("staff"),
+    callerId: v.id("staff"),
+    callerName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const target = await ctx.db.get(args.targetStaffId);
+    if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
+    const sessions = await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", args.targetStaffId)).collect();
+    for (const session of sessions) await ctx.db.delete(session._id);
+    const resets = await ctx.db.query("staffPasswordResets").withIndex("by_staffId", q => q.eq("staffId", args.targetStaffId)).collect();
+    for (const reset of resets) await ctx.db.delete(reset._id);
+    await ctx.db.insert("adminLogs", {
+      userId: args.callerId,
+      adminName: args.callerName,
+      action: "Permanently Deleted Staff",
+      details: `Deleted staff account ${target.email}; historical order and audit records retained.`,
+      category: "team",
+      targetId: target._id,
+      targetType: "staff",
+      timestamp: Date.now(),
+    });
+    await ctx.db.delete(target._id);
+  },
+});
+
 export const getStaffLogins = query({
   args: { staffToken: v.string(), targetStaffId: v.id("staff") },
   handler: async (ctx, args) => {

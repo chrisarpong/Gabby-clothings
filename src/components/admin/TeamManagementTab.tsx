@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useAction } from '@/hooks/useConvex';
 import { api } from '../../../convex/_generated/api';
-import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Check, Smartphone, X } from 'lucide-react';
+import { Users, Shield, Plus, Key, Power, RefreshCw, XCircle, Activity, Copy, Check, Smartphone, X, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStaffAuth } from '../../hooks/useStaffAuth';
 import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/useStaffAuth";
@@ -20,6 +20,7 @@ export default function TeamManagementTab() {
   const updateRole = useStaffMutation(api.staffAuth.updateStaffRole);
   const revokeSessions = useStaffMutation(api.staffAuth.revokeStaffSessions);
   const reset2FA = useStaffMutation(api.staffAuth.resetStaff2FA);
+  const deleteStaff = useStaffAction(api.staffAuthNode.deleteStaffUser);
   const updateStaffPhone = useStaffMutation(api.staffAuth.updateStaffPhone);
 
   const smsSettings = useStaffQuery(api.staffSecurity.getSmsSettings, isCeo ? {} : "skip");
@@ -39,6 +40,10 @@ export default function TeamManagementTab() {
   const [editingPhoneValue, setEditingPhoneValue] = useState('');
   const [isSavingPhone, setIsSavingPhone] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { confirm, dialog } = useConfirm();
 
@@ -215,6 +220,26 @@ export default function TeamManagementTab() {
       toast.error(err.message);
     }
   };
+
+  const handleDeleteStaff = async () => {
+    if (!deleteTarget || !deletePassword || !deleteConfirmation) return;
+    setIsDeleting(true);
+    try {
+      await deleteStaff({
+        targetStaffId: deleteTarget._id as any,
+        currentPassword: deletePassword,
+        confirmation: deleteConfirmation,
+      });
+      toast.success(`${deleteTarget.name} was permanently deleted`);
+      setDeleteTarget(null);
+      setDeletePassword('');
+      setDeleteConfirmation('');
+    } catch (err: any) {
+      toast.error(err.message || "Staff deletion failed");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   const handleRoleChange = async (id: string, newRole: string) => {
     try {
@@ -238,6 +263,27 @@ export default function TeamManagementTab() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">{dialog}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-staff-title">
+          <div className="w-full max-w-lg border border-red-500/40 bg-surface p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <Trash2 className="mt-1 text-error" size={22} />
+              <div>
+                <h2 id="delete-staff-title" className="text-xl font-semibold text-primary">Permanently delete {deleteTarget.name}?</h2>
+                <p className="mt-3 text-sm leading-6 text-on-surface-variant">This permanently removes the staff login, sessions, and pending password resets. It cannot be undone. Historical orders and audit records are retained, but this account will no longer be recoverable.</p>
+              </div>
+            </div>
+            <label className="mt-5 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Your current CEO password</label>
+            <input type="password" autoFocus value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 text-primary" autoComplete="current-password" />
+            <label className="mt-4 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Type DELETE {deleteTarget.email} to confirm</label>
+            <input type="text" value={deleteConfirmation} onChange={e => setDeleteConfirmation(e.target.value)} className="mt-2 w-full border border-surface-variant bg-surface-container-lowest px-3 py-3 font-mono text-primary" />
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => { setDeleteTarget(null); setDeletePassword(''); setDeleteConfirmation(''); }} className="border border-surface-variant px-4 py-3 text-sm text-primary">Cancel</button>
+              <button type="button" onClick={handleDeleteStaff} disabled={isDeleting || !deletePassword || deleteConfirmation !== `DELETE ${deleteTarget.email}`} className="bg-error px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{isDeleting ? "Deleting…" : "Permanently delete"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Generated Password Modal/Banner */}
       {generatedPassword && (
@@ -573,6 +619,15 @@ export default function TeamManagementTab() {
                       >
                         <Power className="w-4 h-4" />
                       </button>
+                      {isCeo && member.role !== 'ceo' && (
+                        <button
+                          onClick={() => setDeleteTarget(member)}
+                          title="Permanently delete staff member"
+                          className="p-2 text-error hover:bg-error/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -474,6 +474,40 @@ export const resetStaffPassword = action({
   }
 });
 
+export const deleteStaffUser = action({
+  args: {
+    staffToken: v.string(),
+    targetStaffId: v.id("staff"),
+    currentPassword: v.string(),
+    confirmation: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const caller = await ctx.runQuery(internal.staffAuth.validateSession, {
+      tokenHash: hashToken(args.staffToken),
+      permission: "team_management",
+    });
+    if (!caller || caller.role !== "ceo" || caller.mustChangePassword || !caller.totpEnabled) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Only a fully verified CEO may permanently delete staff." });
+    }
+    const target = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: args.targetStaffId });
+    if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
+    if (target._id === caller._id) throw new ConvexError({ code: "FORBIDDEN", message: "You cannot delete your own account." });
+    if (target.role === "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "CEO accounts cannot be deleted here." });
+    if (args.confirmation !== `DELETE ${target.email}`) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: `Type DELETE ${target.email} to confirm.` });
+    }
+    if (!(await verifyPassword(args.currentPassword, caller.passwordHash))) {
+      throw new ConvexError({ code: "UNAUTHENTICATED", message: "CEO password is incorrect." });
+    }
+    await ctx.runMutation(internal.staffAuth.deleteStaffInternal, {
+      targetStaffId: target._id,
+      callerId: caller._id,
+      callerName: caller.name,
+    });
+    return { deleted: true };
+  },
+});
+
 export const requestStaffPasswordSms = action({
   args: {
     email: v.string(),

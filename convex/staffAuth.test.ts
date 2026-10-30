@@ -28,6 +28,27 @@ describe("staff authentication integration", () => {
     expect(verified.status).toBe("success");
   });
 
+  it("requires the CEO password and permanently deletes a non-CEO staff account", async () => {
+    const t = convexTest(schema);
+    const password = "CeoDeletePassword2026!";
+    const salt = crypto.randomBytes(16).toString("hex");
+    const passwordHash = await hashPassword(password, salt, { N: 1024, r: 8, p: 1, keylen: 64, maxmem: 64 * 1024 * 1024 });
+    const token = "ceo-delete-token";
+    const ids = await t.run(async (ctx) => {
+      const ceo = await ctx.db.insert("staff", { name: "CEO", email: "delete-ceo@test.local", role: "ceo", passwordHash, passwordSalt: salt, mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now() });
+      const target = await ctx.db.insert("staff", { name: "Target", email: "target@test.local", role: "sales", passwordHash: "x", passwordSalt: "x", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now() });
+      await ctx.db.insert("staffSessions", { staffId: ceo, tokenHash: crypto.createHash("sha256").update(token).digest("hex"), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
+      await ctx.db.insert("staffSessions", { staffId: target, tokenHash: "target-session", createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
+      return { ceo, target };
+    });
+    await expect(t.action(api.staffAuthNode.deleteStaffUser, { staffToken: token, targetStaffId: ids.target, currentPassword: "wrong", confirmation: "DELETE target@test.local" })).rejects.toThrow("CEO password is incorrect");
+    await t.action(api.staffAuthNode.deleteStaffUser, { staffToken: token, targetStaffId: ids.target, currentPassword: password, confirmation: "DELETE target@test.local" });
+    const result = await t.run(async (ctx) => ({ staff: await ctx.db.get(ids.target), sessions: await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", ids.target)).collect(), logs: await ctx.db.query("adminLogs").collect() }));
+    expect(result.staff).toBeNull();
+    expect(result.sessions).toHaveLength(0);
+    expect(result.logs.some((log: any) => log.action === "Permanently Deleted Staff")).toBe(true);
+  });
+
   it("login -> authenticated query -> logout -> unauthenticated", async () => {
     const t = convexTest(schema);
 
