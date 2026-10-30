@@ -2,7 +2,7 @@ import { mutation, query, internalMutation, internalQuery } from "./_generated/s
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
-import { StaffPermission, StaffRole, hasPermission } from "./staffPermissions";
+import { StaffPermission, StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
 
 const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
   sales: 5 * 60 * 1000,
@@ -160,9 +160,12 @@ export async function validateStaffSession(ctx: any, token: string) {
 export async function requireStaff(
   ctx: any,
   token: string,
-  options?: { permission?: StaffPermission | StaffPermission[] },
+  options?: { permission?: StaffPermission | StaffPermission[]; allowIncomplete?: boolean },
 ) {
   const { staff } = await validateStaffSession(ctx, token);
+  if (!options?.allowIncomplete && (staff.mustChangePassword || (requiresTwoFactor(staff.role) && !staff.totpEnabled))) {
+    throw new ConvexError({ code: "SETUP_REQUIRED", message: "Complete password and two-factor setup before continuing." });
+  }
   const permissions = options?.permission
     ? Array.isArray(options.permission) ? options.permission : [options.permission]
     : [];
@@ -295,7 +298,7 @@ export const getStaffProfile = query({
   args: { staffToken: v.string() },
   handler: async (ctx, args) => {
     try {
-      const staff = await requireStaff(ctx, args.staffToken);
+      const staff = await requireStaff(ctx, args.staffToken, { allowIncomplete: true });
       const { passwordHash, passwordSalt, totpSecret, recoveryCodes, ...safeProfile } = staff;
       return safeProfile;
     } catch (e: any) {

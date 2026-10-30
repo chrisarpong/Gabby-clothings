@@ -1,5 +1,11 @@
 export type StaffRole = "ceo" | "admin" | "designer" | "sales";
 
+export const TWO_FACTOR_REQUIRED_ROLES: StaffRole[] = ["ceo", "admin", "designer", "sales"];
+
+export function requiresTwoFactor(role: string): boolean {
+  return TWO_FACTOR_REQUIRED_ROLES.includes(role as StaffRole);
+}
+
 export type StaffPermission =
   | "dashboard"
   | "orders"

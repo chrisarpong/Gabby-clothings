@@ -20,7 +20,7 @@ export function getStaffRouteStep(
 
   const step: StaffRouteStep = profile.mustChangePassword
     ? "change-password"
-    : (profile.role === "ceo" || profile.role === "admin") && !profile.totpEnabled
+    : requiresTwoFactor(profile.role) && !profile.totpEnabled
       ? "setup-2fa"
       : "ok";
 
@@ -28,3 +28,4 @@ export function getStaffRouteStep(
   if (step === "setup-2fa" && currentPath === "/staff/setup-2fa") return null;
   return step;
 }
+import { requiresTwoFactor } from '../../../convex/staffPermissions';

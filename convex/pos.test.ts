@@ -9,7 +9,7 @@ const hash = (value: string) => createHash("sha256").update(value).digest("hex")
 async function staff(t: any, role: string, name = role) {
   const token = `${role}-${name}-token`;
   await t.run(async (ctx: any) => {
-    const id = await ctx.db.insert("staff", { name, email: `${name}@test.local`, role, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now() });
+    const id = await ctx.db.insert("staff", { name, email: `${name}@test.local`, role, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now() });
     await ctx.db.insert("staffSessions", { staffId: id, tokenHash: hash(token), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
   });
   return token;

@@ -22,9 +22,9 @@ describe("getStaffRouteStep", () => {
       .toBe("ok");
   });
 
-  it("does not require 2FA for sales or designers", () => {
-    expect(getStaffRouteStep("token", { role: "sales" }, "/sales")).toBe("ok");
-    expect(getStaffRouteStep("token", { role: "designer" }, "/designer")).toBe("ok");
+  it("requires 2FA for sales and designers", () => {
+    expect(getStaffRouteStep("token", { role: "sales" }, "/sales")).toBe("setup-2fa");
+    expect(getStaffRouteStep("token", { role: "designer" }, "/designer")).toBe("setup-2fa");
   });
 
   it("never redirects to the page already being displayed", () => {

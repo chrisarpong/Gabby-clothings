@@ -7,7 +7,7 @@ import { api } from "./_generated/api";
 async function seed(t: ReturnType<typeof convexTest>, role: string, suffix: string) {
   const token = `${role}-${suffix}`;
   await t.run(async ctx => {
-    const id = await ctx.db.insert("staff", { name: role, email: `${role}-${suffix}@test`, role, passwordHash: "h", passwordSalt: "s", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now() });
+    const id = await ctx.db.insert("staff", { name: role, email: `${role}-${suffix}@test`, role, passwordHash: "h", passwordSalt: "s", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now() });
     await ctx.db.insert("staffSessions", { staffId: id, tokenHash: crypto.createHash("sha256").update(token).digest("hex"), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
     return id;
   });

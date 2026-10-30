@@ -62,7 +62,7 @@ describe("appointment rescheduling authorization", () => {
 
   async function staffToken(t: any) {
     return await t.run(async (ctx: any) => {
-      const staffId = await ctx.db.insert("staff", { name: "Admin", email: "admin@example.test", role: "admin", isActive: true, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, totpEnabled: false, failedAttempts: 0, createdAt: Date.now() });
+      const staffId = await ctx.db.insert("staff", { name: "Admin", email: "admin@example.test", role: "admin", isActive: true, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, totpEnabled: true, failedAttempts: 0, createdAt: Date.now() });
       const token = "staff-reschedule-token";
       await ctx.db.insert("staffSessions", { staffId, tokenHash: createHash("sha256").update(token).digest("hex"), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000, ip: "test", userAgent: "test" });
       return token;
@@ -155,7 +155,7 @@ describe("appointment input and staff payment controls", () => {
   const validDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   async function staff(t: any) {
     return await t.run(async (ctx: any) => {
-      const staffId = await ctx.db.insert("staff", { name: "Admin", email: `admin-${Date.now()}@example.test`, role: "admin", isActive: true, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, totpEnabled: false, failedAttempts: 0, createdAt: Date.now() });
+      const staffId = await ctx.db.insert("staff", { name: "Admin", email: `admin-${Date.now()}@example.test`, role: "admin", isActive: true, passwordHash: "x", passwordSalt: "x", mustChangePassword: false, totpEnabled: true, failedAttempts: 0, createdAt: Date.now() });
       const token = `staff-${Date.now()}`;
       await ctx.db.insert("staffSessions", { staffId, tokenHash: createHash("sha256").update(token).digest("hex"), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
       return token;

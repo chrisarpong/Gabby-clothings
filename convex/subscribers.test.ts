@@ -33,7 +33,7 @@ describe('unsubscribe links', () => {
     const t = convexTest(schema);
     const token = 'marketing-test-token';
     await t.run(async ctx => {
-      const staffId = await ctx.db.insert('staff', { name: 'CEO', email: 'ceo@test.local', role: 'ceo', passwordHash: 'x', passwordSalt: 'x', mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now() });
+      const staffId = await ctx.db.insert('staff', { name: 'CEO', email: 'ceo@test.local', role: 'ceo', passwordHash: 'x', passwordSalt: 'x', mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now() });
       await ctx.db.insert('staffSessions', { staffId, tokenHash: crypto.createHash('sha256').update(token).digest('hex'), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
       await ctx.db.insert('users', { clerkId: 'unsub-client', email: 'UNSUB@example.test', firstName: 'Skip', role: 'client' });
       await ctx.db.insert('users', { clerkId: 'active-client', email: 'active@example.test', firstName: 'Send', role: 'client' });

@@ -36,7 +36,7 @@ async function seedStaff(t: ReturnType<typeof convexTest>, role: StaffRole, suff
       mustChangePassword: false,
       isActive: true,
       failedAttempts: 0,
-      totpEnabled: false,
+      totpEnabled: true,
       createdAt: Date.now(),
     });
     await ctx.db.insert("staffSessions", {
@@ -164,7 +164,7 @@ describe("Phase 2 permission matrix", () => {
     await t.run(async (ctx) => {
       assignedDesignerId = await ctx.db.insert("staff", {
         name: "Assigned Designer", email: "assigned-designer@example.test", role: "designer", passwordHash: "h", passwordSalt: "s",
-        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
         staffId: assignedDesignerId, tokenHash: tokenHash(otherDesignerToken), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000,
@@ -232,11 +232,11 @@ describe("Phase 2 permission matrix", () => {
       });
       inactiveDesignerId = await ctx.db.insert("staff", {
         name: "Inactive Designer", email: "inactive-designer@example.test", role: "designer", passwordHash: "h", passwordSalt: "s",
-        mustChangePassword: false, isActive: false, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+        mustChangePassword: false, isActive: false, failedAttempts: 0, totpEnabled: true, createdAt: Date.now(),
       });
       adminId = await ctx.db.insert("staff", {
         name: "Other Admin", email: "other-admin@example.test", role: "admin", passwordHash: "h", passwordSalt: "s",
-        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now(),
       });
       orderId = await ctx.db.insert("orders", { orderId: "GB-ASSIGN", items: [], totalAmount: 100, status: "processing" });
       appointmentId = await ctx.db.insert("appointments", { name: "Client", email: "client@example.test", phone: "000", date: "2026-11-03", status: "pending" });
@@ -269,7 +269,7 @@ describe("Phase 2 permission matrix", () => {
     await t.run(async (ctx) => {
       salesTwoId = await ctx.db.insert("staff", {
         name: "Second Sales", email: "second-sales@example.test", role: "sales", passwordHash: "h", passwordSalt: "s",
-        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now(),
       });
       await ctx.db.insert("orders", { orderId: "GB-OTHER", items: [], totalAmount: 50, status: "processing", createdByStaffId: salesTwoId });
       await ctx.db.insert("orders", { orderId: "WEB-001", items: [], totalAmount: 60, status: "processing" });
@@ -319,11 +319,11 @@ describe("Phase 2 permission matrix", () => {
     const ids = await t.run(async ctx => Promise.all([
       ctx.db.insert("staff", {
         name: "Legacy One", email: " Shared@Example.Test ", role: "designer", passwordHash: "h", passwordSalt: "s",
-        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now(),
       }),
       ctx.db.insert("staff", {
         name: "Legacy Two", email: "shared@example.test", role: "sales", passwordHash: "h", passwordSalt: "s",
-        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now(),
+        mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now(),
       }),
     ]));
 

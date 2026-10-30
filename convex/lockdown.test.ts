@@ -93,7 +93,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
@@ -121,7 +121,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
@@ -162,7 +162,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
@@ -182,7 +182,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
@@ -325,7 +325,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
@@ -345,7 +345,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.patch(orderId, { assignedDesignerId: designerId });
@@ -432,7 +432,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {
@@ -630,7 +630,7 @@ describe("Phase 1 Security Tests", () => {
         mustChangePassword: false,
         isActive: true,
         failedAttempts: 0,
-        totpEnabled: false,
+        totpEnabled: true,
         createdAt: Date.now(),
       });
       await ctx.db.insert("staffSessions", {

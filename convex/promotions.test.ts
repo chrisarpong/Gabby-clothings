@@ -7,7 +7,7 @@ import { api } from "./_generated/api";
 async function staffToken(t: ReturnType<typeof convexTest>, role = "admin") {
   const token = `${role}-promo-token`;
   await t.run(async ctx => {
-    const staffId = await ctx.db.insert("staff", { name: `${role} staff`, email: `${role}@promo.test`, role, passwordHash: "h", passwordSalt: "s", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: false, createdAt: Date.now() });
+    const staffId = await ctx.db.insert("staff", { name: `${role} staff`, email: `${role}@promo.test`, role, passwordHash: "h", passwordSalt: "s", mustChangePassword: false, isActive: true, failedAttempts: 0, totpEnabled: true, createdAt: Date.now() });
     await ctx.db.insert("staffSessions", { staffId, tokenHash: crypto.createHash("sha256").update(token).digest("hex"), createdAt: Date.now(), lastActivityAt: Date.now(), expiresAt: Date.now() + 3600000 });
   });
   return token;
