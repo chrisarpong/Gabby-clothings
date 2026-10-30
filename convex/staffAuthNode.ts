@@ -110,6 +110,9 @@ export const changePasswordAction = action({
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     
     // 2. Validate password policy
+    if (await verifyPassword(args.newPassword, staff.passwordHash)) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "New password cannot be the same as the current password" });
+    }
     validatePasswordPolicy(args.newPassword, staff.email, staff.name);
 
     // 3. Hash new password
