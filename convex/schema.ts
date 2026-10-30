@@ -72,6 +72,40 @@ export default defineSchema({
     read: v.boolean(),
   }).index("by_type_createdAt", ["type", "createdAt"]).index("by_createdAt", ["createdAt"]),
 
+  staffPasswordResets: defineTable({
+    staffId: v.id("staff"),
+    tempPasswordHash: v.string(),
+    tempPasswordSalt: v.string(),
+    expiresAt: v.number(),
+    attempts: v.number(),
+    usedAt: v.optional(v.number()),
+    voidedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    via: v.string(), // "self_service" | "ceo"
+  }).index("by_staffId", ["staffId"]).index("by_createdAt", ["createdAt"]),
+
+  staffSmsLog: defineTable({
+    purpose: v.string(), // "password_reset" | "password_changed"
+    emailKey: v.string(), // SHA-256 of lowercase email
+    staffId: v.optional(v.id("staff")),
+    maskedPhone: v.optional(v.string()),
+    outcome: v.string(), // "sent"|"blocked_rate_limit"|"blocked_daily_cap"|"disabled"|"no_account"|"no_phone"|"role_not_allowed"|"send_failed"
+    via: v.string(), // "self_service" | "ceo"
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_emailKey_createdAt", ["emailKey", "createdAt"])
+    .index("by_staffId_createdAt", ["staffId", "createdAt"])
+    .index("by_maskedPhone_createdAt", ["maskedPhone", "createdAt"]),
+
+  staffSecuritySettings: defineTable({
+    smsResetEnabled: v.boolean(),
+    smsResetAllowedRoles: v.array(v.string()),
+    smsDailyCap: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.id("staff")),
+  }),
+
   roles: defineTable({
     name: v.string(),
     label: v.string(),
