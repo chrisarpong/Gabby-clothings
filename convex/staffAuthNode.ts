@@ -1,5 +1,8 @@
 "use node";
 import { action, internalAction } from "./_generated/server";
+import { Doc, Id } from "./_generated/dataModel";
+import type { PasswordResetPreparationResult } from "./staffAuth";
+import type { StaffRole } from "./staffPermissions";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { 
@@ -18,6 +21,30 @@ import { UNAMBIGUOUS_ALPHABET, MIN_ACTION_DELAY_MS } from "./lib/smsLimits";
 import { getTempPasswordSms, getPasswordChangedSms } from "./lib/smsTemplates";
 import { sendSms } from "./lib/sms";
 import { normalizeGhanaPhone, maskPhone } from "./lib/phone";
+
+export type LoginActionResult =
+  | { status: "success"; token: string; role: StaffRole }
+  | { status: "2fa_required"; token: string; role: StaffRole };
+export type ChangePasswordActionResult = { status: "success"; token: string; role: StaffRole };
+export type Setup2FAResult = { secret: string; uri: string };
+export type Verify2FAResult = {
+  status: "success";
+  token: string;
+  recoveryCodes?: string[];
+  role?: StaffRole;
+};
+export type GeneratedStaffCredential = { email: string; password: string };
+export type SeededStaffCredential = { role: string; email: string; password: string };
+export type CeoSmsSendResult = { ok: true; maskedPhone: string };
+export type DeleteStaffResult = { deleted: true };
+export type StaffPasswordResetResult = { ok: boolean; message: string };
+
+type CeoPasswordResetPreparation = {
+  staffId: Id<"staff">;
+  phone: string;
+  maskedPhone: string;
+  resetId: Id<"staffPasswordResets">;
+};
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -39,15 +66,15 @@ export const loginAction = action({
     email: v.string(),
     password: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<LoginActionResult> => {
     const normalizedEmail = args.email.trim().toLowerCase();
-    const rateLimit = await ctx.runMutation(internal.staffAuth.checkLoginRateLimit, { email: normalizedEmail });
+    const rateLimit: { allowed: boolean; reason?: string } = await ctx.runMutation(internal.staffAuth.checkLoginRateLimit, { email: normalizedEmail });
     if (!rateLimit.allowed) {
       throw new ConvexError({ code: "TOO_MANY_REQUESTS", message: "Too many login attempts. Please try again later." });
     }
 
     // 1. Fetch user by email via internal query
-    const staff = await ctx.runQuery(internal.staffAuth.getStaffForLogin, { email: normalizedEmail });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffForLogin, { email: normalizedEmail });
     
     // Constant time dummy verification to prevent timing attacks
     if (!staff) {
@@ -80,7 +107,7 @@ export const loginAction = action({
     }
 
     if (!isValid) {
-      const activeTempReset = await ctx.runQuery(internal.staffAuth.getActiveTempReset, { staffId: staff._id });
+      const activeTempReset: Doc<"staffPasswordResets"> | null = await ctx.runQuery(internal.staffAuth.getActiveTempReset, { staffId: staff._id });
       if (activeTempReset) {
         let isTempValid = false;
         for (const p of passwordsToTry) {
@@ -119,7 +146,7 @@ export const loginAction = action({
         tokenHash: challengeHash,
         purpose: "verify_2fa"
       });
-      return { status: "2fa_required", token: challengeToken, role: staff.role };
+      return { status: "2fa_required", token: challengeToken, role: staff.role as StaffRole };
     }
 
     // 4. Generate session token
@@ -133,7 +160,7 @@ export const loginAction = action({
       userAgent: "unknown"
     });
 
-    return { status: "success", token, role: staff.role };
+    return { status: "success", token, role: staff.role as StaffRole };
   }
 });
 
@@ -142,10 +169,10 @@ export const changePasswordAction = action({
     staffToken: v.string(), 
     newPassword: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<ChangePasswordActionResult> => {
     // 1. Verify session
     const tokenHash = hashToken(args.staffToken);
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     
     // 2. Validate password policy
@@ -153,7 +180,7 @@ export const changePasswordAction = action({
       throw new ConvexError({ code: "BAD_REQUEST", message: "New password cannot be the same as the current password" });
     }
 
-    const recentTempHashes = await ctx.runQuery(internal.staffAuth.getRecentTempPasswordHashes, { staffId: staff._id });
+    const recentTempHashes: string[] = await ctx.runQuery(internal.staffAuth.getRecentTempPasswordHashes, { staffId: staff._id });
     for (const tempHash of recentTempHashes) {
       if (await verifyPassword(args.newPassword, tempHash)) {
         throw new ConvexError({ code: "BAD_REQUEST", message: "New password cannot be the same as your temporary password." });
@@ -191,7 +218,7 @@ export const changePasswordAction = action({
       }
     }
 
-    return { status: "success", token: args.staffToken, role: staff.role };
+    return { status: "success", token: args.staffToken, role: staff.role as StaffRole };
   }
 });
 
@@ -199,9 +226,9 @@ export const setup2FA = action({
   args: {
     staffToken: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Setup2FAResult> => {
     const tokenHash = hashToken(args.staffToken);
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     const envKey = requireStaff2FAKey();
     
@@ -225,12 +252,12 @@ export const verify2FA = action({
     code: v.string(),
     isSetup: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{ status: string; token: string; recoveryCodes?: string[]; role?: string }> => {
+  handler: async (ctx, args): Promise<Verify2FAResult> => {
     const envKey = requireStaff2FAKey();
 
     if (args.isSetup) {
       const tokenHash = hashToken(args.token);
-      const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+      const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
       if (!staff || !staff.totpSecret) throw new ConvexError({ code: "UNAUTHENTICATED", message: "2FA not configured" });
 
       const rawSecret = staff.totpSecret.includes(':') && envKey
@@ -248,16 +275,16 @@ export const verify2FA = action({
         recoveryCodes: hashedCodes,
       });
 
-      return { status: "success", token: args.token, recoveryCodes, role: staff.role };
+      return { status: "success", token: args.token, recoveryCodes, role: staff.role as StaffRole };
     } else {
       const tokenHash = hashToken(args.token);
-      const challenge = await ctx.runQuery(internal.staffAuth.getChallenge, { tokenHash, purpose: "verify_2fa" });
+      const challenge: Doc<"staffLoginChallenges"> | null = await ctx.runQuery(internal.staffAuth.getChallenge, { tokenHash, purpose: "verify_2fa" });
       if (!challenge) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid or expired challenge" });
       
       const isBurned = await ctx.runMutation(internal.staffAuth.incrementChallengeAttempts, { challengeId: challenge._id });
       if (isBurned) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Too many attempts" });
 
-      const staff = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: challenge.staffId });
+      const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: challenge.staffId });
       if (!staff || !staff.totpEnabled || !staff.totpSecret) throw new ConvexError({ code: "UNAUTHENTICATED", message: "2FA not configured" });
 
       const rawSecret = staff.totpSecret.includes(':') && envKey
@@ -292,7 +319,7 @@ export const verify2FA = action({
         userAgent: "unknown"
       });
 
-      return { status: "success", token: sessionToken, role: staff.role };
+      return { status: "success", token: sessionToken, role: staff.role as StaffRole };
     }
   }
 });
@@ -314,7 +341,7 @@ export const operatorResetStaffAccess = internalAction({
     email: v.string(),
     resetTwoFactor: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{ email: string; password: string }> => {
+  handler: async (ctx, args): Promise<GeneratedStaffCredential> => {
     const email = args.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new ConvexError({ code: "BAD_REQUEST", message: "A valid staff email is required." });
@@ -335,7 +362,7 @@ export const operatorResetStaffAccess = internalAction({
 
 export const bootstrapCeo = internalAction({
   args: { name: v.string(), email: v.string() },
-  handler: async (ctx, args): Promise<{ email: string; password: string }> => {
+  handler: async (ctx, args): Promise<GeneratedStaffCredential> => {
     const name = args.name.trim();
     const email = args.email.trim().toLowerCase();
     if (!name) throw new ConvexError({ code: "BAD_REQUEST", message: "CEO name is required." });
@@ -350,7 +377,7 @@ export const bootstrapCeo = internalAction({
 
 export const seedDevTeam = internalAction({
   args: {},
-  handler: async (ctx): Promise<Array<{ role: string; email: string; password: string }>> => {
+  handler: async (ctx): Promise<SeededStaffCredential[]> => {
     if (process.env.ALLOW_DEV_SEED !== "true") {
       throw new ConvexError({ code: "FORBIDDEN", message: "Development seed is disabled." });
     }
@@ -374,10 +401,10 @@ export const createStaffUser = action({
     role: v.string(),
     phone: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     // 1. Validate session & permissions
     const tokenHash = hashToken(args.staffToken);
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
     if (!["ceo", "admin", "designer", "sales"].includes(args.role)) {
@@ -419,7 +446,7 @@ export const ceoSendStaffPasswordSms = action({
     staffToken: v.string(),
     targetStaffId: v.id("staff"),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<CeoSmsSendResult> => {
     let tempPassword = "";
     for (let i = 0; i < 10; i++) {
       const idx = crypto.randomInt(0, UNAMBIGUOUS_ALPHABET.length);
@@ -428,7 +455,7 @@ export const ceoSendStaffPasswordSms = action({
     const salt = crypto.randomBytes(16).toString("hex");
     const tempPasswordHash = await hashPassword(tempPassword, salt);
 
-    const prep: any = await ctx.runMutation(internal.staffAuth.prepareCeoPasswordReset, {
+    const prep: CeoPasswordResetPreparation = await ctx.runMutation(internal.staffAuth.prepareCeoPasswordReset, {
       staffToken: args.staffToken,
       targetStaffId: args.targetStaffId,
       tempPasswordHash,
@@ -469,9 +496,9 @@ export const resetStaffPassword = action({
     staffToken: v.string(),
     targetStaffId: v.id("staff"),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     const tokenHash = hashToken(args.staffToken);
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
 
@@ -498,15 +525,15 @@ export const deleteStaffUser = action({
     currentPassword: v.string(),
     confirmation: v.string(),
   },
-  handler: async (ctx, args) => {
-    const caller = await ctx.runQuery(internal.staffAuth.validateSession, {
+  handler: async (ctx, args): Promise<DeleteStaffResult> => {
+    const caller: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, {
       tokenHash: hashToken(args.staffToken),
       permission: "team_management",
     });
     if (!caller || caller.role !== "ceo" || caller.mustChangePassword || !caller.totpEnabled) {
       throw new ConvexError({ code: "FORBIDDEN", message: "Only a fully verified CEO may permanently delete staff." });
     }
-    const target = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: args.targetStaffId });
+    const target: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: args.targetStaffId });
     if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
     if (target._id === caller._id) throw new ConvexError({ code: "FORBIDDEN", message: "You cannot delete your own account." });
     if (target.role === "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "CEO accounts cannot be deleted here." });
@@ -536,7 +563,7 @@ export const requestStaffPasswordSms = action({
   args: {
     email: v.string(),
   },
-  handler: async (ctx, args): Promise<{ ok: boolean; message: string }> => {
+  handler: async (ctx, args): Promise<StaffPasswordResetResult> => {
     const start = Date.now();
     const rawEmail = String(args.email ?? "").trim();
     const normalizedEmail = rawEmail.toLowerCase();
@@ -568,7 +595,7 @@ export const requestStaffPasswordSms = action({
     const salt = crypto.randomBytes(16).toString("hex");
     const tempPasswordHash = await hashPassword(tempPassword, salt);
 
-    const checkResult: any = await ctx.runMutation(internal.staffAuth.preparePasswordResetRequest, {
+    const checkResult: PasswordResetPreparationResult = await ctx.runMutation(internal.staffAuth.preparePasswordResetRequest, {
       emailKey,
       normalizedEmail,
       tempPasswordHash,

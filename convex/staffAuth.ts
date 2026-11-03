@@ -27,6 +27,10 @@ const MAX_SESSION_LENGTH = 12 * 60 * 60 * 1000; // 12 hours
 const VALID_STAFF_ROLES = ["ceo", "admin", "designer", "sales"] as const;
 const DEV_TEAM_ROLES = ["admin", "designer", "sales"] as const;
 
+export type PasswordResetPreparationResult =
+  | { allowed: false; reason: string }
+  | { allowed: true; staffId: Id<"staff">; phone: string; maskedPhone: string; resetId: Id<"staffPasswordResets"> };
+
 async function getActiveCeoCount(ctx: any) {
   const ceos = await ctx.db.query("staff").withIndex("by_role", (q: any) => q.eq("role", "ceo")).collect();
   return ceos.filter((staff: any) => staff.isActive).length;
@@ -666,7 +670,7 @@ export const preparePasswordResetRequest = internalMutation({
     tempPasswordHash: v.string(),
     tempPasswordSalt: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<PasswordResetPreparationResult> => {
     const now = Date.now();
     const settingsDoc = await ctx.db.query("staffSecuritySettings").first();
     const config = settingsDoc || DEFAULT_SMS_SETTINGS;
