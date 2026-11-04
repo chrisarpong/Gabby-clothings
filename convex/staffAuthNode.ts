@@ -170,9 +170,12 @@ export const changePasswordAction = action({
     newPassword: v.string(),
   },
   handler: async (ctx, args): Promise<ChangePasswordActionResult> => {
-    // 1. Verify session
+    const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      allowIncomplete: true,
+    });
     const tokenHash = hashToken(args.staffToken);
-    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: authorization.staffId });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     
     // 2. Validate password policy
@@ -227,8 +230,11 @@ export const setup2FA = action({
     staffToken: v.string(),
   },
   handler: async (ctx, args): Promise<Setup2FAResult> => {
-    const tokenHash = hashToken(args.staffToken);
-    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+    const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      allowIncomplete: true,
+    });
+    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: authorization.staffId });
     if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     const envKey = requireStaff2FAKey();
     
@@ -253,11 +259,13 @@ export const verify2FA = action({
     isSetup: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Verify2FAResult> => {
-    const envKey = requireStaff2FAKey();
-
     if (args.isSetup) {
-      const tokenHash = hashToken(args.token);
-      const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash });
+      const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+        token: args.token,
+        allowIncomplete: true,
+      });
+      const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: authorization.staffId });
+      const envKey = requireStaff2FAKey();
       if (!staff || !staff.totpSecret) throw new ConvexError({ code: "UNAUTHENTICATED", message: "2FA not configured" });
 
       const rawSecret = staff.totpSecret.includes(':') && envKey
@@ -277,6 +285,7 @@ export const verify2FA = action({
 
       return { status: "success", token: args.token, recoveryCodes, role: staff.role as StaffRole };
     } else {
+      const envKey = requireStaff2FAKey();
       const tokenHash = hashToken(args.token);
       const challenge: Doc<"staffLoginChallenges"> | null = await ctx.runQuery(internal.staffAuth.getChallenge, { tokenHash, purpose: "verify_2fa" });
       if (!challenge) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid or expired challenge" });
@@ -402,11 +411,11 @@ export const createStaffUser = action({
     phone: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
-    // 1. Validate session & permissions
-    const tokenHash = hashToken(args.staffToken);
-    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
-    if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
-    if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
+    const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      permission: "team_management",
+    });
+    if (authorization.role !== "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "Only CEO can manage staff" });
     if (!["ceo", "admin", "designer", "sales"].includes(args.role)) {
       throw new ConvexError({ code: "BAD_REQUEST", message: "Role must be ceo, admin, designer, or sales." });
     }
@@ -433,8 +442,8 @@ export const createStaffUser = action({
       phone: normalizedPhone,
       passwordHash: hash,
       passwordSalt: salt,
-      createdBy: staff._id,
-      callerName: staff.name,
+      createdBy: authorization.staffId,
+      callerName: authorization.name,
     });
 
     return tempPassword;
@@ -447,6 +456,11 @@ export const ceoSendStaffPasswordSms = action({
     targetStaffId: v.id("staff"),
   },
   handler: async (ctx, args): Promise<CeoSmsSendResult> => {
+    const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      permission: "team_management",
+    });
+    if (authorization.role !== "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "Only CEO can manage staff" });
     let tempPassword = "";
     for (let i = 0; i < 10; i++) {
       const idx = crypto.randomInt(0, UNAMBIGUOUS_ALPHABET.length);
@@ -497,10 +511,11 @@ export const resetStaffPassword = action({
     targetStaffId: v.id("staff"),
   },
   handler: async (ctx, args): Promise<string> => {
-    const tokenHash = hashToken(args.staffToken);
-    const staff: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "team_management" });
-    if (!staff) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
-    if (staff.role !== "ceo") throw new ConvexError({ code: "UNAUTHORIZED", message: "Only CEO can manage staff" });
+    const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      permission: "team_management",
+    });
+    if (authorization.role !== "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "Only CEO can manage staff" });
 
     const tempPassword = generateTempPassword();
     const salt = crypto.randomBytes(16).toString('hex');
@@ -510,8 +525,8 @@ export const resetStaffPassword = action({
       targetStaffId: args.targetStaffId,
       passwordHash: hash,
       passwordSalt: salt,
-      callerId: staff._id,
-      callerName: staff.name,
+      callerId: authorization.staffId,
+      callerName: authorization.name,
     });
 
     return tempPassword;
@@ -526,13 +541,13 @@ export const deleteStaffUser = action({
     confirmation: v.string(),
   },
   handler: async (ctx, args): Promise<DeleteStaffResult> => {
-    const caller: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.validateSession, {
-      tokenHash: hashToken(args.staffToken),
+    const authorization = await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
       permission: "team_management",
     });
-    if (!caller || caller.role !== "ceo" || caller.mustChangePassword || !caller.totpEnabled) {
-      throw new ConvexError({ code: "FORBIDDEN", message: "Only a fully verified CEO may permanently delete staff." });
-    }
+    if (authorization.role !== "ceo") throw new ConvexError({ code: "FORBIDDEN", message: "Only a fully verified CEO may permanently delete staff." });
+    const caller: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: authorization.staffId });
+    if (!caller) throw new ConvexError({ code: "UNAUTHENTICATED", message: "Invalid session" });
     const target: Doc<"staff"> | null = await ctx.runQuery(internal.staffAuth.getStaffById, { staffId: args.targetStaffId });
     if (!target) throw new ConvexError({ code: "NOT_FOUND", message: "Staff account not found." });
     if (target._id === caller._id) throw new ConvexError({ code: "FORBIDDEN", message: "You cannot delete your own account." });

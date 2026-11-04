@@ -150,7 +150,7 @@ describe("Phase 2 permission matrix", () => {
       staffToken: "invalid-message-reply-token",
       messageId,
       message: "Thanks for reaching out",
-    })).rejects.toThrow("Unauthorized: Requires an active staff session with messages permission.");
+    })).rejects.toThrow("UNAUTHENTICATED");
   });
 
   it("designer work is assigned, bounded, and scoped to the session identity", async () => {

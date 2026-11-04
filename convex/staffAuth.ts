@@ -2,7 +2,7 @@ import { mutation, query, internalMutation, internalQuery } from "./_generated/s
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
-import { StaffPermission, StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
+import { StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
 import { normalizeGhanaPhone, maskPhone } from "./lib/phone";
 import { DEFAULT_SMS_SETTINGS } from "./staffSecurity";
 import {
@@ -176,7 +176,7 @@ export async function validateStaffSession(ctx: any, token: string) {
 export async function requireStaff(
   ctx: any,
   token: string,
-  options?: { permission?: StaffPermission | StaffPermission[]; allowIncomplete?: boolean },
+  options?: { permission?: string | string[]; allowIncomplete?: boolean },
 ) {
   const { staff } = await validateStaffSession(ctx, token);
   if (!options?.allowIncomplete && (staff.mustChangePassword || (requiresTwoFactor(staff.role) && !staff.totpEnabled))) {
@@ -190,6 +190,21 @@ export async function requireStaff(
   }
   return staff;
 }
+
+export const authorizeStaffAction = internalQuery({
+  args: {
+    token: v.string(),
+    permission: v.optional(v.union(v.string(), v.array(v.string()))),
+    allowIncomplete: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.token, {
+      permission: args.permission,
+      allowIncomplete: args.allowIncomplete,
+    });
+    return { staffId: staff._id, role: staff.role, name: staff.name };
+  },
+});
 
 export const validateSession = internalQuery({
   args: { tokenHash: v.string(), permission: v.optional(v.string()) },
@@ -240,10 +255,7 @@ export const logout = mutation({
 export const revokeAllMySessions = mutation({
   args: { staffToken: v.string() }, 
   handler: async (ctx, args) => {
-    const { session } = await validateStaffSession(ctx, args.staffToken);
-    
-    const staff = await ctx.db.get(session.staffId);
-    if (!staff) return;
+    const staff = await requireStaff(ctx, args.staffToken);
     
     const allSessions = await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", staff._id)).collect();
     for (const s of allSessions) {
