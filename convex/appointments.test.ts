@@ -56,7 +56,16 @@ describe("appointment payment authorization", () => {
 });
 
 describe("appointment rescheduling authorization", () => {
-  async function seed(t: any, userId = "user_owner", time = "10:00", date = "2026-11-10") {
+  function futureWeekday(weekday: number): string {
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    let daysAhead = (weekday - date.getUTCDay() + 7) % 7;
+    if (daysAhead < 2) daysAhead += 7;
+    date.setUTCDate(date.getUTCDate() + daysAhead);
+    return date.toISOString().slice(0, 10);
+  }
+
+  async function seed(t: any, userId = "user_owner", time = "10:00", date = futureWeekday(1)) {
     return await t.run(async (ctx: any) => ctx.db.insert("appointments", { userId, name: "Client", email: "client@example.test", phone: "0240000000", date, time, status: "confirmed", paymentStatus: "paid" }));
   }
 
@@ -78,22 +87,26 @@ describe("appointment rescheduling authorization", () => {
   it("allows the owner and staff, while rejecting a taken or past slot", async () => {
     const t = convexTest(schema).withIdentity({ subject: "user_owner" });
     const appointmentId = await seed(t);
-    await t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-11", time: "11:00" });
+    const firstFutureDate = futureWeekday(1);
+    const nextFutureDate = futureWeekday(2);
+    await t.mutation(api.appointments.reschedule, { appointmentId, date: firstFutureDate, time: "11:00" });
     const token = await staffToken(t);
-    await t.mutation(api.appointments.reschedule, { appointmentId, staffToken: token, date: "2026-11-12", time: "12:00" });
-    const taken = await seed(t, "other", "14:00", "2026-11-12");
-    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-12", time: "14:00" })).rejects.toThrow();
+    await t.mutation(api.appointments.reschedule, { appointmentId, staffToken: token, date: nextFutureDate, time: "12:00" });
+    const taken = await seed(t, "other", "14:00", nextFutureDate);
+    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: nextFutureDate, time: "14:00" })).rejects.toThrow();
     await expect(t.mutation(api.appointments.reschedule, { appointmentId: taken, date: "2020-01-01", time: "10:00" })).rejects.toThrow();
   });
 
   it("enforces owner working-day and lunch rules while allowing staff override", async () => {
     const t = convexTest(schema).withIdentity({ subject: "user_owner" });
+    const sunday = futureWeekday(0);
+    const wednesday = futureWeekday(3);
     await t.run(async (ctx: any) => ctx.db.insert("settings", { key: "availability", value: { workingDays: [1, 2, 3, 4, 5], startHour: "09:00", endHour: "17:00", lunchStart: "12:00", lunchEnd: "13:00" } }));
     const appointmentId = await seed(t);
-    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-08", time: "10:00" })).rejects.toThrow();
-    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: "2026-11-11", time: "12:30" })).rejects.toThrow();
+    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: sunday, time: "10:00" })).rejects.toThrow();
+    await expect(t.mutation(api.appointments.reschedule, { appointmentId, date: wednesday, time: "12:30" })).rejects.toThrow();
     const token = await staffToken(t);
-    await t.mutation(api.appointments.reschedule, { appointmentId, staffToken: token, date: "2026-11-08", time: "10:00" });
+    await t.mutation(api.appointments.reschedule, { appointmentId, staffToken: token, date: sunday, time: "10:00" });
   });
 
   it("allows an owner date-only reschedule to today", async () => {

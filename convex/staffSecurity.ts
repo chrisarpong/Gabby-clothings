@@ -44,6 +44,26 @@ export const getSmsSettings = query({
   },
 });
 
+export const getRecentSmsAttempts = query({
+  args: { staffToken: v.string() },
+  handler: async (ctx, args) => {
+    const caller = await requireStaff(ctx, args.staffToken, { permission: "team_management" });
+    if (caller.role !== "ceo") {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Only the CEO can view SMS attempts." });
+    }
+    const rows = await ctx.db.query("staffSmsLog").withIndex("by_createdAt").order("desc").take(20);
+    return rows.map(row => ({
+      time: row.createdAt,
+      purpose: row.purpose,
+      outcome: row.outcome,
+      via: row.via,
+      maskedPhone: row.maskedPhone,
+      failureCode: row.failureCode,
+      providerMessage: row.providerMessage,
+    }));
+  },
+});
+
 export const updateSmsSettings = mutation({
   args: {
     staffToken: v.string(),

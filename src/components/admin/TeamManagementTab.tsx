@@ -8,6 +8,21 @@ import { useStaffQuery, useStaffMutation, useStaffAction } from "../../hooks/use
 import { useConfirm } from '../../hooks/useConfirm';
 import { parseConvexError } from '../../utils/errorParser';
 
+function smsAttemptLabel(outcome: string, failureCode?: string): string {
+  switch (outcome) {
+    case "disabled": return "Reset disabled";
+    case "no_account": return "No matching account";
+    case "no_phone": return "No phone on file";
+    case "role_not_allowed": return "Role not allowed";
+    case "no_2fa": return "2FA is not set up";
+    case "blocked_rate_limit": return "Rate limit reached";
+    case "blocked_daily_cap": return "Daily cap reached";
+    case "send_failed": return `Sending failed (${failureCode || "unknown"})`;
+    case "sent": return "Sent";
+    default: return "Other attempt";
+  }
+}
+
 export default function TeamManagementTab() {
   const { profile } = useStaffAuth();
   const isCeo = profile?.role === "ceo";
@@ -25,6 +40,7 @@ export default function TeamManagementTab() {
   const updateStaffPhone = useStaffMutation(api.staffAuth.updateStaffPhone);
 
   const smsSettings = useStaffQuery(api.staffSecurity.getSmsSettings, isCeo ? {} : "skip");
+  const recentSmsAttempts = useStaffQuery(api.staffSecurity.getRecentSmsAttempts, isCeo ? {} : "skip");
   const updateSmsSettings = useStaffMutation(api.staffSecurity.updateSmsSettings);
 
   const [newStaffName, setNewStaffName] = useState('');
@@ -436,6 +452,24 @@ export default function TeamManagementTab() {
                 <div className="text-xs text-primary font-mono">
                   Last 7 days: <span className="font-bold">{smsSettings?.last7Days ?? 0}</span>
                 </div>
+              </div>
+              <div className="md:col-span-3 pt-4 border-t border-surface-variant">
+                <h3 className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-2">Recent attempts</h3>
+                {!recentSmsAttempts?.length ? (
+                  <p className="text-xs text-on-surface-variant">No SMS attempts recorded.</p>
+                ) : (
+                  <ul className="space-y-2 max-h-64 overflow-y-auto">
+                    {recentSmsAttempts.map((attempt, index) => (
+                      <li key={`${attempt.time}-${index}`} className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-primary">
+                        <span>{smsAttemptLabel(attempt.outcome, attempt.failureCode)}</span>
+                        <span className="text-on-surface-variant">
+                          {attempt.purpose.replaceAll("_", " ")} · {attempt.via === "ceo" ? "CEO initiated" : "Self service"} · {attempt.maskedPhone || "No phone"} · {new Date(attempt.time).toLocaleString()}
+                          {attempt.providerMessage ? ` · ${attempt.providerMessage}` : ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </div>

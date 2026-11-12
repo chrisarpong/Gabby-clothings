@@ -22,7 +22,7 @@ describe("Staff SMS password reset request (Task 6)", () => {
     const disabledRes = await t.action(api.staffAuthNode.requestStaffPasswordSms, {
       email: "disabled-test@test.local",
     });
-    expect(disabledRes.message).toBe("Password reset by SMS is not available. Please contact your manager.");
+    expect(disabledRes.message).toBe("If this account can use SMS reset, a temporary password has been sent.");
 
     // Enable feature in staffSecuritySettings
     await t.run(async (ctx) => {

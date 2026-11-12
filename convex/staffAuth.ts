@@ -2,7 +2,7 @@ import { mutation, query, internalMutation, internalQuery } from "./_generated/s
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { v, ConvexError } from "convex/values";
-import { StaffPermission, StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
+import { StaffRole, hasPermission, requiresTwoFactor } from "./staffPermissions";
 import { normalizeGhanaPhone, maskPhone } from "./lib/phone";
 import { DEFAULT_SMS_SETTINGS } from "./staffSecurity";
 import {
@@ -26,6 +26,10 @@ const IDLE_TIMEOUT_MAP: Record<StaffRole, number> = {
 const MAX_SESSION_LENGTH = 12 * 60 * 60 * 1000; // 12 hours
 const VALID_STAFF_ROLES = ["ceo", "admin", "designer", "sales"] as const;
 const DEV_TEAM_ROLES = ["admin", "designer", "sales"] as const;
+
+export type PasswordResetPreparationResult =
+  | { allowed: false; reason: string }
+  | { allowed: true; staffId: Id<"staff">; phone: string; maskedPhone: string; resetId: Id<"staffPasswordResets"> };
 
 async function getActiveCeoCount(ctx: any) {
   const ceos = await ctx.db.query("staff").withIndex("by_role", (q: any) => q.eq("role", "ceo")).collect();
@@ -172,7 +176,7 @@ export async function validateStaffSession(ctx: any, token: string) {
 export async function requireStaff(
   ctx: any,
   token: string,
-  options?: { permission?: StaffPermission | StaffPermission[]; allowIncomplete?: boolean },
+  options?: { permission?: string | string[]; allowIncomplete?: boolean },
 ) {
   const { staff } = await validateStaffSession(ctx, token);
   if (!options?.allowIncomplete && (staff.mustChangePassword || (requiresTwoFactor(staff.role) && !staff.totpEnabled))) {
@@ -186,6 +190,21 @@ export async function requireStaff(
   }
   return staff;
 }
+
+export const authorizeStaffAction = internalQuery({
+  args: {
+    token: v.string(),
+    permission: v.optional(v.union(v.string(), v.array(v.string()))),
+    allowIncomplete: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.token, {
+      permission: args.permission,
+      allowIncomplete: args.allowIncomplete,
+    });
+    return { staffId: staff._id, role: staff.role, name: staff.name };
+  },
+});
 
 export const validateSession = internalQuery({
   args: { tokenHash: v.string(), permission: v.optional(v.string()) },
@@ -236,10 +255,7 @@ export const logout = mutation({
 export const revokeAllMySessions = mutation({
   args: { staffToken: v.string() }, 
   handler: async (ctx, args) => {
-    const { session } = await validateStaffSession(ctx, args.staffToken);
-    
-    const staff = await ctx.db.get(session.staffId);
-    if (!staff) return;
+    const staff = await requireStaff(ctx, args.staffToken);
     
     const allSessions = await ctx.db.query("staffSessions").withIndex("by_staffId", q => q.eq("staffId", staff._id)).collect();
     for (const s of allSessions) {
@@ -666,7 +682,7 @@ export const preparePasswordResetRequest = internalMutation({
     tempPasswordHash: v.string(),
     tempPasswordSalt: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<PasswordResetPreparationResult> => {
     const now = Date.now();
     const settingsDoc = await ctx.db.query("staffSecuritySettings").first();
     const config = settingsDoc || DEFAULT_SMS_SETTINGS;
@@ -908,6 +924,8 @@ export const completePasswordResetSend = internalMutation({
     emailKey: v.string(),
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("staffSmsLog", {
@@ -918,6 +936,8 @@ export const completePasswordResetSend = internalMutation({
       outcome: "sent",
       via: "self_service",
       createdAt: Date.now(),
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });
@@ -928,6 +948,9 @@ export const failPasswordResetSend = internalMutation({
     emailKey: v.string(),
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    failureCode: v.optional(v.string()),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.resetId, { voidedAt: Date.now() });
@@ -939,6 +962,9 @@ export const failPasswordResetSend = internalMutation({
       outcome: "send_failed",
       via: "self_service",
       createdAt: Date.now(),
+      failureCode: args.failureCode,
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });
@@ -1087,6 +1113,8 @@ export const completeCeoPasswordResetSend = internalMutation({
   args: {
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const staff = await ctx.db.get(args.staffId);
@@ -1099,6 +1127,8 @@ export const completeCeoPasswordResetSend = internalMutation({
       outcome: "sent",
       via: "ceo",
       createdAt: Date.now(),
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });
@@ -1108,6 +1138,9 @@ export const failCeoPasswordResetSend = internalMutation({
     resetId: v.id("staffPasswordResets"),
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    failureCode: v.optional(v.string()),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const staff = await ctx.db.get(args.staffId);
@@ -1121,6 +1154,9 @@ export const failCeoPasswordResetSend = internalMutation({
       outcome: "send_failed",
       via: "ceo",
       createdAt: Date.now(),
+      failureCode: args.failureCode,
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });

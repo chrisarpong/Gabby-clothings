@@ -85,13 +85,16 @@ export default defineSchema({
   }).index("by_staffId", ["staffId"]).index("by_createdAt", ["createdAt"]),
 
   staffSmsLog: defineTable({
-    purpose: v.string(), // "password_reset" | "password_changed"
+    purpose: v.string(), // "password_reset" | "password_changed" | "test"
     emailKey: v.string(), // SHA-256 of lowercase email
     staffId: v.optional(v.id("staff")),
     maskedPhone: v.optional(v.string()),
-    outcome: v.string(), // "sent"|"blocked_rate_limit"|"blocked_daily_cap"|"disabled"|"no_account"|"no_phone"|"role_not_allowed"|"send_failed"
+    outcome: v.string(), // Includes sent, setup blocks, provider failures, and rate-limit outcomes.
     via: v.string(), // "self_service" | "ceo"
     createdAt: v.number(),
+    failureCode: v.optional(v.string()),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_emailKey_createdAt", ["emailKey", "createdAt"])

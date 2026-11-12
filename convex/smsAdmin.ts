@@ -20,6 +20,24 @@ export const recordLowCreditAlert = internalMutation({
   }
 });
 
+export const recordProviderFailure = internalMutation({
+  args: { failureCode: v.string() },
+  handler: async (ctx, args) => {
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    const existing = await ctx.db.query("staffNotifications")
+      .withIndex("by_type_createdAt", q => q.eq("type", "sms_provider_failure").gte("createdAt", oneHourAgo))
+      .first();
+    if (existing) return;
+    await ctx.db.insert("staffNotifications", {
+      title: `SMS sending failed (${args.failureCode}). Check the SMS card.`,
+      type: "sms_provider_failure",
+      recipientRole: "ceo",
+      createdAt: Date.now(),
+      read: false,
+    });
+  },
+});
+
 export const senderStatus = internalAction({
   args: {},
   handler: async () => {

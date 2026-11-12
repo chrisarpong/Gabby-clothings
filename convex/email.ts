@@ -245,8 +245,10 @@ export const sendPromoBroadcast = action({
     discountValue: v.number(),
   },
   handler: async (ctx, args) => {
-    // Admin-only guard: actions don't have ctx.db, so verify identity
-    // and rely on getAllEmails (which itself enforces admin via staffAuth).
+    await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      permission: "marketing",
+    });
 
     const resend = getResendClient();
     if (!resend) throw new Error("Resend API key not configured");
@@ -372,6 +374,10 @@ export const sendNewsletterBroadcast = action({
     message: v.string(),
   },
   handler: async (ctx, args) => {
+    await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      permission: "marketing",
+    });
     const resend = getResendClient();
     if (!resend) throw new Error("Resend API key not configured");
 
@@ -423,10 +429,10 @@ export const replyToMessage = action({
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    const tokenBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(args.staffToken));
-    const tokenHash = Array.from(new Uint8Array(tokenBytes), byte => byte.toString(16).padStart(2, "0")).join("");
-    const staff = await ctx.runQuery(internal.staffAuth.validateSession, { tokenHash, permission: "messages" });
-    if (!staff) throw new Error("Unauthorized: Requires an active staff session with messages permission.");
+    await ctx.runQuery(internal.staffAuth.authorizeStaffAction, {
+      token: args.staffToken,
+      permission: "messages",
+    });
 
     const customerMessage = await ctx.runQuery(internal.messages.getByIdForReply, { messageId: args.messageId });
     if (!customerMessage) throw new Error("Message not found.");
