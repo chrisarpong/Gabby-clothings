@@ -924,6 +924,8 @@ export const completePasswordResetSend = internalMutation({
     emailKey: v.string(),
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("staffSmsLog", {
@@ -934,6 +936,8 @@ export const completePasswordResetSend = internalMutation({
       outcome: "sent",
       via: "self_service",
       createdAt: Date.now(),
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });
@@ -944,6 +948,9 @@ export const failPasswordResetSend = internalMutation({
     emailKey: v.string(),
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    failureCode: v.optional(v.string()),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.resetId, { voidedAt: Date.now() });
@@ -955,6 +962,9 @@ export const failPasswordResetSend = internalMutation({
       outcome: "send_failed",
       via: "self_service",
       createdAt: Date.now(),
+      failureCode: args.failureCode,
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });
@@ -1103,6 +1113,8 @@ export const completeCeoPasswordResetSend = internalMutation({
   args: {
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const staff = await ctx.db.get(args.staffId);
@@ -1115,6 +1127,8 @@ export const completeCeoPasswordResetSend = internalMutation({
       outcome: "sent",
       via: "ceo",
       createdAt: Date.now(),
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });
@@ -1124,6 +1138,9 @@ export const failCeoPasswordResetSend = internalMutation({
     resetId: v.id("staffPasswordResets"),
     staffId: v.id("staff"),
     maskedPhone: v.string(),
+    failureCode: v.optional(v.string()),
+    providerStatus: v.optional(v.number()),
+    providerMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const staff = await ctx.db.get(args.staffId);
@@ -1137,6 +1154,9 @@ export const failCeoPasswordResetSend = internalMutation({
       outcome: "send_failed",
       via: "ceo",
       createdAt: Date.now(),
+      failureCode: args.failureCode,
+      providerStatus: args.providerStatus,
+      providerMessage: args.providerMessage,
     });
   },
 });

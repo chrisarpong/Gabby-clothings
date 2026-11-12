@@ -20,6 +20,8 @@ describe("SMS templates", () => {
 
 describe("SMS provider (mock & BMS)", () => {
   const originalEnv = { ...process.env };
+  const wroteDevOutbox = (runMutation: ReturnType<typeof vi.fn>) =>
+    runMutation.mock.calls.some(call => call[1] && typeof call[1] === "object" && "phone" in call[1] && "message" in call[1]);
 
   beforeEach(() => {
     clearMockSentMessages();
@@ -46,12 +48,26 @@ describe("SMS provider (mock & BMS)", () => {
     expect(messages[0].message).toBe("Test message");
   });
 
-  it("fails closed without secrets when BMS credentials missing or invalid", async () => {
+  it("fails closed without sending when the provider is unset or unknown", async () => {
+    delete process.env.SMS_PROVIDER;
+    process.env.ALLOW_DEV_SMS_OUTBOX = "true";
+    const runMutation = vi.fn();
+    const unset = await sendSms({ to: "+233241234567", message: "Test", kind: "otp" }, { runMutation });
+    expect(unset).toMatchObject({ ok: false, errorCode: "not_configured" });
+    expect(getMockSentMessages()).toHaveLength(0);
+    expect(wroteDevOutbox(runMutation)).toBe(false);
+
+    process.env.SMS_PROVIDER = "unknown";
+    const unknown = await sendSms({ to: "+233241234567", message: "Test", kind: "otp" }, { runMutation });
+    expect(unknown).toMatchObject({ ok: false, errorCode: "not_configured" });
+    expect(wroteDevOutbox(runMutation)).toBe(false);
+  });
+
+  it("fails closed without BMS credentials", async () => {
     process.env.SMS_PROVIDER = "bms";
     delete process.env.BMS_SMS_API_KEY;
     delete process.env.BMS_SMS_SENDER_ID;
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await sendSms({
       to: "+233241234567",
       message: "Test",
@@ -59,8 +75,7 @@ describe("SMS provider (mock & BMS)", () => {
     });
 
     expect(res.ok).toBe(false);
-    expect(res.error).toBe("SMS not configured");
-    expect(errorSpy).toHaveBeenCalledWith("SMS not configured");
+    expect(res.errorCode).toBe("not_configured");
   });
 
   it("formats BMS request correctly, sending sms_type ONLY for otp", async () => {
@@ -124,7 +139,7 @@ describe("SMS provider (mock & BMS)", () => {
     expect(capturedBody.sms_type).toBeUndefined();
   });
 
-  it("handles failure responses (HTTP 500, status error, code not 2000, total_rejected 1, malformed JSON, timeout) without throwing", async () => {
+  it("classifies HTTP, provider rejection, and malformed responses", async () => {
     process.env.SMS_PROVIDER = "bms";
     process.env.BMS_SMS_API_KEY = "secret_key";
     process.env.BMS_SMS_SENDER_ID = "Gabby";
@@ -134,17 +149,17 @@ describe("SMS provider (mock & BMS)", () => {
     // HTTP 500
     global.fetch = vi.fn().mockResolvedValueOnce(new Response("Internal Error", { status: 500 }));
     let res = await sendSms({ to: "+233241234567", message: "m", kind: "otp" });
-    expect(res.ok).toBe(false);
+    expect(res).toMatchObject({ ok: false, errorCode: "http_error", providerStatus: 500 });
 
     // status error
     global.fetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ status: "error", code: "2000" }), { status: 200 }));
     res = await sendSms({ to: "+233241234567", message: "m", kind: "otp" });
-    expect(res.ok).toBe(false);
+    expect(res.errorCode).toBe("provider_rejected");
 
     // code not 2000
     global.fetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ status: "success", code: "4001" }), { status: 200 }));
     res = await sendSms({ to: "+233241234567", message: "m", kind: "otp" });
-    expect(res.ok).toBe(false);
+    expect(res.errorCode).toBe("provider_rejected");
 
     // total_rejected 1
     global.fetch = vi.fn().mockResolvedValueOnce(
@@ -155,18 +170,18 @@ describe("SMS provider (mock & BMS)", () => {
       }), { status: 200 })
     );
     res = await sendSms({ to: "+233241234567", message: "m", kind: "otp" });
-    expect(res.ok).toBe(false);
+    expect(res.errorCode).toBe("provider_rejected");
 
     // malformed JSON
     global.fetch = vi.fn().mockResolvedValueOnce(new Response("not json", { status: 200 }));
     res = await sendSms({ to: "+233241234567", message: "m", kind: "otp" });
-    expect(res.ok).toBe(false);
+    expect(res.errorCode).toBe("bad_response");
 
-    // Network timeout / AbortError -> retried once, logs without secrets
+    // Network error is retried once; the second failure returns network.
     global.fetch = vi.fn().mockRejectedValue(new Error("fetch failed"));
     res = await sendSms({ to: "+233241234567", message: "m", kind: "otp" });
-    expect(res.ok).toBe(false);
-    expect(res.error).toBe("SMS network error");
+    expect(res).toMatchObject({ ok: false, errorCode: "network" });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
 
     // Ensure the secret API key never appears in any console log
     for (const call of errorSpy.mock.calls) {
@@ -175,6 +190,70 @@ describe("SMS provider (mock & BMS)", () => {
         expect(String(arg)).not.toContain("api.mnotify.com");
       }
     }
+  });
+
+  it("does not retry a 10-second timeout", async () => {
+    process.env.SMS_PROVIDER = "bms";
+    process.env.BMS_SMS_API_KEY = "test-key";
+    process.env.BMS_SMS_SENDER_ID = "Gabby";
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })));
+    }));
+    global.fetch = fetchMock as typeof fetch;
+    const pending = sendSms({ to: "+233241234567", message: "m", kind: "otp" });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await expect(pending).resolves.toMatchObject({ ok: false, errorCode: "timeout" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("sanitizes provider messages and never returns the submitted SMS text", async () => {
+    process.env.SMS_PROVIDER = "bms";
+    process.env.BMS_SMS_API_KEY = "test-key";
+    process.env.BMS_SMS_SENDER_ID = "Gabby";
+    const sentText = "Private temporary password 12345";
+    global.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      status: "error", code: "4001", message: `Rejected ${sentText} for +233241234567 https://provider.invalid/path key=super-secret-token-value`,
+      summary: { total_sent: 0, total_rejected: 1 },
+    }), { status: 200 }));
+    const res = await sendSms({ to: "+233241234567", message: sentText, kind: "otp" });
+    expect(res.errorCode).toBe("provider_rejected");
+    expect(res.providerMessage).toContain("[message omitted]");
+    expect(res.providerMessage).toContain("[phone omitted]");
+    expect(res.providerMessage).toContain("[URL omitted]");
+    expect(res.providerMessage).toContain("[redacted]");
+    expect(res.providerMessage).not.toContain(sentText);
+    expect(res.providerMessage).not.toContain("+233241234567");
+    expect(res.providerMessage).not.toContain("super-secret-token-value");
+    expect(res.providerMessage!.length).toBeLessThanOrEqual(120);
+  });
+
+  it("writes the persistent outbox only for exact mock plus the opt-in flag", async () => {
+    const runMutation = vi.fn().mockResolvedValue(undefined);
+    const ctx = { runMutation };
+    process.env.SMS_PROVIDER = "mock";
+    process.env.ALLOW_DEV_SMS_OUTBOX = "true";
+    await sendSms({ to: "+233241234567", message: "mock text", kind: "otp" }, ctx);
+    expect(wroteDevOutbox(runMutation)).toBe(true);
+
+    runMutation.mockClear();
+    process.env.ALLOW_DEV_SMS_OUTBOX = "false";
+    await sendSms({ to: "+233241234567", message: "mock text", kind: "otp" }, ctx);
+    expect(wroteDevOutbox(runMutation)).toBe(false);
+
+    runMutation.mockClear();
+    delete process.env.SMS_PROVIDER;
+    process.env.ALLOW_DEV_SMS_OUTBOX = "true";
+    await sendSms({ to: "+233241234567", message: "unset text", kind: "otp" }, ctx);
+    expect(wroteDevOutbox(runMutation)).toBe(false);
+
+    runMutation.mockClear();
+    process.env.SMS_PROVIDER = "bms";
+    delete process.env.BMS_SMS_API_KEY;
+    delete process.env.BMS_SMS_SENDER_ID;
+    await sendSms({ to: "+233241234567", message: "bms text", kind: "otp" }, ctx);
+    expect(wroteDevOutbox(runMutation)).toBe(false);
   });
 
   it("calls low-credit alert when credit_left is below threshold", async () => {

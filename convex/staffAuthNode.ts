@@ -489,6 +489,8 @@ export const ceoSendStaffPasswordSms = action({
       await ctx.runMutation(internal.staffAuth.completeCeoPasswordResetSend, {
         staffId: prep.staffId,
         maskedPhone: prep.maskedPhone,
+        providerStatus: sendRes.providerStatus,
+        providerMessage: sendRes.providerMessage,
       });
       return { ok: true, maskedPhone: prep.maskedPhone };
     } else {
@@ -496,6 +498,9 @@ export const ceoSendStaffPasswordSms = action({
         resetId: prep.resetId,
         staffId: prep.staffId,
         maskedPhone: prep.maskedPhone,
+        failureCode: sendRes.errorCode,
+        providerStatus: sendRes.providerStatus,
+        providerMessage: sendRes.providerMessage,
       });
       throw new ConvexError({
         code: "SEND_FAILED",
@@ -618,12 +623,6 @@ export const requestStaffPasswordSms = action({
     });
 
     if (!checkResult.allowed) {
-      if (checkResult.reason === "disabled") {
-        return await finishWithDelay({
-          ok: true,
-          message: "Password reset by SMS is not available. Please contact your manager.",
-        });
-      }
       return await finishWithDelay(genericSuccess);
     }
 
@@ -641,6 +640,8 @@ export const requestStaffPasswordSms = action({
         emailKey,
         staffId: checkResult.staffId,
         maskedPhone: checkResult.maskedPhone,
+        providerStatus: sendRes.providerStatus,
+        providerMessage: sendRes.providerMessage,
       });
     } else {
       await ctx.runMutation(internal.staffAuth.failPasswordResetSend, {
@@ -648,6 +649,9 @@ export const requestStaffPasswordSms = action({
         emailKey,
         staffId: checkResult.staffId,
         maskedPhone: checkResult.maskedPhone,
+        failureCode: sendRes.errorCode,
+        providerStatus: sendRes.providerStatus,
+        providerMessage: sendRes.providerMessage,
       });
     }
 
